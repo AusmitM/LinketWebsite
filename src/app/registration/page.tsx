@@ -70,11 +70,17 @@ function RegistrationContent() {
       const payload = await response.json().catch(() => ({}));
       if (payload?.hint === "try_backup_code") {
         setShowBackup(true);
-        setError("We could not match your purchase email. Enter the backup claim code from your box.");
+        setError(
+          "We could not match your purchase email. Enter the backup claim code from your box."
+        );
         return;
       }
 
-      setError(typeof payload?.error === "string" ? payload.error : "Unable to claim this Linket.");
+      setError(
+        typeof payload?.error === "string"
+          ? payload.error
+          : "Unable to claim this Linket."
+      );
     } catch {
       setError("Unable to claim this Linket right now. Try again shortly.");
     }
@@ -95,11 +101,15 @@ function RegistrationContent() {
         <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <a className="rounded border p-4 hover:bg-gray-50" href={signupHref}>
             <h2 className="mb-1 font-medium">1) Start a new account</h2>
-            <p className="text-sm text-gray-600">Create an account, then we will attach this Linket.</p>
+            <p className="text-sm text-gray-600">
+              Create an account, then we will attach this Linket.
+            </p>
           </a>
           <a className="rounded border p-4 hover:bg-gray-50" href={loginHref}>
             <h2 className="mb-1 font-medium">2) Add to an existing account</h2>
-            <p className="text-sm text-gray-600">Sign in, then claim without a code.</p>
+            <p className="text-sm text-gray-600">
+              Sign in, then claim without a code.
+            </p>
           </a>
         </section>
       )}
@@ -107,24 +117,35 @@ function RegistrationContent() {
       <section className="space-y-3 rounded border p-4">
         <h2 className="font-medium">Claim this Linket</h2>
         <div className="flex flex-wrap gap-2">
-          <button onClick={() => claim(true)} className="rounded bg-black px-4 py-2 text-white">
+          <button
+            onClick={() => claim(true)}
+            className="rounded bg-black px-4 py-2 text-white"
+          >
             Claim with my account (no code)
           </button>
-          <button onClick={() => setShowBackup((value) => !value)} className="rounded border px-4 py-2">
+          <button
+            onClick={() => setShowBackup((value) => !value)}
+            className="rounded border px-4 py-2"
+          >
             {showBackup ? "Hide backup" : "Use backup claim code"}
           </button>
         </div>
 
         {showBackup && (
           <div className="pt-2">
-            <label className="mb-1 block text-sm">Backup claim code (scratch-off in the box)</label>
+            <label className="mb-1 block text-sm">
+              Backup claim code (scratch-off in the box)
+            </label>
             <input
               value={claimCode}
               onChange={(event) => setClaimCode(event.target.value)}
               className="mb-3 w-full rounded border p-2"
               placeholder="XXXX-XXXX-XXXX"
             />
-            <button onClick={() => claim(false)} className="rounded bg-black px-4 py-2 text-white">
+            <button
+              onClick={() => claim(false)}
+              className="rounded bg-black px-4 py-2 text-white"
+            >
               Claim with backup code
             </button>
           </div>

@@ -1,101 +1,109 @@
-'use client'
+"use client";
 
-import type { FormEvent } from 'react'
-import { useCallback, useMemo, useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
-import { toast } from '@/components/system/toaster'
+import type { FormEvent } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
+import { toast } from "@/components/system/toaster";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
-const DEFAULT_NEXT = '/dashboard/linkets'
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+const DEFAULT_NEXT = "/dashboard/linkets";
 
 export default function AuthPage() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const nextParam = searchParams.get('next')
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const nextParam = searchParams.get("next");
   const next = useMemo(() => {
-    if (!nextParam) return DEFAULT_NEXT
-    const trimmed = nextParam.trim()
-    if (!trimmed) return DEFAULT_NEXT
-    return trimmed.startsWith('/') ? trimmed : `/${trimmed}`
-  }, [nextParam])
-  const oauthError = searchParams.get('error')
-  const oauthMessage = searchParams.get('message')
-  const view = searchParams.get('view') ?? 'signin'
-  const supabase = useMemo(() => createClient(), [])
+    if (!nextParam) return DEFAULT_NEXT;
+    const trimmed = nextParam.trim();
+    if (!trimmed) return DEFAULT_NEXT;
+    return trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+  }, [nextParam]);
+  const oauthError = searchParams.get("error");
+  const oauthMessage = searchParams.get("message");
+  const view = searchParams.get("view") ?? "signin";
+  const supabase = useMemo(() => createClient(), []);
 
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [pending, setPending] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handlePasswordSignIn = useCallback(
     async (event: FormEvent<HTMLFormElement>) => {
-      event.preventDefault()
+      event.preventDefault();
       if (!email || !password) {
-        setError('Email and password are required.')
-        return
+        setError("Email and password are required.");
+        return;
       }
 
-      setPending(true)
-      setError(null)
+      setPending(true);
+      setError(null);
 
       try {
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
         if (error) {
-          throw error
+          throw error;
         }
 
         if (data.session) {
-          const response = await fetch('/auth/callback', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ event: 'SIGNED_IN', session: data.session }),
-          })
+          const response = await fetch("/auth/callback", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ event: "SIGNED_IN", session: data.session }),
+          });
           if (!response.ok) {
-            throw new Error('Could not finalize session. Please try again.')
+            throw new Error("Could not finalize session. Please try again.");
           }
         }
 
         toast({
-          title: 'Welcome back!',
-          description: 'Your dashboard is ready to manage Linkets.',
-          variant: 'success',
-        })
+          title: "Welcome back!",
+          description: "Your dashboard is ready to manage Linkets.",
+          variant: "success",
+        });
 
-        const destination = next || DEFAULT_NEXT
-        router.replace(destination)
-        router.refresh()
+        const destination = next || DEFAULT_NEXT;
+        router.replace(destination);
+        router.refresh();
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'Unable to sign in. Please try again.'
-        setError(message)
+        const message =
+          err instanceof Error
+            ? err.message
+            : "Unable to sign in. Please try again.";
+        setError(message);
       } finally {
-        setPending(false)
+        setPending(false);
       }
     },
     [email, password, supabase, router, next]
-  )
+  );
 
   const handleOAuth = useCallback(
-    async (provider: 'github' | 'google') => {
-      setPending(true)
-      setError(null)
+    async (provider: "facebook" | "google") => {
+      setPending(true);
+      setError(null);
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${SITE_URL}/auth/callback?next=${encodeURIComponent(next)}`,
+          redirectTo: `${SITE_URL}/auth/callback?next=${encodeURIComponent(
+            next
+          )}`,
         },
-      })
+      });
 
       if (error) {
-        setError(error.message)
-        setPending(false)
+        setError(error.message);
+        setPending(false);
       }
     },
     [supabase, next]
-  )
+  );
 
   return (
     <div className="mx-auto flex w-full max-w-md flex-col gap-6 py-10">
@@ -108,7 +116,7 @@ export default function AuthPage() {
 
       {(error || oauthError) && (
         <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
-          {error ?? oauthMessage ?? 'Authentication failed. Please try again.'}
+          {error ?? oauthMessage ?? "Authentication failed. Please try again."}
         </div>
       )}
 
@@ -117,7 +125,10 @@ export default function AuthPage() {
         className="space-y-4 rounded-lg border border-neutral-200 bg-white/60 p-6 shadow-sm backdrop-blur"
       >
         <div className="flex flex-col gap-2">
-          <label htmlFor="email" className="text-sm font-medium text-neutral-700">
+          <label
+            htmlFor="email"
+            className="text-sm font-medium text-neutral-700"
+          >
             Email
           </label>
           <input
@@ -133,7 +144,10 @@ export default function AuthPage() {
         </div>
 
         <div className="flex flex-col gap-2">
-          <label htmlFor="password" className="text-sm font-medium text-neutral-700">
+          <label
+            htmlFor="password"
+            className="text-sm font-medium text-neutral-700"
+          >
             Password
           </label>
           <input
@@ -153,12 +167,14 @@ export default function AuthPage() {
           disabled={pending}
           className="flex w-full items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {pending ? 'Signing in...' : 'Sign in with email'}
+          {pending ? "Signing in..." : "Sign in with email"}
         </button>
 
         <div className="flex justify-end">
           <Link
-            href={`/reset-password${next ? `?next=${encodeURIComponent(next)}` : ''}`}
+            href={`/reset-password${
+              next ? `?next=${encodeURIComponent(next)}` : ""
+            }`}
             className="text-sm font-medium text-blue-600 hover:underline"
           >
             Forgot password?
@@ -177,7 +193,7 @@ export default function AuthPage() {
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <button
             type="button"
-            onClick={() => handleOAuth('google')}
+            onClick={() => handleOAuth("google")}
             disabled={pending}
             className="flex items-center justify-center gap-2 rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 transition hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-60"
           >
@@ -185,18 +201,18 @@ export default function AuthPage() {
           </button>
           <button
             type="button"
-            onClick={() => handleOAuth('github')}
+            onClick={() => handleOAuth("facebook")}
             disabled={pending}
             className="flex items-center justify-center gap-2 rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 transition hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            <span>GitHub</span>
+            <span>Facebook</span>
           </button>
         </div>
       </div>
 
-      {view === 'signup' ? (
+      {view === "signup" ? (
         <p className="text-center text-sm text-neutral-500">
-          Already have an account?{' '}
+          Already have an account?{" "}
           <Link
             href={`/auth?next=${encodeURIComponent(next)}&view=signin`}
             className="font-semibold text-blue-600 hover:underline"
@@ -206,7 +222,7 @@ export default function AuthPage() {
         </p>
       ) : (
         <p className="text-center text-sm text-neutral-500">
-          New to Linket?{' '}
+          New to Linket?{" "}
           <Link
             href={`/registration?next=${encodeURIComponent(next)}`}
             className="font-semibold text-blue-600 hover:underline"
@@ -216,5 +232,5 @@ export default function AuthPage() {
         </p>
       )}
     </div>
-  )
+  );
 }
