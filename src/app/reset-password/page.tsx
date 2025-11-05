@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -48,7 +47,10 @@ type FormState = {
 export default function ResetPasswordPage() {
   const router = useRouter();
   const [status, setStatus] = useState<ResetState>("checking");
-  const [formValues, setFormValues] = useState<FormState>({ password: "", confirmPassword: "" });
+  const [formValues, setFormValues] = useState<FormState>({
+    password: "",
+    confirmPassword: "",
+  });
   const [errors, setErrors] = useState<ResetErrors>({});
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -73,7 +75,10 @@ export default function ResetPasswordPage() {
   const allChecks = useMemo(
     () => [
       { label: "At least 8 characters", pass: formValues.password.length >= 8 },
-      { label: "Contains a letter", pass: /[a-zA-Z]/.test(formValues.password) },
+      {
+        label: "Contains a letter",
+        pass: /[a-zA-Z]/.test(formValues.password),
+      },
       { label: "Contains a number", pass: /\d/.test(formValues.password) },
     ],
     [formValues.password]
@@ -104,12 +109,18 @@ export default function ResetPasswordPage() {
         assignErrors(parsed.error.issues);
         return;
       }
-      const { error } = await supabase.auth.updateUser({ password: parsed.data.password });
+      const { error } = await supabase.auth.updateUser({
+        password: parsed.data.password,
+      });
       if (error) {
         setErrors({ password: friendlyResetError(error.message) });
         return;
       }
-      toast({ title: "Password updated", description: "Sign in with your new password.", variant: "success" });
+      toast({
+        title: "Password updated",
+        description: "Sign in with your new password.",
+        variant: "success",
+      });
       setStatus("complete");
       setTimeout(() => router.replace("/auth?reset=success"), 800);
     } finally {
@@ -154,7 +165,10 @@ export default function ResetPasswordPage() {
             <CardTitle>Password updated</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 text-sm text-muted-foreground">
-            <p>Your password has been updated. Redirecting you to the sign in page...</p>
+            <p>
+              Your password has been updated. Redirecting you to the sign in
+              page...
+            </p>
             <Button asChild className="w-full rounded-full">
               <Link href="/auth">Go to sign in</Link>
             </Button>
@@ -168,17 +182,27 @@ export default function ResetPasswordPage() {
     <main className="flex min-h-screen items-center justify-center bg-[var(--background)] px-4 py-16">
       <Card className="w-full max-w-md border border-foreground/10 bg-card/80 shadow-xl backdrop-blur">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-semibold text-foreground">Create a new password</CardTitle>
-          <p className="text-sm text-muted-foreground">Pick a strong password that you have not used on Linket before.</p>
+          <CardTitle className="text-2xl font-semibold text-foreground">
+            Create a new password
+          </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Pick a strong password that you have not used on Linket before.
+          </p>
         </CardHeader>
         <CardContent>
           <form className="space-y-5" onSubmit={handleSubmit} noValidate>
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-medium text-foreground">
+              <Label
+                htmlFor="password"
+                className="text-sm font-medium text-foreground"
+              >
                 New password
               </Label>
               <div className="relative">
-                <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+                <Lock
+                  className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                  aria-hidden
+                />
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
@@ -196,17 +220,27 @@ export default function ResetPasswordPage() {
                   className="absolute inset-y-0 right-2 flex items-center rounded-full px-2 text-muted-foreground hover:text-foreground"
                   onClick={() => setShowPassword((prev) => !prev)}
                 >
-                  {showPassword ? <EyeOff className="h-4 w-4" aria-hidden /> : <Eye className="h-4 w-4" aria-hidden />}
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" aria-hidden />
+                  ) : (
+                    <Eye className="h-4 w-4" aria-hidden />
+                  )}
                 </button>
               </div>
-              {errors.password && <p className="text-xs font-medium text-rose-600">{errors.password}</p>}
+              {errors.password && (
+                <p className="text-xs font-medium text-rose-600">
+                  {errors.password}
+                </p>
+              )}
               <ul className="grid gap-1 text-xs text-muted-foreground">
                 {allChecks.map((check) => (
                   <li key={check.label} className="flex items-center gap-2">
                     <span
                       className={cn(
                         "inline-flex h-4 w-4 items-center justify-center rounded-full border",
-                        check.pass ? "border-emerald-400 text-emerald-500" : "border-muted-foreground/40 text-muted-foreground"
+                        check.pass
+                          ? "border-emerald-400 text-emerald-500"
+                          : "border-muted-foreground/40 text-muted-foreground"
                       )}
                       aria-hidden
                     >
@@ -219,7 +253,10 @@ export default function ResetPasswordPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword" className="text-sm font-medium text-foreground">
+              <Label
+                htmlFor="confirmPassword"
+                className="text-sm font-medium text-foreground"
+              >
                 Confirm password
               </Label>
               <div className="relative">
@@ -227,7 +264,9 @@ export default function ResetPasswordPage() {
                   id="confirmPassword"
                   type={showConfirm ? "text" : "password"}
                   value={formValues.confirmPassword}
-                  onChange={(event) => setField("confirmPassword", event.target.value)}
+                  onChange={(event) =>
+                    setField("confirmPassword", event.target.value)
+                  }
                   autoComplete="new-password"
                   placeholder="Repeat password"
                   className="pr-10"
@@ -236,17 +275,33 @@ export default function ResetPasswordPage() {
                 />
                 <button
                   type="button"
-                  aria-label={showConfirm ? "Hide confirm password" : "Show confirm password"}
+                  aria-label={
+                    showConfirm
+                      ? "Hide confirm password"
+                      : "Show confirm password"
+                  }
                   className="absolute inset-y-0 right-2 flex items-center rounded-full px-2 text-muted-foreground hover:text-foreground"
                   onClick={() => setShowConfirm((prev) => !prev)}
                 >
-                  {showConfirm ? <EyeOff className="h-4 w-4" aria-hidden /> : <Eye className="h-4 w-4" aria-hidden />}
+                  {showConfirm ? (
+                    <EyeOff className="h-4 w-4" aria-hidden />
+                  ) : (
+                    <Eye className="h-4 w-4" aria-hidden />
+                  )}
                 </button>
               </div>
-              {errors.confirmPassword && <p className="text-xs font-medium text-rose-600">{errors.confirmPassword}</p>}
+              {errors.confirmPassword && (
+                <p className="text-xs font-medium text-rose-600">
+                  {errors.confirmPassword}
+                </p>
+              )}
             </div>
 
-            <Button type="submit" className="w-full rounded-full" disabled={loading}>
+            <Button
+              type="submit"
+              className="w-full rounded-full"
+              disabled={loading}
+            >
               {loading ? (
                 <span className="inline-flex items-center gap-2 text-sm">
                   <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
