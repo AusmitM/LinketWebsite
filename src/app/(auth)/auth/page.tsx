@@ -30,6 +30,81 @@ export default function AuthPage() {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const handlePasswordSignUp = useCallback(
+    async (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      if (!email || !password) {
+        setError("Email and password are required.");
+        return;
+      }
+
+      if (password.length < 6) {
+        setError("Password must be at least 6 characters.");
+        return;
+      }
+
+      setPending(true);
+      setError(null);
+
+      try {
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: `${SITE_URL}/auth/callback?next=${encodeURIComponent(
+              next
+            )}`,
+          },
+        });
+
+        if (error) {
+          throw error;
+        }
+
+        if (data.session) {
+          // User is immediately signed in
+          const response = await fetch("/auth/callback", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ event: "SIGNED_IN", session: data.session }),
+          });
+          if (!response.ok) {
+            throw new Error("Could not finalize session. Please try again.");
+          }
+
+          toast({
+            title: "Account created!",
+            description: "Welcome to Linket.",
+            variant: "success",
+          });
+
+          const destination = next || DEFAULT_NEXT;
+          router.replace(destination);
+          router.refresh();
+        } else {
+          // Email confirmation required
+          toast({
+            title: "Account created!",
+            description: "Please sign in with your new credentials.",
+            variant: "success",
+          });
+
+          // Redirect to sign-in page
+          router.push(`/auth?next=${encodeURIComponent(next)}&view=signin`);
+        }
+      } catch (err) {
+        const message =
+          err instanceof Error
+            ? err.message
+            : "Unable to create account. Please try again.";
+        setError(message);
+      } finally {
+        setPending(false);
+      }
+    },
+    [email, password, supabase, router, next]
+  );
+
   const handlePasswordSignIn = useCallback(
     async (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
@@ -105,12 +180,18 @@ export default function AuthPage() {
     [supabase, next]
   );
 
+  const isSignUp = view === "signup";
+
   return (
     <div className="mx-auto flex w-full max-w-md flex-col gap-6 py-10">
       <header className="space-y-2 text-center">
-        <h1 className="text-3xl font-semibold tracking-tight">Welcome back</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">
+          {isSignUp ? "Create your account" : "Welcome back"}
+        </h1>
         <p className="text-sm text-neutral-500">
-          Sign in with your credentials to access your dashboard.
+          {isSignUp
+            ? "Sign up to start managing your Linkets."
+            : "Sign in with your credentials to access your dashboard."}
         </p>
       </header>
 
@@ -121,7 +202,7 @@ export default function AuthPage() {
       )}
 
       <form
-        onSubmit={handlePasswordSignIn}
+        onSubmit={isSignUp ? handlePasswordSignUp : handlePasswordSignIn}
         className="space-y-4 rounded-lg border border-neutral-200 bg-white/60 p-6 shadow-sm backdrop-blur"
       >
         <div className="flex flex-col gap-2">
@@ -154,10 +235,14 @@ export default function AuthPage() {
             id="password"
             type="password"
             value={password}
-            autoComplete="current-password"
+            autoComplete={isSignUp ? "new-password" : "current-password"}
             onChange={(event) => setPassword(event.target.value)}
             className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
-            placeholder="Enter your password"
+            placeholder={
+              isSignUp
+                ? "Create a password (6+ characters)"
+                : "Enter your password"
+            }
             required
           />
         </div>
@@ -167,19 +252,27 @@ export default function AuthPage() {
           disabled={pending}
           className="flex w-full items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {pending ? "Signing in..." : "Sign in with email"}
+          {pending
+            ? isSignUp
+              ? "Creating account..."
+              : "Signing in..."
+            : isSignUp
+            ? "Create account"
+            : "Sign in with email"}
         </button>
 
-        <div className="flex justify-end">
-          <Link
-            href={`/reset-password${
-              next ? `?next=${encodeURIComponent(next)}` : ""
-            }`}
-            className="text-sm font-medium text-blue-600 hover:underline"
-          >
-            Forgot password?
-          </Link>
-        </div>
+        {!isSignUp && (
+          <div className="flex justify-end">
+            <Link
+              href={`/forgot-password${
+                next ? `?next=${encodeURIComponent(next)}` : ""
+              }`}
+              className="text-sm font-medium text-blue-600 hover:underline"
+            >
+              Forgot password?
+            </Link>
+          </div>
+        )}
       </form>
 
       <div className="space-y-3">
@@ -220,7 +313,7 @@ export default function AuthPage() {
         </div>
       </div>
 
-      {view === "signup" ? (
+      {isSignUp ? (
         <p className="text-center text-sm text-neutral-500">
           Already have an account?{" "}
           <Link
@@ -234,7 +327,7 @@ export default function AuthPage() {
         <p className="text-center text-sm text-neutral-500">
           New to Linket?{" "}
           <Link
-            href={`/registration?next=${encodeURIComponent(next)}`}
+            href={`/auth?next=${encodeURIComponent(next)}&view=signup`}
             className="font-semibold text-blue-600 hover:underline"
           >
             Create an account

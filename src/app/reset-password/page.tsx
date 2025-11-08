@@ -58,15 +58,64 @@ export default function ResetPasswordPage() {
 
   useEffect(() => {
     let active = true;
+
     (async () => {
-      const { data } = await supabase.auth.getSession();
-      if (!active) return;
-      if (!data.session) {
-        setStatus("expired");
-      } else {
-        setStatus("ready");
+      try {
+        // Check URL hash for tokens (format: #access_token=...&refresh_token=...&type=recovery)
+        const hashParams = new URLSearchParams(
+          window.location.hash.substring(1)
+        );
+        const accessToken = hashParams.get("access_token");
+        const refreshToken = hashParams.get("refresh_token");
+        const type = hashParams.get("type");
+
+        console.log("Hash params:", {
+          accessToken: !!accessToken,
+          refreshToken: !!refreshToken,
+          type,
+        });
+
+        // If we have recovery tokens, exchange them for a session
+        if (accessToken && type === "recovery") {
+          const { data, error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken || "",
+          });
+
+          if (error) {
+            console.error("Error setting session:", error);
+            if (active) setStatus("expired");
+            return;
+          }
+
+          console.log("Session set successfully:", !!data.session);
+        }
+
+        // Verify we have a valid session
+        const { data: sessionData, error: sessionError } =
+          await supabase.auth.getSession();
+
+        if (!active) return;
+
+        if (sessionError) {
+          console.error("Error getting session:", sessionError);
+          setStatus("expired");
+          return;
+        }
+
+        if (!sessionData.session) {
+          console.log("No session found");
+          setStatus("expired");
+        } else {
+          console.log("Valid session found");
+          setStatus("ready");
+        }
+      } catch (error) {
+        console.error("Unexpected error:", error);
+        if (active) setStatus("expired");
       }
     })();
+
     return () => {
       active = false;
     };
@@ -149,7 +198,7 @@ export default function ResetPasswordPage() {
           <CardContent className="space-y-4 text-sm text-muted-foreground">
             <p>Your reset link is no longer valid or has already been used.</p>
             <Button asChild className="w-full rounded-full">
-              <Link href="/auth?view=forgot">Request a new reset link</Link>
+              <Link href="/forgot-password">Request a new reset link</Link>
             </Button>
           </CardContent>
         </Card>
