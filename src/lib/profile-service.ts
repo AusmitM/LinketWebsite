@@ -1,3 +1,5 @@
+//profile-service.ts
+
 /**
 ```sql
 create extension if not exists pgcrypto;
@@ -88,7 +90,9 @@ const SUPABASE_ENABLED = isSupabaseAdminAvailable;
 const PROFILE_TABLE = "user_profiles";
 const PROFILE_LINKS_TABLE = "profile_links";
 
-export type ProfileWithLinks = UserProfileRecord & { links: ProfileLinkRecord[] };
+export type ProfileWithLinks = UserProfileRecord & {
+  links: ProfileLinkRecord[];
+};
 
 export type ProfilePayload = {
   id?: string;
@@ -104,10 +108,20 @@ function normaliseHandle(handle: string) {
   return handle.trim().toLowerCase();
 }
 
-function normaliseTheme(theme: string | ThemeName | null | undefined): ThemeName {
-  const allowed: ThemeName[] = ["light", "dark", "midnight", "forest", "gilded", "silver", "autumn"];
+function normaliseTheme(
+  theme: string | ThemeName | null | undefined
+): ThemeName {
+  const allowed: ThemeName[] = [
+    "light",
+    "dark",
+    "midnight",
+    "forest",
+    "gilded",
+    "silver",
+    "autumn",
+  ];
   const value = (theme ?? "light").toLowerCase();
-  return (allowed.includes(value as ThemeName) ? (value as ThemeName) : "light");
+  return allowed.includes(value as ThemeName) ? (value as ThemeName) : "light";
 }
 
 const memoryProfiles = new Map<string, ProfileWithLinks[]>();
@@ -126,19 +140,28 @@ function cloneAccount(record: AccountRecord): AccountRecord {
   return { ...record };
 }
 
-function generateMemoryHandle(userId: string, preferred?: string | null): string {
+function generateMemoryHandle(
+  userId: string,
+  preferred?: string | null
+): string {
   const base = normaliseHandle(preferred || "");
   const seed = base || `user-${userId.slice(0, 8) || randomId().slice(0, 8)}`;
   let candidate = seed;
   let counter = 1;
-  const existing = new Set(Array.from(memoryAccounts.values()).map((record) => record.username));
+  const existing = new Set(
+    Array.from(memoryAccounts.values()).map((record) => record.username)
+  );
   while (existing.has(candidate)) {
     candidate = `${seed}-${counter++}`;
   }
   return candidate;
 }
 
-function ensureMemoryAccountRecord(userId: string, fallbackHandle?: string | null, displayName?: string | null): AccountRecord {
+function ensureMemoryAccountRecord(
+  userId: string,
+  fallbackHandle?: string | null,
+  displayName?: string | null
+): AccountRecord {
   const existing = memoryAccounts.get(userId);
   if (existing) {
     if (displayName && !existing.display_name) {
@@ -190,10 +213,15 @@ function cloneDeep<T>(value: T): T {
 }
 
 function randomId(): string {
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+  if (
+    typeof crypto !== "undefined" &&
+    typeof crypto.randomUUID === "function"
+  ) {
     return crypto.randomUUID();
   }
-  return `${Math.random().toString(36).slice(2)}${Math.random().toString(36).slice(2)}`;
+  return `${Math.random().toString(36).slice(2)}${Math.random()
+    .toString(36)
+    .slice(2)}`;
 }
 
 function ensureMemoryProfiles(userId: string): ProfileWithLinks[] {
@@ -221,7 +249,10 @@ function memoryGetProfiles(userId: string): ProfileWithLinks[] {
     .map((profile) => cloneDeep(profile));
 }
 
-function memoryEnsureSingleActiveProfile(userId: string, desiredActiveProfileId: string) {
+function memoryEnsureSingleActiveProfile(
+  userId: string,
+  desiredActiveProfileId: string
+) {
   const profiles = ensureMemoryProfiles(userId);
   let found = false;
   const now = new Date().toISOString();
@@ -246,7 +277,10 @@ function memoryEnsureHasActiveProfile(userId: string) {
   }
 }
 
-function memorySaveProfileForUser(userId: string, payload: ProfilePayload): ProfileWithLinks {
+function memorySaveProfileForUser(
+  userId: string,
+  payload: ProfilePayload
+): ProfileWithLinks {
   const handle = normaliseHandle(payload.handle);
   const theme = normaliseTheme(payload.theme);
   const headline = payload.headline?.trim() || null;
@@ -258,7 +292,9 @@ function memorySaveProfileForUser(userId: string, payload: ProfilePayload): Prof
   const profiles = ensureMemoryProfiles(userId);
   const now = new Date().toISOString();
 
-  let profile = payload.id ? profiles.find((p) => p.id === payload.id) : undefined;
+  let profile = payload.id
+    ? profiles.find((p) => p.id === payload.id)
+    : undefined;
 
   if (!profile) {
     profile = {
@@ -322,7 +358,10 @@ function memoryDeleteProfileForUser(userId: string, profileId: string) {
   memoryEnsureHasActiveProfile(userId);
 }
 
-function memorySetActiveProfileForUser(userId: string, profileId: string): ProfileWithLinks {
+function memorySetActiveProfileForUser(
+  userId: string,
+  profileId: string
+): ProfileWithLinks {
   memoryEnsureSingleActiveProfile(userId, profileId);
   const profile = ensureMemoryProfiles(userId).find((p) => p.id === profileId);
   if (!profile) throw new Error("Profile not found");
@@ -338,7 +377,9 @@ function memoryGetProfileByHandle(handle: string): ProfileWithLinks | null {
   return null;
 }
 
-function memoryGetActiveProfileForUser(userId: string): ProfileWithLinks | null {
+function memoryGetActiveProfileForUser(
+  userId: string
+): ProfileWithLinks | null {
   const profiles = ensureMemoryProfiles(userId);
   const match = profiles.find((profile) => profile.is_active);
   return match ? cloneDeep(match) : null;
@@ -350,7 +391,9 @@ function memoryGetGlobalActiveProfile(): ProfileWithLinks | null {
     for (const profile of profiles) {
       if (!profile.is_active) continue;
       const currentScore = Date.parse(profile.updated_at || profile.created_at);
-      const candidateScore = candidate ? Date.parse(candidate.updated_at || candidate.created_at) : Number.NEGATIVE_INFINITY;
+      const candidateScore = candidate
+        ? Date.parse(candidate.updated_at || candidate.created_at)
+        : Number.NEGATIVE_INFINITY;
       if (!candidate || currentScore > candidateScore) {
         candidate = profile;
       }
@@ -359,7 +402,9 @@ function memoryGetGlobalActiveProfile(): ProfileWithLinks | null {
   return candidate ? cloneDeep(candidate) : null;
 }
 
-async function fetchProfileWithLinksById(profileId: string): Promise<ProfileWithLinks | null> {
+async function fetchProfileWithLinksById(
+  profileId: string
+): Promise<ProfileWithLinks | null> {
   if (!SUPABASE_ENABLED) {
     return memoryFetchProfileById(profileId);
   }
@@ -371,15 +416,22 @@ async function fetchProfileWithLinksById(profileId: string): Promise<ProfileWith
     .maybeSingle();
   if (error) throw new Error(error.message);
   if (!data) return null;
-  const profile = data as unknown as UserProfileRecord & { links: ProfileLinkRecord[] };
+  const profile = data as unknown as UserProfileRecord & {
+    links: ProfileLinkRecord[];
+  };
   return { ...profile, links: (profile.links ?? []).sort(byOrder) };
 }
 
 function byOrder(a: ProfileLinkRecord, b: ProfileLinkRecord) {
-  return (a.order_index ?? 0) - (b.order_index ?? 0) || a.created_at.localeCompare(b.created_at);
+  return (
+    (a.order_index ?? 0) - (b.order_index ?? 0) ||
+    a.created_at.localeCompare(b.created_at)
+  );
 }
 
-export async function getProfilesForUser(userId: string): Promise<ProfileWithLinks[]> {
+export async function getProfilesForUser(
+  userId: string
+): Promise<ProfileWithLinks[]> {
   if (!userId) throw new Error("userId is required");
   if (!SUPABASE_ENABLED) {
     return memoryGetProfiles(userId);
@@ -390,11 +442,19 @@ export async function getProfilesForUser(userId: string): Promise<ProfileWithLin
     .eq("user_id", userId)
     .order("created_at", { ascending: true });
   if (error) throw new Error(error.message);
-  const records = (data ?? []) as Array<UserProfileRecord & { links: ProfileLinkRecord[] }>;
-  return records.map((profile) => ({ ...profile, links: (profile.links ?? []).sort(byOrder) }));
+  const records = (data ?? []) as Array<
+    UserProfileRecord & { links: ProfileLinkRecord[] }
+  >;
+  return records.map((profile) => ({
+    ...profile,
+    links: (profile.links ?? []).sort(byOrder),
+  }));
 }
 
-async function ensureSingleActiveProfile(userId: string, desiredActiveProfileId: string) {
+async function ensureSingleActiveProfile(
+  userId: string,
+  desiredActiveProfileId: string
+) {
   if (!SUPABASE_ENABLED) {
     memoryEnsureSingleActiveProfile(userId, desiredActiveProfileId);
     return;
@@ -438,7 +498,10 @@ async function ensureHasActiveProfile(userId: string) {
   }
 }
 
-export async function saveProfileForUser(userId: string, payload: ProfilePayload): Promise<ProfileWithLinks> {
+export async function saveProfileForUser(
+  userId: string,
+  payload: ProfilePayload
+): Promise<ProfileWithLinks> {
   if (!userId) throw new Error("userId is required");
   const handle = normaliseHandle(payload.handle);
   if (!SUPABASE_ENABLED) {
@@ -515,8 +578,12 @@ export async function saveProfileForUser(userId: string, payload: ProfilePayload
   return profile;
 }
 
-export async function deleteProfileForUser(userId: string, profileId: string): Promise<void> {
-  if (!userId || !profileId) throw new Error("userId and profileId are required");
+export async function deleteProfileForUser(
+  userId: string,
+  profileId: string
+): Promise<void> {
+  if (!userId || !profileId)
+    throw new Error("userId and profileId are required");
   if (!SUPABASE_ENABLED) {
     memoryDeleteProfileForUser(userId, profileId);
     return;
@@ -530,7 +597,10 @@ export async function deleteProfileForUser(userId: string, profileId: string): P
   await ensureHasActiveProfile(userId);
 }
 
-export async function setActiveProfileForUser(userId: string, profileId: string): Promise<ProfileWithLinks> {
+export async function setActiveProfileForUser(
+  userId: string,
+  profileId: string
+): Promise<ProfileWithLinks> {
   if (!SUPABASE_ENABLED) {
     return memorySetActiveProfileForUser(userId, profileId);
   }
@@ -540,7 +610,9 @@ export async function setActiveProfileForUser(userId: string, profileId: string)
   return profile;
 }
 
-export async function getProfileByHandle(handle: string): Promise<ProfileWithLinks | null> {
+export async function getProfileByHandle(
+  handle: string
+): Promise<ProfileWithLinks | null> {
   if (!SUPABASE_ENABLED) {
     return memoryGetProfileByHandle(handle);
   }
@@ -553,11 +625,15 @@ export async function getProfileByHandle(handle: string): Promise<ProfileWithLin
     .maybeSingle();
   if (error && error.code !== "PGRST116") throw new Error(error.message);
   if (!data) return null;
-  const record = data as unknown as UserProfileRecord & { links: ProfileLinkRecord[] };
+  const record = data as unknown as UserProfileRecord & {
+    links: ProfileLinkRecord[];
+  };
   return { ...record, links: (record.links ?? []).sort(byOrder) };
 }
 
-export async function getActiveProfileForUser(userId: string): Promise<ProfileWithLinks | null> {
+export async function getActiveProfileForUser(
+  userId: string
+): Promise<ProfileWithLinks | null> {
   if (!SUPABASE_ENABLED) {
     return memoryGetActiveProfileForUser(userId);
   }
@@ -570,7 +646,9 @@ export async function getActiveProfileForUser(userId: string): Promise<ProfileWi
     .maybeSingle();
   if (error && error.code !== "PGRST116") throw new Error(error.message);
   if (!data) return null;
-  const record = data as unknown as UserProfileRecord & { links: ProfileLinkRecord[] };
+  const record = data as unknown as UserProfileRecord & {
+    links: ProfileLinkRecord[];
+  };
   return { ...record, links: (record.links ?? []).sort(byOrder) };
 }
 
@@ -587,11 +665,15 @@ export async function getGlobalActiveProfile(): Promise<ProfileWithLinks | null>
     .maybeSingle();
   if (error && error.code !== "PGRST116") throw new Error(error.message);
   if (!data) return null;
-  const record = data as unknown as UserProfileRecord & { links: ProfileLinkRecord[] };
+  const record = data as unknown as UserProfileRecord & {
+    links: ProfileLinkRecord[];
+  };
   return { ...record, links: (record.links ?? []).sort(byOrder) };
 }
 
-export async function getAccountHandleForUser(userId: string): Promise<string | null> {
+export async function getAccountHandleForUser(
+  userId: string
+): Promise<string | null> {
   if (!userId) throw new Error("userId is required");
   if (!SUPABASE_ENABLED) {
     return ensureMemoryAccountRecord(userId).username;
@@ -618,7 +700,9 @@ export async function getAccountHandleForUser(userId: string): Promise<string | 
   return record.username;
 }
 
-export async function getAccountByHandle(handle: string): Promise<AccountRecord | null> {
+export async function getAccountByHandle(
+  handle: string
+): Promise<AccountRecord | null> {
   const normalised = normaliseHandle(handle);
   if (!normalised) return null;
   if (!SUPABASE_ENABLED) {
@@ -645,7 +729,9 @@ export async function getAccountByHandle(handle: string): Promise<AccountRecord 
   return memoryRememberAccount(record);
 }
 
-export async function getActiveProfileForPublicHandle(handle: string): Promise<{ account: AccountRecord; profile: ProfileWithLinks } | null> {
+export async function getActiveProfileForPublicHandle(
+  handle: string
+): Promise<{ account: AccountRecord; profile: ProfileWithLinks } | null> {
   const account = await getAccountByHandle(handle);
   if (!account) return null;
   const profile = await getActiveProfileForUser(account.user_id);
