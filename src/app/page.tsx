@@ -2,20 +2,18 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import Script from "next/script";
-import {
-  ArrowRight,
-  CheckCircle2,
-  Focus,
-  LineChart,
-  PlayCircle,
-  ShieldCheck,
-  Sparkles,
-  Waves,
-  Zap,
-} from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { CreativePricing } from "@/components/ui/creative-pricing";
+import type { PricingTier } from "@/components/ui/creative-pricing";
+import { FeatureSteps } from "@/components/ui/feature-section";
+import { TestimonialSlider } from "@/components/ui/testimonial-slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -50,15 +48,157 @@ export const metadata: Metadata = {
   },
 };
 
-const HERO_BENEFITS = ["Works with iPhone & Android", "Share in under 2 seconds", "Update anytime"] as const;
-
-const HERO_STATS = [
-  { label: "Profiles launched", value: "42k+" },
-  { label: "Avg. save rate", value: "87%" },
-  { label: "Teams activated", value: "1,200" },
+const SOCIAL_PROOF = [
+  "AAcuisine",
+  "Houston Bee Rescue",
+  "East Bay Robotics",
+  "Sunset Creative",
+  "Brimstone Events",
 ] as const;
 
-const SOCIAL_PROOF = ["AAcuisine", "Houston Bee Rescue", "East Bay Robotics", "Sunset Creative", "Brimstone Events"] as const;
+const DASHBOARD_TABS = [
+  "Overview",
+  "Customers",
+  "Products",
+  "Settings",
+] as const;
+
+const DASHBOARD_VIEWS = [
+  "Overview",
+  "Analytics",
+  "Reports",
+  "Notifications",
+] as const;
+
+const DASHBOARD_STATS = [
+  {
+    label: "Total Revenue",
+    value: "$45,231.89",
+    delta: "+20.1% vs last month",
+  },
+  { label: "Subscriptions", value: "+2,350", delta: "+18.1% vs last month" },
+  { label: "Sales", value: "+12,234", delta: "+19% vs last month" },
+  { label: "Active Now", value: "+573", delta: "+201 since last hour" },
+] as const;
+
+const DASHBOARD_BARS = [
+  { label: "Jan", value: 72 },
+  { label: "Feb", value: 35 },
+  { label: "Mar", value: 58 },
+  { label: "Apr", value: 82 },
+  { label: "May", value: 22 },
+  { label: "Jun", value: 48 },
+  { label: "Jul", value: 64 },
+  { label: "Aug", value: 38 },
+  { label: "Sep", value: 52 },
+  { label: "Oct", value: 44 },
+  { label: "Nov", value: 70 },
+  { label: "Dec", value: 86 },
+] as const;
+
+const RECENT_SALES = [
+  {
+    name: "Olivia Martin",
+    email: "olivia.martin@email.com",
+    amount: "+$1,999.00",
+  },
+  { name: "Jackson Lee", email: "jackson.lee@email.com", amount: "+$39.00" },
+  {
+    name: "Isabella Nguyen",
+    email: "isabella.nguyen@email.com",
+    amount: "+$299.00",
+  },
+  { name: "William Kim", email: "will.kim@email.com", amount: "+$99.00" },
+  { name: "Sofia Davis", email: "sofia.davis@email.com", amount: "+$39.00" },
+] as const;
+
+const FOOTER_LINK_GROUPS = [
+  {
+    title: "Product",
+    links: [
+      { label: "Features", href: "#demo" },
+      { label: "Pricing", href: "#pricing" },
+      { label: "Hardware", href: "/customize" },
+      { label: "Templates", href: "#teams" },
+    ],
+  },
+  {
+    title: "Company",
+    links: [
+      { label: "About", href: "/about" },
+      { label: "Careers", href: "/careers" },
+      { label: "Blog", href: "/blog" },
+      { label: "Press", href: "/press" },
+    ],
+  },
+  {
+    title: "Support",
+    links: [
+      { label: "Help center", href: "/support" },
+      { label: "Status", href: "/status" },
+      { label: "Contact", href: "/contact" },
+      { label: "Docs", href: "/docs" },
+    ],
+  },
+  {
+    title: "Legal",
+    links: [
+      { label: "Privacy", href: "/privacy" },
+      { label: "Terms", href: "/terms" },
+      { label: "Security", href: "/security" },
+      { label: "Accessibility", href: "/accessibility" },
+    ],
+  },
+] as const;
+
+const FOOTER_SOCIALS = [
+  { label: "Twitter", href: "https://twitter.com/linket", icon: Twitter },
+  { label: "Instagram", href: "https://instagram.com/linket", icon: Instagram },
+  { label: "YouTube", href: "https://youtube.com/@linket", icon: Youtube },
+] as const;
+
+const PRICING_TIERS: PricingTier[] = [
+  {
+    name: "Field Starter",
+    icon: <Pencil className="h-6 w-6" />,
+    price: 39,
+    description: "Equip solo sellers with tap-to-share kits.",
+    color: "amber",
+    features: [
+      "1 Linket hardware kit",
+      "Live profile editor",
+      "Tap + QR analytics",
+      "Email support",
+    ],
+  },
+  {
+    name: "Team Builder",
+    icon: <Star className="h-6 w-6" />,
+    price: 119,
+    description: "Most popular plan for pods and clubs.",
+    color: "blue",
+    features: [
+      "Up to 10 kits",
+      "Brand-safe templates",
+      "Collab dashboard",
+      "Priority onboarding",
+    ],
+    popular: true,
+  },
+  {
+    name: "Enterprise Studio",
+    icon: <Sparkles className="h-6 w-6" />,
+    price: 279,
+    description: "Roll Linket across campuses or field teams.",
+    color: "purple",
+    features: [
+      "Unlimited kits",
+      "CRM + webhook exports",
+      "Dedicated strategist",
+      "Custom hardware runs",
+    ],
+  },
+];
 
 type JourneyStep = {
   title: string;
@@ -78,8 +218,10 @@ const JOURNEY_STEPS: JourneyStep[] = [
   },
   {
     title: "Show the essentials",
-    description: "Your hero links, galleries, and saved contact card appear at once.",
-    detail: "Decide which blocks lead and guide every viewer to the next action.",
+    description:
+      "Your hero links, galleries, and saved contact card appear at once.",
+    detail:
+      "Decide which blocks lead and guide every viewer to the next action.",
     icon: Focus,
     accent: "from-rose-200/80 to-rose-100/40 text-rose-700",
   },
@@ -92,39 +234,29 @@ const JOURNEY_STEPS: JourneyStep[] = [
   },
 ];
 
-type FeatureHighlight = {
-  title: string;
-  description: string;
-  icon: LucideIcon;
-  accent: string;
-};
-
-const FEATURE_HIGHLIGHTS: FeatureHighlight[] = [
+const JOURNEY_FEATURES = [
   {
-    title: "Dual-share hardware",
-    description: "Combine NFC with a precision-etched QR so every device can connect.",
-    icon: Zap,
-    accent: "bg-sky-500/10 text-sky-600",
+    step: "Step 1",
+    title: JOURNEY_STEPS[0].title,
+    content: `${JOURNEY_STEPS[0].description} ${JOURNEY_STEPS[0].detail}`,
+    image:
+      "https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?auto=format&fit=crop&w=1600&q=80",
   },
   {
-    title: "Live profile editor",
-    description: "Reorder blocks, add media, and publish instantly -- no new print runs.",
-    icon: Sparkles,
-    accent: "bg-violet-500/10 text-violet-600",
+    step: "Step 2",
+    title: JOURNEY_STEPS[1].title,
+    content: `${JOURNEY_STEPS[1].description} ${JOURNEY_STEPS[1].detail}`,
+    image:
+      "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=1600&q=80",
   },
   {
-    title: "Verified analytics",
-    description: "Track taps, link clicks, and saved contacts without invading privacy.",
-    icon: LineChart,
-    accent: "bg-emerald-500/10 text-emerald-600",
+    step: "Step 3",
+    title: JOURNEY_STEPS[2].title,
+    content: `${JOURNEY_STEPS[2].description} ${JOURNEY_STEPS[2].detail}`,
+    image:
+      "https://images.unsplash.com/photo-1485217988980-11786ced9454?auto=format&fit=crop&w=1600&q=80",
   },
-  {
-    title: "Team dashboards",
-    description: "Assign Linkets, manage branding, and export lead data with one click.",
-    icon: ShieldCheck,
-    accent: "bg-amber-500/10 text-amber-600",
-  },
-];
+] as const;
 
 type UseCase = {
   slug: string;
@@ -179,78 +311,80 @@ type Testimonial = {
 
 const TESTIMONIALS: Testimonial[] = [
   {
-    quote: "Every student left our career fair with Linket saved in their contacts. We saw a 4x increase in follow-up meetings.",
+    quote:
+      "Every student left our career fair with Linket saved in their contacts. We saw a 4x increase in follow-up meetings.",
     name: "Jamila Reyes",
     role: "Director of Partnerships, CampusLoop",
     result: "4x follow-up rate",
   },
   {
-    quote: "Linket lets our pop-up teams capture leads without juggling tablets. We close same-day sales because the info sticks.",
+    quote:
+      "Linket lets our pop-up teams capture leads without juggling tablets. We close same-day sales because the info sticks.",
     name: "Evan Blake",
     role: "Retail Ops, Sundrift",
     result: "+63% qualified leads",
   },
   {
-    quote: "The ability to push a new menu to every Linket overnight is the superpower our food truck collective needed.",
+    quote:
+      "The ability to push a new menu to every Linket overnight is the superpower our food truck collective needed.",
     name: "Mina Chen",
     role: "Founder, Night Market Co.",
     result: "Menu swaps in minutes",
   },
 ];
 
-const PRICING_PLANS = [
+const SLIDER_TESTIMONIALS = [
   {
-    name: "Starter",
-    price: "$35",
-    cadence: "one-time",
-    description: "One Linket keychain with NFC + QR, editable profile, and essential analytics.",
-    features: ["Custom engraving", "Ships in 48 hours", "Unlimited taps"],
-    cta: "Get Starter",
-    href: "/pricing",
-    featured: false,
+    id: 1,
+    quote: TESTIMONIALS[0].quote,
+    name: TESTIMONIALS[0].name,
+    username: TESTIMONIALS[0].role,
+    avatar:
+      "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=600&q=80",
   },
   {
-    name: "Creator",
-    price: "$60",
-    cadence: "one-time",
-    description: "Premium finishes, motion hero blocks, and spotlight layouts built for storytelling.",
-    features: ["Video spotlight", "Pinned link layouts", "Audio embeds"],
-    cta: "Design Yours",
-    href: "/customize",
-    featured: true,
+    id: 2,
+    quote: TESTIMONIALS[1].quote,
+    name: TESTIMONIALS[1].name,
+    username: TESTIMONIALS[1].role,
+    avatar:
+      "https://images.unsplash.com/photo-1544723795-3fb6469f5b39?auto=format&fit=crop&w=600&q=80",
   },
   {
-    name: "Teams",
-    price: "Talk to sales",
-    cadence: "per member / month",
-    description: "Bulk hardware portal, admin controls, lead capture, and CRM/webhook integrations.",
-    features: ["Bulk order portal", "Lead routing rules", "CRM + CSV export"],
-    cta: "Book a demo",
-    href: "/contact",
-    featured: false,
+    id: 3,
+    quote: TESTIMONIALS[2].quote,
+    name: TESTIMONIALS[2].name,
+    username: TESTIMONIALS[2].role,
+    avatar:
+      "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=600&q=80",
   },
 ] as const;
 
 const FAQ = [
   {
     question: "Does Linket work with both iPhone and Android?",
-    answer: "Yes. Modern phones tap via NFC and older devices can scan the etched QR. No downloads needed for either option.",
+    answer:
+      "Yes. Modern phones tap via NFC and older devices can scan the etched QR. No downloads needed for either option.",
   },
   {
     question: "Do recipients need a Linket or an app?",
-    answer: "No. Your Linket opens in the recipient&apos;s browser right away. They can save your contact, follow links, or book time instantly.",
+    answer:
+      "No. Your Linket opens in the recipient&apos;s browser right away. They can save your contact, follow links, or book time instantly.",
   },
   {
     question: "Can I update my profile after printing?",
-    answer: "Absolutely. Change your headline, links, colors, or media anytime. Every tap uses the latest version automatically.",
+    answer:
+      "Absolutely. Change your headline, links, colors, or media anytime. Every tap uses the latest version automatically.",
   },
   {
     question: "How fast do orders ship?",
-    answer: "Single Linkets ship within 48 hours. Team and event kits include a dedicated concierge for rush coordination.",
+    answer:
+      "Single Linkets ship within 48 hours. Team and event kits include a dedicated concierge for rush coordination.",
   },
   {
     question: "Is data collection privacy-centered?",
-    answer: "We only track what matters: tap counts, link clicks, and lead form submissions. No invasive tracking or retargeting pixels.",
+    answer:
+      "We only track what matters: tap counts, link clicks, and lead form submissions. No invasive tracking or retargeting pixels.",
   },
 ] as const;
 
@@ -284,23 +418,24 @@ export default function Home() {
   };
 
   return (
-    <div className="relative overflow-hidden bg-gradient-to-br from-[#f7f3ff] via-white to-[#e9f9ff] text-foreground">
+    <div className="relative overflow-hidden bg-[#fff7ed] text-foreground">
       <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute -left-24 top-0 h-[520px] w-[520px] rounded-full bg-[radial-gradient(circle_at_center,_rgba(255,204,229,0.28),_transparent_70%)] blur-3xl" />
-        <div className="absolute -right-32 top-40 h-[540px] w-[540px] rounded-full bg-[radial-gradient(circle_at_center,_rgba(164,216,255,0.22),_transparent_70%)] blur-3xl" />
-        <div className="absolute inset-x-0 bottom-[-240px] h-[380px] bg-[radial-gradient(circle_at_center,_rgba(16,200,160,0.12),_transparent_70%)] blur-3xl" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#fff5e1] via-[#ffe4d6] to-[#cfe8ff]" />
+        <div className="absolute left-1/2 -top-32 h-[640px] w-[640px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,_rgba(255,161,135,0.35),_rgba(255,245,225,0))] blur-3xl" />
+        <div className="absolute right-0 top-32 h-[520px] w-[520px] rounded-full bg-[radial-gradient(circle,_rgba(255,221,173,0.3),_rgba(255,247,236,0))] blur-3xl" />
+        <div className="absolute inset-x-0 bottom-[-30%] h-[600px] bg-[radial-gradient(circle_at_bottom,_rgba(94,211,243,0.35),_rgba(207,232,255,0))]" />
       </div>
       <HeroSection />
       <TrustedBy />
       <JourneySection />
       <ExperienceSection />
-      <FeatureSection />
       <LiveDemoSection />
       <UseCasesSection />
       <TestimonialsSection />
       <PricingSection />
       <FAQSection />
       <FinalCTASection />
+      <LandingFooter />
       <Script id="linket-faq-schema" type="application/ld+json">
         {JSON.stringify(faqSchema)}
       </Script>
@@ -312,115 +447,220 @@ export default function Home() {
 }
 function HeroSection() {
   return (
-    <section id="hero" className="relative overflow-hidden pb-24 pt-28 sm:pt-32 lg:pb-32">
-      <div className="mx-auto flex max-w-6xl flex-col gap-16 px-4 sm:px-6 lg:flex-row lg:items-center">
-        <div className="max-w-xl space-y-8">
-          <div className="inline-flex items-center gap-3 rounded-full border border-primary/20 bg-primary/10 px-4 py-1.5 text-sm text-primary shadow-sm shadow-primary/20">
-            <Sparkles className="h-4 w-4" aria-hidden />
-            Tap once. Share everything.
-          </div>
-          <Image
-            src={brand.logo}
-            alt={`${brand.name} logo`}
-            width={160}
-            height={48}
-            className="h-10 w-auto"
-            priority
-          />
-          <h1 className="font-display text-4xl leading-tight tracking-tight sm:text-5xl lg:text-6xl">
-            Your intro should feel effortless -- Linket makes it unforgettable.
+    <section
+      id="hero"
+      className="relative isolate overflow-hidden text-slate-900"
+    >
+      <div className="pointer-events-none absolute inset-0" aria-hidden>
+        <div className="absolute left-1/3 -top-16 h-[360px] w-[360px] rounded-full bg-[radial-gradient(circle,_rgba(255,176,139,0.35),_rgba(255,247,234,0))] blur-3xl" />
+        <div className="absolute right-16 top-20 h-[420px] w-[420px] rounded-full bg-[radial-gradient(circle,_rgba(125,211,252,0.25),_rgba(255,255,255,0))] blur-3xl" />
+      </div>
+      <div className="relative z-10 flex min-h-screen flex-col items-center px-4 pb-24 pt-8 text-center sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-4xl py-12">
+          <h1 className="mt-10 text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl lg:text-[4.5rem] lg:leading-[1.1]">
+            Don&apos;t just share it{" "}
+            <span className="block text-5xl font-black sm:text-6xl lg:text-[5.25rem] bg-gradient-to-r from-[#ff9776] via-[#ffd27f] to-[#7dd3fc] bg-clip-text text-transparent">
+              LINKET!
+            </span>
           </h1>
-          <p className="text-lg text-muted-foreground">
-            Linket keychains share your digital profile in seconds. Customize hardware, guide viewers through your story, and know exactly which intros convert.
+          <p className="mx-auto mt-6 max-w-2xl text-base text-slate-600 sm:text-lg">
+            Transform your ideas into reality with our comprehensive suite of
+            development tools and resources. Launch faster, adapt in real time,
+            and keep every interaction memorable.
           </p>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <Button asChild className="rounded-full px-7 py-3 text-base font-semibold shadow-[0_18px_35px_rgba(65,140,255,0.22)] transition hover:translate-y-[-2px]">
-              <Link href="/customize">
-                Design your Linket
-                <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
-              </Link>
-            </Button>
-            <Link
-              href="#demo"
-              className="inline-flex items-center justify-center gap-2 rounded-full border border-foreground/15 px-6 py-3 text-sm font-semibold text-foreground transition hover:border-foreground/30 hover:bg-foreground/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]"
+          <div className="mt-10 flex justify-center">
+            <Button
+              asChild
+              size="lg"
+              className="rounded-full bg-gradient-to-r from-[#ff9776] via-[#ffb866] to-[#5dd6f7] px-10 py-6 text-base font-semibold text-white shadow-[0_20px_50px_rgba(255,151,118,0.35)]"
             >
-              <PlayCircle className="h-5 w-5" aria-hidden />
-              Watch 20s demo
-            </Link>
-          </div>
-          <dl className="flex flex-wrap gap-3 text-sm text-muted-foreground">
-            {HERO_BENEFITS.map((item) => (
-              <div key={item} className="inline-flex items-center gap-2 rounded-full bg-muted px-3 py-1">
-                <span className="h-2 w-2 rounded-full bg-primary" aria-hidden />
-                <dt className="font-medium">{item}</dt>
-              </div>
-            ))}
-          </dl>
-        </div>
-        <div className="relative mx-auto w-full max-w-xl">
-          <div className="absolute -left-10 top-8 hidden h-36 w-36 animate-[pulse_5s_ease-in-out_infinite] rounded-full bg-[#fee5f1]/60 blur-3xl lg:block" aria-hidden />
-          <div className="absolute -right-8 bottom-10 hidden h-32 w-32 animate-[pulse_7s_ease-in-out_infinite] rounded-full bg-[#dffbe4]/60 blur-3xl lg:block" aria-hidden />
-          <div className="relative grid gap-4">
-            <div className="group relative overflow-hidden rounded-[28px] border border-white/60 bg-white/70 p-6 shadow-2xl shadow-slate-900/10 backdrop-blur">
-              <div className="absolute inset-x-6 top-6 h-20 rounded-2xl bg-gradient-to-tr from-[#fef0ff] via-white to-[#dff5ff] opacity-90 transition duration-700 group-hover:translate-y-1 group-hover:opacity-100" aria-hidden />
-              <div className="relative flex flex-col gap-4">
-                <div className="inline-flex items-center gap-2 self-start rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-                  Live profile preview
-                </div>
-                <div className="space-y-3">
-                  <p className="text-sm font-semibold text-muted-foreground">linket.co/u/you</p>
-                  <h2 className="font-display text-2xl text-foreground">Dylan Hart -- Product Designer</h2>
-                  <p className="text-sm text-muted-foreground">
-                    Portfolio * Calendly * Launch deck * Tap-to-save contact
-                  </p>
-                </div>
-                <div className="grid gap-3">
-                  <button
-                    type="button"
-                    className="flex items-center justify-between rounded-2xl border border-foreground/10 bg-white px-4 py-3 text-left text-sm font-semibold text-foreground shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-md"
-                  >
-                    Book a meeting
-                    <ArrowRight className="h-4 w-4" aria-hidden />
-                  </button>
-                  <div className="flex gap-3">
-                    <div className="flex-1 rounded-2xl border border-foreground/10 bg-gradient-to-br from-[#fff8f0] via-white to-[#ffe9f8] p-3 text-sm shadow-sm">
-                      <p className="font-semibold text-foreground">Saved to contacts</p>
-                      <p className="text-xs text-muted-foreground">vCard updated 2 min ago</p>
-                    </div>
-                    <div className="flex-1 rounded-2xl border border-foreground/10 bg-gradient-to-br from-[#eff8ff] via-white to-[#dffbe4] p-3 text-sm shadow-sm">
-                      <p className="font-semibold text-foreground">Lead captured</p>
-                      <p className="text-xs text-muted-foreground">Auto-sync to HubSpot</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="grid grid-cols-3 gap-3 rounded-3xl border border-white/60 bg-white/60 p-4 shadow-2xl backdrop-blur">
-              {HERO_STATS.map((item) => (
-                <div key={item.label} className="rounded-2xl bg-gradient-to-br from-white to-white/60 p-4 text-center shadow-sm">
-                  <dt className="text-sm text-muted-foreground">{item.label}</dt>
-                  <dd className="mt-1 text-2xl font-semibold text-foreground">{item.value}</dd>
-                </div>
-              ))}
-            </div>
+              <Link href="/signup">Get Started</Link>
+            </Button>
           </div>
         </div>
+        <HeroDashboardPreview />
       </div>
     </section>
   );
 }
 
+function HeroDashboardPreview() {
+  return (
+    <div className="relative w-full max-w-6xl rounded-[32px] border border-[#f5d7b0]/80 bg-white/85 p-6 text-left text-slate-900 shadow-[0_45px_120px_rgba(254,215,170,0.45)] backdrop-blur">
+      <div className="flex flex-col gap-4 border-b border-orange-100 pb-6 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex items-center gap-3 rounded-full border border-[#ffd4c2] bg-[#fff6ef] px-4 py-2">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#ff9776] to-[#ffd27f] text-sm font-semibold text-white">
+            AK
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-[0.35em] text-slate-500">
+              Operator
+            </p>
+            <p className="font-semibold text-slate-900">Alicia Koch</p>
+          </div>
+        </div>
+        <div className="flex w-full flex-col gap-3 lg:flex-1 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-wrap gap-2">
+            {DASHBOARD_TABS.map((tab, index) => (
+              <span
+                key={tab}
+                className={cn(
+                  "rounded-full border px-4 py-1.5 text-sm font-medium transition",
+                  index === 0
+                    ? "border-[#ff9776] bg-[#ff9776] text-white"
+                    : "border-slate-200 text-slate-500"
+                )}
+              >
+                {tab}
+              </span>
+            ))}
+          </div>
+          <div className="flex flex-1 items-center justify-end gap-3">
+            <div className="relative w-full max-w-xs flex-1">
+              <Search
+                className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-300"
+                aria-hidden
+              />
+              <input
+                className="w-full rounded-full border border-slate-200 bg-white py-2 pl-11 pr-4 text-sm text-slate-700 placeholder:text-slate-300 focus:border-[#ff9776] focus:outline-none focus:ring-2 focus:ring-[#ff9776]/30"
+                placeholder="Search..."
+              />
+            </div>
+            <div className="hidden items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-600 sm:flex">
+              <Calendar className="h-4 w-4 text-slate-400" aria-hidden />
+              <span>Jan 20, 2023 - Feb 09, 2023</span>
+            </div>
+            <button className="hidden items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white sm:inline-flex">
+              <Download className="h-4 w-4" aria-hidden />
+              Download
+            </button>
+            <div className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white">
+              <UserRound className="h-5 w-5 text-slate-700" aria-hidden />
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="mt-8 space-y-6">
+        <div className="flex flex-wrap items-center gap-4">
+          <h3 className="text-3xl font-semibold text-slate-900">Dashboard</h3>
+          <div className="flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-[0.2em]">
+            {DASHBOARD_VIEWS.map((view, index) => (
+              <span
+                key={view}
+                className={cn(
+                  "rounded-full border px-3 py-1",
+                  index === 0
+                    ? "border-[#7dd3fc] bg-[#7dd3fc]/20 text-[#0f172a]"
+                    : "border-slate-200 text-slate-400"
+                )}
+              >
+                {view}
+              </span>
+            ))}
+          </div>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {DASHBOARD_STATS.map((stat) => (
+            <div
+              key={stat.label}
+              className="rounded-2xl border border-slate-200 bg-[#fff9f3] p-4"
+            >
+              <p className="text-xs uppercase tracking-[0.35em] text-slate-400">
+                {stat.label}
+              </p>
+              <p className="mt-3 text-2xl font-semibold text-slate-900">
+                {stat.value}
+              </p>
+              <p className="text-xs text-emerald-500">{stat.delta}</p>
+            </div>
+          ))}
+        </div>
+        <div className="grid gap-4 lg:grid-cols-[1.4fr_0.6fr]">
+          <div className="rounded-3xl border border-slate-200 bg-gradient-to-br from-white via-[#f0f9ff] to-[#fff4e8] p-5">
+            <div className="flex items-center justify-between">
+              <p className="text-lg font-semibold text-slate-900">Overview</p>
+              <span className="text-xs uppercase tracking-[0.35em] text-slate-400">
+                Monthly revenue
+              </span>
+            </div>
+            <div className="mt-6 flex h-48 items-end gap-3">
+              {DASHBOARD_BARS.map((bar) => (
+                <div
+                  key={bar.label}
+                  className="flex flex-1 flex-col items-center gap-2 text-xs text-slate-400"
+                >
+                  <div
+                    className="w-full rounded-t-3xl bg-gradient-to-t from-[#ffe5c1] via-[#ff9776] to-[#5dd6f7]"
+                    style={{ height: `${bar.value}%` }}
+                  />
+                  <span>{bar.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="rounded-3xl border border-slate-200 bg-white p-5">
+            <p className="text-lg font-semibold text-slate-900">Recent Sales</p>
+            <p className="text-xs text-slate-500">
+              You made {RECENT_SALES.length} sales this month.
+            </p>
+            <div className="mt-6 space-y-4">
+              {RECENT_SALES.map((sale) => {
+                const initials = sale.name
+                  .split(" ")
+                  .map((segment) => segment[0])
+                  .join("")
+                  .slice(0, 2)
+                  .toUpperCase();
+
+                return (
+                  <div
+                    key={sale.email}
+                    className="flex items-center justify-between gap-3"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#fff1db] text-sm font-semibold text-slate-800">
+                        {initials}
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-slate-900">
+                          {sale.name}
+                        </p>
+                        <p className="text-xs text-slate-500">{sale.email}</p>
+                      </div>
+                    </div>
+                    <p className="text-sm font-semibold text-emerald-500">
+                      {sale.amount}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function TrustedBy() {
   return (
-    <section aria-label="Trusted by" className="border-y border-foreground/5 bg-white/70">
-      <div className="mx-auto flex max-w-5xl flex-col items-center gap-4 px-4 py-10 text-center sm:px-6">
-        <p className="text-sm font-medium uppercase tracking-[0.3em] text-muted-foreground">
-          Trusted by students, creators, and modern teams
+    <section className="mx-auto max-w-5xl px-4 pt-8 sm:px-6 lg:px-8">
+      <div className="rounded-[28px] border border-foreground/10 bg-white/80 p-6 text-center shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur">
+        <p className="text-xs font-semibold uppercase tracking-[0.35em] text-muted-foreground">
+          Trusted By
         </p>
-        <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-4 text-base font-semibold text-muted-foreground/80">
-          {SOCIAL_PROOF.map((logo) => (
-            <span key={logo} className="tracking-wide">
-              {logo}
+        <p className="mt-2 text-sm text-muted-foreground">
+          Sales pods, university teams, and creators keep Linket on their
+          keychains to turn every intro into a saved contact.
+        </p>
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs font-semibold text-foreground/80 sm:gap-3 sm:text-sm">
+          {SOCIAL_PROOF.map((name) => (
+            <span
+              key={name}
+              className="inline-flex items-center gap-2 rounded-full border border-foreground/10 px-3 py-1.5"
+            >
+              <Sparkles className="h-3.5 w-3.5 text-primary" aria-hidden />
+              {name}
             </span>
           ))}
         </div>
@@ -431,102 +671,138 @@ function TrustedBy() {
 
 function JourneySection() {
   return (
-    <section id="how-it-works" className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
-      <div className="mx-auto max-w-3xl text-center">
-        <span className="inline-flex items-center gap-2 rounded-full border border-foreground/10 bg-foreground/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
-          How Linket flows
-        </span>
-        <h2 className="mt-5 font-display text-3xl tracking-tight text-foreground sm:text-4xl">
-          Meet, share, and stay top-of-mind in one smooth motion
-        </h2>
-        <p className="mt-4 text-base text-muted-foreground">
-          Linket blends polished hardware with a live profile editor so every introduction feels consistent, warm, and memorable.
-        </p>
-      </div>
-      <div className="mt-14 grid gap-6 lg:grid-cols-3">
-        {JOURNEY_STEPS.map((step) => (
-          <article
-            key={step.title}
-            className="group relative rounded-3xl border border-foreground/10 bg-white/80 p-6 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg"
-          >
-            <div
-              className={cn(
-                "mb-6 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br shadow-sm",
-                step.accent
-              )}
-            >
-              <step.icon className="h-5 w-5" aria-hidden />
-            </div>
-            <h3 className="text-xl font-semibold text-foreground">{step.title}</h3>
-            <p className="mt-3 text-sm text-muted-foreground">{step.description}</p>
-            <p className="mt-4 text-sm font-medium text-foreground">{step.detail}</p>
-            <div
-              className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 rounded-3xl bg-gradient-to-t from-foreground/[0.02] opacity-0 transition duration-300 group-hover:opacity-100"
-              aria-hidden
-            />
-          </article>
-        ))}
-      </div>
-    </section>
-  );
-}
-function ExperienceSection() {
-  return (
-    <section id="customization" className="relative overflow-hidden py-24">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,240,220,0.35),_transparent_65%)]" aria-hidden />
-      <div className="relative mx-auto max-w-3xl px-4 text-center sm:px-6">
-        <span className="inline-flex items-center gap-2 rounded-full border border-foreground/10 bg-foreground/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.35em] text-muted-foreground">
-          Custom Orders
-        </span>
-        <h2 className="mt-4 font-display text-3xl tracking-tight sm:text-4xl">Work with our sales team on your Linket rollout</h2>
-        <p className="mt-4 text-base text-muted-foreground">
-          We now route all bespoke hardware and profile setups through our sales specialists. They&apos;ll scope your lineup, share proofs, and coordinate production end-to-end.
-        </p>
-        <p className="mt-4 text-sm text-muted-foreground">
-          For any custom order, contact sales first so we can tailor materials, timelines, and pricing to your team.
-        </p>
-        <div className="mt-8 flex justify-center">
-          <Button asChild className="rounded-full px-6 py-3">
-            <Link href="/contact">Contact sales</Link>
-          </Button>
-        </div>
-      </div>
+    <section id="how-it-works" className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
+      <FeatureSteps
+        className="mt-8 rounded-[36px] border border-foreground/5 bg-white/90 shadow-[0_35px_80px_rgba(15,23,42,0.08)]"
+        features={JOURNEY_FEATURES}
+        title="How Linket flows"
+        autoPlayInterval={4000}
+        imageHeight="lg:h-[420px]"
+      />
     </section>
   );
 }
 
-function FeatureSection() {
+function ExperienceSection() {
   return (
-    <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
-      <div className="grid gap-10 lg:grid-cols-[0.7fr_1.3fr] lg:gap-16">
-        <div>
-          <span className="inline-flex items-center gap-2 rounded-full border border-foreground/10 bg-foreground/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.35em] text-muted-foreground">
-            Why Linket
-          </span>
-          <h2 className="mt-4 font-display text-3xl tracking-tight sm:text-4xl">
-            Built for the moments where intros either land or get forgotten
-          </h2>
-          <p className="mt-4 text-base text-muted-foreground">
-            Linket pairs premium hardware with software superpowers so you can launch, learn, and iterate without reprinting. Hover each card to see what that means in practice.
+    <section
+      id="customization"
+      className="relative overflow-hidden bg-[#050816] py-24 text-white"
+    >
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-[#fff7ed] via-[#0a0f1e]/40 to-transparent"
+        aria-hidden
+      />
+      <div
+        className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(77,121,255,0.25),_rgba(5,8,22,0))]"
+        aria-hidden
+      />
+      <div
+        className="absolute inset-y-0 right-[-10%] h-[480px] w-[480px] rounded-full bg-[radial-gradient(circle,_rgba(255,151,118,0.25),_rgba(5,8,22,0))] blur-[160px]"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#050816] via-[#0a0f1e]/30 to-transparent"
+        aria-hidden
+      />
+      <div className="relative mx-auto flex max-w-6xl flex-col gap-10 px-4 sm:px-6 lg:flex-row lg:items-center">
+        <div className="space-y-6 lg:w-3/5">
+          <p className="text-sm font-semibold uppercase tracking-[0.4em] text-white/60">
+            Custom orders
           </p>
-        </div>
-        <div className="grid gap-4 md:grid-cols-2">
-          {FEATURE_HIGHLIGHTS.map((feature) => (
-            <article
-              key={feature.title}
-              className="group relative overflow-hidden rounded-3xl border border-foreground/10 bg-white/80 p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
-            >
-              <div className={cn("mb-5 inline-flex h-12 w-12 items-center justify-center rounded-2xl", feature.accent)}>
-                <feature.icon className="h-5 w-5" aria-hidden />
-              </div>
-              <h3 className="text-lg font-semibold text-foreground">{feature.title}</h3>
-              <p className="mt-3 text-sm text-muted-foreground">{feature.description}</p>
+          <div>
+            <p className="text-3xl font-semibold sm:text-4xl">
+              <span className="text-white/80">
+                Generate, tweak, and deploy Linket hardware{" "}
+              </span>
+              <span className="bg-gradient-to-r from-[#ff9776] via-[#ffd27f] to-[#7dd3fc] bg-clip-text text-transparent">
+                10x faster
+              </span>
+            </p>
+            <p className="mt-4 text-base text-white/70">
+              Work directly with our hardware strategists to choose finishes,
+              engraving, and fulfillment flows that match your brand. We handle
+              proofs, sourcing, and rollout so you can stay focused on demos.
+            </p>
+          </div>
+          <div className="grid gap-4 text-sm text-white/80 sm:grid-cols-2">
+            {[
+              "Premium metals, wood, and eco-resin options",
+              "Custom engravings + Pantone-matched finishes",
+              "Bulk activation + profile templates",
+              "Lead routing, CRM exports, and analytics",
+            ].map((item) => (
               <div
-                className="pointer-events-none absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-primary/5 opacity-0 transition duration-300 group-hover:opacity-100"
-                aria-hidden
+                key={item}
+                className="rounded-2xl border border-white/10 bg-white/5 p-4"
+              >
+                {item}
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="w-full max-w-md rounded-3xl border border-white/10 bg-white/5 p-8 shadow-[0_30px_80px_rgba(5,5,20,0.45)] backdrop-blur">
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#ff9776] via-[#ffb866] to-[#5dd6f7] text-slate-900">
+              <Sparkles className="h-6 w-6" aria-hidden />
+            </div>
+            <div>
+              <p className="text-lg font-semibold text-white">Get in touch</p>
+              <p className="text-xs text-white/60">
+                Unlock the full Linket experience with our custom team.
+              </p>
+            </div>
+          </div>
+          <form className="mt-6 space-y-5">
+            <div>
+              <label
+                htmlFor="custom-email"
+                className="text-xs font-semibold uppercase tracking-[0.3em] text-white/50"
+              >
+                Work email
+              </label>
+              <input
+                id="custom-email"
+                type="email"
+                className="mt-2 w-full rounded-2xl border border-white/15 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:border-[#ff9776] focus:outline-none focus:ring-2 focus:ring-[#ff9776]/40"
+                placeholder="name@company.com"
               />
-            </article>
-          ))}
+            </div>
+            <div>
+              <label
+                htmlFor="custom-team"
+                className="text-xs font-semibold uppercase tracking-[0.3em] text-white/50"
+              >
+                Team size
+              </label>
+              <input
+                id="custom-team"
+                type="text"
+                className="mt-2 w-full rounded-2xl border border-white/15 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:border-[#5dd6f7] focus:outline-none focus:ring-2 focus:ring-[#5dd6f7]/40"
+                placeholder="e.g. 25 reps"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="custom-notes"
+                className="text-xs font-semibold uppercase tracking-[0.3em] text-white/50"
+              >
+                Notes
+              </label>
+              <textarea
+                id="custom-notes"
+                rows={3}
+                className="mt-2 w-full rounded-2xl border border-white/15 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:border-[#ff9776] focus:outline-none focus:ring-2 focus:ring-[#ff9776]/40"
+                placeholder="Share timelines or hardware goals..."
+              />
+            </div>
+            <Button className="w-full rounded-2xl bg-gradient-to-r from-[#ff9776] via-[#ffb866] to-[#5dd6f7] text-base font-semibold text-slate-900 shadow-[0_15px_45px_rgba(255,151,118,0.35)]">
+              Book your consult
+            </Button>
+            <p className="text-center text-xs text-white/50">
+              We reply within one business day.
+            </p>
+          </form>
         </div>
       </div>
     </section>
@@ -535,16 +811,34 @@ function FeatureSection() {
 
 function LiveDemoSection() {
   return (
-    <section id="demo" className="relative overflow-hidden border-y border-foreground/5 bg-gradient-to-r from-[#e8faff] via-white to-[#fff1f8] py-24">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.4),_transparent_70%)]" aria-hidden />
+    <section
+      id="demo"
+      className="relative overflow-hidden bg-gradient-to-r from-[#e8faff] via-white to-[#fff1f8] py-24"
+    >
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-[#050816] via-transparent to-transparent"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-[#fff7ed] via-transparent to-transparent"
+        aria-hidden
+      />
+      <div
+        className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.4),_transparent_70%)]"
+        aria-hidden
+      />
       <div className="relative mx-auto flex max-w-6xl flex-col gap-12 px-4 sm:px-6 lg:flex-row lg:items-center">
         <div className="max-w-lg space-y-5">
           <span className="inline-flex items-center gap-2 rounded-full border border-foreground/10 bg-white/60 px-3 py-1 text-xs font-semibold uppercase tracking-[0.35em] text-muted-foreground">
             See it live
           </span>
-          <h2 className="font-display text-3xl tracking-tight sm:text-4xl">Tap-through demo</h2>
+          <h2 className="font-display text-3xl tracking-tight sm:text-4xl">
+            Tap-through demo
+          </h2>
           <p className="text-base text-muted-foreground">
-            Scan the QR or click play to explore a Linket profile. You&apos;ll see NFC handoff, hero blocks, lead capture, and real-time analytics come together in under 20 seconds.
+            Scan the QR or click play to explore a Linket profile. You&apos;ll
+            see NFC handoff, hero blocks, lead capture, and real-time analytics
+            come together in under 20 seconds.
           </p>
           <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
             <div className="inline-flex items-center gap-2 rounded-full bg-white/60 px-3 py-1">
@@ -558,7 +852,10 @@ function LiveDemoSection() {
           </div>
         </div>
         <div className="relative mx-auto w-full max-w-xl">
-          <div className="absolute inset-0 rounded-[40px] bg-gradient-to-br from-primary/20 via-transparent to-transparent blur-3xl" aria-hidden />
+          <div
+            className="absolute inset-0 rounded-[40px] bg-gradient-to-br from-primary/20 via-transparent to-transparent blur-3xl"
+            aria-hidden
+          />
           <div className="relative overflow-hidden rounded-[32px] border border-white/60 bg-white/80 p-6 shadow-2xl backdrop-blur">
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span>linket.co/demo</span>
@@ -571,15 +868,25 @@ function LiveDemoSection() {
                     <div className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 font-semibold text-primary shadow">
                       Hero video
                     </div>
-                    <p className="text-lg font-semibold text-foreground">Tap to meet Saira</p>
-                    <p className="text-xs text-muted-foreground">Creative Director * @sairamakes</p>
+                    <p className="text-lg font-semibold text-foreground">
+                      Tap to meet Saira
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Creative Director * @sairamakes
+                    </p>
                   </div>
                   <div className="space-y-2 text-xs">
-                    <button type="button" className="flex items-center justify-between rounded-2xl bg-white/80 px-3 py-2 font-semibold text-foreground shadow-sm">
+                    <button
+                      type="button"
+                      className="flex items-center justify-between rounded-2xl bg-white/80 px-3 py-2 font-semibold text-foreground shadow-sm"
+                    >
                       View reel
                       <ArrowRight className="h-3.5 w-3.5" aria-hidden />
                     </button>
-                    <button type="button" className="flex items-center justify-between rounded-2xl bg-white/80 px-3 py-2 font-semibold text-foreground shadow-sm">
+                    <button
+                      type="button"
+                      className="flex items-center justify-between rounded-2xl bg-white/80 px-3 py-2 font-semibold text-foreground shadow-sm"
+                    >
                       Save contact
                       <ArrowRight className="h-3.5 w-3.5" aria-hidden />
                     </button>
@@ -592,7 +899,9 @@ function LiveDemoSection() {
                 </div>
               </div>
               <div className="space-y-4 rounded-3xl border border-foreground/10 bg-white/80 p-5 shadow-inner">
-                <h3 className="text-sm font-semibold text-foreground">Snapshot analytics</h3>
+                <h3 className="text-sm font-semibold text-foreground">
+                  Snapshot analytics
+                </h3>
                 <div className="space-y-3 text-xs text-muted-foreground">
                   <div className="flex items-center justify-between rounded-2xl bg-gradient-to-r from-[#e8f9ff] to-transparent px-3 py-2">
                     <span>Taps today</span>
@@ -604,11 +913,14 @@ function LiveDemoSection() {
                   </div>
                   <div className="flex items-center justify-between rounded-2xl bg-gradient-to-r from-[#edfdf4] to-transparent px-3 py-2">
                     <span>Top link</span>
-                    <span className="font-semibold text-foreground">Shop collection</span>
+                    <span className="font-semibold text-foreground">
+                      Shop collection
+                    </span>
                   </div>
                 </div>
                 <div className="rounded-2xl border border-dashed border-foreground/15 bg-white/60 p-4 text-xs text-muted-foreground">
-                  Scan the QR or tap a Linket to experience this flow on your phone.
+                  Scan the QR or tap a Linket to experience this flow on your
+                  phone.
                 </div>
               </div>
             </div>
@@ -629,7 +941,8 @@ function UseCasesSection() {
           Linket adapts to every introduction -- campus, stage, or sales floor
         </h2>
         <p className="mt-4 text-base text-muted-foreground">
-          Switch between presets to match your audience. Linket remembers the links, colors, and form fields that deliver the best follow-through.
+          Switch between presets to match your audience. Linket remembers the
+          links, colors, and form fields that deliver the best follow-through.
         </p>
       </div>
       <Tabs defaultValue={USE_CASES[0]?.slug} className="mt-12">
@@ -645,16 +958,32 @@ function UseCasesSection() {
           ))}
         </TabsList>
         {USE_CASES.map((useCase) => (
-          <TabsContent key={useCase.slug} value={useCase.slug} className="mt-10">
+          <TabsContent
+            key={useCase.slug}
+            value={useCase.slug}
+            className="mt-10"
+          >
             <div className="grid gap-8 lg:grid-cols-[1fr_0.9fr] lg:items-center">
               <article className="rounded-3xl border border-foreground/10 bg-white/80 p-8 shadow-sm">
-                <span className="text-xs font-semibold uppercase tracking-[0.35em] text-primary">{useCase.eyebrow}</span>
-                <h3 className="mt-3 text-2xl font-semibold text-foreground">{useCase.title}</h3>
-                <p className="mt-4 text-sm text-muted-foreground">{useCase.body}</p>
+                <span className="text-xs font-semibold uppercase tracking-[0.35em] text-primary">
+                  {useCase.eyebrow}
+                </span>
+                <h3 className="mt-3 text-2xl font-semibold text-foreground">
+                  {useCase.title}
+                </h3>
+                <p className="mt-4 text-sm text-muted-foreground">
+                  {useCase.body}
+                </p>
                 <div className="mt-6 flex flex-wrap gap-3">
                   {useCase.highlights.map((highlight) => (
-                    <span key={highlight} className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-                      <span className="h-2 w-2 rounded-full bg-primary" aria-hidden />
+                    <span
+                      key={highlight}
+                      className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary"
+                    >
+                      <span
+                        className="h-2 w-2 rounded-full bg-primary"
+                        aria-hidden
+                      />
                       {highlight}
                     </span>
                   ))}
@@ -663,24 +992,39 @@ function UseCasesSection() {
               <div className="relative">
                 <div
                   className="absolute inset-0 rounded-[28px] bg-gradient-to-br opacity-40 blur-2xl"
-                  style={{ backgroundImage: `linear-gradient(135deg, ${useCase.gradient})` }}
+                  style={{
+                    backgroundImage: `linear-gradient(135deg, ${useCase.gradient})`,
+                  }}
                   aria-hidden
                 />
                 <div className="relative overflow-hidden rounded-[28px] border border-white/60 bg-white/80 p-6 shadow-xl backdrop-blur">
-                  <div className="text-sm font-semibold text-muted-foreground">Preset preview</div>
+                  <div className="text-sm font-semibold text-muted-foreground">
+                    Preset preview
+                  </div>
                   <div className="mt-4 space-y-4 text-sm">
                     <div className="rounded-2xl border border-foreground/10 bg-gradient-to-br from-white to-white/60 p-4">
-                      <p className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground/70">Hero headline</p>
-                      <p className="mt-2 text-lg font-semibold text-foreground">Tap to see the {useCase.title.toLowerCase()} flow</p>
+                      <p className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground/70">
+                        Hero headline
+                      </p>
+                      <p className="mt-2 text-lg font-semibold text-foreground">
+                        Tap to see the {useCase.title.toLowerCase()} flow
+                      </p>
                     </div>
                     <div className="rounded-2xl border border-dashed border-foreground/15 bg-white/60 p-4 text-xs text-muted-foreground">
-                      Lead form blocks go here: name, email, and a custom qualifier unique to this preset.
+                      Lead form blocks go here: name, email, and a custom
+                      qualifier unique to this preset.
                     </div>
                     <div className="flex gap-3">
-                      <button type="button" className="flex-1 rounded-2xl border border-foreground/15 bg-white px-4 py-3 text-sm font-semibold text-foreground shadow-sm transition hover:-translate-y-1 hover:shadow-md">
+                      <button
+                        type="button"
+                        className="flex-1 rounded-2xl border border-foreground/15 bg-white px-4 py-3 text-sm font-semibold text-foreground shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+                      >
                         Share preset
                       </button>
-                      <button type="button" className="flex-1 rounded-2xl bg-gradient-to-br from-primary/90 via-primary to-primary/80 px-4 py-3 text-sm font-semibold text-primary-foreground shadow transition hover:shadow-lg">
+                      <button
+                        type="button"
+                        className="flex-1 rounded-2xl bg-gradient-to-br from-primary/90 via-primary to-primary/80 px-4 py-3 text-sm font-semibold text-primary-foreground shadow transition hover:shadow-lg"
+                      >
                         Activate profile
                       </button>
                     </div>
@@ -697,89 +1041,35 @@ function UseCasesSection() {
 
 function TestimonialsSection() {
   return (
-    <section className="relative overflow-hidden border-y border-foreground/5 bg-gradient-to-br from-[#111827]/95 via-[#111827] to-[#1f2937] py-24 text-white">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.06),_transparent_65%)]" aria-hidden />
+    <section className="relative overflow-hidden border-y border-foreground/5 bg-gradient-to-br from-[#fff7ed] via-[#ffe4d6] to-[#ffd9f2] py-24 text-[#0f172a]">
+      <div
+        className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.5),_transparent_70%)]"
+        aria-hidden
+      />
       <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
-        <div className="max-w-2xl">
-          <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.35em] text-white/70">
-            Proof in motion
-          </span>
-          <h2 className="mt-4 font-display text-3xl tracking-tight text-white sm:text-4xl">
-            Linket keeps intros warm long after the tap
-          </h2>
-          <p className="mt-4 text-base text-white/70">
-            Teams, collectives, and campuses use Linket to make sure their message actually lands. Here&apos;s what happens when they do.
-          </p>
-        </div>
-        <div className="mt-12 grid gap-6 lg:grid-cols-3">
-          {TESTIMONIALS.map((testimonial) => (
-            <article key={testimonial.name} className="flex flex-col justify-between rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg shadow-black/20">
-              <p className="text-base leading-relaxed text-white/90">&quot;{testimonial.quote}&quot;</p>
-              <div className="mt-8 border-t border-white/10 pt-5 text-sm text-white/80">
-                <p className="font-semibold text-white">{testimonial.name}</p>
-                <p>{testimonial.role}</p>
-                <p className="mt-2 inline-flex items-center gap-2 rounded-full border border-white/20 px-3 py-1 text-xs font-semibold text-white/80">
-                  <Sparkles className="h-3.5 w-3.5" aria-hidden />
-                  {testimonial.result}
-                </p>
-              </div>
-            </article>
-          ))}
-        </div>
+        <TestimonialSlider
+          testimonials={SLIDER_TESTIMONIALS}
+          eyebrow="Proof in motion"
+          title="Linket keeps intros warm long after the tap"
+          tone="light"
+          className="shadow-[0_45px_120px_rgba(255,151,118,0.25)]"
+        />
       </div>
     </section>
   );
 }
 function PricingSection() {
   return (
-    <section id="pricing" className="mx-auto max-w-6xl px-4 py-24 sm:px-6">
-      <div className="mx-auto max-w-3xl text-center">
-        <span className="inline-flex items-center gap-2 rounded-full border border-foreground/10 bg-foreground/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.35em] text-muted-foreground">
-          Pricing
-        </span>
-        <h2 className="mt-4 font-display text-3xl tracking-tight sm:text-4xl">Tap-ready Linkets for any size launch</h2>
-        <p className="mt-4 text-base text-muted-foreground">
-          Start with one, upgrade to custom finishes, or roll out to your entire team. Every plan includes live editing, analytics, and support.
-        </p>
-      </div>
-      <div className="mt-12 grid gap-6 lg:grid-cols-3">
-        {PRICING_PLANS.map((plan) => (
-          <article
-            key={plan.name}
-            className={cn(
-              "relative rounded-3xl border border-foreground/10 bg-white/80 p-8 shadow-sm transition hover:-translate-y-1 hover:shadow-xl",
-              plan.featured && "border-primary/40 bg-gradient-to-br from-[#f9fbff] via-white to-[#e8f7ff]"
-            )}
-          >
-            {plan.featured && (
-              <span className="absolute right-5 top-5 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-                Most loved
-              </span>
-            )}
-            <h3 className="text-xl font-semibold text-foreground">{plan.name}</h3>
-            <p className="mt-2 text-sm text-muted-foreground">{plan.description}</p>
-            <div className="mt-6 flex items-baseline gap-2">
-              <span className="text-3xl font-bold text-foreground">{plan.price}</span>
-              <span className="text-sm text-muted-foreground">{plan.cadence}</span>
-            </div>
-            <ul className="mt-6 space-y-3 text-sm text-muted-foreground">
-              {plan.features.map((feature) => (
-                <li key={feature} className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-primary" aria-hidden />
-                  {feature}
-                </li>
-              ))}
-            </ul>
-            <Button
-              asChild
-              variant={plan.featured ? "default" : "outline"}
-              className={cn("mt-8 w-full rounded-full", !plan.featured && "border-foreground/20")}
-            >
-              <Link href={plan.href}>{plan.cta}</Link>
-            </Button>
-          </article>
-        ))}
-      </div>
+    <section
+      id="pricing"
+      className="relative mx-auto max-w-6xl px-4 py-24 sm:px-6"
+    >
+      <CreativePricing
+        tag="Linket plans"
+        title="The tap-to-share stack for every crew"
+        description="Choose the plan that keeps every intro warm—from solo sellers to nationwide teams."
+        tiers={PRICING_TIERS}
+      />
     </section>
   );
 }
@@ -791,18 +1081,26 @@ function FAQSection() {
         <span className="inline-flex items-center gap-2 rounded-full border border-foreground/10 bg-foreground/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.35em] text-muted-foreground">
           FAQ
         </span>
-        <h2 className="mt-4 font-display text-3xl tracking-tight sm:text-4xl">Answers before you tap</h2>
+        <h2 className="mt-4 font-display text-3xl tracking-tight sm:text-4xl">
+          Answers before you tap
+        </h2>
         <p className="mt-4 text-base text-muted-foreground">
           Everything you need to know about Linket hardware, profiles, and data.
         </p>
       </div>
       <Accordion type="single" collapsible className="mt-10 space-y-4">
         {FAQ.map((item, index) => (
-          <AccordionItem key={item.question} value={`faq-${index}`} className="overflow-hidden rounded-3xl border border-foreground/10 bg-white/80 px-5">
+          <AccordionItem
+            key={item.question}
+            value={`faq-${index}`}
+            className="overflow-hidden rounded-3xl border border-foreground/10 bg-white/80 px-5"
+          >
             <AccordionTrigger className="text-left text-base font-semibold text-foreground hover:no-underline">
               {item.question}
             </AccordionTrigger>
-            <AccordionContent className="pb-5 text-sm text-muted-foreground">{item.answer}</AccordionContent>
+            <AccordionContent className="pb-5 text-sm text-muted-foreground">
+              {item.answer}
+            </AccordionContent>
           </AccordionItem>
         ))}
       </Accordion>
@@ -813,7 +1111,10 @@ function FAQSection() {
 function FinalCTASection() {
   return (
     <section className="relative overflow-hidden py-24">
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/15 via-transparent to-transparent" aria-hidden />
+      <div
+        className="absolute inset-0 bg-gradient-to-br from-primary/15 via-transparent to-transparent"
+        aria-hidden
+      />
       <div className="relative mx-auto max-w-4xl rounded-[36px] border border-white/60 bg-white/80 px-6 py-16 text-center shadow-2xl backdrop-blur sm:px-10">
         <Image
           src={brand.logo}
@@ -826,7 +1127,8 @@ function FinalCTASection() {
           Ready to launch a Linket that people remember?
         </h2>
         <p className="mt-4 text-base text-muted-foreground">
-          Build your hardware, craft your profile, and start sharing in less than a week. Let&apos;s make every tap count.
+          Build your hardware, craft your profile, and start sharing in less
+          than a week. Let&apos;s make every tap count.
         </p>
         <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Button asChild className="rounded-full px-6 py-3">
@@ -845,5 +1147,117 @@ function FinalCTASection() {
   );
 }
 
+function LandingFooter() {
+  const currentYear = new Date().getFullYear();
 
-
+  return (
+    <footer className="relative overflow-hidden border-t border-white/40 bg-[#050816] text-white">
+      <div
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.25),_rgba(5,8,22,0))]"
+        aria-hidden
+      />
+      <div className="relative mx-auto max-w-6xl px-4 py-16 sm:px-6">
+        <div className="grid gap-10 lg:grid-cols-[1.2fr_2fr]">
+          <div>
+            <div className="flex items-center gap-3 text-lg font-semibold">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10">
+                <span className="text-2xl">🔗</span>
+              </div>
+              <div>
+                <p className="text-sm uppercase tracking-[0.4em] text-white/70">
+                  {brand.name}
+                </p>
+                <p className="text-2xl font-bold text-white">
+                  Tap once. Stay remembered.
+                </p>
+              </div>
+            </div>
+            <p className="mt-6 text-sm text-white/70">
+              Linket turns every tap into a live microsite, lead capture, and
+              follow-up you&apos;ll actually remember. Built for students,
+              creators, and field teams who want intros that stick.
+            </p>
+            <div className="mt-6 space-y-2 text-sm">
+              <p className="text-white/80">hello@linket.com</p>
+              <p className="text-white/60">
+                1236 Mission Street, San Francisco, CA
+              </p>
+            </div>
+            <div className="mt-8 flex items-center gap-4">
+              {FOOTER_SOCIALS.map((social) => (
+                <Link
+                  key={social.label}
+                  href={social.href}
+                  aria-label={social.label}
+                  className="flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-white/5 text-white/70 transition hover:-translate-y-1 hover:text-white"
+                >
+                  <social.icon className="h-5 w-5" aria-hidden />
+                </Link>
+              ))}
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-8 text-sm text-white/70 sm:grid-cols-4">
+            {FOOTER_LINK_GROUPS.map((group) => (
+              <div key={group.title} className="space-y-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.35em] text-white/60">
+                  {group.title}
+                </p>
+                <ul className="space-y-2">
+                  {group.links.map((link) => (
+                    <li key={link.label}>
+                      <Link
+                        href={link.href}
+                        className="transition hover:text-white"
+                      >
+                        {link.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="mt-12 flex flex-col gap-4 border-t border-white/10 pt-6 text-xs text-white/60 sm:flex-row sm:items-center sm:justify-between">
+          <p>
+            © {currentYear} {brand.name}. All rights reserved.
+          </p>
+          <div className="flex flex-wrap items-center gap-4">
+            <Link href="/privacy" className="transition hover:text-white">
+              Privacy
+            </Link>
+            <Link href="/terms" className="transition hover:text-white">
+              Terms
+            </Link>
+            <Link href="/security" className="transition hover:text-white">
+              Security
+            </Link>
+            <Link
+              href="mailto:hello@linket.com"
+              className="transition hover:text-white"
+            >
+              Contact sales
+            </Link>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+}
+import {
+  ArrowRight,
+  Calendar,
+  Download,
+  Focus,
+  Instagram,
+  LineChart,
+  Pencil,
+  Search,
+  ShieldCheck,
+  Sparkles,
+  Star,
+  Twitter,
+  UserRound,
+  Waves,
+  Youtube,
+} from "lucide-react";

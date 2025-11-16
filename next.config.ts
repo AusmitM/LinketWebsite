@@ -10,29 +10,46 @@ function originFromEnv(url?: string) {
   }
 }
 
-const supabaseOrigin = originFromEnv(process.env.NEXT_PUBLIC_SUPABASE_URL) || "https://*.supabase.co";
+const supabaseOrigin =
+  originFromEnv(process.env.NEXT_PUBLIC_SUPABASE_URL) ||
+  "https://*.supabase.co";
 
-const csp = (
-  [
-    `default-src 'self'` ,
-    `script-src 'self' 'unsafe-inline'`,
-    `style-src 'self' 'unsafe-inline'`,
-    `img-src 'self' data: blob: ${supabaseOrigin}`,
-    `connect-src 'self' ${supabaseOrigin}`,
-    `font-src 'self' data:`,
-    `frame-ancestors 'none'`,
-    `base-uri 'self'`,
-    `form-action 'self'`,
-  ].join("; ")
-);
+const remoteImageHosts = [
+  "images.unsplash.com",
+  "www.launchuicomponents.com",
+  "farmui.vercel.app",
+];
+
+const csp = [
+  `default-src 'self'`,
+  `script-src 'self' 'unsafe-inline'`,
+  `style-src 'self' 'unsafe-inline'`,
+  `img-src 'self' data: blob: ${supabaseOrigin} ${remoteImageHosts
+    .map((host) => `https://${host}`)
+    .join(" ")}`,
+  `connect-src 'self' ${supabaseOrigin}`,
+  `font-src 'self' data:`,
+  `frame-ancestors 'none'`,
+  `base-uri 'self'`,
+  `form-action 'self'`,
+].join("; ");
 
 const nextConfig: NextConfig = {
+  images: {
+    remotePatterns: remoteImageHosts.map((hostname) => ({
+      protocol: "https",
+      hostname,
+    })),
+  },
   async headers() {
     const locked = process.env.PREVIEW_LOCK === "1";
     const baseHeaders = [
       { key: "X-Frame-Options", value: "DENY" },
       { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-      { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+      {
+        key: "Permissions-Policy",
+        value: "camera=(), microphone=(), geolocation=()",
+      },
       { key: "Content-Security-Policy", value: csp },
     ];
     if (locked) {
