@@ -14,6 +14,11 @@ export function Footer() {
   const pathname = usePathname();
   const isDashboard = pathname?.startsWith("/dashboard");
   const isPublic = !isDashboard;
+  const isLanding = pathname === "/";
+
+  if (isLanding) {
+    return null;
+  }
 
   const columns = [
     {
@@ -56,7 +61,8 @@ export function Footer() {
 
   const wrapperClass = cn(
     "border-t bg-muted/20",
-    isDashboard && "border-border/60 bg-background/50 backdrop-blur supports-[backdrop-filter]:bg-background/35"
+    isDashboard &&
+      "border-border/60 bg-background/50 backdrop-blur supports-[backdrop-filter]:bg-background/35"
   );
 
   const brandTextClass = cn(
@@ -76,7 +82,10 @@ export function Footer() {
 
   if (isPublic) {
     return (
-      <footer className="border-t border-white/60 bg-white/80 py-10 backdrop-blur supports-[backdrop-filter]:bg-white/65" aria-label="Site footer">
+      <footer
+        className="border-t border-white/60 bg-white/80 py-10 backdrop-blur supports-[backdrop-filter]:bg-white/65"
+        aria-label="Site footer"
+      >
         <div className="mx-auto flex max-w-6xl justify-center px-4 md:px-6">
           <Link
             href="/"
@@ -84,15 +93,32 @@ export function Footer() {
             aria-label={`${brand.name} home`}
           >
             {brand.logo ? (
-              <Image src={brand.logo} alt={`${brand.name} logo`} width={148} height={42} className="h-10 w-auto" priority />
+              <Image
+                src={brand.logo}
+                alt={`${brand.name} logo`}
+                width={148}
+                height={42}
+                className="h-10 w-auto"
+                priority
+              />
             ) : hasBrandMark() ? (
-              <Image src={(brand.logomark || brand.logo) ?? ""} alt={`${brand.name} mark`} width={36} height={36} />
+              <Image
+                src={(brand.logomark || brand.logo) ?? ""}
+                alt={`${brand.name} mark`}
+                width={36}
+                height={36}
+              />
             ) : (
               <>
-                <span className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-foreground text-sm font-bold text-background" aria-hidden="true">
+                <span
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-foreground text-sm font-bold text-background"
+                  aria-hidden="true"
+                >
                   {(brand.shortName ?? brand.name).slice(0, 2)}
                 </span>
-                <span className="text-lg font-semibold text-[#0f172a]">{brand.name}</span>
+                <span className="text-lg font-semibold text-[#0f172a]">
+                  {brand.name}
+                </span>
               </>
             )}
           </Link>
@@ -112,29 +138,61 @@ export function Footer() {
               aria-label={`${brand.name} home`}
             >
               {brand.logo ? (
-                <Image src={brand.logo} alt={`${brand.name} logo`} width={148} height={42} className="h-10 w-auto" priority />
+                <Image
+                  src={brand.logo}
+                  alt={`${brand.name} logo`}
+                  width={148}
+                  height={42}
+                  className="h-10 w-auto"
+                  priority
+                />
               ) : hasBrandMark() ? (
-                <Image src={(brand.logomark || brand.logo) ?? ""} alt={`${brand.name} mark`} width={36} height={36} />
+                <Image
+                  src={(brand.logomark || brand.logo) ?? ""}
+                  alt={`${brand.name} mark`}
+                  width={36}
+                  height={36}
+                />
               ) : (
-                <span className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-foreground text-sm font-bold text-background" aria-hidden="true">
+                <span
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-foreground text-sm font-bold text-background"
+                  aria-hidden="true"
+                >
                   {(brand.shortName ?? brand.name).slice(0, 2)}
                 </span>
               )}
-              {!brand.logo && <span className={brandTextClass}>{brand.name}</span>}
+              {!brand.logo && (
+                <span className={brandTextClass}>{brand.name}</span>
+              )}
             </Link>
-            <p className="max-w-md text-sm text-muted-foreground">{brand.blurb}</p>
-            <div className="flex flex-col gap-3 sm:flex-row" role="group" aria-label="Join newsletter">
-              <Input type="email" placeholder="name@email.com" required className={newsletterInputClass} />
+            <p className="max-w-md text-sm text-muted-foreground">
+              {brand.blurb}
+            </p>
+            <div
+              className="flex flex-col gap-3 sm:flex-row"
+              role="group"
+              aria-label="Join newsletter"
+            >
+              <Input
+                type="email"
+                placeholder="name@email.com"
+                required
+                className={newsletterInputClass}
+              />
               <Button type="button" className="rounded-full">
                 Get tips
               </Button>
             </div>
-            <p className="text-xs text-muted-foreground">Join 5,000+ students, creators, and teams staying in the loop.</p>
+            <p className="text-xs text-muted-foreground">
+              Join 5,000+ students, creators, and teams staying in the loop.
+            </p>
           </div>
           <div className="grid grid-cols-2 gap-8 sm:grid-cols-4">
             {columns.map((column) => (
               <div key={column.heading} className="space-y-3">
-                <h3 className="text-sm font-semibold text-foreground">{column.heading}</h3>
+                <h3 className="text-sm font-semibold text-foreground">
+                  {column.heading}
+                </h3>
                 <ul className="space-y-2 text-sm text-muted-foreground">
                   {column.links.map((item) => (
                     <li key={item.href}>
@@ -152,15 +210,32 @@ export function Footer() {
           </div>
         </div>
         <div className="mt-12 flex flex-col gap-4 border-t border-foreground/10 pt-6 text-sm text-muted-foreground md:flex-row md:items-center md:justify-between">
-          <p>{"\u00a9"} {year} {brand.name}. All rights reserved.</p>
+          <p>
+            {"\u00a9"} {year} {brand.name}. All rights reserved.
+          </p>
           <div className="flex items-center gap-4">
-            <a href="https://www.instagram.com/linket" target="_blank" rel="noreferrer" className={socialLinkClass}>
+            <a
+              href="https://www.instagram.com/linket"
+              target="_blank"
+              rel="noreferrer"
+              className={socialLinkClass}
+            >
               Instagram
             </a>
-            <a href="https://www.linkedin.com/company/linket" target="_blank" rel="noreferrer" className={socialLinkClass}>
+            <a
+              href="https://www.linkedin.com/company/linket"
+              target="_blank"
+              rel="noreferrer"
+              className={socialLinkClass}
+            >
               LinkedIn
             </a>
-            <a href="https://www.tiktok.com/@linket" target="_blank" rel="noreferrer" className={socialLinkClass}>
+            <a
+              href="https://www.tiktok.com/@linket"
+              target="_blank"
+              rel="noreferrer"
+              className={socialLinkClass}
+            >
               TikTok
             </a>
           </div>

@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
+import { useEffect, useState, type MouseEvent } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 import { Menu, X } from "lucide-react";
 
@@ -11,25 +11,54 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { buildAvatarPublicUrl } from "@/lib/avatar-utils";
 import { brand } from "@/config/brand";
+import { AdaptiveNavPill } from "@/components/ui/3d-adaptive-navigation-bar";
 
 type UserLite = { id: string; email: string | null } | null;
 
-const NAV_LINKS = [
-  { href: "/#how-it-works", label: "How it Works" },
-  { href: "/#customization", label: "Customization" },
-  { href: "/#teams", label: "For Teams" },
-  { href: "/#pricing", label: "Pricing" },
-  { href: "/#faq", label: "FAQ" },
-];
+const LANDING_LINKS = [
+  {
+    id: "how-it-works",
+    label: "How it Works",
+    gradient: "linear-gradient(120deg,#ff9776 0%,#ffb166 100%)",
+    shadow: "0 10px 24px rgba(255,151,118,0.35)",
+  },
+  {
+    id: "customization",
+    label: "Customization",
+    gradient: "linear-gradient(120deg,#ffb166 0%,#ffd27f 100%)",
+    shadow: "0 10px 24px rgba(255,183,120,0.32)",
+  },
+  {
+    id: "demo",
+    label: "Demo",
+    gradient: "linear-gradient(120deg,#ffd27f 0%,#ffc3a0 100%)",
+    shadow: "0 10px 24px rgba(255,178,140,0.28)",
+  },
+  {
+    id: "pricing",
+    label: "Pricing",
+    gradient: "linear-gradient(120deg,#ffc3a0 0%,#ff9fb7 100%)",
+    shadow: "0 10px 24px rgba(255,159,183,0.28)",
+  },
+  {
+    id: "faq",
+    label: "FAQ",
+    gradient: "linear-gradient(120deg,#ff9fb7 0%,#7fc8e8 100%)",
+    shadow: "0 10px 24px rgba(127,200,232,0.3)",
+  },
+] as const;
 
 export function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [user, setUser] = useState<UserLite>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isAtTop, setIsAtTop] = useState(true);
+  const [currentHash, setCurrentHash] = useState("");
   const isDashboard = pathname?.startsWith("/dashboard");
   const isPublic = !isDashboard;
+  const isLandingPage = pathname === "/";
 
   useEffect(() => {
     if (!isDashboard) {
@@ -88,6 +117,43 @@ export function Navbar() {
   }, [pathname]);
 
   useEffect(() => {
+    if (!isLandingPage || typeof window === "undefined") {
+      setCurrentHash("");
+      return;
+    }
+    const nextHash = window.location.hash || `#${LANDING_LINKS[0].id}`;
+    setCurrentHash(nextHash);
+    const handleHash = () =>
+      setCurrentHash(window.location.hash || `#${LANDING_LINKS[0].id}`);
+    window.addEventListener("hashchange", handleHash);
+    return () => window.removeEventListener("hashchange", handleHash);
+  }, [isLandingPage]);
+
+  useEffect(() => {
+    if (!isLandingPage || typeof window === "undefined") return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (visible?.target?.id) {
+          const nextHash = `#${visible.target.id}`;
+          setCurrentHash((prev) => (prev === nextHash ? prev : nextHash));
+        }
+      },
+      {
+        threshold: [0.3, 0.5, 0.7],
+        rootMargin: "-15% 0px -35% 0px",
+      }
+    );
+    LANDING_LINKS.forEach((link) => {
+      const section = document.getElementById(link.id);
+      if (section) observer.observe(section);
+    });
+    return () => observer.disconnect();
+  }, [isLandingPage]);
+
+  useEffect(() => {
     if (!isPublic) {
       setIsAtTop(true);
       return;
@@ -125,13 +191,59 @@ export function Navbar() {
   const navLinkTone = isDashboard
     ? "text-foreground/80 hover:bg-foreground/10"
     : overlayMode
-    ? "bg-white/15 text-white/90 shadow-[0_22px_55px_rgba(15,15,30,0.35)] hover:bg-white/20 hover:text-white"
+    ? "border border-white/60 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.95),_rgba(255,255,255,0.7))] text-slate-900 shadow-[0_18px_35px_rgba(15,15,30,0.18)] hover:bg-white"
     : "text-slate-700 hover:bg-slate-100";
   const navLinkActive = isDashboard
     ? "text-foreground"
     : overlayMode
-    ? "bg-white text-[#0f172a] shadow-[0_24px_60px_rgba(15,15,30,0.35)]"
+    ? "border border-white bg-white text-[#0f172a] shadow-[0_20px_45px_rgba(15,15,30,0.28)]"
     : "text-[#0f172a]";
+
+  const activeLandingSection = isLandingPage
+    ? currentHash
+      ? currentHash.replace("#", "")
+      : LANDING_LINKS[0].id
+    : LANDING_LINKS[0].id;
+
+  const scrollToSection = (sectionId: string) => {
+    if (typeof window === "undefined") return;
+    const element = document.getElementById(sectionId);
+    if (!element) return;
+    const headerOffset = 80;
+    const offsetPosition =
+      element.getBoundingClientRect().top + window.scrollY - headerOffset;
+    window.scrollTo({
+      top: Math.max(offsetPosition, 0),
+      behavior: "smooth",
+    });
+    const hash = `#${sectionId}`;
+    setCurrentHash(hash);
+    window.history.replaceState(null, "", hash);
+  };
+
+  const handlePillSelect = (
+    sectionId: (typeof LANDING_LINKS)[number]["id"]
+  ) => {
+    if (isLandingPage) {
+      scrollToSection(sectionId);
+    } else {
+      router.push(`/#${sectionId}`);
+    }
+  };
+
+  const handleNavLinkClick = (
+    event: MouseEvent<HTMLAnchorElement>,
+    sectionId: (typeof LANDING_LINKS)[number]["id"],
+    closeMenu?: boolean
+  ) => {
+    if (!isLandingPage) {
+      if (closeMenu) setMobileOpen(false);
+      return;
+    }
+    event.preventDefault();
+    if (closeMenu) setMobileOpen(false);
+    scrollToSection(sectionId);
+  };
 
   const mobilePanelClass = cn(
     "fixed inset-x-4 top-24 z-50 rounded-2xl border p-6 shadow-xl backdrop-blur-sm",
@@ -142,13 +254,9 @@ export function Navbar() {
       : "border-foreground/10 bg-white"
   );
 
-  const mobileLinkClass = cn(
-    "block rounded-xl px-3 py-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]",
-    isDashboard
-      ? "text-foreground/80 hover:bg-foreground/10"
-      : overlayMode
-      ? "text-white/80 hover:bg-white/10"
-      : "text-slate-700 hover:bg-slate-100"
+  const mobileLinkBase = cn(
+    "block rounded-2xl px-4 py-2 text-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]",
+    isDashboard ? "text-foreground/80 hover:bg-foreground/10" : "text-[#0f172a]"
   );
 
   const mobileAvatarFrame = cn(
@@ -161,66 +269,58 @@ export function Navbar() {
   );
 
   const desktopLinks = (
-    <ul className="hidden items-center gap-1.5 lg:flex" aria-label="Primary">
-      {NAV_LINKS.map((link) => {
-        const isAnchor = link.href.includes("#");
-        const active = isAnchor ? pathname === "/" : pathname === link.href;
-        return (
-          <li key={link.href}>
-            <Link
-              href={link.href}
-              className={cn(navLinkBase, navLinkTone, active && navLinkActive)}
-            >
-              {link.label}
-            </Link>
-          </li>
-        );
-      })}
-    </ul>
+    <div className="w-full max-w-[720px] px-4">
+      <AdaptiveNavPill
+        items={LANDING_LINKS}
+        activeId={activeLandingSection}
+        onSelect={handlePillSelect}
+        alwaysExpanded
+      />
+    </div>
   );
 
   const loginButton = user ? (
     <Link
       href="/dashboard/linkets"
       className={cn(
-        "hidden items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold transition lg:inline-flex",
+        "inline-flex h-12 items-center justify-center rounded-full px-5 text-sm font-semibold uppercase tracking-[0.08em] transition",
         isDashboard
           ? "bg-foreground text-background hover:bg-foreground/90"
           : overlayMode
-          ? "border border-white/30 bg-white/10 text-white hover:bg-white/20"
-          : "bg-foreground text-background hover:bg-foreground/90"
+          ? "border border-white/40 bg-white/5 text-white shadow-[0_16px_32px_rgba(15,23,42,0.25)] hover:bg-white/15"
+          : "bg-[#0b1220] text-white shadow-[0_18px_32px_rgba(15,23,42,0.25)] hover:bg-[#141c32]"
       )}
       aria-label={`Go to ${brand.name} dashboard`}
     >
       Dashboard
     </Link>
   ) : (
-    <Link
-      href="/auth?view=signin"
+    <Button
+      asChild
       className={cn(
-        "hidden items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold transition lg:inline-flex",
+        "h-12 rounded-full px-6 text-sm font-semibold uppercase tracking-[0.08em]",
         isDashboard
-          ? "border border-foreground/20 text-foreground hover:border-foreground/40 hover:bg-foreground/5"
+          ? "border border-foreground/20 bg-background text-foreground hover:bg-foreground/5"
           : overlayMode
-          ? "border border-white/30 text-white hover:bg-white/10"
-          : "border border-foreground/20 text-foreground hover:border-foreground/40 hover:bg-foreground/5"
+          ? "bg-white text-slate-900 shadow-[0_18px_35px_rgba(15,23,42,0.25)] hover:bg-white/90"
+          : "bg-white text-[#0b1220] shadow-[0_12px_30px_rgba(15,23,42,0.12)] hover:bg-white/95"
       )}
       aria-label={`Log in to ${brand.name}`}
     >
-      Sign in
-    </Link>
+      <Link href="/auth?view=signin">Sign in</Link>
+    </Button>
   );
 
   const primaryCta = (
     <Button
       asChild
       className={cn(
-        "rounded-full",
+        "h-12 rounded-full px-6 text-sm font-semibold uppercase tracking-[0.08em]",
         isDashboard
           ? "shadow-[0_12px_40px_rgba(16,200,120,0.15)] hover:shadow-[0_18px_45px_rgba(16,200,120,0.22)]"
           : overlayMode
-          ? "bg-white text-slate-900 shadow-[0_20px_45px_rgba(15,23,42,0.35)] hover:bg-white/90"
-          : "shadow-[0_18px_45px_rgba(56,189,248,0.25)] hover:shadow-[0_24px_55px_rgba(56,189,248,0.35)]"
+          ? "bg-white text-slate-900 shadow-[0_22px_50px_rgba(15,23,42,0.35)] hover:bg-white/90"
+          : "bg-gradient-to-r from-[#7fc8e8] via-[#5fb7f5] to-[#a5f3fc] text-[#0b1220] shadow-[0_20px_45px_rgba(125,200,232,0.35)] hover:bg-gradient-to-r hover:from-[#ff9776] hover:via-[#ffb166] hover:to-[#ffd27f]"
       )}
     >
       <Link href="/pricing" aria-label={`Buy ${brand.shortName ?? brand.name}`}>
@@ -237,7 +337,7 @@ export function Navbar() {
   return (
     <header role="banner" className={headerClassName} aria-label="Site header">
       <nav className={navClassName} aria-label="Main">
-        <div className="flex items-center gap-6">
+        <div className="flex flex-1 items-center gap-4">
           <Link
             href="/"
             className="inline-flex items-center gap-2 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]"
@@ -266,20 +366,25 @@ export function Navbar() {
               <span className={brandNameClass}>{brand.name}</span>
             )}
           </Link>
-          {desktopLinks}
+          <div
+            className="hidden flex-1 items-center justify-center lg:flex"
+            aria-label="Primary"
+          >
+            {desktopLinks}
+          </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           {loginButton}
           {primaryCta}
           <button
             type="button"
             className={cn(
-              "inline-flex items-center justify-center rounded-full border p-2 lg:hidden focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]",
+              "inline-flex items-center justify-center rounded-full border p-2 transition lg:hidden focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]",
               isDashboard
-                ? "border-border/60 text-foreground"
+                ? "border-border/60 bg-background/70 text-foreground"
                 : overlayMode
-                ? "border-white/40 text-white"
-                : "border-foreground/10"
+                ? "border-white/70 bg-white/90 text-slate-900 shadow-[0_10px_25px_rgba(15,15,30,0.2)]"
+                : "border-foreground/10 bg-white/80 text-foreground"
             )}
             onClick={() => setMobileOpen((open) => !open)}
             aria-label={mobileOpen ? "Close navigation" : "Open navigation"}
@@ -302,14 +407,42 @@ export function Navbar() {
           />
           <div className={mobilePanelClass}>
             <nav aria-label="Mobile primary">
-              <ul className="flex flex-col gap-2 text-sm font-medium">
-                {NAV_LINKS.map((link) => (
-                  <li key={link.href}>
-                    <Link href={link.href} className={mobileLinkClass}>
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
+              <ul className="flex flex-col gap-2 text-sm">
+                {LANDING_LINKS.map((link) => {
+                  const isActive =
+                    isLandingPage && activeLandingSection === link.id;
+                  const accentShadow =
+                    link.shadow ?? "0 8px 20px rgba(15,23,42,0.15)";
+                  return (
+                    <li key={link.id}>
+                      <Link
+                        href={`/#${link.id}`}
+                        className={cn(
+                          mobileLinkBase,
+                          isActive ? "font-semibold" : "font-medium",
+                          !isDashboard && "text-[#0b1220]"
+                        )}
+                        style={
+                          !isDashboard
+                            ? {
+                                backgroundImage: link.gradient,
+                                opacity: isActive ? 1 : 0.78,
+                                border: "1px solid rgba(255,255,255,0.5)",
+                                boxShadow: isActive
+                                  ? accentShadow
+                                  : "inset 0 0 0 1px rgba(255,255,255,0.35)",
+                              }
+                            : undefined
+                        }
+                        onClick={(event) =>
+                          handleNavLinkClick(event, link.id, true)
+                        }
+                      >
+                        {link.label}
+                      </Link>
+                    </li>
+                  );
+                })}
               </ul>
             </nav>
             <div className="mt-6 grid gap-3">

@@ -17,7 +17,7 @@ interface Testimonial {
 }
 
 interface TestimonialSliderProps {
-  testimonials: readonly Testimonial[];
+  testimonials: Testimonial[];
   eyebrow?: string;
   title?: string;
   className?: string;
@@ -39,9 +39,7 @@ function TestimonialSlider({
 }: TestimonialSliderProps) {
   const isLight = tone === "light";
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [windowWidth, setWindowWidth] = useState<number>(() =>
-    typeof window !== "undefined" ? window.innerWidth : 1280
-  );
+  const [windowWidth, setWindowWidth] = useState<number>(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const [direction, setDirection] = useState<1 | -1>(1);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -55,6 +53,7 @@ function TestimonialSlider({
       const maxIndex = Math.max(0, testimonials.length - newVisible);
       setCurrentIndex((prev) => Math.min(prev, maxIndex));
     };
+    handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, [testimonials.length]);
