@@ -19,6 +19,9 @@ export function Footer() {
   if (isLanding) {
     return null;
   }
+  if (isDashboard) {
+    return null;
+  }
 
   const columns = [
     {
@@ -59,26 +62,14 @@ export function Footer() {
     },
   ];
 
-  const wrapperClass = cn(
-    "border-t bg-muted/20",
-    isDashboard &&
-      "border-border/60 bg-background/50 backdrop-blur supports-[backdrop-filter]:bg-background/35"
-  );
+  const wrapperClass = cn("border-t bg-muted/20");
 
-  const brandTextClass = cn(
-    "text-xl font-semibold tracking-tight",
-    isDashboard ? "text-foreground" : "text-[#0f172a]"
-  );
+  const brandTextClass = "text-xl font-semibold tracking-tight text-[#0f172a]";
 
-  const newsletterInputClass = cn(
-    "rounded-full",
-    isDashboard ? "border-border/60 bg-card/80" : "bg-white"
-  );
+  const newsletterInputClass = "rounded-full bg-white";
 
-  const socialLinkClass = cn(
-    "transition hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]",
-    isDashboard ? "text-foreground/80" : "text-muted-foreground"
-  );
+  const socialLinkClass =
+    "text-muted-foreground transition hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]";
 
   if (isPublic) {
     return (

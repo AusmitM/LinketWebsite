@@ -48,6 +48,13 @@ const LANDING_LINKS = [
   },
 ] as const;
 
+const DASHBOARD_NAV = [
+  { href: "/dashboard", label: "Overview" },
+  { href: "/dashboard/analytics", label: "Analytics" },
+  { href: "/dashboard/leads", label: "Leads" },
+  { href: "/dashboard/profiles", label: "Profiles" },
+] as const;
+
 export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
@@ -186,24 +193,24 @@ export function Navbar() {
       : "text-[#0f172a]"
   );
 
-  const navLinkBase =
-    "rounded-full px-4 py-2 text-sm transition shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]";
-  const navLinkTone = isDashboard
-    ? "text-foreground/80 hover:bg-foreground/10"
-    : overlayMode
-    ? "border border-white/60 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.95),_rgba(255,255,255,0.7))] text-slate-900 shadow-[0_18px_35px_rgba(15,15,30,0.18)] hover:bg-white"
-    : "text-slate-700 hover:bg-slate-100";
-  const navLinkActive = isDashboard
-    ? "text-foreground"
-    : overlayMode
-    ? "border border-white bg-white text-[#0f172a] shadow-[0_20px_45px_rgba(15,15,30,0.28)]"
-    : "text-[#0f172a]";
+  // const navLinkBase =
+  //   "rounded-full px-4 py-2 text-sm transition shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]";
+  // const navLinkTone = isDashboard
+  //   ? "text-foreground/80 hover:bg-foreground/10"
+  //   : overlayMode
+  //   ? "border border-white/60 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.95),_rgba(255,255,255,0.7))] text-slate-900 shadow-[0_18px_35px_rgba(15,15,30,0.18)] hover:bg-white"
+  //   : "text-slate-700 hover:bg-slate-100";
+  // const navLinkActive = isDashboard
+  //   ? "text-foreground"
+  //   : overlayMode
+  //   ? "border border-white bg-white text-[#0f172a] shadow-[0_20px_45px_rgba(15,15,30,0.28)]"
+  //   : "text-[#0f172a]";
 
   const activeLandingSection = isLandingPage
     ? currentHash
       ? currentHash.replace("#", "")
       : LANDING_LINKS[0].id
-    : LANDING_LINKS[0].id;
+    : null;
 
   const scrollToSection = (sectionId: string) => {
     if (typeof window === "undefined") return;
@@ -221,9 +228,7 @@ export function Navbar() {
     window.history.replaceState(null, "", hash);
   };
 
-  const handlePillSelect = (
-    sectionId: (typeof LANDING_LINKS)[number]["id"]
-  ) => {
+  const handlePillSelect = (sectionId: string) => {
     if (isLandingPage) {
       scrollToSection(sectionId);
     } else {
@@ -274,7 +279,6 @@ export function Navbar() {
         items={LANDING_LINKS}
         activeId={activeLandingSection}
         onSelect={handlePillSelect}
-        alwaysExpanded
       />
     </div>
   );
@@ -333,6 +337,161 @@ export function Navbar() {
     "mx-auto flex max-w-6xl items-center justify-between px-4 py-3 md:px-6",
     overlayMode ? "text-white" : "text-foreground"
   );
+
+  const dashboardAvatar = user ? (
+    <Link
+      href="/dashboard/profile"
+      className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border/60 bg-card/90 text-sm font-semibold uppercase text-foreground transition hover:bg-card"
+      aria-label="Account"
+    >
+      {avatarUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={avatarUrl}
+          alt="avatar"
+          className="h-full w-full rounded-full object-cover"
+        />
+      ) : (
+        (user.email ?? "LL").slice(0, 2).toUpperCase()
+      )}
+    </Link>
+  ) : (
+    <Button
+      variant="outline"
+      size="sm"
+      asChild
+      className="rounded-full border-border/60 bg-card/80 text-foreground hover:bg-card"
+    >
+      <Link href="/auth?view=signin">Sign in</Link>
+    </Button>
+  );
+
+  if (isDashboard) {
+    const mobileNavItemClass = cn(
+      "rounded-2xl border px-4 py-2 text-base font-semibold transition",
+      "border-border/60 bg-card/80 text-foreground hover:bg-card"
+    );
+    const activeDashboardHref = (() => {
+      if (!pathname) return null;
+      if (!pathname.startsWith("/dashboard")) return null;
+      if (pathname === "/dashboard") return "/dashboard";
+      let match: string | null = null;
+      for (const item of DASHBOARD_NAV) {
+        if (item.href === "/dashboard") continue;
+        if (pathname === item.href || pathname.startsWith(`${item.href}/`)) {
+          if (!match || item.href.length > match.length) {
+            match = item.href;
+          }
+        }
+      }
+      return match;
+    })();
+
+    const isNavActive = (href: string) => activeDashboardHref === href;
+
+    const dashboardLink = (link: (typeof DASHBOARD_NAV)[number]) => {
+      const isActive = isNavActive(link.href);
+      return (
+        <Link
+          key={link.href}
+          href={link.href}
+          className={cn(
+            "rounded-full px-4 py-2 text-sm font-semibold tracking-wide transition lg:inline-flex",
+            isActive
+              ? "bg-foreground text-background shadow-[var(--shadow-ambient)]"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          {link.label}
+        </Link>
+      );
+    };
+
+    return (
+      <header className="sticky top-0 z-50 w-full border-b border-border/60 bg-background/90 text-foreground backdrop-blur supports-[backdrop-filter]:bg-background/70">
+        <nav
+          className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 text-foreground md:px-6"
+          aria-label="Dashboard"
+        >
+          <div className="flex items-center gap-6">
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center gap-2"
+              aria-label={`${brand.name} dashboard`}
+            >
+              <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-foreground/10 text-lg font-bold text-foreground">
+                {(brand.shortName ?? brand.name).slice(0, 2)}
+              </span>
+              <span className="hidden text-lg font-semibold text-foreground lg:inline">
+                {brand.name}
+              </span>
+            </Link>
+            <div className="hidden items-center gap-2 rounded-full border border-border/60 bg-card/80 px-2 py-1 lg:flex">
+              {DASHBOARD_NAV.map(dashboardLink)}
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button
+              asChild
+              size="sm"
+              className="hidden rounded-full bg-gradient-to-r from-[#6ee7b7] via-[#3b82f6] to-[#8b5cf6] text-white shadow-[0_20px_40px_rgba(59,130,246,0.35)] hover:scale-[1.01] lg:inline-flex"
+            >
+              <Link href="/dashboard/linkets/new">New Linket</Link>
+            </Button>
+            {dashboardAvatar}
+            <button
+              type="button"
+              className="inline-flex items-center justify-center rounded-full border border-border/60 p-2 text-foreground lg:hidden"
+              onClick={() => setMobileOpen((prev) => !prev)}
+              aria-label={mobileOpen ? "Close navigation" : "Open navigation"}
+            >
+              {mobileOpen ? (
+                <X className="h-5 w-5" aria-hidden />
+              ) : (
+                <Menu className="h-5 w-5" aria-hidden />
+              )}
+            </button>
+          </div>
+        </nav>
+        {mobileOpen && (
+          <div className="border-t border-border/60 bg-background/95 px-4 pb-6 pt-4 text-foreground lg:hidden">
+            <nav
+              className="flex flex-col gap-2"
+              aria-label="Dashboard sections"
+            >
+              {DASHBOARD_NAV.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={cn(
+                    mobileNavItemClass,
+                    isNavActive(link.href) &&
+                      "border-foreground/40 bg-card text-foreground font-semibold"
+                  )}
+                  onClick={() => setMobileOpen(false)}
+                >
+                  {link.label}
+                </Link>
+              ))}
+              <Button
+                asChild
+                size="sm"
+                className="mt-3 w-full rounded-2xl bg-gradient-to-r from-[#6ee7b7] via-[#3b82f6] to-[#8b5cf6] text-white shadow-[0_18px_35px_rgba(59,130,246,0.35)]"
+              >
+                <Link href="/dashboard/linkets/new">New Linket</Link>
+              </Button>
+              <div className="mt-2 flex items-center gap-3 rounded-2xl border border-border/60 bg-card/80 px-4 py-3">
+                {dashboardAvatar}
+                <div className="text-sm text-muted-foreground">
+                  {user?.email ?? "Not signed in"}
+                </div>
+              </div>
+            </nav>
+          </div>
+        )}
+      </header>
+    );
+  }
 
   return (
     <header role="banner" className={headerClassName} aria-label="Site header">

@@ -11,6 +11,8 @@ import {
   BarChart3,
   Radio,
   Tags,
+  MessageSquare,
+  CreditCard,
   Settings,
   HelpCircle,
   ChevronLeft,
@@ -21,17 +23,17 @@ import {
 const BASE_NAV = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
   { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/dashboard/leads", label: "Leads", icon: MessageSquare },
   { href: "/dashboard/profiles", label: "Linket Profiles", icon: Radio },
-  // { href: "/dashboard/messages", label: "Messages", icon: MessageSquare },
-  // { href: "/dashboard/billing", label: "Billing", icon: CreditCard },
-  { href: "/dashboard/vcard", label: "vCard", icon: Radio },
   { href: "/dashboard/linkets", label: "Linkets", icon: Tags },
+  { href: "/dashboard/vcard", label: "vCard", icon: Radio },
+  { href: "/dashboard/billing", label: "Billing", icon: CreditCard },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 
 const STORAGE_KEY = "dash:sidebar-collapsed";
 
-export default function Sidebar() {
+export default function Sidebar({ className }: { className?: string }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -74,43 +76,38 @@ export default function Sidebar() {
   return (
     <aside
       className={cn(
-        "sticky top-0 hidden h-[calc(100dvh-0px)] shrink-0 border-r bg-sidebar/70 backdrop-blur md:block",
-        collapsed ? "w-[72px]" : "w-[240px]"
+        "hidden shrink-0 border-r bg-sidebar/70 backdrop-blur md:block",
+        collapsed ? "w-[72px]" : "w-[240px]",
+        className
       )}
       aria-label="Primary"
     >
       <div className="flex h-full flex-col">
         <div className="flex items-center justify-between gap-2 px-3 py-4">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 rounded-md px-2 py-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
-          >
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-[var(--primary)]/90 to-[var(--accent)]/90 shadow" />
-            {!collapsed && (
-              <span className="text-sm font-semibold">Linket</span>
+          <div
+            className={cn(
+              "flex items-center gap-2 rounded-lg border border-border/60 bg-card/80 px-2 py-1.5 shadow-sm backdrop-blur",
+              collapsed && "justify-center"
             )}
-          </Link>
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-card/80 px-2 py-1.5 shadow-sm backdrop-blur">
-              <ThemeToggle />
-              {!collapsed && (
-                <span className="text-xs font-medium text-muted-foreground">
-                  Theme
-                </span>
-              )}
-            </div>
-            <button
-              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-              onClick={() => setCollapsed((v) => !v)}
-              className="rounded-md p-1 text-muted-foreground hover:bg-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]"
-            >
-              {collapsed ? (
-                <ChevronRight className="h-4 w-4" />
-              ) : (
-                <ChevronLeft className="h-4 w-4" />
-              )}
-            </button>
+          >
+            <ThemeToggle />
+            {!collapsed && (
+              <span className="text-xs font-medium text-muted-foreground">
+                Theme
+              </span>
+            )}
           </div>
+          <button
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            onClick={() => setCollapsed((v) => !v)}
+            className="rounded-md p-1 text-muted-foreground hover:bg-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]"
+          >
+            {collapsed ? (
+              <ChevronRight className="h-4 w-4" />
+            ) : (
+              <ChevronLeft className="h-4 w-4" />
+            )}
+          </button>
         </div>
         <nav className="flex-1 space-y-1 px-2">
           {navItems.map((item) => {

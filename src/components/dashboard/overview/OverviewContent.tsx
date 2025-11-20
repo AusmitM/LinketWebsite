@@ -17,7 +17,16 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { BarChart3, MoveDown, MoveUp, Settings2, Users } from "lucide-react";
+import {
+  BarChart3,
+  Building2,
+  Download,
+  MoveDown,
+  MoveUp,
+  Settings2,
+  Share2,
+  Users,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -33,11 +42,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { useDashboardUser } from "@/components/dashboard/DashboardSessionContext";
 import { supabase } from "@/lib/supabase";
-// import type { UserAnalytics } from "@/lib/analytics-service";
-import {
-  // processUserAnalytics,
-  type UserAnalytics,
-} from "@/lib/supabase-analytics";
+import { toast } from "@/components/system/toaster";
+import type { UserAnalytics } from "@/lib/analytics-service";
+
 const numberFormatter = new Intl.NumberFormat("en-US");
 const percentFormatter = new Intl.NumberFormat("en-US", {
   style: "percent",
@@ -64,9 +71,9 @@ type ModuleKey =
   | "business-metrics"
   | "growth-trajectory"
   | "conversion-funnel"
-  // | "lead-followups"
-  | "top-performers";
-// | "quick-actions";
+  | "lead-followups"
+  | "top-performers"
+  | "quick-actions";
 
 type ModuleSize = "full" | "wide" | "half" | "third";
 
@@ -75,6 +82,7 @@ type ModuleContext = {
   analytics: UserAnalytics | null;
   error: string | null;
   publicUrl: string | null;
+  userId: string | null;
 };
 
 type ModuleDefinition = {
@@ -86,11 +94,11 @@ type ModuleDefinition = {
 
 const ALL_MODULES: ModuleKey[] = [
   "business-metrics",
+  "quick-actions",
   "growth-trajectory",
-  "conversion-funnel",
-  // "lead-followups",
   "top-performers",
-  // "quick-actions",
+  "conversion-funnel",
+  "lead-followups",
 ];
 
 const MODULE_STORAGE_KEY = "overview:module-preferences";
@@ -102,22 +110,22 @@ type ModulePreferences = {
 
 const sizeClassMap: Record<ModuleSize, string> = {
   full: "col-span-12",
-  wide: "col-span-12 xl:col-span-8",
-  half: "col-span-12 xl:col-span-6",
-  third: "col-span-12 xl:col-span-4",
+  wide: "col-span-12 lg:col-span-8",
+  half: "col-span-12 lg:col-span-6",
+  third: "col-span-12 sm:col-span-6 lg:col-span-4",
 };
 
 const MODULE_CATALOG: Record<ModuleKey, ModuleDefinition> = {
   "business-metrics": {
     label: "Business pulse",
     description: "Daily performance snapshot and active Linket health.",
-    size: "full",
+    size: "wide",
     render: BusinessMetricsModule,
   },
   "growth-trajectory": {
     label: "Engagement trend",
     description: "Scans and leads over time.",
-    size: "full",
+    size: "wide",
     render: GrowthTrajectoryModule,
   },
   "conversion-funnel": {
@@ -126,29 +134,28 @@ const MODULE_CATALOG: Record<ModuleKey, ModuleDefinition> = {
     size: "half",
     render: ConversionFunnelModule,
   },
-  // "lead-followups": {
-  //   label: "Lead follow-ups",
-  //   description: "Latest leads with contact details.",
-  //   size: "half",
-  //   render: LeadFollowupModule,
-  // },
+  "lead-followups": {
+    label: "Lead follow-ups",
+    description: "Latest leads with contact details.",
+    size: "half",
+    render: LeadFollowupModule,
+  },
   "top-performers": {
     label: "Top Linkets",
     description: "Linkets delivering the most scans and leads.",
-    size: "half",
+    size: "third",
     render: TopPerformersModule,
   },
-  // "quick-actions": {
-  //   label: "Quick actions",
-  //   description: "Jump into the workflows you use most.",
-  //   size: "third",
-  //   render: QuickActionsModule,
-  // },
+  "quick-actions": {
+    label: "Quick actions",
+    description: "Jump into the workflows you use most.",
+    size: "third",
+    render: QuickActionsModule,
+  },
 };
 
 export default function OverviewContent() {
   const dashboardUser = useDashboardUser();
-  console.log("DASHBOARD USER:", dashboardUser);
   const [userId, setUserId] = useState<string | null | undefined>(
     dashboardUser?.id ?? undefined
   );
@@ -391,8 +398,9 @@ export default function OverviewContent() {
       analytics,
       error,
       publicUrl,
+      userId: userId ?? null,
     }),
-    [loading, analytics, error, publicUrl]
+    [loading, analytics, error, publicUrl, userId]
   );
 
   const lastUpdated = analytics?.meta.generatedAt
@@ -400,7 +408,7 @@ export default function OverviewContent() {
     : null;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold text-foreground">Overview</h1>
@@ -508,7 +516,7 @@ export default function OverviewContent() {
         </Card>
       ) : null}
 
-      <div className="grid gap-6 xl:grid-cols-12">
+      <div className="grid gap-4 lg:grid-cols-12">
         {activeModules.length === 0 ? (
           <Card className="col-span-12 rounded-3xl border bg-card/80 shadow-sm">
             <CardContent className="flex flex-col items-center gap-4 py-12 text-center">
@@ -545,7 +553,7 @@ function BusinessMetricsModule({ analytics, loading }: ModuleContext) {
   if (loading && !analytics) {
     return (
       <Card className="rounded-3xl border bg-card/80 shadow-sm">
-        <CardHeader>
+        <CardHeader className="space-y-1 pb-1">
           <CardTitle className="flex items-center gap-2 text-lg font-semibold">
             <BarChart3 className="h-5 w-5 text-primary" aria-hidden />
             Business pulse
@@ -554,7 +562,7 @@ function BusinessMetricsModule({ analytics, loading }: ModuleContext) {
             Daily performance snapshot.
           </p>
         </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <CardContent className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-4">
           {Array.from({ length: 4 }).map((_, index) => (
             <SkeletonStatCard key={`metric-skeleton-${index}`} />
           ))}
@@ -566,7 +574,7 @@ function BusinessMetricsModule({ analytics, loading }: ModuleContext) {
   if (!analytics?.totals) {
     return (
       <Card className="rounded-3xl border bg-card/80 shadow-sm">
-        <CardHeader>
+        <CardHeader className="space-y-1 pb-1">
           <CardTitle className="flex items-center gap-2 text-lg font-semibold">
             <BarChart3 className="h-5 w-5 text-primary" aria-hidden />
             Business pulse
@@ -618,7 +626,7 @@ function BusinessMetricsModule({ analytics, loading }: ModuleContext) {
 
   return (
     <Card className="rounded-3xl border bg-card/80 shadow-sm">
-      <CardHeader>
+      <CardHeader className="space-y-1 pb-1">
         <CardTitle className="flex items-center gap-2 text-lg font-semibold">
           <BarChart3 className="h-5 w-5 text-primary" aria-hidden />
           Business pulse
@@ -627,7 +635,7 @@ function BusinessMetricsModule({ analytics, loading }: ModuleContext) {
           Daily performance snapshot.
         </p>
       </CardHeader>
-      <CardContent className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <CardContent className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-4">
         {cards.map((card) => (
           <StatCard key={card.label} {...card} />
         ))}
@@ -641,7 +649,7 @@ function GrowthTrajectoryModule({ analytics, loading }: ModuleContext) {
 
   return (
     <Card className="rounded-3xl border bg-card/80 shadow-sm">
-      <CardHeader className="flex flex-row items-center justify-between">
+      <CardHeader className="flex flex-row items-center justify-between pb-1">
         <div>
           <CardTitle className="text-lg font-semibold">
             Engagement trend
@@ -739,7 +747,7 @@ function ConversionFunnelModule({
 
   return (
     <Card className="rounded-3xl border bg-card/80 shadow-sm">
-      <CardHeader>
+      <CardHeader className="space-y-1 pb-1">
         <CardTitle className="text-lg font-semibold">
           Conversion funnel
         </CardTitle>
@@ -747,8 +755,8 @@ function ConversionFunnelModule({
           Tap-to-lead performance over the last 7 days.
         </p>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid gap-4">
+      <CardContent className="space-y-3">
+        <div className="grid gap-3">
           <SnapshotRow
             label="Total taps"
             value={numberFormatter.format(scans7d)}
@@ -782,88 +790,150 @@ function ConversionFunnelModule({
   );
 }
 
-// function LeadFollowupModule({ analytics, loading }: ModuleContext) {
-//   return (
-//     <Card className="rounded-3xl border bg-card/80 shadow-sm">
-//       <CardHeader>
-//         <CardTitle className="text-lg font-semibold">Lead follow-ups</CardTitle>
-//         <p className="text-sm text-muted-foreground">
-//           Reach out while you’re still top-of-mind.
-//         </p>
-//       </CardHeader>
-//       <CardContent>
-//         {loading && !analytics ? (
-//           <div className="space-y-3">
-//             {Array.from({ length: 4 }).map((_, index) => (
-//               <div
-//                 key={index}
-//                 className="h-12 animate-pulse rounded-2xl bg-muted"
-//               />
-//             ))}
-//           </div>
-//         ) : analytics?.recentLeads?.length ? (
-//           <div className="grid gap-3">
-//             {analytics.recentLeads.slice(0, 5).map((lead) => (
-//               <div
-//                 key={lead.id}
-//                 className="flex flex-col gap-1 rounded-2xl border border-border/70 bg-background/60 p-3 text-sm"
-//               >
-//                 <div className="flex flex-wrap items-center justify-between gap-2">
-//                   <div className="font-medium text-foreground">
-//                     {lead.name || "Unnamed lead"}
-//                   </div>
-//                   <span className="text-xs text-muted-foreground">
-//                     {shortDate.format(new Date(lead.created_at))}
-//                   </span>
-//                 </div>
-//                 <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-//                   {lead.email && (
-//                     <a
-//                       href={`mailto:${lead.email}`}
-//                       className="truncate text-primary underline"
-//                     >
-//                       {lead.email}
-//                     </a>
-//                   )}
-//                   {lead.phone && (
-//                     <a
-//                       href={`tel:${lead.phone}`}
-//                       className="truncate text-primary underline"
-//                     >
-//                       {lead.phone}
-//                     </a>
-//                   )}
-//                   {lead.company && (
-//                     <span className="truncate">{lead.company}</span>
-//                   )}
-//                 </div>
-//                 {lead.message && (
-//                   <blockquote className="rounded-xl border border-dashed border-border/70 bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-//                     {lead.message}
-//                   </blockquote>
-//                 )}
-//               </div>
-//             ))}
-//             <Button
-//               asChild
-//               variant="outline"
-//               className="mt-1 w-full rounded-full text-sm"
-//             >
-//               <Link href="/dashboard/leads">View all leads</Link>
-//             </Button>
-//           </div>
-//         ) : (
-//           <EmptyState message="No leads captured in this window." />
-//         )}
-//       </CardContent>
-//     </Card>
-//   );
-// }
+function LeadFollowupModule({ analytics, loading, userId }: ModuleContext) {
+  const [recentLeads, setRecentLeads] = useState(
+    () => analytics?.recentLeads ?? []
+  );
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setRecentLeads(analytics?.recentLeads ?? []);
+  }, [analytics?.recentLeads]);
+
+  const handleDelete = useCallback(
+    async (id: string) => {
+      if (!userId) {
+        toast({
+          title: "Sign in required",
+          description: "You need to be signed in to delete leads.",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (!window.confirm("Delete this lead? This cannot be undone.")) return;
+      setDeletingId(id);
+      try {
+        const { error } = await supabase
+          .from("leads")
+          .delete()
+          .eq("id", id)
+          .eq("user_id", userId);
+        if (error) throw error;
+        setRecentLeads((prev) => prev.filter((lead) => lead.id !== id));
+        toast({ title: "Lead deleted" });
+      } catch (err) {
+        const description =
+          err instanceof Error ? err.message : "Unable to delete lead.";
+        toast({ title: "Delete failed", description, variant: "destructive" });
+      } finally {
+        setDeletingId(null);
+      }
+    },
+    [userId]
+  );
+
+  const hasLeads = (recentLeads ?? []).length > 0;
+
+  return (
+    <Card className="rounded-3xl border bg-card/80 shadow-sm">
+      <CardHeader className="space-y-1 pb-1">
+        <CardTitle className="text-lg font-semibold">Lead follow-ups</CardTitle>
+        <p className="text-sm text-muted-foreground">
+          Reach out while you&apos;re still top-of-mind.
+        </p>
+      </CardHeader>
+      <CardContent>
+        {loading && !analytics ? (
+          <div className="space-y-3">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div
+                key={index}
+                className="h-12 animate-pulse rounded-2xl bg-muted"
+              />
+            ))}
+          </div>
+        ) : hasLeads ? (
+          <div className="grid gap-3">
+            {recentLeads.slice(0, 5).map((lead) => (
+              <div
+                key={lead.id}
+                className="flex flex-col gap-2 rounded-2xl border border-border/70 bg-background/60 p-3 text-sm"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="font-medium text-foreground">
+                    {lead.name || "Unnamed lead"}
+                  </div>
+                  <span className="text-xs text-muted-foreground">
+                    {shortDate.format(new Date(lead.created_at))}
+                  </span>
+                </div>
+                <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                  {lead.email && (
+                    <a
+                      href={`mailto:${lead.email}`}
+                      className="truncate text-primary underline"
+                    >
+                      {lead.email}
+                    </a>
+                  )}
+                  {lead.phone && (
+                    <a
+                      href={`tel:${lead.phone}`}
+                      className="truncate text-primary underline"
+                    >
+                      {lead.phone}
+                    </a>
+                  )}
+                  {lead.company && (
+                    <span className="truncate">{lead.company}</span>
+                  )}
+                </div>
+                {lead.message && (
+                  <blockquote className="rounded-xl border border-dashed border-border/70 bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                    {lead.message}
+                  </blockquote>
+                )}
+                <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-primary hover:text-primary/80"
+                    asChild
+                  >
+                    <Link href="/dashboard/leads">View details</Link>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-destructive hover:text-destructive/90"
+                    disabled={deletingId === lead.id}
+                    onClick={() => handleDelete(lead.id)}
+                  >
+                    {deletingId === lead.id ? "Deleting..." : "Delete"}
+                  </Button>
+                </div>
+              </div>
+            ))}
+            <Button
+              asChild
+              variant="outline"
+              className="mt-1 w-full rounded-full text-sm"
+            >
+              <Link href="/dashboard/leads">Manage all leads</Link>
+            </Button>
+          </div>
+        ) : (
+          <EmptyState message="No leads captured in this window." />
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
 function TopPerformersModule({ analytics, loading }: ModuleContext) {
   return (
     <Card className="rounded-3xl border bg-card/80 shadow-sm">
-      <CardHeader>
+      <CardHeader className="space-y-1 pb-1">
         <CardTitle className="flex items-center gap-2 text-lg font-semibold">
           <Users className="h-5 w-5 text-primary" aria-hidden />
           Top Linkets
@@ -919,54 +989,54 @@ function TopPerformersModule({ analytics, loading }: ModuleContext) {
   );
 }
 
-// function QuickActionsModule({ publicUrl }: ModuleContext) {
-//   return (
-//     <Card className="rounded-3xl border bg-card/80 shadow-sm">
-//       <CardHeader>
-//         <CardTitle className="flex items-center gap-2 text-lg font-semibold">
-//           <Building2 className="h-5 w-5 text-primary" aria-hidden />
-//           Quick actions
-//         </CardTitle>
-//         <p className="text-sm text-muted-foreground">
-//           Keep momentum with the next best step.
-//         </p>
-//       </CardHeader>
-//       <CardContent className="grid gap-3">
-//         <Button
-//           asChild
-//           className="w-full justify-start rounded-2xl bg-primary/90 text-primary-foreground hover:bg-primary"
-//         >
-//           <Link href={publicUrl ?? "/dashboard/profiles"}>
-//             <Share2 className="mr-2 h-4 w-4" aria-hidden />
-//             {publicUrl
-//               ? "Share public profile"
-//               : "Activate your public profile"}
-//           </Link>
-//         </Button>
-//         <Button
-//           asChild
-//           variant="outline"
-//           className="w-full justify-start rounded-2xl"
-//         >
-//           <Link href="/dashboard/linkets">
-//             <Users className="mr-2 h-4 w-4" aria-hidden />
-//             Assign a new Linket
-//           </Link>
-//         </Button>
-//         <Button
-//           asChild
-//           variant="ghost"
-//           className="w-full justify-start rounded-2xl"
-//         >
-//           <Link href="/dashboard/leads">
-//             <Download className="mr-2 h-4 w-4" aria-hidden />
-//             Export latest leads
-//           </Link>
-//         </Button>
-//       </CardContent>
-//     </Card>
-//   );
-// }
+function QuickActionsModule({ publicUrl }: ModuleContext) {
+  return (
+    <Card className="rounded-3xl border bg-card/80 shadow-sm">
+      <CardHeader className="space-y-1 pb-1">
+        <CardTitle className="flex items-center gap-2 text-lg font-semibold">
+          <Building2 className="h-5 w-5 text-primary" aria-hidden />
+          Quick actions
+        </CardTitle>
+        <p className="text-sm text-muted-foreground">
+          Keep momentum with the next best step.
+        </p>
+      </CardHeader>
+      <CardContent className="grid gap-3">
+        <Button
+          asChild
+          className="w-full justify-start rounded-2xl bg-primary/90 text-primary-foreground hover:bg-primary"
+        >
+          <Link href={publicUrl ?? "/dashboard/profiles"}>
+            <Share2 className="mr-2 h-4 w-4" aria-hidden />
+            {publicUrl
+              ? "Share public profile"
+              : "Activate your public profile"}
+          </Link>
+        </Button>
+        <Button
+          asChild
+          variant="outline"
+          className="w-full justify-start rounded-2xl"
+        >
+          <Link href="/dashboard/linkets">
+            <Users className="mr-2 h-4 w-4" aria-hidden />
+            Assign a new Linket
+          </Link>
+        </Button>
+        <Button
+          asChild
+          variant="ghost"
+          className="w-full justify-start rounded-2xl"
+        >
+          <Link href="/dashboard/leads">
+            <Download className="mr-2 h-4 w-4" aria-hidden />
+            Export latest leads
+          </Link>
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
 
 function StatCard({
   label,
@@ -979,12 +1049,12 @@ function StatCard({
 }) {
   return (
     <Card className="rounded-2xl border bg-background/70 shadow-sm">
-      <CardHeader>
+      <CardHeader className="pb-1">
         <CardTitle className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
           {label}
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-1">
+      <CardContent className="space-y-0.5">
         <div className="text-3xl font-semibold text-foreground">{value}</div>
         {helper && (
           <div className="text-xs text-muted-foreground">{helper}</div>

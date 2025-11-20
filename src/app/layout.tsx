@@ -37,7 +37,9 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "/",
   },
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
+  ),
   openGraph: {
     title: defaultTitle,
     description: brand.blurb,
@@ -103,10 +105,16 @@ export default function RootLayout({
             </a>
             <div className="flex min-h-dvh flex-col">
               <Navbar />
-              <main id="main" className="flex-1">{children}</main>
+              <main id="main" className="flex-1 min-h-0">
+                {children}
+              </main>
               <Footer />
             </div>
-            <Script id="product-jsonld" type="application/ld+json" strategy="afterInteractive">
+            <Script
+              id="product-jsonld"
+              type="application/ld+json"
+              strategy="afterInteractive"
+            >
               {JSON.stringify(productJsonLd)}
             </Script>
             <Toaster />
@@ -116,7 +124,3 @@ export default function RootLayout({
     </html>
   );
 }
-
-
-
-

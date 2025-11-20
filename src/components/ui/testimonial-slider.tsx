@@ -17,7 +17,7 @@ interface Testimonial {
 }
 
 interface TestimonialSliderProps {
-  testimonials: Testimonial[];
+  testimonials: readonly Testimonial[];
   eyebrow?: string;
   title?: string;
   className?: string;

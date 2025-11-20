@@ -9,6 +9,22 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import {
+  Calendar,
+  Download,
+  Focus,
+  Instagram,
+  LineChart,
+  Pencil,
+  UserRound,
+  Search,
+  ShieldCheck,
+  Sparkles,
+  Star,
+  Twitter,
+  Waves,
+  Youtube,
+} from "lucide-react";
 import { CreativePricing } from "@/components/ui/creative-pricing";
 import type { PricingTier } from "@/components/ui/creative-pricing";
 import { FeatureSteps } from "@/components/ui/feature-section";
@@ -19,11 +35,11 @@ import { cn } from "@/lib/utils";
 import { brand } from "@/config/brand";
 
 export const metadata: Metadata = {
-  title: "Linket -- Tap once. Share everything.",
+  title: "Linket -- Stay Connected",
   description:
     "Linket keychains share your digital profile with a single tap. Customize the hardware, control every link, and see analytics from the very first introduction.",
   openGraph: {
-    title: "Linket -- Tap once. Share everything.",
+    title: "Linket -- Stay Connected",
     description:
       "From the first tap to saved contact, Linket keeps intros warm. NFC + QR hardware, live editing, and analytics built for students, creators, and teams.",
     images: [
@@ -37,7 +53,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Tap once. Share everything.",
+    title: "Stay Connected",
     description:
       "Linket is the customizable tap-to-share keychain that keeps your information current with every scan.",
     images: ["/og.png"],
@@ -55,29 +71,23 @@ const SOCIAL_PROOF = [
   "Brimstone Events",
 ] as const;
 
-const DASHBOARD_TABS = [
-  "Overview",
-  "Customers",
-  "Products",
-  "Settings",
-] as const;
+const DASHBOARD_TABS = ["Overview", "Linkets", "Profiles", "Leads"] as const;
 
-const DASHBOARD_VIEWS = [
-  "Overview",
-  "Analytics",
-  "Reports",
-  "Notifications",
-] as const;
+const DASHBOARD_VIEWS = ["Overview", "Linkets", "Profiles", "Leads"] as const;
 
 const DASHBOARD_STATS = [
+  { label: "Leads collected", value: "128", delta: "+32 vs last quarter" },
+  { label: "Scans", value: "842", delta: "+19% vs last quarter" },
   {
-    label: "Total Revenue",
-    value: "$45,231.89",
-    delta: "+20.1% vs last month",
+    label: "Conversion rate",
+    value: "15.2%",
+    delta: "Leads ÷ scans in this range",
   },
-  { label: "Subscriptions", value: "+2,350", delta: "+18.1% vs last month" },
-  { label: "Sales", value: "+12,234", delta: "+19% vs last month" },
-  { label: "Active Now", value: "+573", delta: "+201 since last hour" },
+  {
+    label: "Active Linkets",
+    value: "7",
+    delta: "Linkets that got at least one scan",
+  },
 ] as const;
 
 const DASHBOARD_BARS = [
@@ -96,19 +106,15 @@ const DASHBOARD_BARS = [
 ] as const;
 
 const RECENT_SALES = [
-  {
-    name: "Olivia Martin",
-    email: "olivia.martin@email.com",
-    amount: "+$1,999.00",
-  },
-  { name: "Jackson Lee", email: "jackson.lee@email.com", amount: "+$39.00" },
+  { name: "Olivia Martin", email: "olivia.martin@email.com", amount: "New" },
+  { name: "Jackson Lee", email: "jackson.lee@email.com", amount: "Yesterday" },
   {
     name: "Isabella Nguyen",
     email: "isabella.nguyen@email.com",
-    amount: "+$299.00",
+    amount: "3 days ago",
   },
-  { name: "William Kim", email: "will.kim@email.com", amount: "+$99.00" },
-  { name: "Sofia Davis", email: "sofia.davis@email.com", amount: "+$39.00" },
+  { name: "William Kim", email: "will.kim@email.com", amount: "Followed up" },
+  { name: "Sofia Davis", email: "sofia.davis@email.com", amount: "1 week ago" },
 ] as const;
 
 const FOOTER_LINK_GROUPS = [
@@ -531,9 +537,11 @@ function HeroDashboardPreview() {
         <div className="grid gap-4 lg:grid-cols-[1.4fr_0.6fr]">
           <div className="rounded-3xl border border-slate-200 bg-gradient-to-br from-white via-[#f0f9ff] to-[#fff4e8] p-5">
             <div className="flex items-center justify-between">
-              <p className="text-lg font-semibold text-slate-900">Overview</p>
+              <p className="text-lg font-semibold text-slate-900">
+                Scans and leads over time
+              </p>
               <span className="text-xs uppercase tracking-[0.35em] text-slate-400">
-                Monthly revenue
+                Activity by month
               </span>
             </div>
             <div className="mt-6 flex h-48 items-end gap-3">
@@ -552,9 +560,9 @@ function HeroDashboardPreview() {
             </div>
           </div>
           <div className="rounded-3xl border border-slate-200 bg-white p-5">
-            <p className="text-lg font-semibold text-slate-900">Recent Sales</p>
+            <p className="text-lg font-semibold text-slate-900">Recent leads</p>
             <p className="text-xs text-slate-500">
-              You made {RECENT_SALES.length} sales this month.
+              You made {RECENT_SALES.length} new connections this period.
             </p>
             <div className="mt-6 space-y-4">
               {RECENT_SALES.map((sale) => {
@@ -764,18 +772,7 @@ function ExperienceSection() {
 
 function LiveDemoSection() {
   return (
-    <section
-      id="demo"
-      className="relative overflow-hidden bg-gradient-to-r from-[#e8faff] via-white to-[#fff1f8] py-24"
-    >
-      <div
-        className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-[#050816] via-[#050816]/40 to-transparent"
-        aria-hidden
-      />
-      <div
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#ffe6da] via-[#fff7ed]/70 to-transparent"
-        aria-hidden
-      />
+    <section id="demo" className="relative overflow-hidden py-24">
       <div
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.4),_transparent_70%)]"
         aria-hidden
@@ -823,9 +820,9 @@ function LiveDemoSection() {
 }
 function TestimonialsSection() {
   return (
-    <section className="relative overflow-hidden border-y border-foreground/5 bg-gradient-to-br from-[#fff7ed] via-[#ffe4d6] to-[#ffd9f2] py-24 text-[#0f172a]">
+    <section className="relative -mt-12 overflow-hidden pb-24 pt-32 text-[#0f172a]">
       <div
-        className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.5),_transparent_70%)]"
+        className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.4),_transparent_70%)]"
         aria-hidden
       />
       <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
@@ -920,7 +917,7 @@ function LandingFooter() {
               follow-up you&apos;ll actually remember. Built for students,
               creators, and field teams who want intros that stick.
             </p>
-            <div className="mt-6 space-y-2 text-sm">
+            <div className="mt-6 space-y-2 text-sm text-white/70">
               <p className="text-white/80">hello@linket.com</p>
               <p className="text-white/60">
                 1236 Mission Street, San Francisco, CA
@@ -987,20 +984,3 @@ function LandingFooter() {
     </footer>
   );
 }
-import {
-  ArrowRight,
-  Calendar,
-  Download,
-  Focus,
-  Instagram,
-  LineChart,
-  Pencil,
-  Search,
-  ShieldCheck,
-  Sparkles,
-  Star,
-  Twitter,
-  UserRound,
-  Waves,
-  Youtube,
-} from "lucide-react";
