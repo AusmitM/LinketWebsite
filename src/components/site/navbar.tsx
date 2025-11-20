@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, type MouseEvent } from "react";
+import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 import { Menu, X } from "lucide-react";
@@ -63,6 +63,21 @@ export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isAtTop, setIsAtTop] = useState(true);
   const [currentHash, setCurrentHash] = useState("");
+  const [lockedSection, setLockedSection] = useState<string | null>(null);
+  const lockTimeout = useRef<number | null>(null);
+  const lockedSectionRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    lockedSectionRef.current = lockedSection;
+  }, [lockedSection]);
+
+  useEffect(() => {
+    return () => {
+      if (lockTimeout.current) {
+        window.clearTimeout(lockTimeout.current);
+      }
+    };
+  }, []);
   const isDashboard = pathname?.startsWith("/dashboard");
   const isPublic = !isDashboard;
   const isLandingPage = pathname === "/";
@@ -143,6 +158,7 @@ export function Navbar() {
         const visible = entries
           .filter((entry) => entry.isIntersecting)
           .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (lockedSectionRef.current) return;
         if (visible?.target?.id) {
           const nextHash = `#${visible.target.id}`;
           setCurrentHash((prev) => (prev === nextHash ? prev : nextHash));
@@ -193,18 +209,18 @@ export function Navbar() {
       : "text-[#0f172a]"
   );
 
-  // const navLinkBase =
-  //   "rounded-full px-4 py-2 text-sm transition shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]";
-  // const navLinkTone = isDashboard
-  //   ? "text-foreground/80 hover:bg-foreground/10"
-  //   : overlayMode
-  //   ? "border border-white/60 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.95),_rgba(255,255,255,0.7))] text-slate-900 shadow-[0_18px_35px_rgba(15,15,30,0.18)] hover:bg-white"
-  //   : "text-slate-700 hover:bg-slate-100";
-  // const navLinkActive = isDashboard
-  //   ? "text-foreground"
-  //   : overlayMode
-  //   ? "border border-white bg-white text-[#0f172a] shadow-[0_20px_45px_rgba(15,15,30,0.28)]"
-  //   : "text-[#0f172a]";
+  const navLinkBase =
+    "rounded-full px-4 py-2 text-sm transition shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]";
+  const navLinkTone = isDashboard
+    ? "text-foreground/80 hover:bg-foreground/10"
+    : overlayMode
+    ? "border border-white/60 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.95),_rgba(255,255,255,0.7))] text-slate-900 shadow-[0_18px_35px_rgba(15,15,30,0.18)] hover:bg-white"
+    : "text-slate-700 hover:bg-slate-100";
+  const navLinkActive = isDashboard
+    ? "text-foreground"
+    : overlayMode
+    ? "border border-white bg-white text-[#0f172a] shadow-[0_20px_45px_rgba(15,15,30,0.28)]"
+    : "text-[#0f172a]";
 
   const activeLandingSection = isLandingPage
     ? currentHash
@@ -223,6 +239,14 @@ export function Navbar() {
       top: Math.max(offsetPosition, 0),
       behavior: "smooth",
     });
+    if (lockTimeout.current) {
+      window.clearTimeout(lockTimeout.current);
+    }
+    setLockedSection(sectionId);
+    lockTimeout.current = window.setTimeout(() => {
+      setLockedSection(null);
+      lockTimeout.current = null;
+    }, 900);
     const hash = `#${sectionId}`;
     setCurrentHash(hash);
     window.history.replaceState(null, "", hash);
