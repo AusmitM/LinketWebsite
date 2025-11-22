@@ -419,13 +419,13 @@ function HeroSection() {
           <h1 className="mt-10 text-[clamp(2.5rem,_5vw,_4.5rem)] font-semibold leading-[1.08] tracking-tight text-slate-900">
             Don&apos;t just share it...{" "}
             <span className="block bg-[linear-gradient(100deg,_#ff9776_0%,_#ffd27f_40%,_#7dd3fc_70%,_#2f80ed_100%)] bg-clip-text text-[clamp(3rem,_8vw,_5.25rem)] font-black italic leading-[1.02] tracking-tight text-transparent">
-              LINKEL!
+              LINKET!
             </span>
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-base text-slate-600 sm:text-lg">
-            Transform your ideas into reality with our comprehensive suite of
-            development tools and resources. Launch faster, adapt in real time,
-            and keep every interaction memorable.
+            Level up your network and client relations with our comprehensive suite of
+            development tools and resources. Connect faster, adapt in real time,
+            and make every interaction memorable.
           </p>
           <div className="mt-10 flex justify-center">
             <Button
@@ -433,7 +433,7 @@ function HeroSection() {
               size="lg"
               className="rounded-full bg-gradient-to-r from-[#ff9776] via-[#ffb866] to-[#5dd6f7] px-10 py-6 text-base font-semibold text-white shadow-[0_20px_50px_rgba(255,151,118,0.35)]"
             >
-              <Link href="/signup">Get Started</Link>
+              <Link href="/auth?view=signin">Get Started</Link>
             </Button>
           </div>
         </div>
@@ -638,7 +638,7 @@ function JourneySection() {
       <FeatureSteps
         className="mt-8 rounded-[36px] border border-foreground/5 bg-white/90 shadow-[0_35px_80px_rgba(15,23,42,0.08)]"
         features={JOURNEY_FEATURES}
-        title="How Linket flows"
+        title="How We Connect"
         autoPlayInterval={4000}
         imageHeight="lg:h-[420px]"
       />
