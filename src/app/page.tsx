@@ -414,12 +414,12 @@ function HeroSection() {
         <div className="absolute left-1/3 -top-16 h-[360px] w-[360px] rounded-full bg-[radial-gradient(circle,_rgba(255,176,139,0.35),_rgba(255,247,234,0))] blur-3xl" />
         <div className="absolute right-16 top-20 h-[420px] w-[420px] rounded-full bg-[radial-gradient(circle,_rgba(125,211,252,0.25),_rgba(255,255,255,0))] blur-3xl" />
       </div>
-      <div className="relative z-10 flex min-h-screen flex-col items-center px-4 pb-24 pt-8 text-center sm:px-6 lg:px-8">
+      <div className="relative z-10 flex min-h-screen flex-col items-center px-4 pb-16 pt-8 text-center sm:px-6 sm:pb-24 lg:px-8">
         <div className="mx-auto max-w-4xl py-12">
-          <h1 className="mt-10 text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl lg:text-[4.5rem] lg:leading-[1.1]">
+          <h1 className="mt-10 text-[clamp(2.5rem,_5vw,_4.5rem)] font-semibold leading-[1.08] tracking-tight text-slate-900">
             Don&apos;t just share it...{" "}
-            <span className="block text-8xl font-black italic tracking-tight sm:text-8xl lg:text-[5.25rem] bg-[linear-gradient(100deg,_#ff9776_0%,_#ffd27f_40%,_#7dd3fc_70%,_#2f80ed_100%)] bg-clip-text text-transparent">
-              LINKET!
+            <span className="block bg-[linear-gradient(100deg,_#ff9776_0%,_#ffd27f_40%,_#7dd3fc_70%,_#2f80ed_100%)] bg-clip-text text-[clamp(3rem,_8vw,_5.25rem)] font-black italic leading-[1.02] tracking-tight text-transparent">
+              LINKEL!
             </span>
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-base text-slate-600 sm:text-lg">
@@ -445,7 +445,8 @@ function HeroSection() {
 
 function HeroDashboardPreview() {
   return (
-    <div className="relative w-full max-w-6xl rounded-[32px] border border-[#f5d7b0]/80 bg-white/85 p-6 text-left text-slate-900 shadow-[0_45px_120px_rgba(254,215,170,0.45)] backdrop-blur">
+    <div className="w-full px-1 sm:px-0">
+      <div className="relative mx-auto w-full max-w-6xl origin-top scale-[0.93] rounded-[28px] border border-[#f5d7b0]/80 bg-white/85 p-4 text-left text-slate-900 shadow-[0_45px_120px_rgba(254,215,170,0.45)] backdrop-blur sm:scale-100 sm:rounded-[32px] sm:p-6">
       <div className="flex flex-col gap-4 border-b border-orange-100 pb-6 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center gap-3 rounded-full border border-[#ffd4c2] bg-[#fff6ef] px-4 py-2">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#ff9776] to-[#ffd27f] text-sm font-semibold text-white">
@@ -501,7 +502,7 @@ function HeroDashboardPreview() {
       </div>
       <div className="mt-8 space-y-6">
         <div className="flex flex-wrap items-center gap-4">
-          <h3 className="text-3xl font-semibold text-slate-900">Dashboard</h3>
+          <h3 className="text-2xl font-semibold text-slate-900 sm:text-3xl">Dashboard</h3>
           <div className="flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-[0.2em]">
             {DASHBOARD_VIEWS.map((view, index) => (
               <span
@@ -527,7 +528,7 @@ function HeroDashboardPreview() {
               <p className="text-xs uppercase tracking-[0.35em] text-slate-400">
                 {stat.label}
               </p>
-              <p className="mt-3 text-2xl font-semibold text-slate-900">
+              <p className="mt-3 text-xl font-semibold text-slate-900 sm:text-2xl">
                 {stat.value}
               </p>
               <p className="text-xs text-emerald-500">{stat.delta}</p>
@@ -544,7 +545,7 @@ function HeroDashboardPreview() {
                 Activity by month
               </span>
             </div>
-            <div className="mt-6 flex h-48 items-end gap-3">
+            <div className="mt-6 flex h-40 items-end gap-3 sm:h-48">
               {DASHBOARD_BARS.map((bar) => (
                 <div
                   key={bar.label}
@@ -599,6 +600,7 @@ function HeroDashboardPreview() {
           </div>
         </div>
       </div>
+      </div>
     </div>
   );
 }
@@ -648,7 +650,7 @@ function ExperienceSection() {
   return (
     <section
       id="customization"
-      className="relative overflow-hidden bg-[#050816] py-24 text-white"
+      className="relative overflow-hidden bg-[#050816] py-16 text-white sm:py-24"
     >
       <div
         className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-[#fff7ed] via-[#0a0f1e]/40 to-transparent"
@@ -772,7 +774,7 @@ function ExperienceSection() {
 
 function LiveDemoSection() {
   return (
-    <section id="demo" className="relative overflow-hidden py-24">
+    <section id="demo" className="relative overflow-hidden py-16 sm:py-24">
       <div
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.4),_transparent_70%)]"
         aria-hidden
@@ -820,7 +822,7 @@ function LiveDemoSection() {
 }
 function TestimonialsSection() {
   return (
-    <section className="relative -mt-12 overflow-hidden pb-24 pt-32 text-[#0f172a]">
+    <section className="relative -mt-12 overflow-hidden pb-20 pt-24 text-[#0f172a] sm:pb-24 sm:pt-32">
       <div
         className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.4),_transparent_70%)]"
         aria-hidden
@@ -841,7 +843,7 @@ function PricingSection() {
   return (
     <section
       id="pricing"
-      className="relative mx-auto max-w-6xl px-4 py-24 sm:px-6"
+      className="relative mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24"
     >
       <CreativePricing
         tag="Linket plans"
@@ -855,7 +857,7 @@ function PricingSection() {
 
 function FAQSection() {
   return (
-    <section id="faq" className="mx-auto max-w-4xl px-4 py-24 sm:px-6">
+    <section id="faq" className="mx-auto max-w-4xl px-4 py-16 sm:px-6 sm:py-24">
       <div className="text-center">
         <span className="inline-flex items-center gap-2 rounded-full border border-foreground/10 bg-foreground/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.35em] text-muted-foreground">
           FAQ

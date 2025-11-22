@@ -527,14 +527,14 @@ export function Navbar() {
             aria-label={`${brand.name} home`}
           >
             {brand.logo ? (
-              <span className="relative block h-10 w-40">
+              <span className="relative block h-14 w-28 sm:h-16 sm:w-32 lg:h-20 lg:w-40">
                 <Image
                   src={brand.logo}
                   alt={`${brand.name} logo`}
                   fill
                   className="object-contain"
                   priority
-                  sizes="(max-width: 1024px) 160px, 200px"
+                  sizes="(max-width: 640px) 120px, (max-width: 1024px) 160px, 200px"
                 />
               </span>
             ) : (
