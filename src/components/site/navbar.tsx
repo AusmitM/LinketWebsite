@@ -1,13 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState, type MouseEvent } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 import { Menu, X } from "lucide-react";
 
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { buildAvatarPublicUrl } from "@/lib/avatar-utils";
 import { brand } from "@/config/brand";
@@ -47,6 +54,8 @@ const LANDING_LINKS = [
     shadow: "0 10px 24px rgba(127,200,232,0.3)",
   },
 ] as const;
+
+type LandingSectionId = (typeof LANDING_LINKS)[number]["id"];
 
 const DASHBOARD_NAV = [
   { href: "/dashboard", label: "Overview" },
@@ -228,7 +237,7 @@ export function Navbar() {
       : LANDING_LINKS[0].id
     : null;
 
-  const scrollToSection = (sectionId: string) => {
+  const scrollToSection = (sectionId: LandingSectionId) => {
     if (typeof window === "undefined") return;
     const element = document.getElementById(sectionId);
     if (!element) return;
@@ -252,7 +261,7 @@ export function Navbar() {
     window.history.replaceState(null, "", hash);
   };
 
-  const handlePillSelect = (sectionId: string) => {
+  const handlePillSelect = (sectionId: LandingSectionId) => {
     if (isLandingPage) {
       scrollToSection(sectionId);
     } else {
@@ -260,18 +269,9 @@ export function Navbar() {
     }
   };
 
-  const handleNavLinkClick = (
-    event: MouseEvent<HTMLAnchorElement>,
-    sectionId: (typeof LANDING_LINKS)[number]["id"],
-    closeMenu?: boolean
-  ) => {
-    if (!isLandingPage) {
-      if (closeMenu) setMobileOpen(false);
-      return;
-    }
-    event.preventDefault();
-    if (closeMenu) setMobileOpen(false);
-    scrollToSection(sectionId);
+  const handleDropdownSelect = (sectionId: LandingSectionId) => {
+    handlePillSelect(sectionId);
+    setMobileOpen(false);
   };
 
   const mobilePanelClass = cn(
@@ -281,11 +281,6 @@ export function Navbar() {
       : overlayMode
       ? "border-white/30 bg-slate-900/85 text-white"
       : "border-foreground/10 bg-white"
-  );
-
-  const mobileLinkBase = cn(
-    "block rounded-2xl px-4 py-2 text-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]",
-    isDashboard ? "text-foreground/80 hover:bg-foreground/10" : "text-[#0f172a]"
   );
 
   const mobileAvatarFrame = cn(
@@ -311,7 +306,7 @@ export function Navbar() {
     <Link
       href="/dashboard/linkets"
       className={cn(
-        "inline-flex h-12 items-center justify-center rounded-full px-5 text-sm font-semibold uppercase tracking-[0.08em] transition",
+        "inline-flex h-10 items-center justify-center rounded-full px-4 text-xs font-semibold uppercase tracking-[0.08em] transition md:h-12 md:px-5 md:text-sm",
         isDashboard
           ? "bg-foreground text-background hover:bg-foreground/90"
           : overlayMode
@@ -326,7 +321,7 @@ export function Navbar() {
     <Button
       asChild
       className={cn(
-        "h-12 rounded-full px-6 text-sm font-semibold uppercase tracking-[0.08em]",
+        "h-10 rounded-full px-4 text-xs font-semibold uppercase tracking-[0.08em] md:h-12 md:px-6 md:text-sm",
         isDashboard
           ? "border border-foreground/20 bg-background text-foreground hover:bg-foreground/5"
           : overlayMode
@@ -343,7 +338,7 @@ export function Navbar() {
     <Button
       asChild
       className={cn(
-        "h-12 rounded-full px-6 text-sm font-semibold uppercase tracking-[0.08em]",
+        "h-10 rounded-full px-4 text-xs font-semibold uppercase tracking-[0.08em] md:h-12 md:px-6 md:text-sm",
         isDashboard
           ? "shadow-[0_12px_40px_rgba(16,200,120,0.15)] hover:shadow-[0_18px_45px_rgba(16,200,120,0.22)]"
           : overlayMode
@@ -358,9 +353,12 @@ export function Navbar() {
   );
 
   const navClassName = cn(
-    "mx-auto flex max-w-6xl items-center justify-between px-4 py-3 md:px-6",
+    "mx-auto flex max-w-6xl items-center justify-between px-3 py-2 md:px-6 md:py-3",
     overlayMode ? "text-white" : "text-foreground"
   );
+
+  const activeLandingId = (activeLandingSection ??
+    LANDING_LINKS[0].id) as LandingSectionId;
 
   const dashboardAvatar = user ? (
     <Link
@@ -520,14 +518,14 @@ export function Navbar() {
   return (
     <header role="banner" className={headerClassName} aria-label="Site header">
       <nav className={navClassName} aria-label="Main">
-        <div className="flex flex-1 items-center gap-4">
+        <div className="flex flex-1 items-center gap-3 md:gap-4">
           <Link
             href="/"
             className="inline-flex items-center gap-2 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]"
             aria-label={`${brand.name} home`}
           >
             {brand.logo ? (
-              <span className="relative block h-10 w-40">
+              <span className="relative block h-8 w-32 md:h-10 md:w-40">
                 <Image
                   src={brand.logo}
                   alt={`${brand.name} logo`}
@@ -556,7 +554,7 @@ export function Navbar() {
             {desktopLinks}
           </div>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 md:gap-4">
           {loginButton}
           {primaryCta}
           <button
@@ -589,46 +587,50 @@ export function Navbar() {
             onClick={() => setMobileOpen(false)}
           />
           <div className={mobilePanelClass}>
-            <nav aria-label="Mobile primary">
-              <ul className="flex flex-col gap-2 text-sm">
-                {LANDING_LINKS.map((link) => {
-                  const isActive =
-                    isLandingPage && activeLandingSection === link.id;
-                  const accentShadow =
-                    link.shadow ?? "0 8px 20px rgba(15,23,42,0.15)";
-                  return (
-                    <li key={link.id}>
-                      <Link
-                        href={`/#${link.id}`}
-                        className={cn(
-                          mobileLinkBase,
-                          isActive ? "font-semibold" : "font-medium",
-                          !isDashboard && "text-[#0b1220]"
-                        )}
-                        style={
-                          !isDashboard
-                            ? {
-                                backgroundImage: link.gradient,
-                                opacity: isActive ? 1 : 0.78,
-                                border: "1px solid rgba(255,255,255,0.5)",
-                                boxShadow: isActive
-                                  ? accentShadow
-                                  : "inset 0 0 0 1px rgba(255,255,255,0.35)",
-                              }
-                            : undefined
-                        }
-                        onClick={(event) =>
-                          handleNavLinkClick(event, link.id, true)
-                        }
-                      >
-                        {link.label}
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
+            <nav aria-label="Mobile primary" className="grid gap-4">
+              <Select
+                value={activeLandingId}
+                onValueChange={(value) =>
+                  handleDropdownSelect(value as LandingSectionId)
+                }
+              >
+                <SelectTrigger
+                  className={cn(
+                    "w-full justify-between rounded-2xl px-4 py-3 text-base font-semibold",
+                    isDashboard
+                      ? "border-border/60 bg-card/80 text-foreground hover:bg-card"
+                      : overlayMode
+                      ? "border-white/40 bg-white/10 text-white shadow-[0_10px_24px_rgba(15,15,30,0.18)] hover:bg-white/15"
+                      : "border-foreground/10 bg-white text-[#0b1220] shadow-[0_12px_32px_rgba(15,23,42,0.12)] hover:bg-slate-50"
+                  )}
+                  aria-label="Jump to section"
+                >
+                  <SelectValue placeholder="Navigate" />
+                </SelectTrigger>
+                <SelectContent
+                  className={cn(
+                    "rounded-xl shadow-lg",
+                    isDashboard
+                      ? "border-border/60 bg-background/95 text-foreground"
+                      : overlayMode
+                      ? "border-white/20 bg-slate-900 text-white"
+                      : "border-foreground/10 bg-white text-[#0b1220]"
+                  )}
+                  position="popper"
+                >
+                  {LANDING_LINKS.map((link) => (
+                    <SelectItem key={link.id} value={link.id}>
+                      {link.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <div className="grid gap-3">
+                <div className="w-full">{primaryCta}</div>
+                <div className="w-full">{loginButton}</div>
+              </div>
             </nav>
-            <div className="mt-6 grid gap-3">
+            <div className="mt-4 grid gap-3">
               {user && avatarUrl ? (
                 <Link
                   href="/dashboard/linkets"
