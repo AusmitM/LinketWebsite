@@ -433,7 +433,7 @@ function HeroSection() {
               size="lg"
               className="rounded-full bg-gradient-to-r from-[#ff9776] via-[#ffb866] to-[#5dd6f7] px-10 py-6 text-base font-semibold text-white shadow-[0_20px_50px_rgba(255,151,118,0.35)]"
             >
-              <Link href="/signup">Get Started</Link>
+              <Link href="/auth">Get Started</Link>
             </Button>
           </div>
         </div>
@@ -650,10 +650,6 @@ function ExperienceSection() {
       id="customization"
       className="relative overflow-hidden bg-[#050816] py-24 text-white"
     >
-      <div
-        className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-[#fff7ed] via-[#0a0f1e]/40 to-transparent"
-        aria-hidden
-      />
       <div
         className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(77,121,255,0.25),_rgba(5,8,22,0))]"
         aria-hidden
