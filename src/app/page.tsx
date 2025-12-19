@@ -35,7 +35,7 @@ import { cn } from "@/lib/utils";
 import { brand } from "@/config/brand";
 
 export const metadata: Metadata = {
-  title: "Linket -- Stay Connected",
+  title: "Linket Connect",
   description:
     "Linket keychains share your digital profile with a single tap. Customize the hardware, control every link, and see analytics from the very first introduction.",
   openGraph: {
