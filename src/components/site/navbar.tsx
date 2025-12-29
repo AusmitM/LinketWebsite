@@ -525,7 +525,7 @@ export function Navbar() {
             aria-label={`${brand.name} home`}
           >
             {brand.logo ? (
-              <span className="relative block h-8 w-32 md:h-10 md:w-40">
+              <span className="relative block h-8 w-32 md:h-20 md:w-40">
                 <Image
                   src={brand.logo}
                   alt={`${brand.name} logo`}
