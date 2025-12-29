@@ -423,7 +423,7 @@ function HeroSection() {
             </span>
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-base text-slate-600 sm:text-lg">
-            Transform your ideas into reality with our comprehensive suite of
+            Transform your market into leads, and your leads into sales with our comprehensive suite of
             development tools and resources. Launch faster, adapt in real time,
             and keep every interaction memorable.
           </p>
@@ -910,13 +910,13 @@ function LandingFooter() {
             </div>
             <p className="mt-6 text-sm text-white/70">
               Linket turns every tap into a live microsite, lead capture, and
-              follow-up you&apos;ll actually remember. Built for students,
+              follow-up customers actually remember. Built for students,
               creators, and field teams who want intros that stick.
             </p>
             <div className="mt-6 space-y-2 text-sm text-white/70">
-              <p className="text-white/80">hello@linket.com</p>
+              <p className="text-white/80">punit@peridotkonda.com</p>
               <p className="text-white/60">
-                1236 Mission Street, San Francisco, CA
+                 400 Bizzell St, College Station, TX
               </p>
             </div>
             <div className="mt-8 flex items-center gap-4">
