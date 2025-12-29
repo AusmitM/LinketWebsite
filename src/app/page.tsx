@@ -105,6 +105,10 @@ const DASHBOARD_BARS = [
   { label: "Dec", value: 86 },
 ] as const;
 
+const DASHBOARD_TREND = [
+  28, 34, 39, 46, 53, 61, 69, 76, 82, 88, 94, 98,
+] as const;
+
 const RECENT_SALES = [
   { name: "Olivia Martin", email: "olivia.martin@email.com", amount: "New" },
   { name: "Jackson Lee", email: "jackson.lee@email.com", amount: "Yesterday" },
@@ -444,6 +448,18 @@ function HeroSection() {
 }
 
 function HeroDashboardPreview() {
+  const trendPoints = DASHBOARD_TREND.map((value, index) => {
+    const x = 10 + (index / (DASHBOARD_TREND.length - 1)) * 300;
+    const y = 92 - (value / 100) * 70;
+    return { x, y };
+  });
+  const trendPath = `M ${trendPoints
+    .map((point) => `${point.x} ${point.y}`)
+    .join(" L ")}`;
+  const trendArea = `${trendPath} L ${
+    trendPoints[trendPoints.length - 1].x
+  } 110 L ${trendPoints[0].x} 110 Z`;
+
   return (
     <div className="relative w-full max-w-6xl rounded-[32px] border border-[#f5d7b0]/80 bg-white/85 p-6 text-left text-slate-900 shadow-[0_45px_120px_rgba(254,215,170,0.45)] backdrop-blur">
       <div className="flex flex-col gap-4 border-b border-orange-100 pb-6 lg:flex-row lg:items-center lg:justify-between">
@@ -535,28 +551,86 @@ function HeroDashboardPreview() {
           ))}
         </div>
         <div className="grid gap-4 lg:grid-cols-[1.4fr_0.6fr]">
-          <div className="rounded-3xl border border-slate-200 bg-gradient-to-br from-white via-[#f0f9ff] to-[#fff4e8] p-5">
-            <div className="flex items-center justify-between">
-              <p className="text-lg font-semibold text-slate-900">
-                Scans and leads over time
-              </p>
-              <span className="text-xs uppercase tracking-[0.35em] text-slate-400">
-                Activity by month
-              </span>
-            </div>
-            <div className="mt-6 flex h-48 items-end gap-3">
-              {DASHBOARD_BARS.map((bar) => (
-                <div
-                  key={bar.label}
-                  className="flex flex-1 flex-col items-center gap-2 text-xs text-slate-400"
-                >
-                  <div
-                    className="w-full rounded-t-3xl bg-gradient-to-t from-[#ffe5c1] via-[#ff9776] to-[#5dd6f7]"
-                    style={{ height: `${bar.value}%` }}
-                  />
-                  <span>{bar.label}</span>
+          <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-[#fff7ef] p-6">
+            <div
+              className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.75),_rgba(255,247,239,0)_60%)]"
+              aria-hidden
+            />
+            <div className="relative space-y-5">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <p className="text-lg font-semibold text-slate-900">
+                    Scans and leads over time
+                  </p>
+                  <p className="mt-1 text-xs uppercase tracking-[0.35em] text-slate-400">
+                    Activity pulse
+                  </p>
                 </div>
-              ))}
+              </div>
+              <div className="grid gap-4 lg:grid-cols-1">
+                <div className="flex min-h-[320px] flex-col rounded-2xl border border-slate-100 bg-white/90 p-5">
+                  <div className="flex items-center justify-between text-xs text-slate-400">
+                    <span className="uppercase tracking-[0.35em]">
+                      Scans trend
+                    </span>
+                    <span className="font-semibold text-slate-500">
+                      Last 12 months
+                    </span>
+                  </div>
+                  <svg
+                    viewBox="0 0 320 120"
+                    className="mt-4 h-56 w-full flex-1"
+                    aria-hidden
+                  >
+                    <defs>
+                      <linearGradient
+                        id="scan-trend-line"
+                        x1="0"
+                        y1="0"
+                        x2="1"
+                        y2="1"
+                      >
+                        <stop offset="0%" stopColor="#ffb27a" />
+                        <stop offset="55%" stopColor="#ffd6a3" />
+                        <stop offset="100%" stopColor="#7dd3fc" />
+                      </linearGradient>
+                    </defs>
+                    <path
+                      d="M0 24 H320 M0 52 H320 M0 80 H320"
+                      stroke="#e8eef6"
+                      strokeWidth="1"
+                      strokeDasharray="4 6"
+                      fill="none"
+                    />
+                    <path
+                      d={trendArea}
+                      fill="url(#scan-trend-line)"
+                      opacity="0.16"
+                    />
+                    <path
+                      d={trendPath}
+                      fill="none"
+                      stroke="url(#scan-trend-line)"
+                      strokeWidth="4"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <circle
+                      cx={trendPoints[trendPoints.length - 1].x}
+                      cy={trendPoints[trendPoints.length - 1].y}
+                      r="5"
+                      fill="#22c55e"
+                    />
+                  </svg>
+                  <div className="mt-3 grid grid-cols-6 gap-2 text-[11px] uppercase tracking-[0.25em] text-slate-300 sm:grid-cols-12">
+                    {DASHBOARD_BARS.map((bar) => (
+                      <span key={bar.label} className="text-center">
+                        {bar.label}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
           <div className="rounded-3xl border border-slate-200 bg-white p-5">

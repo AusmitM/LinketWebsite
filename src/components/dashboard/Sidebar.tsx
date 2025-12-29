@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 
 const BASE_NAV = [
-  { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
+  { href: "/dashboard/overview", label: "Overview", icon: LayoutDashboard },
   { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/dashboard/leads", label: "Leads", icon: MessageSquare },
   { href: "/dashboard/profiles", label: "Linket Profiles", icon: Radio },
@@ -51,11 +51,24 @@ export default function Sidebar({ className }: { className?: string }) {
   useEffect(() => {
     let active = true;
     (async () => {
-      const { data } = await supabase
+      const { data: userData } = await supabase.auth.getUser();
+      if (!active) return;
+      const userId = userData.user?.id;
+      if (!userId) {
+        setIsAdmin(false);
+        return;
+      }
+
+      const { data, error } = await supabase
         .from("admin_users")
         .select("user_id")
+        .eq("user_id", userId)
         .maybeSingle();
       if (!active) return;
+      if (error) {
+        setIsAdmin(false);
+        return;
+      }
       setIsAdmin(Boolean(data));
     })().catch(() => {
       if (active) setIsAdmin(false);
@@ -112,7 +125,9 @@ export default function Sidebar({ className }: { className?: string }) {
         <nav className="flex-1 space-y-1 px-2">
           {navItems.map((item) => {
             const Icon = item.icon;
-            const active = pathname === item.href;
+            const active =
+              pathname === item.href ||
+              (item.href === "/dashboard/overview" && pathname === "/dashboard");
             return (
               <Link
                 key={item.href}

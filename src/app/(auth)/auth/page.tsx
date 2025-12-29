@@ -1,7 +1,7 @@
 "use client";
 
 import type { FormEvent } from "react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
@@ -24,6 +24,36 @@ export default function AuthPage() {
   const oauthMessage = searchParams.get("message");
   const view = searchParams.get("view") ?? "signin";
   const supabase = useMemo(() => createClient(), []);
+  const siteUrl =
+    SITE_URL ?? (typeof window !== "undefined" ? window.location.origin : "");
+
+  useEffect(() => {
+    let active = true;
+
+    const syncSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (!active) return;
+      if (data.session) {
+        const destination = next || DEFAULT_NEXT;
+        router.replace(destination);
+        router.refresh();
+      }
+    };
+
+    syncSession();
+
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) return;
+      const destination = next || DEFAULT_NEXT;
+      router.replace(destination);
+      router.refresh();
+    });
+
+    return () => {
+      active = false;
+      data.subscription.unsubscribe();
+    };
+  }, [supabase, router, next]);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -51,7 +81,7 @@ export default function AuthPage() {
           email,
           password,
           options: {
-            emailRedirectTo: `${SITE_URL}/auth/callback?next=${encodeURIComponent(
+            emailRedirectTo: `${siteUrl}/auth/callback?next=${encodeURIComponent(
               next
             )}`,
           },
@@ -166,7 +196,7 @@ export default function AuthPage() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${SITE_URL}/auth/callback?next=${encodeURIComponent(
+          redirectTo: `${siteUrl}/auth/callback?next=${encodeURIComponent(
             next
           )}`,
         },

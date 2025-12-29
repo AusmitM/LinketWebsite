@@ -58,7 +58,7 @@ const LANDING_LINKS = [
 type LandingSectionId = (typeof LANDING_LINKS)[number]["id"];
 
 const DASHBOARD_NAV = [
-  { href: "/dashboard", label: "Overview" },
+  { href: "/dashboard/overview", label: "Overview" },
   { href: "/dashboard/analytics", label: "Analytics" },
   { href: "/dashboard/leads", label: "Leads" },
   { href: "/dashboard/profiles", label: "Profiles" },
@@ -90,6 +90,8 @@ export function Navbar() {
   const isDashboard = pathname?.startsWith("/dashboard");
   const isPublic = !isDashboard;
   const isLandingPage = pathname === "/";
+  const isAuthPage =
+    pathname?.startsWith("/auth") || pathname?.startsWith("/forgot-password");
 
   useEffect(() => {
     if (!isDashboard) {
@@ -198,7 +200,7 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [isPublic]);
 
-  const overlayMode = isPublic && isAtTop;
+  const overlayMode = isPublic && isAtTop && isLandingPage;
 
   const headerClassName = cn(
     "top-0 z-50 w-full border-b transition-all duration-300",
@@ -393,13 +395,15 @@ export function Navbar() {
       "rounded-2xl border px-4 py-2 text-base font-semibold transition",
       "border-border/60 bg-card/80 text-foreground hover:bg-card"
     );
+    const overviewHref = "/dashboard/overview";
     const activeDashboardHref = (() => {
       if (!pathname) return null;
       if (!pathname.startsWith("/dashboard")) return null;
-      if (pathname === "/dashboard") return "/dashboard";
+      if (pathname === "/dashboard" || pathname === overviewHref)
+        return overviewHref;
       let match: string | null = null;
       for (const item of DASHBOARD_NAV) {
-        if (item.href === "/dashboard") continue;
+        if (item.href === overviewHref) continue;
         if (pathname === item.href || pathname.startsWith(`${item.href}/`)) {
           if (!match || item.href.length > match.length) {
             match = item.href;
@@ -515,6 +519,46 @@ export function Navbar() {
     );
   }
 
+  if (isAuthPage) {
+    return (
+      <header className="sticky top-0 z-50 w-full border-b border-foreground/10 bg-white/80 backdrop-blur">
+        <nav
+          className="mx-auto flex max-w-6xl items-center px-4 py-3 md:px-6"
+          aria-label="Main"
+        >
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]"
+            aria-label={`${brand.name} home`}
+          >
+            {brand.logo ? (
+              <span className="relative block h-8 w-32 md:h-10 md:w-40">
+                <Image
+                  src={brand.logo}
+                  alt={`${brand.name} logo`}
+                  fill
+                  className="object-contain"
+                  priority
+                  sizes="(max-width: 1024px) 160px, 200px"
+                />
+              </span>
+            ) : (
+              <span
+                className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-foreground text-sm font-bold text-background"
+                aria-hidden
+              >
+                {(brand.shortName ?? brand.name).slice(0, 2)}
+              </span>
+            )}
+            {!brand.logo && (
+              <span className={brandNameClass}>{brand.name}</span>
+            )}
+          </Link>
+        </nav>
+      </header>
+    );
+  }
+
   return (
     <header role="banner" className={headerClassName} aria-label="Site header">
       <nav className={navClassName} aria-label="Main">
@@ -525,7 +569,7 @@ export function Navbar() {
             aria-label={`${brand.name} home`}
           >
             {brand.logo ? (
-              <span className="relative block h-8 w-32 md:h-20 md:w-40">
+              <span className="relative block h-15 w-32 md:h-18 md:w-40">
                 <Image
                   src={brand.logo}
                   alt={`${brand.name} logo`}
@@ -551,34 +595,36 @@ export function Navbar() {
             className="hidden flex-1 items-center justify-center lg:flex"
             aria-label="Primary"
           >
-            {desktopLinks}
+            {isLandingPage ? desktopLinks : null}
           </div>
         </div>
         <div className="flex items-center gap-2 md:gap-4">
-          {loginButton}
-          {primaryCta}
-          <button
-            type="button"
-            className={cn(
-              "inline-flex items-center justify-center rounded-full border p-2 transition lg:hidden focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]",
-              isDashboard
-                ? "border-border/60 bg-background/70 text-foreground"
-                : overlayMode
-                ? "border-white/70 bg-white/90 text-slate-900 shadow-[0_10px_25px_rgba(15,15,30,0.2)]"
-                : "border-foreground/10 bg-white/80 text-foreground"
-            )}
-            onClick={() => setMobileOpen((open) => !open)}
-            aria-label={mobileOpen ? "Close navigation" : "Open navigation"}
-          >
-            {mobileOpen ? (
-              <X className="h-5 w-5" aria-hidden />
-            ) : (
-              <Menu className="h-5 w-5" aria-hidden />
-            )}
-          </button>
+          {isLandingPage ? loginButton : null}
+          {isLandingPage ? primaryCta : null}
+          {isLandingPage ? (
+            <button
+              type="button"
+              className={cn(
+                "inline-flex items-center justify-center rounded-full border p-2 transition lg:hidden focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]",
+                isDashboard
+                  ? "border-border/60 bg-background/70 text-foreground"
+                  : overlayMode
+                  ? "border-white/70 bg-white/90 text-slate-900 shadow-[0_10px_25px_rgba(15,15,30,0.2)]"
+                  : "border-foreground/10 bg-white/80 text-foreground"
+              )}
+              onClick={() => setMobileOpen((open) => !open)}
+              aria-label={mobileOpen ? "Close navigation" : "Open navigation"}
+            >
+              {mobileOpen ? (
+                <X className="h-5 w-5" aria-hidden />
+              ) : (
+                <Menu className="h-5 w-5" aria-hidden />
+              )}
+            </button>
+          ) : null}
         </div>
       </nav>
-      {mobileOpen && (
+      {isLandingPage && mobileOpen && (
         <div className="lg:hidden">
           <button
             type="button"
