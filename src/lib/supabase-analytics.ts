@@ -1,5 +1,6 @@
 // lib/supabase-analytics.ts
 import { supabase } from "@/lib/supabase";
+import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
 
 export interface TapLead {
   id: string;
@@ -26,19 +27,17 @@ export interface LinketProfile {
   created_at: string;
 }
 
-export interface VCard {
+type LeadRow = {
+  id: string;
   user_id: string;
-  profile_path: string;
-  full_name: string | null;
-  title: string | null;
+  handle: string | null;
+  name: string | null;
   email: string | null;
   phone: string | null;
   company: string | null;
-  website: string | null;
-  address: string | null;
-  notes: string | null;
+  message: string | null;
   created_at: string;
-}
+};
 
 export interface UserAnalytics {
   meta: {
@@ -78,6 +77,10 @@ export interface UserAnalytics {
   }>;
 }
 
+function analyticsClient() {
+  return isSupabaseAdminAvailable ? supabaseAdmin : supabase;
+}
+
 /**
  * Fetch all taps and leads for a user
  */
@@ -90,7 +93,8 @@ export async function fetchUserTaps(userId: string, days: number = 30) {
   cutoffDate.setDate(cutoffDate.getDate() - days);
 
   // First get all linkets for this user
-  const { data: linkets, error: linketsError } = await supabase
+  const client = analyticsClient();
+  const { data: linkets, error: linketsError } = await client
     .from("linkets")
     .select("linket_id")
     .eq("user_id", userId);
@@ -111,7 +115,7 @@ export async function fetchUserTaps(userId: string, days: number = 30) {
   console.log(`[fetchUserTaps] Fetching taps for linket IDs:`, linketIds);
 
   // Get all taps/leads for these linkets
-  const { data: taps, error: tapsError } = await supabase
+  const { data: taps, error: tapsError } = await client
     .from("taps_leads")
     .select("*")
     .in("linket_id", linketIds)
@@ -132,7 +136,8 @@ export async function fetchUserTaps(userId: string, days: number = 30) {
  */
 export async function fetchUserLinketProfiles(userId: string) {
   // Get linkets for user
-  const { data: linkets, error: linketsError } = await supabase
+  const client = analyticsClient();
+  const { data: linkets, error: linketsError } = await client
     .from("linkets")
     .select("*")
     .eq("user_id", userId);
@@ -143,7 +148,7 @@ export async function fetchUserLinketProfiles(userId: string) {
   const linketIds = linkets.map((l) => l.linket_id);
 
   // Get profiles for these linkets
-  const { data: profiles, error: profilesError } = await supabase
+  const { data: profiles, error: profilesError } = await client
     .from("linket_profiles")
     .select("*")
     .in("linket_id", linketIds);
@@ -155,16 +160,17 @@ export async function fetchUserLinketProfiles(userId: string) {
 /**
  * Fetch vcard data for leads
  */
-export async function fetchLeadVCards(userId: string, limit: number = 50) {
-  const { data: vcards, error } = await supabase
-    .from("vcard")
-    .select("*")
+export async function fetchRecentLeads(userId: string, limit: number = 50) {
+  const client = analyticsClient();
+  const { data: leads, error } = await client
+    .from("leads")
+    .select("id,user_id,handle,name,email,phone,company,message,created_at")
     .eq("user_id", userId)
     .order("created_at", { ascending: false })
     .limit(limit);
 
   if (error) throw error;
-  return vcards || [];
+  return (leads ?? []) as LeadRow[];
 }
 
 /**
@@ -180,16 +186,16 @@ export async function processUserAnalytics(
     );
 
     // Fetch all data in parallel
-    const [taps, profiles, vcards] = await Promise.all([
+    const [taps, profiles, leads] = await Promise.all([
       fetchUserTaps(userId, days),
       fetchUserLinketProfiles(userId),
-      fetchLeadVCards(userId, 100),
+      fetchRecentLeads(userId, 100),
     ]);
 
     console.log(`[Supabase Analytics] Data fetched:`, {
       taps: taps.length,
       profiles: profiles.length,
-      vcards: vcards.length,
+      leads: leads.length,
     });
 
     // Get date boundaries
@@ -289,15 +295,15 @@ export async function processUserAnalytics(
       .sort((a, b) => b.scans - a.scans)
       .slice(0, 10);
 
-    // Build recent leads from vcards
-    const recentLeads = vcards.slice(0, 10).map((vcard) => ({
-      id: vcard.user_id + "-" + vcard.created_at,
-      name: vcard.full_name || null,
-      email: vcard.email || null,
-      phone: vcard.phone || null,
-      company: vcard.company || null,
-      message: vcard.notes || null,
-      created_at: vcard.created_at,
+    // Build recent leads from lead capture submissions
+    const recentLeads = leads.slice(0, 10).map((lead) => ({
+      id: lead.id,
+      name: lead.name || null,
+      email: lead.email || null,
+      phone: lead.phone || null,
+      company: lead.company || null,
+      message: lead.message || null,
+      created_at: lead.created_at,
     }));
 
     return {
