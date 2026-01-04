@@ -10,7 +10,6 @@ import {
   Link as LinkIcon,
   Mail,
   MapPin,
-  Plus,
   MessageSquare,
   Sparkles,
   Users,
@@ -31,7 +30,9 @@ import { Input } from "@/components/ui/input";
 import { useDashboardUser } from "@/components/dashboard/DashboardSessionContext";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/components/system/toaster";
+import PublicProfilePreview from "@/components/public/PublicProfilePreview";
 import type { UserAnalytics } from "@/lib/analytics-service";
+import type { ProfileWithLinks } from "@/lib/profile-service";
 
 const numberFormatter = new Intl.NumberFormat("en-US");
 const percentFormatter = new Intl.NumberFormat("en-US", {
@@ -568,10 +569,10 @@ export default function OverviewContent() {
         <div className="lg:col-span-5">
           <Card className="h-full rounded-3xl border border-border/70 bg-card/90 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
             <CardContent className="flex h-full items-start justify-center p-6">
-              <PublicProfileMock />
-            </CardContent>
-          </Card>
-        </div>
+            <PublicProfilePreviewPanel userId={userId ?? null} />
+          </CardContent>
+        </Card>
+      </div>
 
         <Card className="rounded-3xl border border-border/70 bg-card/90 shadow-[0_18px_45px_rgba(15,23,42,0.08)] lg:col-span-12">
           <CardHeader className="space-y-1">
@@ -755,45 +756,110 @@ function AnalyticsTile({
   );
 }
 
-function PublicProfileMock() {
-  return (
-    <div className="h-fit w-full max-w-[340px] overflow-hidden rounded-[36px] border border-border/60 bg-background shadow-[0_20px_40px_-30px_rgba(15,23,42,0.3)]">
-      <div className="h-28 rounded-t-[36px] bg-gradient-to-r from-[#7C4DA0] via-[#B26A85] to-[#E1A37B]" />
-      <div className="flex flex-col items-center px-6 pb-6">
-        <div className="-mt-10 h-20 w-20 overflow-hidden rounded-full border-4 border-background bg-muted shadow-sm" />
-        <div className="mt-3 text-center">
-          <div className="text-base font-semibold text-foreground">
-            Jessica Miller
-          </div>
-          <div className="mt-1 text-xs text-muted-foreground">
-            Digital Creator | Connecting Ideas & Communities
-          </div>
-        </div>
-        <button
-          type="button"
-          className="mt-4 w-full rounded-full bg-[#EEF3F9] px-4 py-2 text-xs font-semibold text-[#7AA7D8] opacity-80"
-        >
-          Add email or phone to enable Save contact
-        </button>
+function PublicProfilePreviewPanel({ userId }: { userId: string | null }) {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [profile, setProfile] = useState<ProfileWithLinks | null>(null);
+  const [account, setAccount] = useState<{
+    handle: string;
+    displayName: string | null;
+    avatarPath: string | null;
+    avatarUpdatedAt: string | null;
+  } | null>(null);
 
-        <div className="mt-4 w-full text-left">
-          <div className="text-xs font-semibold text-muted-foreground">
-            Links
-          </div>
-          <div className="mt-3 grid grid-cols-2 gap-3">
-            <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-border/60 bg-white px-4 py-4 text-center text-xs font-medium text-foreground shadow-[0_12px_24px_-18px_rgba(15,23,42,0.3)]">
-              <span className="text-sm">
-                <Plus className="h-4 w-4" />
-              </span>
-              <span>+ Add link</span>
-            </div>
-          </div>
-        </div>
+  useEffect(() => {
+    if (!userId) {
+      setLoading(false);
+      setError("Sign in to see your live preview.");
+      setProfile(null);
+      setAccount(null);
+      return;
+    }
 
-        <div className="mt-4 w-full text-xs text-muted-foreground">
-          Get in Touch
-        </div>
+    let active = true;
+    setLoading(true);
+    setError(null);
+
+    (async () => {
+      try {
+        const [accountRes, profilesRes] = await Promise.all([
+          fetch(`/api/account/handle?userId=${encodeURIComponent(userId)}`, {
+            cache: "no-store",
+          }),
+          fetch(`/api/linket-profiles?userId=${encodeURIComponent(userId)}`, {
+            cache: "no-store",
+          }),
+        ]);
+
+        if (!accountRes.ok) {
+          const info = await accountRes.json().catch(() => ({}));
+          throw new Error(info?.error || "Unable to load account.");
+        }
+        if (!profilesRes.ok) {
+          const info = await profilesRes.json().catch(() => ({}));
+          throw new Error(info?.error || "Unable to load profile.");
+        }
+
+        const accountPayload = (await accountRes.json()) as {
+          handle?: string | null;
+          displayName?: string | null;
+          avatarPath?: string | null;
+          avatarUpdatedAt?: string | null;
+        };
+        const profiles = (await profilesRes.json()) as ProfileWithLinks[];
+        const activeProfile =
+          profiles.find((item) => item.is_active) ?? profiles[0];
+
+        if (!activeProfile) {
+          throw new Error("Create a public profile to see the preview.");
+        }
+
+        if (!active) return;
+        setAccount({
+          handle: accountPayload?.handle || activeProfile.handle,
+          displayName: accountPayload?.displayName ?? null,
+          avatarPath: accountPayload?.avatarPath ?? null,
+          avatarUpdatedAt: accountPayload?.avatarUpdatedAt ?? null,
+        });
+        setProfile(activeProfile);
+        setLoading(false);
+      } catch (err) {
+        if (!active) return;
+        setError(err instanceof Error ? err.message : "Preview unavailable.");
+        setProfile(null);
+        setAccount(null);
+        setLoading(false);
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [userId]);
+
+  if (loading) {
+    return (
+      <div className="flex h-[520px] w-full items-center justify-center rounded-[36px] border border-border/60 bg-background text-sm text-muted-foreground shadow-[0_20px_40px_-30px_rgba(15,23,42,0.3)]">
+        Loading preview...
       </div>
+    );
+  }
+
+  if (!profile || !account) {
+    return (
+      <div className="flex h-[520px] w-full items-center justify-center rounded-[36px] border border-border/60 bg-background text-sm text-muted-foreground shadow-[0_20px_40px_-30px_rgba(15,23,42,0.3)]">
+        {error ?? "Preview unavailable."}
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-[520px] w-full max-w-[420px] overflow-hidden rounded-[36px] border border-border/60 bg-background shadow-[0_20px_40px_-30px_rgba(15,23,42,0.3)]">
+      <PublicProfilePreview
+        profile={profile}
+        account={account}
+        handle={account.handle || profile.handle}
+      />
     </div>
   );
 }
