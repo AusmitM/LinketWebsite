@@ -568,11 +568,11 @@ export default function OverviewContent() {
 
         <div className="lg:col-span-5">
           <Card className="h-full rounded-3xl border border-border/70 bg-card/90 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
-            <CardContent className="flex h-full items-start justify-center p-6">
-            <PublicProfilePreviewPanel userId={userId ?? null} />
-          </CardContent>
-        </Card>
-      </div>
+            <CardContent className="flex h-full items-stretch p-6">
+              <PublicProfilePreviewPanel userId={userId ?? null} />
+            </CardContent>
+          </Card>
+        </div>
 
         <Card className="rounded-3xl border border-border/70 bg-card/90 shadow-[0_18px_45px_rgba(15,23,42,0.08)] lg:col-span-12">
           <CardHeader className="space-y-1">
@@ -839,7 +839,7 @@ function PublicProfilePreviewPanel({ userId }: { userId: string | null }) {
 
   if (loading) {
     return (
-      <div className="flex h-[520px] w-full items-center justify-center rounded-[36px] border border-border/60 bg-background text-sm text-muted-foreground shadow-[0_20px_40px_-30px_rgba(15,23,42,0.3)]">
+      <div className="flex h-full w-full items-center justify-center rounded-[36px] border border-border/60 bg-background text-sm text-muted-foreground shadow-[0_20px_40px_-30px_rgba(15,23,42,0.3)]">
         Loading preview...
       </div>
     );
@@ -847,19 +847,21 @@ function PublicProfilePreviewPanel({ userId }: { userId: string | null }) {
 
   if (!profile || !account) {
     return (
-      <div className="flex h-[520px] w-full items-center justify-center rounded-[36px] border border-border/60 bg-background text-sm text-muted-foreground shadow-[0_20px_40px_-30px_rgba(15,23,42,0.3)]">
+      <div className="flex h-full w-full items-center justify-center rounded-[36px] border border-border/60 bg-background text-sm text-muted-foreground shadow-[0_20px_40px_-30px_rgba(15,23,42,0.3)]">
         {error ?? "Preview unavailable."}
       </div>
     );
   }
 
   return (
-    <div className="h-[520px] w-full max-w-[420px] overflow-hidden rounded-[36px] border border-border/60 bg-background shadow-[0_20px_40px_-30px_rgba(15,23,42,0.3)]">
+    <div className="h-full w-full overflow-hidden rounded-[36px] border border-border/60 bg-background shadow-[0_20px_40px_-30px_rgba(15,23,42,0.3)]">
+      <div className="h-full w-full overflow-y-auto">
       <PublicProfilePreview
         profile={profile}
         account={account}
         handle={account.handle || profile.handle}
       />
+      </div>
     </div>
   );
 }
