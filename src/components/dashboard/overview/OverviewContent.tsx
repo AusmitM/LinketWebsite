@@ -860,6 +860,7 @@ function PublicProfilePreviewPanel({ userId }: { userId: string | null }) {
         profile={profile}
         account={account}
         handle={account.handle || profile.handle}
+        layout="stacked"
       />
       </div>
     </div>
