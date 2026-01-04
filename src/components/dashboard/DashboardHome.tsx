@@ -129,8 +129,8 @@ export default function DashboardHome({ initialContact, onSaveContact }: { initi
   const publicUrl = useMemo(() => {
     if (!activeProfile) return null;
     const handle = accountHandle || activeProfile.handle;
-    const base = process.env.NEXT_PUBLIC_SITE_URL ?? "";
-    return `${base}/u/${encodeURIComponent(handle)}`;
+    const base = (process.env.NEXT_PUBLIC_SITE_URL ?? "").replace(/\/$/, "");
+    return `${base}/${encodeURIComponent(handle)}`;
   }, [activeProfile, accountHandle]);
 
   if (loading || userId === undefined) {
@@ -169,7 +169,11 @@ export default function DashboardHome({ initialContact, onSaveContact }: { initi
                 <div>
                   <p className="text-xs uppercase tracking-[0.4em] text-muted-foreground">Active profile</p>
                   <h2 className="text-xl font-semibold text-foreground">{activeProfile.name}</h2>
-                  <p className="text-sm text-muted-foreground">{accountHandle ? `linket.co/u/${accountHandle}` : `linket.co/u/${activeProfile.handle}`}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {accountHandle
+                      ? `linketconnect.com/${accountHandle}`
+                      : `linketconnect.com/${activeProfile.handle}`}
+                  </p>
                   {activeProfile.headline && (
                     <p className="mt-2 text-sm text-muted-foreground/90">{activeProfile.headline}</p>
                   )}

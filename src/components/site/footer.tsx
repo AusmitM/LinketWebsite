@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { brand, hasBrandMark } from "@/config/brand";
 import { cn } from "@/lib/utils";
+import { isPublicProfilePathname } from "@/lib/routing";
 
 export function Footer() {
   const year = new Date().getFullYear();
@@ -15,11 +16,15 @@ export function Footer() {
   const isDashboard = pathname?.startsWith("/dashboard");
   const isPublic = !isDashboard;
   const isLanding = pathname === "/";
+  const isPublicProfile = isPublicProfilePathname(pathname);
 
   if (isLanding) {
     return null;
   }
   if (isDashboard) {
+    return null;
+  }
+  if (isPublicProfile) {
     return null;
   }
 

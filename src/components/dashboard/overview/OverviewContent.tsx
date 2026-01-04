@@ -1,13 +1,20 @@
-﻿"use client";
+"use client";
 
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  type ReactNode,
-} from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import {
+  ArrowUpDown,
+  BarChart3,
+  Calendar,
+  Download,
+  Link as LinkIcon,
+  Mail,
+  MapPin,
+  Plus,
+  MessageSquare,
+  Sparkles,
+  Users,
+} from "lucide-react";
 import {
   Area,
   AreaChart,
@@ -17,29 +24,10 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import {
-  BarChart3,
-  Building2,
-  Download,
-  MoveDown,
-  MoveUp,
-  Settings2,
-  Share2,
-  Users,
-} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
 import { useDashboardUser } from "@/components/dashboard/DashboardSessionContext";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/components/system/toaster";
@@ -60,6 +48,13 @@ const timestampFormatter = new Intl.DateTimeFormat("en-US", {
   hour: "numeric",
   minute: "2-digit",
 });
+const dateTimeFormatter = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+});
 
 type ViewState = {
   loading: boolean;
@@ -67,91 +62,18 @@ type ViewState = {
   analytics: UserAnalytics | null;
 };
 
-type ModuleKey =
-  | "business-metrics"
-  | "growth-trajectory"
-  | "conversion-funnel"
-  | "lead-followups"
-  | "top-performers"
-  | "quick-actions";
+type TimeRange = "week" | "month" | "quarter" | "year";
 
-type ModuleSize = "full" | "wide" | "half" | "third";
-
-type ModuleContext = {
-  loading: boolean;
-  analytics: UserAnalytics | null;
-  error: string | null;
-  publicUrl: string | null;
-  userId: string | null;
-};
-
-type ModuleDefinition = {
-  label: string;
-  description: string;
-  size: ModuleSize;
-  render: (context: ModuleContext) => ReactNode;
-};
-
-const ALL_MODULES: ModuleKey[] = [
-  "business-metrics",
-  "quick-actions",
-  "growth-trajectory",
-  "top-performers",
-  "conversion-funnel",
-  "lead-followups",
-];
-
-const MODULE_STORAGE_KEY = "overview:module-preferences";
-
-type ModulePreferences = {
-  order: ModuleKey[];
-  active: ModuleKey[];
-};
-
-const sizeClassMap: Record<ModuleSize, string> = {
-  full: "col-span-12",
-  wide: "col-span-12 lg:col-span-8",
-  half: "col-span-12 lg:col-span-6",
-  third: "col-span-12 sm:col-span-6 lg:col-span-4",
-};
-
-const MODULE_CATALOG: Record<ModuleKey, ModuleDefinition> = {
-  "business-metrics": {
-    label: "Business pulse",
-    description: "Daily performance snapshot and active Linket health.",
-    size: "wide",
-    render: BusinessMetricsModule,
-  },
-  "growth-trajectory": {
-    label: "Engagement trend",
-    description: "Scans and leads over time.",
-    size: "wide",
-    render: GrowthTrajectoryModule,
-  },
-  "conversion-funnel": {
-    label: "Conversion funnel",
-    description: "Understand how taps become warm leads.",
-    size: "half",
-    render: ConversionFunnelModule,
-  },
-  "lead-followups": {
-    label: "Lead follow-ups",
-    description: "Latest leads with contact details.",
-    size: "half",
-    render: LeadFollowupModule,
-  },
-  "top-performers": {
-    label: "Top Linkets",
-    description: "Linkets delivering the most scans and leads.",
-    size: "third",
-    render: TopPerformersModule,
-  },
-  "quick-actions": {
-    label: "Quick actions",
-    description: "Jump into the workflows you use most.",
-    size: "third",
-    render: QuickActionsModule,
-  },
+type LeadRow = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  company: string;
+  school: string;
+  city: string;
+  time: string;
+  timeValue: number;
+  email: string;
 };
 
 export default function OverviewContent() {
@@ -159,24 +81,30 @@ export default function OverviewContent() {
   const [userId, setUserId] = useState<string | null | undefined>(
     dashboardUser?.id ?? undefined
   );
-  const [publicUrl, setPublicUrl] = useState<string | null>(null);
   const [{ loading, error, analytics }, setState] = useState<ViewState>({
     loading: true,
     error: null,
     analytics: null,
   });
-
-  const [modulePrefs, setModulePrefs] = useState<ModulePreferences>({
-    order: ALL_MODULES,
-    active: ALL_MODULES,
-  });
-  const [customizerOpen, setCustomizerOpen] = useState(false);
+  const [now, setNow] = useState(() => new Date());
+  const [search, setSearch] = useState("");
+  const [sortKey, setSortKey] = useState<keyof LeadRow>("timeValue");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+  const [tapRange, setTapRange] = useState<TimeRange>("month");
+  const [conversionRange, setConversionRange] = useState<TimeRange>("month");
 
   useEffect(() => {
     if (dashboardUser?.id) {
       setUserId(dashboardUser.id);
     }
   }, [dashboardUser]);
+
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      setNow(new Date());
+    }, 60_000);
+    return () => window.clearInterval(id);
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -219,31 +147,6 @@ export default function OverviewContent() {
   }, []);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      const raw = window.localStorage.getItem(MODULE_STORAGE_KEY);
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as ModulePreferences;
-      const order = Array.isArray(parsed?.order)
-        ? parsed.order.filter((key): key is ModuleKey =>
-            ALL_MODULES.includes(key)
-          )
-        : ALL_MODULES;
-      const active = Array.isArray(parsed?.active)
-        ? parsed.active.filter((key): key is ModuleKey =>
-            ALL_MODULES.includes(key)
-          )
-        : ALL_MODULES;
-      setModulePrefs({
-        order: order.length ? order : ALL_MODULES,
-        active: active.length ? active : ALL_MODULES,
-      });
-    } catch {
-      // ignore parse errors
-    }
-  }, []);
-
-  useEffect(() => {
     if (userId === undefined) return;
     if (userId === null) {
       setState({
@@ -263,18 +166,9 @@ export default function OverviewContent() {
       try {
         const analyticsUrl = `/api/analytics/user?userId=${encodeURIComponent(
           resolvedUserId
-        )}&days=30`;
-        const profilesUrl = `/api/linket-profiles?userId=${encodeURIComponent(
-          resolvedUserId
-        )}`;
-        const handleUrl = `/api/account/handle?userId=${encodeURIComponent(
-          resolvedUserId
-        )}`;
-
-        const [analyticsRes, profilesRes, handleRes] = await Promise.all([
+        )}&days=90`;
+        const [analyticsRes] = await Promise.all([
           fetch(analyticsUrl, { cache: "no-store" }),
-          fetch(profilesUrl, { cache: "no-store" }),
-          fetch(handleUrl, { cache: "no-store" }),
         ]);
 
         if (!analyticsRes.ok) {
@@ -297,29 +191,6 @@ export default function OverviewContent() {
         }
 
         if (cancelled) return;
-
-        if (profilesRes.ok) {
-          const profiles = (await profilesRes.json().catch(() => [])) as Array<{
-            id: string;
-            handle: string;
-            is_active: boolean;
-          }>;
-          const accountPayload = handleRes.ok
-            ? await handleRes.json().catch(() => null)
-            : null;
-          const activeProfile =
-            profiles.find((p) => p.is_active) ?? profiles[0] ?? null;
-          if (activeProfile) {
-            const handle =
-              typeof accountPayload?.handle === "string"
-                ? accountPayload.handle
-                : activeProfile.handle;
-            const base = process.env.NEXT_PUBLIC_SITE_URL ?? "";
-            setPublicUrl(`${base}/u/${encodeURIComponent(handle)}`);
-          } else {
-            setPublicUrl(null);
-          }
-        }
       } catch (err) {
         const message =
           err instanceof Error ? err.message : "Unable to load overview";
@@ -335,173 +206,206 @@ export default function OverviewContent() {
     };
   }, [userId]);
 
-  const persistPreferences = useCallback((prefs: ModulePreferences) => {
-    setModulePrefs(prefs);
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(MODULE_STORAGE_KEY, JSON.stringify(prefs));
+  const totals = analytics?.totals;
+  const timeline = analytics?.timeline ?? [];
+  const leads = analytics?.recentLeads ?? [];
+
+  const overviewItems = [
+    {
+      label: "Taps in the past week",
+      value: totals ? numberFormatter.format(totals.scans7d) : "--",
+      icon: Sparkles,
+    },
+    {
+      label: "Recent leads",
+      value: totals ? numberFormatter.format(totals.leads7d) : "--",
+      icon: Users,
+    },
+    {
+      label: "Conversion rate (Leads / Taps)",
+      value: totals
+        ? percentFormatter.format(totals.conversionRate7d || 0)
+        : "--",
+      icon: BarChart3,
+    },
+    {
+      label: "Leads you should reach out to",
+      value: totals ? numberFormatter.format(leads.length) : "--",
+      icon: MessageSquare,
+    },
+  ];
+
+  const leadRows = useMemo<LeadRow[]>(() => {
+    return leads.map((lead) => {
+      const name = lead.name ?? "";
+      const [firstName, ...lastParts] = name.trim().split(" ");
+      const lastName = lastParts.join(" ");
+      const created = new Date(lead.created_at);
+      return {
+        id: lead.id,
+        firstName: firstName || "--",
+        lastName: lastName || "--",
+        company: lead.company ?? "--",
+        school: "--",
+        city: "--",
+        time: timestampFormatter.format(created),
+        timeValue: created.getTime(),
+        email: lead.email ?? "",
+      };
+    });
+  }, [leads]);
+
+  const filteredLeads = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) return leadRows;
+    return leadRows.filter((row) =>
+      [
+        row.firstName,
+        row.lastName,
+        row.company,
+        row.school,
+        row.city,
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(query)
+    );
+  }, [leadRows, search]);
+
+  const sortedLeads = useMemo(() => {
+    const rows = [...filteredLeads];
+    rows.sort((a, b) => {
+      const key = sortKey;
+      const aVal = a[key];
+      const bVal = b[key];
+      if (typeof aVal === "number" && typeof bVal === "number") {
+        return sortDirection === "asc" ? aVal - bVal : bVal - aVal;
+      }
+      const aStr = String(aVal).toLowerCase();
+      const bStr = String(bVal).toLowerCase();
+      if (aStr === bStr) return 0;
+      if (sortDirection === "asc") {
+        return aStr < bStr ? -1 : 1;
+      }
+      return aStr > bStr ? -1 : 1;
+    });
+    return rows.slice(0, 10);
+  }, [filteredLeads, sortKey, sortDirection]);
+
+  const toggleSort = useCallback((key: keyof LeadRow) => {
+    setSortKey((prevKey) => {
+      if (prevKey !== key) {
+        setSortDirection("asc");
+        return key;
+      }
+      setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+      return key;
+    });
+  }, []);
+
+  const exportCsv = useCallback(() => {
+    if (filteredLeads.length === 0) {
+      toast({ title: "No leads to export" });
+      return;
     }
-  }, []);
+    const header = [
+      "first_name",
+      "last_name",
+      "company",
+      "school",
+      "city",
+      "time_acquired",
+    ];
+    const rows = filteredLeads.map((row) => [
+      safeCsv(row.firstName),
+      safeCsv(row.lastName),
+      safeCsv(row.company),
+      safeCsv(row.school),
+      safeCsv(row.city),
+      safeCsv(row.time),
+    ]);
+    const csv = [header.join(","), ...rows.map((r) => r.join(","))].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    const date = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
+    a.download = `linket-leads-${date}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }, [filteredLeads]);
 
-  const toggleModule = useCallback((key: ModuleKey, enabled: boolean) => {
-    setModulePrefs((prev) => {
-      if (enabled) {
-        if (prev.active.includes(key)) return prev;
-        const next = [...prev.active, key];
-        const prefs = { ...prev, active: next };
-        if (typeof window !== "undefined")
-          window.localStorage.setItem(
-            MODULE_STORAGE_KEY,
-            JSON.stringify(prefs)
-          );
-        return prefs;
-      }
-      if (prev.active.length === 1 && prev.active[0] === key) {
-        return prev;
-      }
-      const next = prev.active.filter((item) => item !== key);
-      const prefs = { ...prev, active: next };
-      if (typeof window !== "undefined")
-        window.localStorage.setItem(MODULE_STORAGE_KEY, JSON.stringify(prefs));
-      return prefs;
-    });
-  }, []);
+  const emailLeads = useCallback(() => {
+    const emails = filteredLeads
+      .map((row) => row.email)
+      .filter(Boolean)
+      .slice(0, 50);
+    if (emails.length === 0) {
+      toast({ title: "No emails available" });
+      return;
+    }
+    const subject = encodeURIComponent("Following up from Linket");
+    const bcc = encodeURIComponent(emails.join(","));
+    window.location.href = `mailto:?subject=${subject}&bcc=${bcc}`;
+  }, [filteredLeads]);
 
-  const moveModule = useCallback((key: ModuleKey, direction: "up" | "down") => {
-    setModulePrefs((prev) => {
-      const order = [...prev.order];
-      const index = order.indexOf(key);
-      if (index === -1) return prev;
-      const nextIndex = direction === "up" ? index - 1 : index + 1;
-      if (nextIndex < 0 || nextIndex >= order.length) return prev;
-      const [removed] = order.splice(index, 1);
-      order.splice(nextIndex, 0, removed);
-      const prefs = { ...prev, order };
-      if (typeof window !== "undefined")
-        window.localStorage.setItem(MODULE_STORAGE_KEY, JSON.stringify(prefs));
-      return prefs;
-    });
-  }, []);
+  const dateLabel = dateTimeFormatter.format(now);
 
-  const resetPreferences = useCallback(() => {
-    const defaults = { order: ALL_MODULES, active: ALL_MODULES };
-    persistPreferences(defaults);
-  }, [persistPreferences]);
+  const rangeDays: Record<TimeRange, number> = {
+    week: 7,
+    month: 30,
+    quarter: 90,
+    year: 365,
+  };
 
-  const activeModules = useMemo(() => {
-    const activeSet = new Set(modulePrefs.active);
-    return modulePrefs.order.filter((key) => activeSet.has(key));
-  }, [modulePrefs]);
+  const tapData = useMemo(() => {
+    const days = rangeDays[tapRange];
+    const sliced = timeline.slice(-Math.min(days, timeline.length));
+    return sliced.map((point) => ({
+      ...point,
+      label: shortDate.format(new Date(point.date)),
+    }));
+  }, [timeline, tapRange]);
 
-  const moduleContext = useMemo<ModuleContext>(
-    () => ({
-      loading,
-      analytics,
-      error,
-      publicUrl,
-      userId: userId ?? null,
-    }),
-    [loading, analytics, error, publicUrl, userId]
+  const conversionData = useMemo(() => {
+    const days = rangeDays[conversionRange];
+    const sliced = timeline.slice(-Math.min(days, timeline.length));
+    return sliced.map((point) => ({
+      ...point,
+      label: shortDate.format(new Date(point.date)),
+      conversion: point.scans > 0 ? point.leads / point.scans : 0,
+    }));
+  }, [timeline, conversionRange]);
+
+  const leads7d = sumRange(timeline, 7, (point) => point.leads);
+  const prevLeads7d = sumRange(
+    timeline.slice(0, Math.max(timeline.length - 7, 0)),
+    7,
+    (point) => point.leads
+  );
+  const leadDelta =
+    prevLeads7d > 0 ? (leads7d - prevLeads7d) / prevLeads7d : null;
+
+  const tapsByProfile = analytics?.topProfiles ?? [];
+  const maxTap = Math.max(
+    1,
+    ...tapsByProfile.map((profile) => profile.scans)
   );
 
-  const lastUpdated = analytics?.meta.generatedAt
-    ? timestampFormatter.format(new Date(analytics.meta.generatedAt))
-    : null;
-
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+    <div className="space-y-6">
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-1">
-          <h1 className="text-2xl font-semibold text-foreground">Overview</h1>
+          <h1 className="text-2xl font-semibold text-foreground">Dashboard</h1>
           <p className="text-sm text-muted-foreground">
-            Track how Linkets perform and surface the metrics your business
-            cares about. {lastUpdated ? `Last updated ${lastUpdated}.` : ""}
+            Overview of taps, leads, analytics, and your public profile.
           </p>
         </div>
-        <Dialog open={customizerOpen} onOpenChange={setCustomizerOpen}>
-          <DialogTrigger asChild>
-            <Button
-              variant="outline"
-              className="inline-flex items-center gap-2 rounded-full"
-            >
-              <Settings2 className="h-4 w-4" aria-hidden />
-              Customize overview
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-xl">
-            <DialogHeader>
-              <DialogTitle>Customize your overview</DialogTitle>
-              <DialogDescription>
-                Toggle modules on or off and arrange them so the information you
-                value most is front and centre.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-2">
-              {modulePrefs.order.map((key) => {
-                const definition = MODULE_CATALOG[key];
-                const isActive = modulePrefs.active.includes(key);
-                return (
-                  <div
-                    key={key}
-                    className="flex items-start justify-between gap-3 rounded-2xl border border-border/70 bg-card/70 p-3"
-                  >
-                    <div>
-                      <div className="text-sm font-semibold text-foreground">
-                        {definition.label}
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        {definition.description}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="flex flex-col items-center gap-1 text-muted-foreground">
-                        <button
-                          type="button"
-                          aria-label="Move module up"
-                          onClick={() => moveModule(key, "up")}
-                          disabled={modulePrefs.order[0] === key}
-                          className="inline-flex rounded-full border border-border/60 bg-background p-1 text-muted-foreground transition hover:text-foreground disabled:opacity-40"
-                        >
-                          <MoveUp className="h-4 w-4" aria-hidden />
-                        </button>
-                        <button
-                          type="button"
-                          aria-label="Move module down"
-                          onClick={() => moveModule(key, "down")}
-                          disabled={
-                            modulePrefs.order[modulePrefs.order.length - 1] ===
-                            key
-                          }
-                          className="inline-flex rounded-full border border-border/60 bg-background p-1 text-muted-foreground transition hover:text-foreground disabled:opacity-40"
-                        >
-                          <MoveDown className="h-4 w-4" aria-hidden />
-                        </button>
-                      </div>
-                      <Switch
-                        checked={isActive}
-                        onCheckedChange={(checked) =>
-                          toggleModule(key, checked)
-                        }
-                        aria-label={`Toggle ${definition.label}`}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            <DialogFooter>
-              <Button variant="ghost" onClick={resetPreferences}>
-                Restore defaults
-              </Button>
-              <Button
-                onClick={() => setCustomizerOpen(false)}
-                className="rounded-full px-6"
-              >
-                Done
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
+        <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-card/80 px-4 py-2 text-xs font-medium text-muted-foreground shadow-sm">
+          <Calendar className="h-4 w-4 text-muted-foreground" aria-hidden />
+          {dateLabel}
+        </div>
+      </header>
 
       {error && !loading && !analytics ? (
         <Card className="rounded-3xl border border-destructive/40 bg-destructive/10 shadow-sm">
@@ -516,588 +420,435 @@ export default function OverviewContent() {
         </Card>
       ) : null}
 
-      <div className="grid gap-4 lg:grid-cols-12">
-        {activeModules.length === 0 ? (
-          <Card className="col-span-12 rounded-3xl border bg-card/80 shadow-sm">
-            <CardContent className="flex flex-col items-center gap-4 py-12 text-center">
-              <p className="max-w-sm text-sm text-muted-foreground">
-                You’ve hidden every module. Choose the widgets that matter most
-                to your business and we’ll pin them here.
+      <div className="grid gap-6 lg:grid-cols-12">
+        <div className="space-y-6 lg:col-span-7">
+          <Card className="rounded-3xl border border-border/70 bg-card/90 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
+            <CardHeader className="space-y-1">
+              <CardTitle className="text-lg font-semibold text-foreground">
+                Overview
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Your latest Linket performance snapshot.
               </p>
-              <Button
-                className="rounded-full px-5"
-                onClick={() => setCustomizerOpen(true)}
-              >
-                Add dashboard widgets
-              </Button>
+            </CardHeader>
+            <CardContent className="grid gap-4">
+              {overviewItems.map((item) => (
+                <MetricRow
+                  key={item.label}
+                  icon={item.icon}
+                  label={item.label}
+                  value={item.value}
+                  loading={loading && !analytics}
+                />
+              ))}
             </CardContent>
           </Card>
-        ) : (
-          activeModules.map((key) => {
-            const definition = MODULE_CATALOG[key];
-            const element = definition.render(moduleContext);
-            if (!element) return null;
-            return (
-              <div key={key} className={sizeClassMap[definition.size]}>
-                {element}
+
+          <Card className="rounded-3xl border border-border/70 bg-card/90 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
+            <CardHeader className="space-y-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <CardTitle className="text-lg font-semibold text-foreground">
+                    Leads
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    Recent prospects captured from Linket scans.
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    className="rounded-full"
+                    onClick={exportCsv}
+                    disabled={loading}
+                  >
+                    <Download className="mr-2 h-4 w-4" aria-hidden />
+                    Download CSV
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="rounded-full"
+                    onClick={emailLeads}
+                    disabled={loading}
+                  >
+                    <Mail className="mr-2 h-4 w-4" aria-hidden />
+                    Email leads
+                  </Button>
+                </div>
               </div>
-            );
-          })
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="relative w-full sm:max-w-xs">
+                  <Input
+                    value={search}
+                    onChange={(event) => setSearch(event.target.value)}
+                    placeholder="Search name, company, school, city"
+                    className="rounded-full pr-4"
+                    aria-label="Search leads"
+                  />
+                </div>
+                <Button
+                  asChild
+                  variant="ghost"
+                  className="text-sm text-primary hover:text-primary/80"
+                >
+                  <Link href="/dashboard/leads">View all</Link>
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {loading && !analytics ? (
+                <div className="space-y-3">
+                  {Array.from({ length: 4 }).map((_, index) => (
+                    <div
+                      key={`lead-skeleton-${index}`}
+                      className="h-10 animate-pulse rounded-2xl bg-muted"
+                    />
+                  ))}
+                </div>
+              ) : sortedLeads.length > 0 ? (
+                <div className="overflow-x-auto rounded-2xl border border-border/60">
+                  <table className="min-w-[640px] table-auto text-left text-sm">
+                    <thead className="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
+                      <tr>
+                        {[
+                          { key: "firstName", label: "First name" },
+                          { key: "lastName", label: "Last name" },
+                          { key: "company", label: "Company" },
+                          { key: "school", label: "School" },
+                          { key: "city", label: "City" },
+                          { key: "timeValue", label: "Time acquired" },
+                        ].map((column) => (
+                          <th key={column.key} className="px-4 py-3">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                toggleSort(column.key as keyof LeadRow)
+                              }
+                              className="inline-flex items-center gap-2 text-xs font-semibold text-muted-foreground transition hover:text-foreground"
+                            >
+                              {column.label}
+                              <ArrowUpDown className="h-3 w-3" aria-hidden />
+                            </button>
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/60 bg-card/60">
+                      {sortedLeads.map((row) => (
+                        <tr key={row.id} className="hover:bg-muted/30">
+                          <td className="px-4 py-3 text-foreground">
+                            {row.firstName}
+                          </td>
+                          <td className="px-4 py-3 text-foreground">
+                            {row.lastName}
+                          </td>
+                          <td className="px-4 py-3 text-muted-foreground">
+                            {row.company}
+                          </td>
+                          <td className="px-4 py-3 text-muted-foreground">
+                            {row.school}
+                          </td>
+                          <td className="px-4 py-3 text-muted-foreground">
+                            {row.city}
+                          </td>
+                          <td className="px-4 py-3 text-muted-foreground">
+                            {row.time}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <EmptyState message="No leads match this search yet." />
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="lg:col-span-5">
+          <Card className="h-full rounded-3xl border border-border/70 bg-card/90 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
+            <CardContent className="flex h-full items-start justify-center p-6">
+              <PublicProfileMock />
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card className="rounded-3xl border border-border/70 bg-card/90 shadow-[0_18px_45px_rgba(15,23,42,0.08)] lg:col-span-12">
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-lg font-semibold text-foreground">
+              Analytics
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Monitor engagement, conversions, and lead capture impact.
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid gap-4 lg:grid-cols-2">
+              <AnalyticsTile
+                title="Tap trend"
+                icon={Sparkles}
+                range={tapRange}
+                onRangeChange={setTapRange}
+                loading={loading && !analytics}
+              >
+                <ChartPanel data={tapData} dataKey="scans" />
+              </AnalyticsTile>
+              <AnalyticsTile
+                title="Conversion rate trend"
+                icon={BarChart3}
+                range={conversionRange}
+                onRangeChange={setConversionRange}
+                loading={loading && !analytics}
+              >
+                <ChartPanel data={conversionData} dataKey="conversion" />
+              </AnalyticsTile>
+              <AnalyticsTile title="Taps per link" icon={LinkIcon}>
+                <div className="space-y-3">
+                  {tapsByProfile.length === 0 ? (
+                    <EmptyState message="No taps recorded yet." />
+                  ) : (
+                    tapsByProfile.slice(0, 5).map((profile) => (
+                      <div key={profile.handle ?? profile.profileId ?? "tap"}>
+                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                          <span className="truncate">
+                            {profile.displayName || "Linket"}
+                          </span>
+                          <span className="text-foreground">
+                            {numberFormatter.format(profile.scans)}
+                          </span>
+                        </div>
+                        <div className="mt-2 h-2 rounded-full bg-muted">
+                          <div
+                            className="h-2 rounded-full bg-primary"
+                            style={{
+                              width: `${Math.max(
+                                8,
+                                (profile.scans / maxTap) * 100
+                              )}%`,
+                            }}
+                          />
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </AnalyticsTile>
+              <AnalyticsTile title="Leads captured" icon={Users}>
+                <div className="space-y-2">
+                  <div className="text-4xl font-semibold text-foreground">
+                    {totals
+                      ? numberFormatter.format(totals.leads7d)
+                      : "--"}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    Last 7 days
+                  </div>
+                  <div className="text-xs font-medium text-foreground">
+                    {leadDelta === null
+                      ? "Delta unavailable"
+                      : `${leadDelta > 0 ? "+" : ""}${percentFormatter.format(
+                          leadDelta
+                        )} vs previous period`}
+                  </div>
+                </div>
+              </AnalyticsTile>
+            </div>
+
+            <div className="rounded-3xl border border-dashed border-border/70 bg-gradient-to-br from-muted/40 via-background to-muted/40 p-6">
+              <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground">
+                <MapPin className="h-4 w-4 text-primary" aria-hidden />
+                Location map of taps
+              </div>
+              <div className="flex h-56 items-center justify-center rounded-2xl border border-border/60 bg-background/60 text-sm text-muted-foreground">
+                Map placeholder
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+function MetricRow({
+  icon: Icon,
+  label,
+  value,
+  loading,
+}: {
+  icon: typeof Sparkles;
+  label: string;
+  value: string;
+  loading: boolean;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-2xl border border-border/60 bg-background/70 px-4 py-3">
+      <div className="flex items-center gap-3">
+        <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
+          <Icon className="h-4 w-4" aria-hidden />
+        </span>
+        <span className="text-sm font-medium text-foreground">{label}</span>
+      </div>
+      <span className="text-sm font-semibold text-foreground">
+        {loading ? <span className="text-muted-foreground">--</span> : value}
+      </span>
+    </div>
+  );
+}
+
+function AnalyticsTile({
+  title,
+  icon: Icon,
+  children,
+  range,
+  onRangeChange,
+  loading,
+}: {
+  title: string;
+  icon: typeof Sparkles;
+  children: React.ReactNode;
+  range?: TimeRange;
+  onRangeChange?: (range: TimeRange) => void;
+  loading?: boolean;
+}) {
+  return (
+    <div className="rounded-3xl border border-border/60 bg-background/70 p-4 shadow-sm">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <Icon className="h-4 w-4" aria-hidden />
+          </span>
+          <div>
+            <div className="text-sm font-semibold text-foreground">{title}</div>
+          </div>
+        </div>
+        {range && onRangeChange ? (
+          <div className="flex items-center gap-1 rounded-full border border-border/60 bg-background px-2 py-1 text-xs">
+            {(["week", "month", "quarter", "year"] as TimeRange[]).map(
+              (option) => (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => onRangeChange(option)}
+                  className={`rounded-full px-2 py-0.5 text-xs font-medium transition ${
+                    range === option
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                  aria-pressed={range === option}
+                >
+                  {labelForRange(option)}
+                </button>
+              )
+            )}
+          </div>
+        ) : null}
+      </div>
+      <div className="mt-3">
+        {loading ? (
+          <div className="h-40 animate-pulse rounded-2xl bg-muted" />
+        ) : (
+          children
         )}
       </div>
     </div>
   );
 }
 
-function BusinessMetricsModule({ analytics, loading }: ModuleContext) {
-  if (loading && !analytics) {
-    return (
-      <Card className="rounded-3xl border bg-card/80 shadow-sm">
-        <CardHeader className="space-y-1 pb-1">
-          <CardTitle className="flex items-center gap-2 text-lg font-semibold">
-            <BarChart3 className="h-5 w-5 text-primary" aria-hidden />
-            Business pulse
-          </CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Daily performance snapshot.
-          </p>
-        </CardHeader>
-        <CardContent className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, index) => (
-            <SkeletonStatCard key={`metric-skeleton-${index}`} />
-          ))}
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (!analytics?.totals) {
-    return (
-      <Card className="rounded-3xl border bg-card/80 shadow-sm">
-        <CardHeader className="space-y-1 pb-1">
-          <CardTitle className="flex items-center gap-2 text-lg font-semibold">
-            <BarChart3 className="h-5 w-5 text-primary" aria-hidden />
-            Business pulse
-          </CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Daily performance snapshot.
-          </p>
-        </CardHeader>
-        <CardContent>
-          <EmptyState message="Connect your analytics to see scans, leads, and conversion data." />
-        </CardContent>
-      </Card>
-    );
-  }
-
-  const totals = analytics.totals;
-  const cards = [
-    {
-      label: "Taps today",
-      value: numberFormatter.format(totals.scansToday),
-      helper: totals.lastScanAt
-        ? `Last tap ${timestampFormatter.format(new Date(totals.lastScanAt))}`
-        : "No taps yet today",
-    },
-    {
-      label: "Leads today",
-      value: numberFormatter.format(totals.leadsToday),
-      helper:
-        totals.leadsToday > 0
-          ? "Follow up within 24 hours"
-          : "No new leads yet",
-    },
-    {
-      label: "7-day conversion",
-      value: percentFormatter.format(totals.conversionRate7d || 0),
-      helper: `${numberFormatter.format(
-        totals.leads7d
-      )} leads from ${numberFormatter.format(totals.scans7d)} taps`,
-    },
-    {
-      label: "Active Linkets",
-      value: numberFormatter.format(totals.activeTags),
-      helper:
-        totals.activeTags > 0
-          ? "Linkets that recorded taps this week"
-          : "Assign Linkets to team members",
-    },
-  ];
-
+function PublicProfileMock() {
   return (
-    <Card className="rounded-3xl border bg-card/80 shadow-sm">
-      <CardHeader className="space-y-1 pb-1">
-        <CardTitle className="flex items-center gap-2 text-lg font-semibold">
-          <BarChart3 className="h-5 w-5 text-primary" aria-hidden />
-          Business pulse
-        </CardTitle>
-        <p className="text-sm text-muted-foreground">
-          Daily performance snapshot.
-        </p>
-      </CardHeader>
-      <CardContent className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-4">
-        {cards.map((card) => (
-          <StatCard key={card.label} {...card} />
-        ))}
-      </CardContent>
-    </Card>
-  );
-}
-
-function GrowthTrajectoryModule({ analytics, loading }: ModuleContext) {
-  const data = analytics?.timeline ?? [];
-
-  return (
-    <Card className="rounded-3xl border bg-card/80 shadow-sm">
-      <CardHeader className="flex flex-row items-center justify-between pb-1">
-        <div>
-          <CardTitle className="text-lg font-semibold">
-            Engagement trend
-          </CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Scans and leads recorded over time.
-          </p>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {loading && !analytics ? (
-          <div className="h-56 animate-pulse rounded-2xl bg-muted" />
-        ) : data.length ? (
-          <div className="h-72 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart
-                data={data.map((point) => ({
-                  ...point,
-                  label: shortDate.format(new Date(point.date)),
-                }))}
-              >
-                <CartesianGrid
-                  stroke="rgba(148, 163, 184, 0.2)"
-                  strokeDasharray="8 5"
-                />
-                <XAxis
-                  dataKey="label"
-                  tickLine={false}
-                  axisLine={false}
-                  tickMargin={8}
-                  tick={{ fontSize: 12, fill: "currentColor" }}
-                />
-                <YAxis
-                  tickFormatter={(value) => numberFormatter.format(value)}
-                  tickLine={false}
-                  axisLine={false}
-                  tickMargin={8}
-                  tick={{ fontSize: 12, fill: "currentColor" }}
-                />
-                <Tooltip content={<ChartTooltip />} />
-                <Area
-                  type="monotone"
-                  dataKey="scans"
-                  name="Scans"
-                  stroke="var(--primary)"
-                  fill="var(--primary)"
-                  strokeWidth={2}
-                  fillOpacity={0.15}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="leads"
-                  name="Leads"
-                  stroke="var(--accent)"
-                  fill="var(--accent)"
-                  strokeWidth={2}
-                  fillOpacity={0.15}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+    <div className="h-fit w-full max-w-[340px] overflow-hidden rounded-[36px] border border-border/60 bg-background shadow-[0_20px_40px_-30px_rgba(15,23,42,0.3)]">
+      <div className="h-28 rounded-t-[36px] bg-gradient-to-r from-[#7C4DA0] via-[#B26A85] to-[#E1A37B]" />
+      <div className="flex flex-col items-center px-6 pb-6">
+        <div className="-mt-10 h-20 w-20 overflow-hidden rounded-full border-4 border-background bg-muted shadow-sm" />
+        <div className="mt-3 text-center">
+          <div className="text-base font-semibold text-foreground">
+            Jessica Miller
           </div>
-        ) : (
-          <EmptyState message="Once your Linkets start receiving traffic you'll see trends here." />
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-function ConversionFunnelModule({
-  analytics,
-  loading,
-  publicUrl,
-}: ModuleContext) {
-  if (loading && !analytics) {
-    return (
-      <Card className="rounded-3xl border bg-card/80 shadow-sm">
-        <CardContent className="py-12">
-          <div className="h-32 animate-pulse rounded-2xl bg-muted" />
-        </CardContent>
-      </Card>
-    );
-  }
-
-  const totals = analytics?.totals;
-  const scans7d = totals?.scans7d ?? 0;
-  const leads7d = totals?.leads7d ?? 0;
-  const conversion = totals?.conversionRate7d ?? 0;
-  const leadPerLinket =
-    totals && totals.activeTags > 0
-      ? `${(totals.leads7d / totals.activeTags).toFixed(
-          1
-        )} leads / active Linket`
-      : "Assign Linkets to start tracking";
-
-  return (
-    <Card className="rounded-3xl border bg-card/80 shadow-sm">
-      <CardHeader className="space-y-1 pb-1">
-        <CardTitle className="text-lg font-semibold">
-          Conversion funnel
-        </CardTitle>
-        <p className="text-sm text-muted-foreground">
-          Tap-to-lead performance over the last 7 days.
-        </p>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="grid gap-3">
-          <SnapshotRow
-            label="Total taps"
-            value={numberFormatter.format(scans7d)}
-            helper="Across every active Linket"
-          />
-          <SnapshotRow
-            label="Leads captured"
-            value={numberFormatter.format(leads7d)}
-            helper={leadPerLinket}
-          />
-          <SnapshotRow
-            label="Conversion rate"
-            value={percentFormatter.format(conversion || 0)}
-            helper="Leads / taps last 7 days"
-          />
-        </div>
-        <div className="rounded-2xl border border-dashed border-border/70 bg-muted/30 px-4 py-3 text-xs text-muted-foreground">
-          Want more taps? Share your public profile with prospects:
-          <div className="mt-2 inline-flex items-center gap-2">
-            <Link
-              href={publicUrl ?? "/dashboard/profiles"}
-              className="truncate rounded-full border border-border/60 bg-background px-3 py-1 text-xs font-medium text-foreground hover:border-border"
-              title={publicUrl ?? undefined}
-            >
-              {publicUrl ?? "Set active profile"}
-            </Link>
+          <div className="mt-1 text-xs text-muted-foreground">
+            Digital Creator | Connecting Ideas & Communities
           </div>
         </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function LeadFollowupModule({ analytics, loading, userId }: ModuleContext) {
-  const [recentLeads, setRecentLeads] = useState(
-    () => analytics?.recentLeads ?? []
-  );
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-
-  useEffect(() => {
-    setRecentLeads(analytics?.recentLeads ?? []);
-  }, [analytics?.recentLeads]);
-
-  const handleDelete = useCallback(
-    async (id: string) => {
-      if (!userId) {
-        toast({
-          title: "Sign in required",
-          description: "You need to be signed in to delete leads.",
-          variant: "destructive",
-        });
-        return;
-      }
-      if (!window.confirm("Delete this lead? This cannot be undone.")) return;
-      setDeletingId(id);
-      try {
-        const { error } = await supabase
-          .from("leads")
-          .delete()
-          .eq("id", id)
-          .eq("user_id", userId);
-        if (error) throw error;
-        setRecentLeads((prev) => prev.filter((lead) => lead.id !== id));
-        toast({ title: "Lead deleted" });
-      } catch (err) {
-        const description =
-          err instanceof Error ? err.message : "Unable to delete lead.";
-        toast({ title: "Delete failed", description, variant: "destructive" });
-      } finally {
-        setDeletingId(null);
-      }
-    },
-    [userId]
-  );
-
-  const hasLeads = (recentLeads ?? []).length > 0;
-
-  return (
-    <Card className="rounded-3xl border bg-card/80 shadow-sm">
-      <CardHeader className="space-y-1 pb-1">
-        <CardTitle className="text-lg font-semibold">Lead follow-ups</CardTitle>
-        <p className="text-sm text-muted-foreground">
-          Reach out while you&apos;re still top-of-mind.
-        </p>
-      </CardHeader>
-      <CardContent>
-        {loading && !analytics ? (
-          <div className="space-y-3">
-            {Array.from({ length: 4 }).map((_, index) => (
-              <div
-                key={index}
-                className="h-12 animate-pulse rounded-2xl bg-muted"
-              />
-            ))}
-          </div>
-        ) : hasLeads ? (
-          <div className="grid gap-3">
-            {recentLeads.slice(0, 5).map((lead) => (
-              <div
-                key={lead.id}
-                className="flex flex-col gap-2 rounded-2xl border border-border/70 bg-background/60 p-3 text-sm"
-              >
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="font-medium text-foreground">
-                    {lead.name || "Unnamed lead"}
-                  </div>
-                  <span className="text-xs text-muted-foreground">
-                    {shortDate.format(new Date(lead.created_at))}
-                  </span>
-                </div>
-                <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                  {lead.email && (
-                    <a
-                      href={`mailto:${lead.email}`}
-                      className="truncate text-primary underline"
-                    >
-                      {lead.email}
-                    </a>
-                  )}
-                  {lead.phone && (
-                    <a
-                      href={`tel:${lead.phone}`}
-                      className="truncate text-primary underline"
-                    >
-                      {lead.phone}
-                    </a>
-                  )}
-                  {lead.company && (
-                    <span className="truncate">{lead.company}</span>
-                  )}
-                </div>
-                {lead.message && (
-                  <blockquote className="rounded-xl border border-dashed border-border/70 bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-                    {lead.message}
-                  </blockquote>
-                )}
-                <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-primary hover:text-primary/80"
-                    asChild
-                  >
-                    <Link href="/dashboard/leads">View details</Link>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-destructive hover:text-destructive/90"
-                    disabled={deletingId === lead.id}
-                    onClick={() => handleDelete(lead.id)}
-                  >
-                    {deletingId === lead.id ? "Deleting..." : "Delete"}
-                  </Button>
-                </div>
-              </div>
-            ))}
-            <Button
-              asChild
-              variant="outline"
-              className="mt-1 w-full rounded-full text-sm"
-            >
-              <Link href="/dashboard/leads">Manage all leads</Link>
-            </Button>
-          </div>
-        ) : (
-          <EmptyState message="No leads captured in this window." />
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-function TopPerformersModule({ analytics, loading }: ModuleContext) {
-  return (
-    <Card className="rounded-3xl border bg-card/80 shadow-sm">
-      <CardHeader className="space-y-1 pb-1">
-        <CardTitle className="flex items-center gap-2 text-lg font-semibold">
-          <Users className="h-5 w-5 text-primary" aria-hidden />
-          Top Linkets
-        </CardTitle>
-        <p className="text-sm text-muted-foreground">
-          Who&apos;s bringing in the most interest this week.
-        </p>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {loading && !analytics ? (
-          <div className="space-y-2">
-            <div className="h-12 animate-pulse rounded-2xl bg-muted" />
-            <div className="h-12 animate-pulse rounded-2xl bg-muted" />
-            <div className="h-12 animate-pulse rounded-2xl bg-muted" />
-          </div>
-        ) : analytics?.topProfiles?.length ? (
-          analytics.topProfiles.slice(0, 5).map((profile) => {
-            const key = `${profile.profileId ?? "np"}-${
-              profile.handle ?? "nh"
-            }`;
-            const subtitle = profile.handle
-              ? `linket.co/u/${profile.handle}`
-              : profile.nickname || "Unassigned";
-            return (
-              <div
-                key={key}
-                className="flex items-center justify-between rounded-2xl border px-3 py-2 text-sm"
-              >
-                <div>
-                  <div className="font-medium text-foreground">
-                    {profile.displayName || "Linket"}
-                  </div>
-                  <p className="text-xs text-muted-foreground">{subtitle}</p>
-                </div>
-                <div className="text-right text-xs text-muted-foreground">
-                  <div className="font-semibold text-foreground">
-                    {numberFormatter.format(profile.scans)} taps
-                  </div>
-                  <div>
-                    {profile.leads
-                      ? `${numberFormatter.format(profile.leads)} leads`
-                      : "0 leads"}
-                  </div>
-                </div>
-              </div>
-            );
-          })
-        ) : (
-          <EmptyState message="No activity yet. Share your Linkets to start ranking results." />
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-function QuickActionsModule({ publicUrl }: ModuleContext) {
-  return (
-    <Card className="rounded-3xl border bg-card/80 shadow-sm">
-      <CardHeader className="space-y-1 pb-1">
-        <CardTitle className="flex items-center gap-2 text-lg font-semibold">
-          <Building2 className="h-5 w-5 text-primary" aria-hidden />
-          Quick actions
-        </CardTitle>
-        <p className="text-sm text-muted-foreground">
-          Keep momentum with the next best step.
-        </p>
-      </CardHeader>
-      <CardContent className="grid gap-3">
-        <Button
-          asChild
-          className="w-full justify-start rounded-2xl bg-primary/90 text-primary-foreground hover:bg-primary"
+        <button
+          type="button"
+          className="mt-4 w-full rounded-full bg-[#EEF3F9] px-4 py-2 text-xs font-semibold text-[#7AA7D8] opacity-80"
         >
-          <Link href={publicUrl ?? "/dashboard/profiles"}>
-            <Share2 className="mr-2 h-4 w-4" aria-hidden />
-            {publicUrl
-              ? "Share public profile"
-              : "Activate your public profile"}
-          </Link>
-        </Button>
-        <Button
-          asChild
-          variant="outline"
-          className="w-full justify-start rounded-2xl"
-        >
-          <Link href="/dashboard/linkets">
-            <Users className="mr-2 h-4 w-4" aria-hidden />
-            Assign a new Linket
-          </Link>
-        </Button>
-        <Button
-          asChild
-          variant="ghost"
-          className="w-full justify-start rounded-2xl"
-        >
-          <Link href="/dashboard/leads">
-            <Download className="mr-2 h-4 w-4" aria-hidden />
-            Export latest leads
-          </Link>
-        </Button>
-      </CardContent>
-    </Card>
-  );
-}
+          Add email or phone to enable Save contact
+        </button>
 
-function StatCard({
-  label,
-  value,
-  helper,
-}: {
-  label: string;
-  value: string;
-  helper?: string;
-}) {
-  return (
-    <Card className="rounded-2xl border bg-background/70 shadow-sm">
-      <CardHeader className="pb-1">
-        <CardTitle className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
-          {label}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-0.5">
-        <div className="text-3xl font-semibold text-foreground">{value}</div>
-        {helper && (
-          <div className="text-xs text-muted-foreground">{helper}</div>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
+        <div className="mt-4 w-full text-left">
+          <div className="text-xs font-semibold text-muted-foreground">
+            Links
+          </div>
+          <div className="mt-3 grid grid-cols-2 gap-3">
+            <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-border/60 bg-white px-4 py-4 text-center text-xs font-medium text-foreground shadow-[0_12px_24px_-18px_rgba(15,23,42,0.3)]">
+              <span className="text-sm">
+                <Plus className="h-4 w-4" />
+              </span>
+              <span>+ Add link</span>
+            </div>
+          </div>
+        </div>
 
-function SkeletonStatCard() {
-  return <div className="h-32 animate-pulse rounded-2xl bg-muted" />;
-}
-
-function SnapshotRow({
-  label,
-  value,
-  helper,
-  ctaHref,
-  ctaLabel,
-}: {
-  label: string;
-  value: string;
-  helper?: string;
-  ctaHref?: string;
-  ctaLabel?: string;
-}) {
-  return (
-    <div className="flex items-center justify-between gap-3">
-      <div>
-        <div className="text-sm font-medium text-foreground">{label}</div>
-        {helper && <p className="text-xs text-muted-foreground">{helper}</p>}
+        <div className="mt-4 w-full text-xs text-muted-foreground">
+          Get in Touch
+        </div>
       </div>
-      <div className="text-right">
-        <div className="text-sm font-semibold text-foreground">{value}</div>
-        {ctaHref && ctaLabel && (
-          <Link
-            href={ctaHref}
-            className="text-xs font-medium text-primary underline"
-          >
-            {ctaLabel}
-          </Link>
-        )}
+    </div>
+  );
+}
+
+function ChartPanel({
+  data,
+  dataKey,
+}: {
+  data: Array<{ label: string; [key: string]: number | string }>;
+  dataKey: string;
+}) {
+  if (!data.length) {
+    return (
+      <div className="flex h-40 items-center justify-center rounded-2xl border border-dashed border-border/70 text-xs text-muted-foreground">
+        No data yet
       </div>
+    );
+  }
+  return (
+    <div className="h-40 w-full">
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart data={data}>
+          <CartesianGrid
+            stroke="rgba(148, 163, 184, 0.2)"
+            strokeDasharray="6 4"
+          />
+          <XAxis
+            dataKey="label"
+            tickLine={false}
+            axisLine={false}
+            tickMargin={8}
+            tick={{ fontSize: 10, fill: "currentColor" }}
+          />
+          <YAxis
+            tickLine={false}
+            axisLine={false}
+            tickMargin={8}
+            tick={{ fontSize: 10, fill: "currentColor" }}
+            tickFormatter={(value) =>
+              dataKey === "conversion"
+                ? percentFormatter.format(value)
+                : numberFormatter.format(value)
+            }
+          />
+          <Tooltip content={<ChartTooltip />} />
+          <Area
+            type="monotone"
+            dataKey={dataKey}
+            stroke="var(--primary)"
+            fill="var(--primary)"
+            strokeWidth={2}
+            fillOpacity={0.18}
+          />
+        </AreaChart>
+      </ResponsiveContainer>
     </div>
   );
 }
@@ -1112,24 +863,14 @@ function ChartTooltip({
   label?: string;
 }) {
   if (!active || !payload || payload.length === 0) return null;
-  const scans = payload.find((item) => item.name === "Scans")?.value ?? 0;
-  const leads = payload.find((item) => item.name === "Leads")?.value ?? 0;
+  const value = payload[0]?.value ?? 0;
   return (
     <div className="rounded-md border border-border/70 bg-background/95 px-3 py-2 text-xs shadow">
       <div className="font-medium text-foreground">{label}</div>
-      <div className="mt-1 space-y-1">
-        <div className="flex items-center justify-between gap-6">
-          <span className="text-muted-foreground">Scans</span>
-          <span className="font-medium text-foreground">
-            {numberFormatter.format(scans)}
-          </span>
-        </div>
-        <div className="flex items-center justify-between gap-6">
-          <span className="text-muted-foreground">Leads</span>
-          <span className="font-medium text-foreground">
-            {numberFormatter.format(leads)}
-          </span>
-        </div>
+      <div className="mt-1 text-muted-foreground">
+        {typeof value === "number"
+          ? numberFormatter.format(value)
+          : String(value)}
       </div>
     </div>
   );
@@ -1141,4 +882,35 @@ function EmptyState({ message }: { message: string }) {
       {message}
     </p>
   );
+}
+
+function safeCsv(value: string) {
+  if (value == null) return "";
+  const needs = /[",\n]/.test(value);
+  const val = String(value).replace(/"/g, '""');
+  return needs ? `"${val}"` : val;
+}
+
+function labelForRange(range: TimeRange) {
+  switch (range) {
+    case "week":
+      return "Week";
+    case "month":
+      return "Month";
+    case "quarter":
+      return "3 Months";
+    case "year":
+      return "Year";
+    default:
+      return "Range";
+  }
+}
+
+function sumRange(
+  points: Array<{ date: string; scans: number; leads: number }>,
+  days: number,
+  selector: (point: { date: string; scans: number; leads: number }) => number
+) {
+  const subset = points.slice(-Math.min(days, points.length));
+  return subset.reduce((total, point) => total + selector(point), 0);
 }

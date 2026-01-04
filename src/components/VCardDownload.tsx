@@ -2,7 +2,23 @@
 import * as React from "react";
 import { Button } from "@/components/ui/button";
 
-export default function VCardDownload({ handle, label = "Save vCard" }: { handle: string; label?: string }) {
+type ButtonVariant = React.ComponentProps<typeof Button>["variant"];
+
+export default function VCardDownload({
+  handle,
+  label = "Save vCard",
+  className,
+  variant,
+  iconSrc,
+  iconAlt = "Site icon",
+}: {
+  handle: string;
+  label?: string;
+  className?: string;
+  variant?: ButtonVariant;
+  iconSrc?: string;
+  iconAlt?: string;
+}) {
   const href = `/api/vcard/${encodeURIComponent(handle)}`;
   const [downloading, setDownloading] = React.useState(false);
 
@@ -38,8 +54,24 @@ export default function VCardDownload({ handle, label = "Save vCard" }: { handle
   }
 
   return (
-    <Button onClick={download} disabled={downloading} aria-label={label} title={label}>
-      {downloading ? "Preparing…" : label}
+    <Button
+      onClick={download}
+      disabled={downloading}
+      aria-label={label}
+      title={label}
+      className={className}
+      variant={variant}
+    >
+      {iconSrc ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={iconSrc}
+          alt={iconAlt}
+          className="mr-2 h-4 w-4"
+          aria-hidden
+        />
+      ) : null}
+      {downloading ? "Preparing..." : label}
     </Button>
   );
 }

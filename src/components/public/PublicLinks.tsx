@@ -48,11 +48,13 @@ export default function PublicLinks({
   initial,
   appearance,
   className,
+  variant = "cards",
 }: {
   profileId?: string | null;
   initial: ProfileLinkRecord[];
   appearance?: LinksAppearance;
   className?: string;
+  variant?: "cards" | "buttons";
 }) {
   const filtered = useFilteredLinks(initial);
   const [links, setLinks] = useState<ProfileLinkRecord[]>(filtered);
@@ -98,6 +100,34 @@ export default function PublicLinks({
       supabase.removeChannel(channel);
     };
   }, [profileId]);
+
+  if (variant === "buttons") {
+    return (
+      <section className={cn("space-y-4", className)}>
+        {!hasLinks ? (
+          <div className="rounded-2xl border border-dashed border-border/60 bg-muted/40 px-4 py-6 text-center text-sm text-muted-foreground">
+            Links will appear here as soon as they are published.
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {links.map((link) => (
+              <a
+                key={link.id}
+                href={link.url}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center justify-center rounded-full border border-transparent bg-[color:var(--primary)] px-6 py-3 text-sm font-semibold text-[color:var(--primary-foreground)] shadow-[0_18px_35px_-25px_var(--ring)] transition hover:brightness-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]"
+                aria-label={`Open ${link.title}`}
+                title={link.title}
+              >
+                {link.title}
+              </a>
+            ))}
+          </div>
+        )}
+      </section>
+    );
+  }
 
   return (
     <section className={cn("space-y-6", className)}>

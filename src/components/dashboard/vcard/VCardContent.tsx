@@ -21,7 +21,24 @@ type VCardFields = {
   photoName: string | null;
 };
 
-export default function VCardContent() {
+type VCardStatusPayload = {
+  status: "idle" | "saving" | "saved" | "error";
+  isDirty: boolean;
+  error: string | null;
+  lastSavedAt: string | null;
+};
+
+export default function VCardContent({
+  variant = "card",
+  onFieldsChange,
+  onStatusChange,
+  idPrefix,
+}: {
+  variant?: "card" | "embedded";
+  onFieldsChange?: (fields: VCardFields) => void;
+  onStatusChange?: (payload: VCardStatusPayload) => void;
+  idPrefix?: string;
+}) {
   const [fields, setFields] = useState<VCardFields>({
     fullName: "",
     title: "",
@@ -39,6 +56,7 @@ export default function VCardContent() {
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
+  const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSavedRef = useRef<VCardFields | null>(null);
   const initialisedRef = useRef(false);
@@ -118,6 +136,7 @@ export default function VCardContent() {
         lastSavedRef.current = payload.fields;
         initialisedRef.current = true;
         setStatus("saved");
+        setLastSavedAt(new Date().toISOString());
       } catch (err) {
         if (cancelled) return;
         const message = err instanceof Error ? err.message : "Unable to load vCard";
@@ -157,6 +176,9 @@ export default function VCardContent() {
         }
         const stillDirty = !areVCardFieldsEqual(latestFieldsRef.current, payload.fields);
         setStatus(stillDirty ? "saving" : "saved");
+        if (!stillDirty) {
+          setLastSavedAt(new Date().toISOString());
+        }
       } catch (err) {
         const message = err instanceof Error ? err.message : "Unable to save vCard";
         setStatus("error");
@@ -203,6 +225,14 @@ export default function VCardContent() {
     return !areVCardFieldsEqual(lastSavedRef.current, fields);
   }, [fields]);
 
+  useEffect(() => {
+    onFieldsChange?.(fields);
+  }, [fields, onFieldsChange]);
+
+  useEffect(() => {
+    onStatusChange?.({ status, isDirty, error, lastSavedAt });
+  }, [status, isDirty, error, lastSavedAt, onStatusChange]);
+
   const statusMessage = useMemo(() => {
     if (loading) return "Loading...";
     if (status === "saving") return "Saving changes...";
@@ -214,10 +244,18 @@ export default function VCardContent() {
   const inputsDisabled = loading || !userId;
 
   return (
-    <Card className="rounded-3xl border bg-card/80 shadow-sm">
+    <Card
+      className={
+        variant === "embedded"
+          ? "rounded-2xl border border-border/60 bg-background/70 shadow-sm"
+          : "rounded-3xl border bg-card/80 shadow-sm"
+      }
+    >
       <CardHeader>
         <CardTitle className="text-lg font-semibold">vCard details</CardTitle>
-        <p className="text-sm text-muted-foreground">Fill in the contact fields that appear when someone taps your NFC tag.</p>
+        <p className="text-sm text-muted-foreground">
+          Fill in the contact fields that appear when someone taps your NFC tag.
+        </p>
       </CardHeader>
       <CardContent className="space-y-4">
         <section className="flex flex-col gap-4 rounded-2xl border border-dashed border-muted/70 p-4 sm:flex-row sm:items-center sm:justify-between">
@@ -260,16 +298,16 @@ export default function VCardContent() {
         </section>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Full name" id="fullName" value={fields.fullName} onChange={updateField} required disabled={inputsDisabled} />
-          <Field label="Title" id="title" value={fields.title} onChange={updateField} disabled={inputsDisabled} />
-          <Field label="Email" id="email" type="email" value={fields.email} onChange={updateField} disabled={inputsDisabled} />
-          <Field label="Phone" id="phone" type="tel" value={fields.phone} onChange={updateField} disabled={inputsDisabled} />
-          <Field label="Company" id="company" value={fields.company} onChange={updateField} disabled={inputsDisabled} />
-          <Field label="Website" id="website" type="url" value={fields.website} onChange={updateField} disabled={inputsDisabled} />
+          <Field label="Full name" id="fullName" value={fields.fullName} onChange={updateField} required disabled={inputsDisabled} idPrefix={idPrefix} />
+          <Field label="Title" id="title" value={fields.title} onChange={updateField} disabled={inputsDisabled} idPrefix={idPrefix} />
+          <Field label="Email" id="email" type="email" value={fields.email} onChange={updateField} disabled={inputsDisabled} idPrefix={idPrefix} />
+          <Field label="Phone" id="phone" type="tel" value={fields.phone} onChange={updateField} disabled={inputsDisabled} idPrefix={idPrefix} />
+          <Field label="Company" id="company" value={fields.company} onChange={updateField} disabled={inputsDisabled} idPrefix={idPrefix} />
+          <Field label="Website" id="website" type="url" value={fields.website} onChange={updateField} disabled={inputsDisabled} idPrefix={idPrefix} />
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Address" id="address" component="textarea" value={fields.address} onChange={updateField} disabled={inputsDisabled} />
-          <Field label="Notes" id="note" component="textarea" value={fields.note} onChange={updateField} disabled={inputsDisabled} />
+          <Field label="Address" id="address" component="textarea" value={fields.address} onChange={updateField} disabled={inputsDisabled} idPrefix={idPrefix} />
+          <Field label="Notes" id="note" component="textarea" value={fields.note} onChange={updateField} disabled={inputsDisabled} idPrefix={idPrefix} />
         </div>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <span className={`text-sm ${status === "error" ? "text-destructive" : "text-muted-foreground"}`}>{statusMessage}</span>
@@ -293,19 +331,31 @@ type FieldProps = {
   component?: "input" | "textarea";
   required?: boolean;
   disabled?: boolean;
+  idPrefix?: string;
 };
 
-function Field({ label, id, value, onChange, type = "text", component = "input", required = false, disabled = false }: FieldProps) {
+function Field({
+  label,
+  id,
+  value,
+  onChange,
+  type = "text",
+  component = "input",
+  required = false,
+  disabled = false,
+  idPrefix,
+}: FieldProps) {
   function handleChange(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
     onChange(id, event.target.value);
   }
+  const fieldId = idPrefix ? `${idPrefix}-${id}` : id;
 
   return (
     <div className="space-y-2">
-      <Label htmlFor={id}>{label}</Label>
+      <Label htmlFor={fieldId}>{label}</Label>
       {component === "textarea" ? (
         <Textarea
-          id={id}
+          id={fieldId}
           value={value}
           rows={4}
           placeholder={required ? undefined : "Optional"}
@@ -315,7 +365,7 @@ function Field({ label, id, value, onChange, type = "text", component = "input",
         />
       ) : (
         <Input
-          id={id}
+          id={fieldId}
           value={value}
           type={type}
           placeholder={required ? undefined : "Optional"}

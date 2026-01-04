@@ -21,20 +21,31 @@ type Props = {
   userId: string;
   avatarUrl: string | null;
   onUploaded: (payload: { path: string; version: string; publicUrl: string }) => void;
+  variant?: "default" | "compact";
+  inputId?: string;
 };
 
 type InteractionMode = "idle" | "pan";
 
 const OUTPUT_SIZE = 640;
-const PREVIEW_SIZE = 340;
-const CROP_DIAMETER = 260;
-const CROP_RADIUS = CROP_DIAMETER / 2;
-const MINI_PREVIEW_DIAMETER = 96;
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 3;
 const ZOOM_STEP = 0.01;
 
-export default function AvatarUploader({ userId, avatarUrl, onUploaded }: Props) {
+export default function AvatarUploader({
+  userId,
+  avatarUrl,
+  onUploaded,
+  variant = "default",
+  inputId,
+}: Props) {
+  const isCompact = variant === "compact";
+  const previewSize = isCompact ? 240 : 340;
+  const cropDiameter = isCompact ? 180 : 260;
+  const cropRadius = cropDiameter / 2;
+  const miniPreviewDiameter = isCompact ? 64 : 96;
+  const miniPreviewSize = isCompact ? 56 : 76;
+  const miniPreviewOuter = isCompact ? 64 : 80;
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const pointerMode = useRef<InteractionMode>("idle");
   const pointerPosition = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -52,11 +63,11 @@ export default function AvatarUploader({ userId, avatarUrl, onUploaded }: Props)
 
   const baseScale = useMemo(() => {
     if (!imageMeta) return 1;
-    return Math.max(CROP_DIAMETER / imageMeta.width, CROP_DIAMETER / imageMeta.height);
-  }, [imageMeta]);
+    return Math.max(cropDiameter / imageMeta.width, cropDiameter / imageMeta.height);
+  }, [imageMeta, cropDiameter]);
 
   const previewScale = baseScale * zoom;
-  const miniScale = previewScale * (MINI_PREVIEW_DIAMETER / CROP_DIAMETER);
+  const miniScale = previewScale * (miniPreviewDiameter / cropDiameter);
 
   const clampOffset = useCallback(
     (next: { x: number; y: number }, nextZoom = zoom, meta = imageMeta): { x: number; y: number } => {
@@ -64,14 +75,14 @@ export default function AvatarUploader({ userId, avatarUrl, onUploaded }: Props)
       const scale = baseScale * nextZoom;
       const halfWidth = (meta.width * scale) / 2;
       const halfHeight = (meta.height * scale) / 2;
-      const limitX = Math.max(0, halfWidth - CROP_RADIUS);
-      const limitY = Math.max(0, halfHeight - CROP_RADIUS);
+      const limitX = Math.max(0, halfWidth - cropRadius);
+      const limitY = Math.max(0, halfHeight - cropRadius);
       return {
         x: Math.max(-limitX, Math.min(limitX, next.x)),
         y: Math.max(-limitY, Math.min(limitY, next.y)),
       };
     },
-    [baseScale, zoom, imageMeta]
+    [baseScale, zoom, imageMeta, cropRadius]
   );
 
   const resetCropState = useCallback(() => {
@@ -168,7 +179,7 @@ export default function AvatarUploader({ userId, avatarUrl, onUploaded }: Props)
   );
 
   const handleDrop = useCallback(
-    (event: DragEvent<HTMLDivElement>) => {
+    (event: DragEvent<HTMLElement>) => {
       event.preventDefault();
       setDraggingOver(false);
       const file = event.dataTransfer.files?.[0] ?? null;
@@ -188,7 +199,7 @@ export default function AvatarUploader({ userId, avatarUrl, onUploaded }: Props)
       const version = new Date().toISOString();
       const cropped = await cropToWebP(selectedFile, {
         outputSize: OUTPUT_SIZE,
-        circleDiameter: CROP_DIAMETER,
+        circleDiameter: cropDiameter,
         baseScale,
         zoom,
         offset,
@@ -222,24 +233,186 @@ export default function AvatarUploader({ userId, avatarUrl, onUploaded }: Props)
   const currentAvatarThumb = previewUrl && previewReady ? previewUrl : avatarUrl;
   const zoomPercent = Math.round(zoom * 100);
   const helperText = selectedFile
-    ? "Click and drag to reposition. Use the slider or scroll wheel to zoom."
-    : "Drop a photo here or choose a file to get started.";
+    ? "Drag to reposition. Click again to save."
+    : "Drop a photo here or click to upload.";
+  const cardClassName = cn(
+    "rounded-2xl border border-border/70 bg-card/80 shadow-sm",
+    isCompact && "gap-4 py-4"
+  );
+  const headerClassName = cn(isCompact && "px-4");
+  const titleClassName = cn(isCompact && "text-sm");
+  const descriptionClassName = cn(
+    "text-sm text-muted-foreground",
+    isCompact && "text-xs"
+  );
+  const contentClassName = cn(
+    "flex flex-col gap-6 lg:flex-row lg:items-start",
+    isCompact && "gap-4 px-4"
+  );
+  const previewContainerClassName = cn(
+    "relative flex aspect-square items-center justify-center overflow-hidden border bg-muted/40",
+    isCompact ? "max-w-[320px] rounded-2xl" : "max-w-[420px] rounded-3xl",
+    !previewUrl && "border-dashed"
+  );
+  const dropButtonClassName = cn(
+    "flex h-full w-full flex-col items-center justify-center gap-3 text-center transition",
+    isCompact ? "rounded-2xl p-6" : "rounded-3xl p-10",
+    isDraggingOver ? "bg-accent/30" : "bg-transparent"
+  );
+  const dropCircleClassName = cn(
+    "flex items-center justify-center rounded-full border-2 border-dashed border-border text-muted-foreground",
+    isCompact ? "h-14 w-14 text-xs" : "h-20 w-20 text-sm"
+  );
+  const helperTextClassName = cn(
+    "text-xs text-muted-foreground",
+    isCompact && "text-[11px]"
+  );
+  const asideClassName = cn(
+    "w-full max-w-sm space-y-5",
+    isCompact && "max-w-[280px] space-y-3"
+  );
+  const asideCardClassName = cn(
+    "rounded-2xl border border-dashed border-border/70 bg-card/60 p-4 shadow-sm",
+    isCompact && "p-3"
+  );
+  const zoomCardClassName = cn(
+    "space-y-4 rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm",
+    isCompact && "space-y-3 p-3"
+  );
+  const actionButtonClassName = cn(
+    "rounded-full",
+    isCompact ? "px-4" : "px-6"
+  );
+
+  if (isCompact) {
+    return (
+      <Card className={cardClassName}>
+        <CardHeader className={headerClassName}>
+          <CardTitle className={titleClassName}>Avatar</CardTitle>
+          <p className={descriptionClassName}>
+            Upload a square or portrait photo. We'll convert it to WebP, crop it to a perfect circle, and replace your profile image everywhere.
+          </p>
+        </CardHeader>
+        <CardContent className={contentClassName}>
+          <section className="flex-1 space-y-3">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              id={inputId}
+              className="hidden"
+              onChange={(event) => handleFile(event.target.files?.[0] ?? null)}
+            />
+            <button
+              type="button"
+              className={previewContainerClassName}
+              onClick={() => {
+                if (previewUrl && previewReady && selectedFile && !loading) {
+                  void handleUpload();
+                  return;
+                }
+                fileInputRef.current?.click();
+              }}
+              onDragOver={(event) => {
+                event.preventDefault();
+                setDraggingOver(true);
+              }}
+              onDragLeave={(event) => {
+                event.preventDefault();
+                setDraggingOver(false);
+              }}
+              onDrop={handleDrop}
+            >
+              {previewUrl ? (
+                <div
+                  className="relative"
+                  style={{ width: previewSize, height: previewSize }}
+                  onPointerDown={handlePointerDown}
+                  onPointerMove={handlePointerMove}
+                  onPointerUp={handlePointerUp}
+                  onPointerLeave={handlePointerUp}
+                  onWheel={handleWheel}
+                  role="application"
+                  aria-label="Avatar crop preview"
+                >
+                  {!previewReady && (
+                    <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-muted/60 text-sm text-muted-foreground">
+                      Loading preview...
+                    </div>
+                  )}
+                  <div
+                    className="absolute inset-[12px] rounded-xl bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08)0%,rgba(15,23,42,0.1)100%)]"
+                    aria-hidden
+                  />
+                  <div
+                    className={cn(
+                      "pointer-events-none select-none transition-opacity duration-300 absolute left-1/2 top-1/2",
+                      previewReady ? "opacity-100" : "opacity-0"
+                    )}
+                    style={{
+                      transform: `translate(${offset.x}px, ${offset.y}px)`,
+                    }}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={previewUrl}
+                      alt="Crop preview"
+                      className="absolute left-1/2 top-1/2 block select-none"
+                      style={{
+                        width: imageMeta?.width ?? "auto",
+                        height: imageMeta?.height ?? "auto",
+                        transform: `translate(-50%, -50%) scale(${previewScale})`,
+                        transformOrigin: "center",
+                      }}
+                      draggable={false}
+                    />
+                  </div>
+                  <div
+                    className="pointer-events-none absolute inset-[12px]"
+                    aria-hidden
+                    style={{
+                      background: `radial-gradient(circle ${cropRadius}px at center, rgba(15,23,42,0) 0%, rgba(15,23,42,0) ${cropRadius - 3}px, rgba(15,23,42,0.55) ${cropRadius}px, rgba(15,23,42,0.75) 100%)`,
+                    }}
+                  />
+                  <div
+                    className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/80 shadow-[0_12px_24px_-12px_rgba(15,23,42,0.45)]"
+                    style={{ width: cropDiameter, height: cropDiameter }}
+                  />
+                </div>
+              ) : (
+                <div className={dropButtonClassName}>
+                  <div className={dropCircleClassName}>Upload</div>
+                  <div className="space-y-1 text-[11px]">
+                    <p className="text-xs font-semibold text-foreground">
+                      Upload profile photo
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      PNG, JPG, or WebP up to 5MB
+                    </p>
+                  </div>
+                </div>
+              )}
+            </button>
+            <p className={helperTextClassName}>{helperText}</p>
+            {error && <p className="text-sm text-destructive">{error}</p>}
+          </section>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
-    <Card className="rounded-2xl border border-border/70 bg-card/80 shadow-sm">
-      <CardHeader>
-        <CardTitle>Avatar</CardTitle>
-        <p className="text-sm text-muted-foreground">
-          Upload a square or portrait photo. We’ll convert it to WebP, crop it to a perfect circle, and replace your profile image everywhere.
+    <Card className={cardClassName}>
+      <CardHeader className={headerClassName}>
+        <CardTitle className={titleClassName}>Avatar</CardTitle>
+        <p className={descriptionClassName}>
+          Upload a square or portrait photo. We'll convert it to WebP, crop it to a perfect circle, and replace your profile image everywhere.
         </p>
       </CardHeader>
-      <CardContent className="flex flex-col gap-6 lg:flex-row lg:items-start">
-        <section className="flex-1 space-y-4">
+      <CardContent className={contentClassName}>
+        <section className={cn("flex-1 space-y-4", isCompact && "space-y-3")}>
           <div
-            className={cn(
-              "relative flex aspect-square max-w-[420px] items-center justify-center overflow-hidden rounded-3xl border bg-muted/40",
-              !previewUrl && "border-dashed"
-            )}
+            className={previewContainerClassName}
             onDragOver={(event) => {
               event.preventDefault();
               setDraggingOver(true);
@@ -253,7 +426,7 @@ export default function AvatarUploader({ userId, avatarUrl, onUploaded }: Props)
             {previewUrl ? (
               <div
                 className="relative"
-                style={{ width: PREVIEW_SIZE, height: PREVIEW_SIZE }}
+                style={{ width: previewSize, height: previewSize }}
                 onPointerDown={handlePointerDown}
                 onPointerMove={handlePointerMove}
                 onPointerUp={handlePointerUp}
@@ -300,28 +473,27 @@ export default function AvatarUploader({ userId, avatarUrl, onUploaded }: Props)
                   className="pointer-events-none absolute inset-[12px]"
                   aria-hidden
                   style={{
-                    background: `radial-gradient(circle ${CROP_RADIUS}px at center, rgba(15,23,42,0) 0%, rgba(15,23,42,0) ${CROP_RADIUS - 3}px, rgba(15,23,42,0.55) ${CROP_RADIUS}px, rgba(15,23,42,0.75) 100%)`,
+                    background: `radial-gradient(circle ${cropRadius}px at center, rgba(15,23,42,0) 0%, rgba(15,23,42,0) ${cropRadius - 3}px, rgba(15,23,42,0.55) ${cropRadius}px, rgba(15,23,42,0.75) 100%)`,
                   }}
                 />
                 <div
                   className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/80 shadow-[0_12px_24px_-12px_rgba(15,23,42,0.45)]"
-                  style={{ width: CROP_DIAMETER, height: CROP_DIAMETER }}
+                  style={{ width: cropDiameter, height: cropDiameter }}
                 />
               </div>
             ) : (
               <button
                 type="button"
-                className={cn(
-                  "flex h-full w-full flex-col items-center justify-center gap-3 rounded-3xl p-10 text-center transition",
-                  isDraggingOver ? "bg-accent/30" : "bg-transparent"
-                )}
+                className={dropButtonClassName}
                 onClick={() => fileInputRef.current?.click()}
               >
-                <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-dashed border-border text-sm text-muted-foreground">
+                <div className={dropCircleClassName}>
                   Drop photo
                 </div>
-                <div className="space-y-1">
-                  <p className="text-sm font-semibold text-foreground">Drag &amp; drop a file</p>
+                <div className={cn("space-y-1", isCompact && "text-[11px]")}>
+                  <p className={cn("text-sm font-semibold text-foreground", isCompact && "text-xs")}>
+                    Drag &amp; drop a file
+                  </p>
                   <p className="text-xs text-muted-foreground">PNG, JPG, or WebP up to 5MB</p>
                   <p className="text-xs text-primary underline">or click to browse</p>
                 </div>
@@ -329,16 +501,22 @@ export default function AvatarUploader({ userId, avatarUrl, onUploaded }: Props)
             )}
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="flex h-20 w-20 items-center justify-center rounded-full border bg-muted/40">
+          <div className={cn("flex items-center gap-4", isCompact && "gap-3")}>
+            <div
+              className="flex items-center justify-center rounded-full border bg-muted/40"
+              style={{ width: miniPreviewOuter, height: miniPreviewOuter }}
+            >
               {currentAvatarThumb ? (
-                <div className="relative h-[76px] w-[76px] overflow-hidden rounded-full border border-white/70 shadow-inner">
+                <div
+                  className="relative overflow-hidden rounded-full border border-white/70 shadow-inner"
+                  style={{ width: miniPreviewSize, height: miniPreviewSize }}
+                >
                   {previewUrl && previewReady && (
                     <div
                       className="absolute left-1/2 top-1/2 h-full w-full"
                       style={{
-                        transform: `translate(${offset.x * (MINI_PREVIEW_DIAMETER / CROP_DIAMETER)}px, ${
-                          offset.y * (MINI_PREVIEW_DIAMETER / CROP_DIAMETER)
+                        transform: `translate(${offset.x * (miniPreviewDiameter / cropDiameter)}px, ${
+                          offset.y * (miniPreviewDiameter / cropDiameter)
                         }px)`,
                       }}
                     >
@@ -369,30 +547,43 @@ export default function AvatarUploader({ userId, avatarUrl, onUploaded }: Props)
                   />
                 </div>
               ) : (
-                <span className="text-xs text-muted-foreground">No avatar</span>
+                <span className={cn("text-xs text-muted-foreground", isCompact && "text-[11px]")}>
+                  No avatar
+                </span>
               )}
             </div>
-            <p className="text-xs text-muted-foreground">{helperText}</p>
+            <p className={helperTextClassName}>{helperText}</p>
           </div>
         </section>
 
-        <aside className="w-full max-w-sm space-y-5">
-          <div className="rounded-2xl border border-dashed border-border/70 bg-card/60 p-4 shadow-sm">
+        <aside className={asideClassName}>
+          <div className={asideCardClassName}>
             <input
               ref={fileInputRef}
               type="file"
               accept="image/png,image/jpeg,image/webp"
+              id={inputId}
               className="hidden"
               onChange={(event) => handleFile(event.target.files?.[0] ?? null)}
             />
             <div className="flex flex-col gap-3">
               <div className="flex items-center gap-3">
-                <Button type="button" variant="secondary" className="rounded-full" onClick={() => fileInputRef.current?.click()}>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size={isCompact ? "sm" : "default"}
+                  className="rounded-full"
+                  onClick={() => fileInputRef.current?.click()}
+                >
                   Choose photo
                 </Button>
-                {fileName && <span className="truncate text-xs text-muted-foreground">{fileName}</span>}
+                {fileName && (
+                  <span className={cn("truncate text-xs text-muted-foreground", isCompact && "text-[11px]")}>
+                    {fileName}
+                  </span>
+                )}
               </div>
-              <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+              <div className={cn("flex flex-wrap gap-2 text-xs text-muted-foreground", isCompact && "text-[11px]")}>
                 <span>PNG/JPG/WebP</span>
                 <span aria-hidden>•</span>
                 <span>Up to 5MB</span>
@@ -403,9 +594,15 @@ export default function AvatarUploader({ userId, avatarUrl, onUploaded }: Props)
           </div>
 
           {previewUrl && previewReady && (
-            <div className="space-y-4 rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm">
+            <div className={zoomCardClassName}>
               <div className="space-y-2">
-                <label htmlFor="avatar-zoom" className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                <label
+                  htmlFor="avatar-zoom"
+                  className={cn(
+                    "flex items-center justify-between text-xs uppercase tracking-[0.2em] text-muted-foreground",
+                    isCompact && "text-[10px]"
+                  )}
+                >
                   Zoom
                   <span className="text-[11px] font-semibold text-foreground">{zoomPercent}%</span>
                 </label>
@@ -453,13 +650,16 @@ export default function AvatarUploader({ userId, avatarUrl, onUploaded }: Props)
           <div className="flex items-center gap-2">
             <Button
               type="button"
-              className="rounded-full px-6"
+              size={isCompact ? "sm" : "default"}
+              className={actionButtonClassName}
               disabled={!previewUrl || !previewReady || loading}
               onClick={handleUpload}
             >
               {loading ? "Uploading…" : "Save avatar"}
             </Button>
-            <p className="text-xs text-muted-foreground">Your new avatar replaces the old one everywhere instantly.</p>
+            <p className={cn("text-xs text-muted-foreground", isCompact && "text-[11px]")}>
+              Your new avatar replaces the old one everywhere instantly.
+            </p>
           </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
         </aside>

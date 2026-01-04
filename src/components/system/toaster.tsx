@@ -10,6 +10,8 @@ export type ToastOptions = {
   description?: string;
   variant?: "default" | "success" | "destructive";
   durationMs?: number;
+  actionLabel?: string;
+  onAction?: () => void;
 };
 
 type ToastInternal = Required<ToastOptions> & { id: string };
@@ -23,6 +25,8 @@ export function toast(opts: ToastOptions) {
     description: opts.description || "",
     variant: opts.variant || "default",
     durationMs: opts.durationMs ?? 3200,
+    actionLabel: opts.actionLabel || "",
+    onAction: opts.onAction || (() => undefined),
   };
   window.dispatchEvent(new CustomEvent(TOAST_EVENT, { detail }));
   return detail.id;
@@ -97,6 +101,17 @@ export function Toaster() {
                       <div className="mt-0.5 text-sm text-muted-foreground">{t.description}</div>
                     )}
                   </div>
+                  {t.actionLabel ? (
+                    <button
+                      className="rounded-full px-2 py-1 text-sm font-medium text-foreground underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]"
+                      onClick={() => {
+                        t.onAction?.();
+                        dismiss(t.id);
+                      }}
+                    >
+                      {t.actionLabel}
+                    </button>
+                  ) : null}
                   <button
                     aria-label="Dismiss notification"
                     className="rounded-full p-1 text-muted-foreground hover:bg-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]"

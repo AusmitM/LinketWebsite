@@ -314,7 +314,7 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
                           </Select>
                           {activeProfile ? (
                             <Link
-                              href={`/u/${activeProfile.handle}`}
+                              href={`/${activeProfile.handle}`}
                               target="_blank"
                               rel="noreferrer"
                               className="inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs text-muted-foreground hover:text-foreground"

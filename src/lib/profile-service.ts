@@ -82,10 +82,29 @@ grant select on table public.profile_links to anon;
 */
 
 import { supabaseAdmin, isSupabaseAdminAvailable } from "@/lib/supabase-admin";
+import { createClient } from "@supabase/supabase-js";
 import type { ThemeName } from "@/lib/themes";
 import type { ProfileLinkRecord, UserProfileRecord } from "@/types/db";
 
 const SUPABASE_ENABLED = isSupabaseAdminAvailable;
+const PUBLIC_URL =
+  process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+const PUBLIC_ANON_KEY =
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+const SUPABASE_PUBLIC_ENABLED = Boolean(
+  PUBLIC_URL &&
+    PUBLIC_URL !== "https://example.supabase.co" &&
+    PUBLIC_ANON_KEY &&
+    PUBLIC_ANON_KEY !== "anon-key"
+);
+
+const supabasePublic = createClient(
+  PUBLIC_URL || "https://example.supabase.co",
+  PUBLIC_ANON_KEY || "anon-key",
+  {
+    auth: { persistSession: false, autoRefreshToken: false },
+  }
+);
 
 const PROFILE_TABLE = "user_profiles";
 const PROFILE_LINKS_TABLE = "profile_links";
@@ -613,11 +632,37 @@ export async function setActiveProfileForUser(
 export async function getProfileByHandle(
   handle: string
 ): Promise<ProfileWithLinks | null> {
-  if (!SUPABASE_ENABLED) {
-    return memoryGetProfileByHandle(handle);
-  }
   const normalised = normaliseHandle(handle);
-  const { data, error } = await supabaseAdmin
+  if (!SUPABASE_ENABLED) {
+    return getProfileByHandlePublic(normalised);
+  }
+  try {
+    const { data, error } = await supabaseAdmin
+      .from(PROFILE_TABLE)
+      .select(`*, links:${PROFILE_LINKS_TABLE}(*)`)
+      .eq("handle", normalised)
+      .limit(1)
+      .maybeSingle();
+    if (error && error.code !== "PGRST116") throw new Error(error.message);
+    if (data) {
+      const record = data as unknown as UserProfileRecord & {
+        links: ProfileLinkRecord[];
+      };
+      return { ...record, links: (record.links ?? []).sort(byOrder) };
+    }
+  } catch (error) {
+    console.error("Profile handle admin lookup failed:", error);
+  }
+  return getProfileByHandlePublic(normalised);
+}
+
+async function getProfileByHandlePublic(
+  normalised: string
+): Promise<ProfileWithLinks | null> {
+  if (!SUPABASE_PUBLIC_ENABLED) {
+    return memoryGetProfileByHandle(normalised);
+  }
+  const { data, error } = await supabasePublic
     .from(PROFILE_TABLE)
     .select(`*, links:${PROFILE_LINKS_TABLE}(*)`)
     .eq("handle", normalised)
@@ -732,9 +777,25 @@ export async function getAccountByHandle(
 export async function getActiveProfileForPublicHandle(
   handle: string
 ): Promise<{ account: AccountRecord; profile: ProfileWithLinks } | null> {
-  const account = await getAccountByHandle(handle);
-  if (!account) return null;
-  const profile = await getActiveProfileForUser(account.user_id);
+  const normalised = normaliseHandle(handle);
+  try {
+    const account = await getAccountByHandle(normalised);
+    if (account) {
+      const profile = await getActiveProfileForUser(account.user_id);
+      if (profile) return { account, profile };
+    }
+  } catch (error) {
+    console.error("Public handle lookup failed:", error);
+  }
+
+  const profile = await getProfileByHandle(normalised);
   if (!profile) return null;
-  return { account, profile };
+  const fallbackAccount: AccountRecord = {
+    user_id: profile.user_id,
+    username: normalised,
+    display_name: profile.name ?? null,
+    avatar_url: null,
+    avatar_updated_at: null,
+  };
+  return { account: fallbackAccount, profile };
 }

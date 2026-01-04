@@ -280,7 +280,7 @@ export default function AnalyticsContent() {
             ) : analytics?.topProfiles?.length ? (
               <div className="space-y-2">
                 {analytics.topProfiles.map((profile) => {
-                  const subtitle = profile.handle ? `linket.co/u/${profile.handle}` : profile.nickname || "Unassigned";
+                  const subtitle = profile.handle ? `linketconnect.com/${profile.handle}` : profile.nickname || "Unassigned";
                   const conversion = profile.scans > 0 ? profile.leads / profile.scans : 0;
                   return (
                     <div key={`${profile.profileId ?? "np"}-${profile.handle ?? "nh"}`} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border px-3 py-2">

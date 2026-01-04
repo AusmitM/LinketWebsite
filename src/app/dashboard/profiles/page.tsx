@@ -1,9 +1,9 @@
-import ProfilesContent from "@/components/dashboard/profiles/ProfilesContent";
+import PublicProfileEditorPage from "@/components/dashboard/public-profile/PublicProfileEditorPage";
 
 export const metadata = {
-  title: "NFC profiles",
+  title: "Linket public profile",
 };
 
 export default function ProfilesPage() {
-  return <ProfilesContent />;
+  return <PublicProfileEditorPage />;
 }

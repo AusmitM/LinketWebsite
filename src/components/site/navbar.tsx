@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { buildAvatarPublicUrl } from "@/lib/avatar-utils";
 import { brand } from "@/config/brand";
 import { AdaptiveNavPill } from "@/components/ui/3d-adaptive-navigation-bar";
+import { isPublicProfilePathname } from "@/lib/routing";
 
 type UserLite = { id: string; email: string | null } | null;
 
@@ -88,10 +89,15 @@ export function Navbar() {
     };
   }, []);
   const isDashboard = pathname?.startsWith("/dashboard");
+  const isPublicProfile = isPublicProfilePathname(pathname);
   const isPublic = !isDashboard;
   const isLandingPage = pathname === "/";
   const isAuthPage =
     pathname?.startsWith("/auth") || pathname?.startsWith("/forgot-password");
+
+  if (isPublicProfile) {
+    return null;
+  }
 
   useEffect(() => {
     if (!isDashboard) {
@@ -220,19 +226,6 @@ export function Navbar() {
       : "text-[#0f172a]"
   );
 
-  const navLinkBase =
-    "rounded-full px-4 py-2 text-sm transition shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]";
-  const navLinkTone = isDashboard
-    ? "text-foreground/80 hover:bg-foreground/10"
-    : overlayMode
-    ? "border border-white/60 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.95),_rgba(255,255,255,0.7))] text-slate-900 shadow-[0_18px_35px_rgba(15,15,30,0.18)] hover:bg-white"
-    : "text-slate-700 hover:bg-slate-100";
-  const navLinkActive = isDashboard
-    ? "text-foreground"
-    : overlayMode
-    ? "border border-white bg-white text-[#0f172a] shadow-[0_20px_45px_rgba(15,15,30,0.28)]"
-    : "text-[#0f172a]";
-
   const activeLandingSection = isLandingPage
     ? currentHash
       ? currentHash.replace("#", "")
@@ -263,11 +256,12 @@ export function Navbar() {
     window.history.replaceState(null, "", hash);
   };
 
-  const handlePillSelect = (sectionId: LandingSectionId) => {
+  const handlePillSelect = (sectionId: string) => {
+    const validSectionId = sectionId as LandingSectionId;
     if (isLandingPage) {
-      scrollToSection(sectionId);
+      scrollToSection(validSectionId);
     } else {
-      router.push(`/#${sectionId}`);
+      router.push(`/#${validSectionId}`);
     }
   };
 
@@ -445,12 +439,22 @@ export function Navbar() {
               className="inline-flex items-center gap-2"
               aria-label={`${brand.name} dashboard`}
             >
-              <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-foreground/10 text-lg font-bold text-foreground">
-                {(brand.shortName ?? brand.name).slice(0, 2)}
-              </span>
-              <span className="hidden text-lg font-semibold text-foreground lg:inline">
-                {brand.name}
-              </span>
+              {brand.logo ? (
+                <span className="relative h-15 w-32 overflow-hidden">
+                  <Image
+                    src={brand.logo}
+                    alt={`${brand.name} logo`}
+                    fill
+                    className="object-contain"
+                    sizes="128px"
+                    priority
+                  />
+                </span>
+              ) : (
+                <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-foreground/10 text-lg font-bold text-foreground">
+                  {(brand.shortName ?? brand.name).slice(0, 2)}
+                </span>
+              )}
             </Link>
             <div className="hidden items-center gap-2 rounded-full border border-border/60 bg-card/80 px-2 py-1 lg:flex">
               {DASHBOARD_NAV.map(dashboardLink)}

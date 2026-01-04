@@ -661,12 +661,12 @@ export default function ProfilesContent() {
     accountHandle ?? draft?.handle ?? activeProfile?.handle ?? null;
   const publicProfileUrl = useMemo(() => {
     if (!effectiveHandle) return null;
-    const envBase = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, "");
-    if (envBase) return `${envBase}/u/${effectiveHandle}`;
+    const envBase = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://linketconnect.com").replace(/\/$/, "");
+    if (envBase) return `${envBase}/${effectiveHandle}`;
     if (typeof window !== "undefined") {
-      return `${window.location.origin}/u/${effectiveHandle}`;
+      return `${window.location.origin}/${effectiveHandle}`;
     }
-    return `/u/${effectiveHandle}`;
+    return `/${effectiveHandle}`;
   }, [effectiveHandle]);
 
   const copyPublicProfileUrl = useCallback(async () => {
@@ -886,7 +886,7 @@ export default function ProfilesContent() {
                     </label>
                     <div className="relative">
                       <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
-                        linket.co/u/
+                        linketconnect.com/
                       </span>
                       <Input
                         id="profile-handle"
@@ -894,7 +894,7 @@ export default function ProfilesContent() {
                         onChange={(event) =>
                           updateDraft({ handle: event.target.value })
                         }
-                        className="pl-28"
+                        className="pl-40"
                         disabled={inputsDisabled}
                       />
                     </div>
