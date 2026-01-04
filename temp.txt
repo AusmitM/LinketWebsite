@@ -13,11 +13,11 @@ import { cn } from "@/lib/utils";
 import { brand } from "@/config/brand";
 
 export const metadata: Metadata = {
-  title: "Linket -- Tap once. Share everything.",
+  title: "Linket -- Don't just share it... Linket!.",
   description:
     "Linket keychains share your digital profile with a single tap. Customize the hardware, control every link, and see analytics from the very first introduction.",
   openGraph: {
-    title: "Linket -- Tap once. Share everything.",
+    title: "Linket -- Don't just share it... Linket!.",
     description:
       "From the first tap to saved contact, Linket keeps intros warm. NFC + QR hardware, live editing, and analytics built for students, creators, and teams.",
     images: [
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Tap once. Share everything.",
+    title: "Don't just share it... Linket!.",
     description:
       "Linket is the customizable tap-to-share keychain that keeps your information current with every scan.",
     images: ["/og.png"],
