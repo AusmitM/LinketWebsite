@@ -34,6 +34,9 @@ export const metadata: Metadata = {
     template: `%s | ${brand.name}`,
   },
   description: brand.blurb,
+  icons: {
+    icon: "/linket-favicon.svg",
+  },
   alternates: {
     canonical: "/",
   },

@@ -58,9 +58,6 @@ export const metadata: Metadata = {
       "Linket is the customizable tap-to-share keychain that keeps your information current with every scan.",
     images: ["/og.png"],
   },
-  icons: {
-    icon: "/linket-favicon.svg",
-  },
 };
 
 const SOCIAL_PROOF = [
