@@ -186,7 +186,7 @@ export async function processUserAnalytics(
     );
 
     // Fetch all data in parallel
-    const [taps, profiles, leads] = await Promise.all([
+    const [taps, profiles, recentLeadRows] = await Promise.all([
       fetchUserTaps(userId, days),
       fetchUserLinketProfiles(userId),
       fetchRecentLeads(userId, 100),
@@ -195,7 +195,7 @@ export async function processUserAnalytics(
     console.log(`[Supabase Analytics] Data fetched:`, {
       taps: taps.length,
       profiles: profiles.length,
-      leads: leads.length,
+      leads: recentLeadRows.length,
     });
 
     // Get date boundaries
@@ -210,9 +210,9 @@ export async function processUserAnalytics(
     const scans7d = scans.filter((t) => new Date(t.created_at) >= sevenDaysAgo);
 
     // Filter leads (action = 'lead')
-    const leads = taps.filter((t) => t.action === "lead");
-    const leadsToday = leads.filter((t) => new Date(t.created_at) >= today);
-    const leads7d = leads.filter((t) => new Date(t.created_at) >= sevenDaysAgo);
+    const leadEvents = taps.filter((t) => t.action === "lead");
+    const leadsToday = leadEvents.filter((t) => new Date(t.created_at) >= today);
+    const leads7d = leadEvents.filter((t) => new Date(t.created_at) >= sevenDaysAgo);
 
     // Calculate conversion rate
     const conversionRate7d =
@@ -296,7 +296,7 @@ export async function processUserAnalytics(
       .slice(0, 10);
 
     // Build recent leads from lead capture submissions
-    const recentLeads = leads.slice(0, 10).map((lead) => ({
+    const recentLeads = recentLeadRows.slice(0, 10).map((lead) => ({
       id: lead.id,
       name: lead.name || null,
       email: lead.email || null,
