@@ -64,7 +64,7 @@ export default function AnalyticsContent() {
     async function load() {
       try {
         if (!userId) throw new Error("User ID is missing");
-        const analyticsUrl = `/api/analytics/user?userId=${encodeURIComponent(userId)}&days=${range}`;
+        const analyticsUrl = `/api/analytics/supabase?userId=${encodeURIComponent(userId)}&days=${range}`;
         const response = await fetch(analyticsUrl, { cache: "no-store" });
         if (!response.ok) {
           const info = await response.json().catch(() => ({}));

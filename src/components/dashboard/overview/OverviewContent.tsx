@@ -162,7 +162,7 @@ export default function OverviewContent() {
 
     async function load() {
       try {
-        const analyticsUrl = `/api/analytics/user?userId=${encodeURIComponent(
+        const analyticsUrl = `/api/analytics/supabase?userId=${encodeURIComponent(
           resolvedUserId
         )}&days=90`;
         const [analyticsRes] = await Promise.all([
