@@ -290,7 +290,7 @@ export default function OverviewContent() {
       }
       return aStr > bStr ? -1 : 1;
     });
-    return rows.slice(0, 10);
+    return rows.slice(0, 5);
   }, [filteredLeads, sortKey, sortDirection]);
 
   const toggleSort = useCallback((key: keyof LeadRow) => {
