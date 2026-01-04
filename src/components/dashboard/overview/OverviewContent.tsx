@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
-  ArrowUpDown,
   BarChart3,
   Calendar,
   Download,
@@ -89,8 +88,6 @@ export default function OverviewContent() {
   });
   const [now, setNow] = useState(() => new Date());
   const [search, setSearch] = useState("");
-  const [sortKey, setSortKey] = useState<keyof LeadRow>("timeValue");
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [tapRange, setTapRange] = useState<TimeRange>("month");
   const [conversionRange, setConversionRange] = useState<TimeRange>("month");
 
@@ -275,34 +272,9 @@ export default function OverviewContent() {
 
   const sortedLeads = useMemo(() => {
     const rows = [...filteredLeads];
-    rows.sort((a, b) => {
-      const key = sortKey;
-      const aVal = a[key];
-      const bVal = b[key];
-      if (typeof aVal === "number" && typeof bVal === "number") {
-        return sortDirection === "asc" ? aVal - bVal : bVal - aVal;
-      }
-      const aStr = String(aVal).toLowerCase();
-      const bStr = String(bVal).toLowerCase();
-      if (aStr === bStr) return 0;
-      if (sortDirection === "asc") {
-        return aStr < bStr ? -1 : 1;
-      }
-      return aStr > bStr ? -1 : 1;
-    });
+    rows.sort((a, b) => b.timeValue - a.timeValue);
     return rows.slice(0, 5);
-  }, [filteredLeads, sortKey, sortDirection]);
-
-  const toggleSort = useCallback((key: keyof LeadRow) => {
-    setSortKey((prevKey) => {
-      if (prevKey !== key) {
-        setSortDirection("asc");
-        return key;
-      }
-      setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
-      return key;
-    });
-  }, []);
+  }, [filteredLeads]);
 
   const exportCsv = useCallback(() => {
     if (filteredLeads.length === 0) {
@@ -511,24 +483,15 @@ export default function OverviewContent() {
                     <thead className="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
                       <tr>
                         {[
-                          { key: "firstName", label: "First name" },
-                          { key: "lastName", label: "Last name" },
-                          { key: "company", label: "Company" },
-                          { key: "school", label: "School" },
-                          { key: "city", label: "City" },
-                          { key: "timeValue", label: "Time acquired" },
-                        ].map((column) => (
-                          <th key={column.key} className="px-4 py-3">
-                            <button
-                              type="button"
-                              onClick={() =>
-                                toggleSort(column.key as keyof LeadRow)
-                              }
-                              className="inline-flex items-center gap-2 text-xs font-semibold text-muted-foreground transition hover:text-foreground"
-                            >
-                              {column.label}
-                              <ArrowUpDown className="h-3 w-3" aria-hidden />
-                            </button>
+                          "First name",
+                          "Last name",
+                          "Company",
+                          "School",
+                          "City",
+                          "Time acquired",
+                        ].map((label) => (
+                          <th key={label} className="px-4 py-3 text-xs font-semibold text-muted-foreground">
+                            {label}
                           </th>
                         ))}
                       </tr>
