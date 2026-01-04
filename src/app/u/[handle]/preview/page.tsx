@@ -26,9 +26,8 @@ type PreviewState = {
 function faviconForUrl(url: string) {
   try {
     const parsed = new URL(url);
-    const host = parsed.hostname;
-    if (!host) return null;
-    return `https://www.google.com/s2/favicons?domain=${host}&sz=64`;
+    if (!parsed.hostname) return null;
+    return `/api/favicon?u=${encodeURIComponent(parsed.toString())}`;
   } catch {
     return null;
   }
