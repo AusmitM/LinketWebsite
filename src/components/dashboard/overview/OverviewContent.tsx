@@ -5,9 +5,7 @@ import Link from "next/link";
 import {
   BarChart3,
   Calendar,
-  Download,
   Link as LinkIcon,
-  Mail,
   MapPin,
   MessageSquare,
   Sparkles,
@@ -25,7 +23,6 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { useDashboardUser } from "@/components/dashboard/DashboardSessionContext";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/components/system/toaster";
@@ -66,14 +63,11 @@ type TimeRange = "week" | "month" | "quarter" | "year";
 
 type LeadRow = {
   id: string;
-  firstName: string;
-  lastName: string;
-  company: string;
-  school: string;
-  city: string;
-  time: string;
-  timeValue: number;
-  email: string;
+  name: string | null;
+  email: string | null;
+  company: string | null;
+  message: string | null;
+  created_at: string;
 };
 
 export default function OverviewContent() {
@@ -87,7 +81,9 @@ export default function OverviewContent() {
     analytics: null,
   });
   const [now, setNow] = useState(() => new Date());
-  const [search, setSearch] = useState("");
+  const [recentLeads, setRecentLeads] = useState<LeadRow[]>([]);
+  const [recentLeadsLoading, setRecentLeadsLoading] = useState(true);
+  const [recentLeadsError, setRecentLeadsError] = useState<string | null>(null);
   const [tapRange, setTapRange] = useState<TimeRange>("month");
   const [conversionRange, setConversionRange] = useState<TimeRange>("month");
 
@@ -233,94 +229,45 @@ export default function OverviewContent() {
     },
   ];
 
-  const leadRows = useMemo<LeadRow[]>(() => {
-    return leads.map((lead) => {
-      const name = lead.name ?? "";
-      const [firstName, ...lastParts] = name.trim().split(" ");
-      const lastName = lastParts.join(" ");
-      const created = new Date(lead.created_at);
-      return {
-        id: lead.id,
-        firstName: firstName || "--",
-        lastName: lastName || "--",
-        company: lead.company ?? "--",
-        school: "--",
-        city: "--",
-        time: timestampFormatter.format(created),
-        timeValue: created.getTime(),
-        email: lead.email ?? "",
-      };
-    });
-  }, [leads]);
-
-  const filteredLeads = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    if (!query) return leadRows;
-    return leadRows.filter((row) =>
-      [
-        row.firstName,
-        row.lastName,
-        row.company,
-        row.school,
-        row.city,
-      ]
-        .join(" ")
-        .toLowerCase()
-        .includes(query)
-    );
-  }, [leadRows, search]);
-
-  const sortedLeads = useMemo(() => {
-    const rows = [...filteredLeads];
-    rows.sort((a, b) => b.timeValue - a.timeValue);
-    return rows.slice(0, 5);
-  }, [filteredLeads]);
-
-  const exportCsv = useCallback(() => {
-    if (filteredLeads.length === 0) {
-      toast({ title: "No leads to export" });
+  useEffect(() => {
+    if (!userId) {
+      setRecentLeads([]);
+      setRecentLeadsLoading(false);
+      setRecentLeadsError(userId === null ? "Sign in to see leads." : null);
       return;
     }
-    const header = [
-      "first_name",
-      "last_name",
-      "company",
-      "school",
-      "city",
-      "time_acquired",
-    ];
-    const rows = filteredLeads.map((row) => [
-      safeCsv(row.firstName),
-      safeCsv(row.lastName),
-      safeCsv(row.company),
-      safeCsv(row.school),
-      safeCsv(row.city),
-      safeCsv(row.time),
-    ]);
-    const csv = [header.join(","), ...rows.map((r) => r.join(","))].join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    const date = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
-    a.download = `linket-leads-${date}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-  }, [filteredLeads]);
 
-  const emailLeads = useCallback(() => {
-    const emails = filteredLeads
-      .map((row) => row.email)
-      .filter(Boolean)
-      .slice(0, 50);
-    if (emails.length === 0) {
-      toast({ title: "No emails available" });
-      return;
-    }
-    const subject = encodeURIComponent("Following up from Linket");
-    const bcc = encodeURIComponent(emails.join(","));
-    window.location.href = `mailto:?subject=${subject}&bcc=${bcc}`;
-  }, [filteredLeads]);
+    let active = true;
+    setRecentLeadsLoading(true);
+    setRecentLeadsError(null);
+
+    (async () => {
+      try {
+        const { data, error: leadsError } = await supabase
+          .from("leads")
+          .select("id,name,email,company,message,created_at")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false })
+          .limit(5);
+
+        if (!active) return;
+        if (leadsError) throw leadsError;
+        setRecentLeads((data as LeadRow[]) ?? []);
+        setRecentLeadsLoading(false);
+      } catch (err) {
+        if (!active) return;
+        const message =
+          err instanceof Error ? err.message : "Unable to load leads.";
+        setRecentLeadsError(message);
+        setRecentLeads([]);
+        setRecentLeadsLoading(false);
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [userId]);
 
   const dateLabel = dateTimeFormatter.format(now);
 
@@ -428,102 +375,60 @@ export default function OverviewContent() {
                     Recent prospects captured from Linket scans.
                   </p>
                 </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <Button
-                    className="rounded-full"
-                    onClick={exportCsv}
-                    disabled={loading}
-                  >
-                    <Download className="mr-2 h-4 w-4" aria-hidden />
-                    Download CSV
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="rounded-full"
-                    onClick={emailLeads}
-                    disabled={loading}
-                  >
-                    <Mail className="mr-2 h-4 w-4" aria-hidden />
-                    Email leads
-                  </Button>
-                </div>
               </div>
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="relative w-full sm:max-w-xs">
-                  <Input
-                    value={search}
-                    onChange={(event) => setSearch(event.target.value)}
-                    placeholder="Search name, company, school, city"
-                    className="rounded-full pr-4"
-                    aria-label="Search leads"
-                  />
-                </div>
-                <Button
-                  asChild
-                  variant="ghost"
-                  className="text-sm text-primary hover:text-primary/80"
-                >
-                  <Link href="/dashboard/leads">View all</Link>
-                </Button>
-              </div>
+              <Button
+                asChild
+                variant="ghost"
+                className="text-sm text-primary hover:text-primary/80"
+              >
+                <Link href="/dashboard/leads">View all</Link>
+              </Button>
             </CardHeader>
             <CardContent>
-              {loading && !analytics ? (
+              {recentLeadsLoading ? (
                 <div className="space-y-3">
-                  {Array.from({ length: 4 }).map((_, index) => (
+                  {Array.from({ length: 3 }).map((_, index) => (
                     <div
                       key={`lead-skeleton-${index}`}
                       className="h-10 animate-pulse rounded-2xl bg-muted"
                     />
                   ))}
                 </div>
-              ) : sortedLeads.length > 0 ? (
-                <div className="overflow-x-auto rounded-2xl border border-border/60">
-                  <table className="min-w-[640px] table-auto text-left text-sm">
-                    <thead className="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
-                      <tr>
-                        {[
-                          "First name",
-                          "Last name",
-                          "Company",
-                          "School",
-                          "City",
-                          "Time acquired",
-                        ].map((label) => (
-                          <th key={label} className="px-4 py-3 text-xs font-semibold text-muted-foreground">
-                            {label}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border/60 bg-card/60">
-                      {sortedLeads.map((row) => (
-                        <tr key={row.id} className="hover:bg-muted/30">
-                          <td className="px-4 py-3 text-foreground">
-                            {row.firstName}
-                          </td>
-                          <td className="px-4 py-3 text-foreground">
-                            {row.lastName}
-                          </td>
-                          <td className="px-4 py-3 text-muted-foreground">
-                            {row.company}
-                          </td>
-                          <td className="px-4 py-3 text-muted-foreground">
-                            {row.school}
-                          </td>
-                          <td className="px-4 py-3 text-muted-foreground">
-                            {row.city}
-                          </td>
-                          <td className="px-4 py-3 text-muted-foreground">
-                            {row.time}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+              ) : recentLeadsError ? (
+                <EmptyState message={recentLeadsError} />
+              ) : recentLeads.length > 0 ? (
+                <div className="space-y-3">
+                  {recentLeads.map((lead) => (
+                    <div
+                      key={lead.id}
+                      className="rounded-2xl border border-border/60 bg-card/70 px-4 py-3"
+                    >
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <div>
+                          <div className="text-sm font-semibold text-foreground">
+                            {lead.name?.trim() || "Unknown"}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {lead.email ?? "No email"}
+                            {lead.company ? ` · ${lead.company}` : ""}
+                          </div>
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {timestampFormatter.format(
+                            new Date(lead.created_at)
+                          )}
+                        </div>
+                      </div>
+                      {lead.message ? (
+                        <p className="mt-2 text-xs text-muted-foreground">
+                          {lead.message}
+                        </p>
+                      ) : null}
+                    </div>
+                  ))}
                 </div>
               ) : (
-                <EmptyState message="No leads match this search yet." />
+                <EmptyState message="No leads yet. Share your public page to collect contacts." />
               )}
             </CardContent>
           </Card>
@@ -914,13 +819,6 @@ function EmptyState({ message }: { message: string }) {
       {message}
     </p>
   );
-}
-
-function safeCsv(value: string) {
-  if (value == null) return "";
-  const needs = /[",\n]/.test(value);
-  const val = String(value).replace(/"/g, '""');
-  return needs ? `"${val}"` : val;
 }
 
 function labelForRange(range: TimeRange) {
