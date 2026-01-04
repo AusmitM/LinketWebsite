@@ -669,9 +669,9 @@ export default function PublicProfileEditorPage() {
     }
   }, [loggingOut, supabase]);
 
-  const profileDisplayName = draft?.name || "Jessica Miller";
+  const profileDisplayName = draft?.name || "John Doe";
   const profileTagline =
-    draft?.headline || "Digital Creator | Connecting Ideas & Communities";
+    draft?.headline || "I do things | other things & more other things";
 
   return (
     <div className="space-y-6">
