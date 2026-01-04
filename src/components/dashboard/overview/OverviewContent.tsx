@@ -72,9 +72,7 @@ type LeadRow = {
 
 export default function OverviewContent() {
   const dashboardUser = useDashboardUser();
-  const [userId, setUserId] = useState<string | null | undefined>(
-    dashboardUser?.id ?? undefined
-  );
+  const userId = dashboardUser?.id ?? null;
   const [{ loading, error, analytics }, setState] = useState<ViewState>({
     loading: true,
     error: null,
@@ -88,12 +86,6 @@ export default function OverviewContent() {
   const [conversionRange, setConversionRange] = useState<TimeRange>("month");
 
   useEffect(() => {
-    if (dashboardUser?.id) {
-      setUserId(dashboardUser.id);
-    }
-  }, [dashboardUser]);
-
-  useEffect(() => {
     const id = window.setInterval(() => {
       setNow(new Date());
     }, 60_000);
@@ -101,47 +93,6 @@ export default function OverviewContent() {
   }, []);
 
   useEffect(() => {
-    let active = true;
-    const { data: subscription } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        if (!active) return;
-        const id = session?.user?.id ?? null;
-        setUserId(id);
-        if (!session?.user) {
-          setState({
-            loading: false,
-            error: "You're not signed in.",
-            analytics: null,
-          });
-        }
-      }
-    );
-
-    supabase.auth
-      .getUser()
-      .then(({ data }) => {
-        if (!active) return;
-        const user = data.user;
-        if (!user) return;
-        setUserId(user.id);
-      })
-      .catch(() => {
-        if (active)
-          setState({
-            loading: false,
-            error: "Unable to verify session.",
-            analytics: null,
-          });
-      });
-
-    return () => {
-      active = false;
-      subscription.subscription?.unsubscribe?.();
-    };
-  }, []);
-
-  useEffect(() => {
-    if (userId === undefined) return;
     if (userId === null) {
       setState({
         loading: false,
