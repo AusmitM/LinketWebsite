@@ -37,7 +37,7 @@ export function createDefaultLeadFormConfig(id: string): LeadFormConfig {
         helpText: "(###) ### - ####",
       }),
       createField("short_text", "Email", {
-        helpText: "Ex. JDoe@LinketCOnnect.com",
+        helpText: "Ex. JDoe@LinketConnect.com",
         validation: { rule: "email" },
       }),
       createField("long_text", "Note"),
