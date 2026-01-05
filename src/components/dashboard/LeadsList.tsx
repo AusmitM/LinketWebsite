@@ -310,24 +310,27 @@ export default function LeadsList({ userId }: { userId: string }) {
             No leads yet. Share your public page to collect contacts.
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-2">
             {leads.map((l) => (
-              <article key={l.id} className="rounded-xl border p-4 shadow-sm">
-                <header className="flex flex-wrap items-center justify-between gap-2">
+              <article key={l.id} className="rounded-xl border p-3 shadow-sm">
+                <header className="flex flex-wrap items-start justify-between gap-2">
                   <div className="min-w-0">
                     <h3 className="text-sm font-medium">
                       {l.name}
                       {l.company ? (
                         <span className="text-muted-foreground">
                           {" "}
-                          · {l.company}
+                          - {l.company}
                         </span>
                       ) : null}
                     </h3>
-                    <p className="text-xs text-muted-foreground break-all">
-                      {l.email}
-                      {l.phone ? ` · ${l.phone}` : ""}
-                    </p>
+                    {(l.email || l.phone) && (
+                      <p className="text-xs text-muted-foreground break-all">
+                        {l.email || ""}
+                        {l.email && l.phone ? " - " : ""}
+                        {l.phone || ""}
+                      </p>
+                    )}
                   </div>
                   <time
                     className="text-xs text-muted-foreground"
@@ -342,24 +345,27 @@ export default function LeadsList({ userId }: { userId: string }) {
                   </p>
                 ) : null}
                 {renderCustomFields(l, fieldLabels)}
-                <footer className="mt-3 flex flex-wrap items-center gap-2 text-xs">
-                  <a
-                    className="rounded-md border px-2 py-1 hover:bg-muted"
-                    href={`mailto:${encodeURIComponent(
-                      l.email
-                    )}?subject=${encodeURIComponent(`Re: ${l.name}`)}`}
-                    aria-label="Reply via email"
-                  >
-                    Reply
-                  </a>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => copy(l.email)}
-                    aria-label="Copy email"
-                  >
-                    Copy email
-                  </Button>
+                <footer className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                  {l.email ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => copy(l.email)}
+                      aria-label="Copy email"
+                    >
+                      Copy email
+                    </Button>
+                  ) : null}
+                  {l.phone ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => copy(l.phone || "")}
+                      aria-label="Copy phone number"
+                    >
+                      Copy phone
+                    </Button>
+                  ) : null}
                   {l.source_url ? (
                     <a
                       className="rounded-md border px-2 py-1 hover:bg-muted"
