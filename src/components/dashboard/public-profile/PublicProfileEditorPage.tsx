@@ -705,7 +705,7 @@ export default function PublicProfileEditorPage() {
           />
         </div>
         <div className="flex justify-center self-start">
-          <div className="origin-top-left scale-[1.3]">
+          <div className="origin-top-left scale-[.75]">
             <PhonePreviewCard
               profile={{ name: profileDisplayName, tagline: profileTagline }}
               contactEnabled={hasContactDetails}
