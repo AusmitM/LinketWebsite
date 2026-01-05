@@ -172,7 +172,10 @@ export default function LeadsList({ userId }: { userId: string }) {
         description: error.message,
         variant: "destructive",
       });
-    else toast({ title: "Lead deleted", variant: "success" });
+    else {
+      setLeads((prev) => prev.filter((lead) => lead.id !== id));
+      toast({ title: "Lead deleted", variant: "success" });
+    }
   }
 
   function exportCsv() {
