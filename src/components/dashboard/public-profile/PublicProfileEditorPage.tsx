@@ -1306,10 +1306,10 @@ function PhonePreviewCard({
       <div className="flex flex-col items-center px-6 pb-6">
         <div className="-mt-10 h-20 w-20 overflow-hidden rounded-full border-4 border-background bg-muted shadow-sm" />
         <div className="mt-3 text-center">
-          <div className="text-base font-semibold text-foreground">
+          <div className="mx-auto max-w-[240px] truncate text-base font-semibold text-foreground">
             {profile.name}
           </div>
-          <div className="mt-1 text-xs text-muted-foreground">
+          <div className="mx-auto mt-1 max-w-[240px] truncate text-xs text-muted-foreground">
             {profile.tagline}
           </div>
         </div>
@@ -1323,9 +1323,9 @@ function PhonePreviewCard({
               : "bg-[#EEF3F9] text-[#7AA7D8] opacity-80"
           )}
         >
-          {contactEnabled
-            ? "Save contact"
-            : contactDisabledText}
+          <span className="block truncate">
+            {contactEnabled ? "Save contact" : contactDisabledText}
+          </span>
         </button>
 
         <div className="mt-4 w-full text-left">
@@ -1497,7 +1497,7 @@ function LinkListItem({
       onDrop={onDrop}
       onDragEnd={onDragEnd}
     >
-      <div className="flex items-center gap-3">
+      <div className="flex min-w-0 items-center gap-3">
         {favicon ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
