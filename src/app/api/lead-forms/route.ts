@@ -186,9 +186,22 @@ export async function GET(request: NextRequest) {
     let query = supabase.from("lead_forms").select("*").eq("user_id", userId);
     if (profileId) query = query.eq("profile_id", profileId);
     if (handle) query = query.eq("handle", handle);
-    const { data, error: formError } = await query.maybeSingle();
+    let { data, error: formError } = await query.maybeSingle();
     if (formError && formError.code !== "PGRST116") {
       throw new Error(formError.message);
+    }
+
+    if (!data && profileId && handle) {
+      const fallback = await supabase
+        .from("lead_forms")
+        .select("*")
+        .eq("user_id", userId)
+        .eq("handle", handle)
+        .maybeSingle();
+      if (fallback.error && fallback.error.code !== "PGRST116") {
+        throw new Error(fallback.error.message);
+      }
+      data = fallback.data as LeadFormRow | null;
     }
 
     let config: LeadFormConfig | null = null;
