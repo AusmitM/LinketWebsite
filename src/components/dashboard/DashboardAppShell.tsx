@@ -1,5 +1,6 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
 import Sidebar from "@/components/dashboard/Sidebar";
@@ -26,8 +27,9 @@ export default function DashboardAppShell({
     <div
       id="dashboard-theme-scope"
       className="flex min-h-screen bg-[var(--background)]"
+      style={{ "--dashboard-nav-height": "64px" } as CSSProperties}
     >
-      <div className="sticky top-0 hidden h-screen lg:block">
+      <div className="hidden h-[calc(100vh-var(--dashboard-nav-height))] lg:sticky lg:top-[var(--dashboard-nav-height)] lg:block">
         <Sidebar />
       </div>
       <div className="flex flex-1 flex-col overflow-hidden">

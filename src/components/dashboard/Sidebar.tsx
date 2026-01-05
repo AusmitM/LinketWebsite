@@ -149,13 +149,13 @@ export default function Sidebar({
   return (
     <aside
       className={cn(
-        "shrink-0 border-r bg-sidebar/70 backdrop-blur",
+        "h-full shrink-0 border-r bg-sidebar/70 backdrop-blur",
         isCollapsed ? "w-[72px]" : "w-[240px]",
         className
       )}
       aria-label="Primary"
     >
-      <div className="flex min-h-screen flex-col">
+      <div className="flex min-h-full flex-col">
         <div className="flex items-center justify-end gap-2 px-4 py-5">
           {canCollapse && (
             <button
