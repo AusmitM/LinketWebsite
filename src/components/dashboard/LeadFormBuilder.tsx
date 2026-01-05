@@ -168,7 +168,6 @@ export default function LeadFormBuilder({
   const [settings, setSettings] = useState<FormSettings>(DEFAULT_SETTINGS);
   const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null);
   const [expandedFields, setExpandedFields] = useState<Record<string, boolean>>({});
-  const [advancedFields, setAdvancedFields] = useState<Record<string, boolean>>({});
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -409,7 +408,6 @@ export default function LeadFormBuilder({
       setExpandedFields(
         nextFields[0]?.id ? { [nextFields[0].id]: true } : {}
       );
-      setAdvancedFields({});
       setPreviewSuccess(false);
     },
     []
@@ -452,13 +450,6 @@ export default function LeadFormBuilder({
 
   const toggleExpanded = useCallback((fieldId: string) => {
     setExpandedFields((prev) => ({
-      ...prev,
-      [fieldId]: !prev[fieldId],
-    }));
-  }, []);
-
-  const toggleAdvanced = useCallback((fieldId: string) => {
-    setAdvancedFields((prev) => ({
       ...prev,
       [fieldId]: !prev[fieldId],
     }));
@@ -709,7 +700,6 @@ export default function LeadFormBuilder({
                     {orderedFields.length ? (
                       orderedFields.map((field, index) => {
                         const expanded = Boolean(expandedFields[field.id]);
-                        const advancedOpen = Boolean(advancedFields[field.id]);
                         return (
                           <div
                             key={field.id}
@@ -865,90 +855,6 @@ export default function LeadFormBuilder({
                                   </div>
                                 )}
 
-                                <button
-                                  type="button"
-                                  className="flex items-center gap-2 text-xs font-medium text-muted-foreground"
-                                  onClick={() => toggleAdvanced(field.id)}
-                                >
-                                  {advancedOpen ? "Hide" : "Show"} advanced settings
-                                  {advancedOpen ? (
-                                    <ChevronUp className="h-4 w-4" />
-                                  ) : (
-                                    <ChevronDown className="h-4 w-4" />
-                                  )}
-                                </button>
-
-                                {advancedOpen && (
-                                  <div className="space-y-3">
-                                    <div className="grid gap-3 md:grid-cols-2">
-                                      <div className="space-y-2">
-                                        <Label className="text-xs text-muted-foreground">
-                                          Key
-                                        </Label>
-                                        <Input
-                                          value={field.key}
-                                          onChange={(event) =>
-                                            updateField(field.id, {
-                                              key: normalizeKey(
-                                                event.target.value || field.label
-                                              ),
-                                            })
-                                          }
-                                          className="h-9 text-sm"
-                                        />
-                                      </div>
-                                      <div className="space-y-2">
-                                        <Label className="text-xs text-muted-foreground">
-                                          Min length
-                                        </Label>
-                                        <Input
-                                          type="number"
-                                          value={field.validation.minLength ?? ""}
-                                          onChange={(event) =>
-                                            updateField(field.id, {
-                                              validation: {
-                                                ...field.validation,
-                                                minLength: event.target.value
-                                                  ? Number(event.target.value)
-                                                  : null,
-                                              },
-                                            })
-                                          }
-                                          className="h-9 text-sm"
-                                        />
-                                      </div>
-                                    </div>
-                                    {field.type === "email" && (
-                                      <label className="flex items-center gap-2 text-xs text-muted-foreground">
-                                        Email format
-                                        <Switch
-                                          checked={Boolean(
-                                            field.validation.emailFormat
-                                          )}
-                                          onCheckedChange={(value) =>
-                                            updateField(field.id, {
-                                              validation: {
-                                                ...field.validation,
-                                                emailFormat: Boolean(value),
-                                              },
-                                            })
-                                          }
-                                        />
-                                      </label>
-                                    )}
-                                    <label className="flex items-center gap-2 text-xs text-muted-foreground">
-                                      Hidden
-                                      <Switch
-                                        checked={field.hidden}
-                                        onCheckedChange={(value) =>
-                                          updateField(field.id, {
-                                            hidden: Boolean(value),
-                                          })
-                                        }
-                                      />
-                                    </label>
-                                  </div>
-                                )}
                               </div>
                             )}
                           </div>
