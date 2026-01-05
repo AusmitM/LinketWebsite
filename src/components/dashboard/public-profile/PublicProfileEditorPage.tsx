@@ -1240,6 +1240,7 @@ function EditorPanel({
           profileId={draft?.id ?? null}
           onPreviewChange={onLeadFormPreview}
           showPreview={false}
+          layout="stacked"
         />
     ) : (
       <Card className="rounded-2xl border border-border/60 bg-card/80 shadow-sm">

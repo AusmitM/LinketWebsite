@@ -114,6 +114,7 @@ type Props = {
   profileId?: string | null;
   onPreviewChange?: (form: LeadFormConfig) => void;
   showPreview?: boolean;
+  layout?: "side" | "stacked";
 };
 
 type ResponsesStats = {
@@ -134,6 +135,7 @@ export default function LeadFormBuilder({
   profileId,
   onPreviewChange,
   showPreview = true,
+  layout = "side",
 }: Props) {
   const [form, setForm] = useState<LeadFormConfig | null>(null);
   const [loading, setLoading] = useState(true);
@@ -483,7 +485,13 @@ export default function LeadFormBuilder({
         </Card>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+      <div
+        className={
+          layout === "stacked"
+            ? "grid gap-6"
+            : "grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]"
+        }
+      >
         <div className="space-y-6">
           <Card className="rounded-2xl border border-border/60 bg-card/80 shadow-sm">
             <CardHeader>
