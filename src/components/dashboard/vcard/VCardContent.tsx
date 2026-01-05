@@ -61,6 +61,7 @@ export default function VCardContent({
   const lastSavedRef = useRef<VCardFields | null>(null);
   const initialisedRef = useRef(false);
   const latestFieldsRef = useRef(fields);
+  const buttonSaveRequested = useRef(false);
 
   useEffect(() => {
     latestFieldsRef.current = fields;
@@ -201,7 +202,7 @@ export default function VCardContent({
     saveTimer.current = setTimeout(() => {
       saveTimer.current = null;
       void persist(fields);
-    }, 800);
+    }, 2000);
     return () => {
       if (saveTimer.current) {
         clearTimeout(saveTimer.current);
@@ -232,6 +233,30 @@ export default function VCardContent({
   useEffect(() => {
     onStatusChange?.({ status, isDirty, error, lastSavedAt });
   }, [status, isDirty, error, lastSavedAt, onStatusChange]);
+
+  useEffect(() => {
+    const handleClick = (event: MouseEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (!target) return;
+      if (!target.closest("button, [role='button']")) return;
+      buttonSaveRequested.current = true;
+    };
+    document.addEventListener("click", handleClick);
+    return () => {
+      document.removeEventListener("click", handleClick);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!buttonSaveRequested.current) return;
+    if (!isDirty || !userId) {
+      buttonSaveRequested.current = false;
+      return;
+    }
+    if (status === "saving" || loading) return;
+    buttonSaveRequested.current = false;
+    void persist(fields);
+  }, [fields, isDirty, loading, status, userId, persist]);
 
   const statusMessage = useMemo(() => {
     if (loading) return "Loading...";

@@ -159,6 +159,7 @@ export default function PublicProfileEditorPage() {
   const statusButtonRef = useRef<HTMLButtonElement | null>(null);
   const avatarButtonRef = useRef<HTMLButtonElement | null>(null);
   const viewButtonRef = useRef<HTMLButtonElement | null>(null);
+  const buttonSaveRequested = useRef(false);
 
   useEffect(() => {
     if (dashboardUser?.id) {
@@ -354,7 +355,7 @@ export default function PublicProfileEditorPage() {
     autosaveTimer.current = setTimeout(() => {
       autosaveTimer.current = null;
       void handleSave();
-    }, 900);
+    }, 2000);
     return () => {
       if (autosaveTimer.current) {
         clearTimeout(autosaveTimer.current);
@@ -362,6 +363,30 @@ export default function PublicProfileEditorPage() {
       }
     };
   }, [draft, isDirty, userId, handleSave]);
+
+  useEffect(() => {
+    const handleClick = (event: MouseEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (!target) return;
+      if (!target.closest("button, [role='button']")) return;
+      buttonSaveRequested.current = true;
+    };
+    document.addEventListener("click", handleClick);
+    return () => {
+      document.removeEventListener("click", handleClick);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!buttonSaveRequested.current) return;
+    if (!isDirty || !userId) {
+      buttonSaveRequested.current = false;
+      return;
+    }
+    if (saving) return;
+    buttonSaveRequested.current = false;
+    void handleSave();
+  }, [isDirty, saving, userId, handleSave]);
 
   useEffect(() => {
     const handle = draft?.handle || accountHandle;

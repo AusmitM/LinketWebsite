@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/dialog";
 import type { LeadField } from "@/types/db";
 
-const SAVE_DEBOUNCE_MS = 700;
+const SAVE_DEBOUNCE_MS = 2000;
 
 const FIELD_TYPES = [
   "text",
@@ -192,6 +192,7 @@ export default function LeadFormBuilder({
   const lastSavedFieldIds = useRef<string[]>([]);
   const keyToIdRef = useRef<Map<string, string>>(new Map());
   const loadToken = useRef(0);
+  const buttonSaveRequested = useRef(false);
 
   const showPreview = variant !== "compact";
 
@@ -406,6 +407,30 @@ export default function LeadFormBuilder({
         autosaveTimer.current = null;
       }
     };
+  }, [handle, isDirty, loading, persist, userId]);
+
+  useEffect(() => {
+    const handleClick = (event: MouseEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (!target) return;
+      if (!target.closest("button, [role='button']")) return;
+      buttonSaveRequested.current = true;
+    };
+    document.addEventListener("click", handleClick);
+    return () => {
+      document.removeEventListener("click", handleClick);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!buttonSaveRequested.current) return;
+    if (!userId || !handle || !isDirty) {
+      buttonSaveRequested.current = false;
+      return;
+    }
+    if (loading) return;
+    buttonSaveRequested.current = false;
+    void persist();
   }, [handle, isDirty, loading, persist, userId]);
 
   const applyTemplate = useCallback(
