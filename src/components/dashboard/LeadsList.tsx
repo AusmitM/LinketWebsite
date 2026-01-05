@@ -180,6 +180,34 @@ export default function LeadsList({ userId }: { userId: string }) {
       toast({ title: "No leads to export" });
       return;
     }
+    const customKeySet = new Set<string>();
+    const labelByKey: Record<string, string> = {};
+    leads.forEach((lead) => {
+      const custom = lead.custom_fields;
+      if (!custom || typeof custom !== "object") return;
+      Object.entries(custom).forEach(([key, value]) => {
+        if (!key || CORE_FIELD_KEYS.has(key)) return;
+        if (value == null) return;
+        if (value === "" || (typeof value === "string" && !value.trim())) return;
+        customKeySet.add(key);
+        if (!labelByKey[key]) {
+          labelByKey[key] =
+            fieldLabels[lead.handle]?.[key] ?? toReadableLabel(key);
+        }
+      });
+    });
+    const customKeys = Array.from(customKeySet);
+    const usedHeaders = new Set<string>();
+    const customHeaders = customKeys.map((key) => {
+      const label = labelByKey[key] || toReadableLabel(key);
+      if (usedHeaders.has(label)) {
+        const deduped = `${label} (${key})`;
+        usedHeaders.add(deduped);
+        return deduped;
+      }
+      usedHeaders.add(label);
+      return label;
+    });
     const header = [
       "created_at",
       "name",
@@ -190,6 +218,7 @@ export default function LeadsList({ userId }: { userId: string }) {
       "source_url",
       "handle",
       "id",
+      ...customHeaders,
     ];
     const rows = leads.map((l) => [
       safeCsv(l.created_at),
@@ -201,6 +230,10 @@ export default function LeadsList({ userId }: { userId: string }) {
       safeCsv(l.source_url || ""),
       safeCsv(l.handle),
       safeCsv(l.id),
+      ...customKeys.map((key) => {
+        const value = l.custom_fields?.[key] as string | boolean | null | undefined;
+        return safeCsv(formatLeadValue(value ?? null));
+      }),
     ]);
     const csv = [header.join(","), ...rows.map((r) => r.join(","))].join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
