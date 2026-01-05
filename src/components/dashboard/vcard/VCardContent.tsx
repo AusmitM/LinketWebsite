@@ -346,7 +346,11 @@ function Field({
   idPrefix,
 }: FieldProps) {
   function handleChange(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
-    onChange(id, event.target.value);
+    const nextValue =
+      id === "phone" && event.target instanceof HTMLInputElement
+        ? formatPhoneNumber(event.target.value)
+        : event.target.value;
+    onChange(id, nextValue);
   }
   const fieldId = idPrefix ? `${idPrefix}-${id}` : id;
 
@@ -391,6 +395,18 @@ function areVCardFieldsEqual(a: VCardFields, b: VCardFields) {
     a.photoData === b.photoData &&
     a.photoName === b.photoName
   );
+}
+
+function formatPhoneNumber(value: string) {
+  const digits = value.replace(/\D/g, "").slice(0, 10);
+  if (!digits) return "";
+  if (digits.length <= 3) {
+    return `(${digits}`;
+  }
+  if (digits.length <= 6) {
+    return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+  }
+  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)} - ${digits.slice(6)}`;
 }
 
 

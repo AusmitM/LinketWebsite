@@ -551,7 +551,13 @@ function renderFieldInput({
       id={id}
       type={field.type === "phone" ? "tel" : field.type}
       value={String(value ?? "")}
-      onChange={(event) => onChange(event.target.value)}
+      onChange={(event) => {
+        const nextValue =
+          field.type === "phone" && event.target instanceof HTMLInputElement
+            ? formatPhoneNumber(event.target.value)
+            : event.target.value;
+        onChange(nextValue);
+      }}
       placeholder={field.placeholder || ""}
       className={inputClassName}
       required={field.required}
@@ -571,4 +577,16 @@ function normalizeKey(value: string) {
 
 function combineName(first?: string, last?: string) {
   return [first || "", last || ""].filter(Boolean).join(" ").trim();
+}
+
+function formatPhoneNumber(value: string) {
+  const digits = value.replace(/\D/g, "").slice(0, 10);
+  if (!digits) return "";
+  if (digits.length <= 3) {
+    return `(${digits}`;
+  }
+  if (digits.length <= 6) {
+    return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+  }
+  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)} - ${digits.slice(6)}`;
 }
