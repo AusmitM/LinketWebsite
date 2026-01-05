@@ -56,8 +56,8 @@ export const metadata: Metadata = {
     images: [
       {
         url: "/og.png",
-        width: 300,
-        height: 300,
+        width: 32,
+        height: 32,
         alt: `${brand.name} logo`,
       },
     ],
