@@ -150,6 +150,7 @@ export default function PublicProfileEditorPage() {
     isDirty: false,
     error: null,
   });
+  const [vcardLoaded, setVcardLoaded] = useState(false);
 
   const autosavePending = useRef(false);
   const leadFormLoadRef = useRef(0);
@@ -157,6 +158,38 @@ export default function PublicProfileEditorPage() {
   const statusButtonRef = useRef<HTMLButtonElement | null>(null);
   const avatarButtonRef = useRef<HTMLButtonElement | null>(null);
   const viewButtonRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    if (!userId || vcardLoaded) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const response = await fetch(
+          `/api/vcard/profile?userId=${encodeURIComponent(userId)}`,
+          { cache: "no-store" }
+        );
+        if (!response.ok) return;
+        const payload = (await response.json()) as {
+          fields?: { email?: string; phone?: string };
+        };
+        if (cancelled) return;
+        setVcardSnapshot((prev) => {
+          if (prev.email || prev.phone) return prev;
+          return {
+            ...prev,
+            email: payload.fields?.email ?? "",
+            phone: payload.fields?.phone ?? "",
+          };
+        });
+        setVcardLoaded(true);
+      } catch {
+        if (!cancelled) setVcardLoaded(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [userId, vcardLoaded]);
 
   useEffect(() => {
     if (dashboardUser?.id) {
@@ -704,8 +737,8 @@ export default function PublicProfileEditorPage() {
             }
           />
         </div>
-        <div className="flex justify-center self-start">
-          <div className="origin-top-left scale-[.85]">
+        <div className="flex justify-end self-start">
+          <div className="origin-top-left scale-[1]">
             <PhonePreviewCard
               profile={{ name: profileDisplayName, tagline: profileTagline }}
               contactEnabled={hasContactDetails}
