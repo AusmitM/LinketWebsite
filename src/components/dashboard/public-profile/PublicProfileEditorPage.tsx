@@ -155,6 +155,7 @@ export default function PublicProfileEditorPage() {
   const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const autosavePending = useRef(false);
   const leadFormLoadRef = useRef(0);
+  const draftRef = useRef<ProfileDraft | null>(null);
   const statusButtonRef = useRef<HTMLButtonElement | null>(null);
   const avatarButtonRef = useRef<HTMLButtonElement | null>(null);
   const viewButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -265,6 +266,10 @@ export default function PublicProfileEditorPage() {
     );
   }, [theme, draft]);
 
+  useEffect(() => {
+    draftRef.current = draft;
+  }, [draft]);
+
   const isDirty = useMemo(() => {
     if (!draft || !savedProfile) return false;
     return JSON.stringify(draft) !== JSON.stringify(savedProfile);
@@ -276,22 +281,24 @@ export default function PublicProfileEditorPage() {
       autosavePending.current = true;
       return;
     }
+    const draftSnapshot = draft;
+    const snapshotUpdatedAt = draftSnapshot.updatedAt;
     autosavePending.current = false;
     setSaving(true);
     setSaveError(null);
     try {
       const payload = {
-        id: draft.id?.trim() ? draft.id : undefined,
-        name: draft.name,
-        handle: draft.handle,
-        headline: draft.headline,
-        theme: draft.theme,
-        links: draft.links.map((link) => ({
+        id: draftSnapshot.id?.trim() ? draftSnapshot.id : undefined,
+        name: draftSnapshot.name,
+        handle: draftSnapshot.handle,
+        headline: draftSnapshot.headline,
+        theme: draftSnapshot.theme,
+        links: draftSnapshot.links.map((link) => ({
           id: link.id,
           title: link.label,
           url: link.url,
         })),
-        active: draft.active,
+        active: draftSnapshot.active,
       };
       const res = await fetch("/api/linket-profiles", {
         method: "POST",
@@ -304,11 +311,14 @@ export default function PublicProfileEditorPage() {
       }
       const saved = mergeProfileUi(
         mapProfile((await res.json()) as ProfileWithLinks),
-        draft
+        draftSnapshot
       );
-      setDraft(saved);
       setSavedProfile(saved);
       setLastSavedAt(new Date().toISOString());
+      const currentDraft = draftRef.current;
+      if (currentDraft?.updatedAt === snapshotUpdatedAt) {
+        setDraft(saved);
+      }
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Unable to save profile";
@@ -679,6 +689,7 @@ export default function PublicProfileEditorPage() {
       <TopActionBar
         lastSavedAt={lastSavedAt}
         saveState={saveState}
+        isDirty={isDirty}
         onPublish={handlePublish}
         onUnpublish={handleUnpublish}
         onRetrySave={handleSave}
@@ -787,6 +798,7 @@ export default function PublicProfileEditorPage() {
 function TopActionBar({
   lastSavedAt,
   saveState,
+  isDirty,
   onPublish,
   onUnpublish,
   onRetrySave,
@@ -810,6 +822,7 @@ function TopActionBar({
 }: {
   lastSavedAt: string | null;
   saveState: "saving" | "saved" | "failed";
+  isDirty: boolean;
   onPublish: () => void;
   onUnpublish: () => void;
   onRetrySave: () => void;
@@ -847,6 +860,9 @@ function TopActionBar({
           <span>
             Last saved: {lastSavedAt ? formatShortDate(lastSavedAt) : "Just now"}
           </span>
+          {isDirty && (
+            <span className="text-amber-600">Unsaved changes</span>
+          )}
         </button>
 
         <div className="ml-auto flex flex-wrap items-center gap-2">
@@ -908,13 +924,16 @@ function TopActionBar({
                 "font-medium",
                 saveState === "failed" && "text-destructive",
                 saveState === "saving" && "text-muted-foreground",
-                saveState === "saved" && "text-foreground"
+                saveState === "saved" &&
+                  (isDirty ? "text-amber-600" : "text-foreground")
               )}
             >
               {saveState === "failed"
                 ? "Save failed"
                 : saveState === "saving"
                 ? "Saving..."
+                : isDirty
+                ? "Unsaved changes"
                 : "Saved"}
             </span>
           </div>
