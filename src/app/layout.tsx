@@ -35,6 +35,7 @@ export const metadata: Metadata = {
   },
   description: brand.blurb,
   icons: {
+    icon: [{ url: "/linket-favicon.svg", type: "image/svg+xml" }],
     apple: "/apple-touch-icon.png",
   },
   alternates: {
