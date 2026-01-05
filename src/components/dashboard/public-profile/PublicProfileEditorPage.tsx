@@ -709,7 +709,7 @@ export default function PublicProfileEditorPage() {
             <PhonePreviewCard
               profile={{ name: profileDisplayName, tagline: profileTagline }}
               contactEnabled={hasContactDetails}
-              contactDisabledText="Contact Information"
+              contactDisabledText="Add email or phone to enable Save contact"
               onContactClick={handleContactCta}
               links={draft?.links ?? []}
               leadFormPreview={leadFormPreview}
