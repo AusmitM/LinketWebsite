@@ -369,17 +369,6 @@ export default function LeadsList({ userId }: { userId: string }) {
                       Copy phone
                     </Button>
                   ) : null}
-                  {l.source_url ? (
-                    <a
-                      className="rounded-md border px-2 py-1 hover:bg-muted"
-                      href={l.source_url}
-                      target="_blank"
-                      rel="noreferrer"
-                      aria-label="Open source URL"
-                    >
-                      Source
-                    </a>
-                  ) : null}
                   <Button
                     variant="destructive"
                     size="sm"
