@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type FocusEvent } from "react";
 import {
   ArrowDown,
   ArrowUp,
@@ -29,8 +29,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { LeadField } from "@/types/db";
-
-const SAVE_DEBOUNCE_MS = 2000;
 
 const FIELD_TYPES = [
   "text",
@@ -185,14 +183,12 @@ export default function LeadFormBuilder({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
 
-  const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const savingRef = useRef(false);
   const pendingSave = useRef(false);
   const lastSnapshotRef = useRef<string | null>(null);
   const lastSavedFieldIds = useRef<string[]>([]);
   const keyToIdRef = useRef<Map<string, string>>(new Map());
   const loadToken = useRef(0);
-  const buttonSaveRequested = useRef(false);
 
   const showPreview = variant !== "compact";
 
@@ -388,50 +384,17 @@ export default function LeadFormBuilder({
     [fields, handle, settings, userId]
   );
 
-  useEffect(() => {
-    if (!userId || !handle) return;
-    if (loading) return;
-    if (!isDirty) return;
-
-    if (autosaveTimer.current) {
-      clearTimeout(autosaveTimer.current);
-    }
-    autosaveTimer.current = setTimeout(() => {
-      autosaveTimer.current = null;
-      void persist();
-    }, SAVE_DEBOUNCE_MS);
-
-    return () => {
-      if (autosaveTimer.current) {
-        clearTimeout(autosaveTimer.current);
-        autosaveTimer.current = null;
-      }
-    };
-  }, [handle, isDirty, loading, persist, userId]);
-
-  useEffect(() => {
-    const handleClick = (event: MouseEvent) => {
+  const handleBlurCapture = useCallback(
+    (event: FocusEvent<HTMLDivElement>) => {
       const target = event.target as HTMLElement | null;
       if (!target) return;
-      if (!target.closest("button, [role='button']")) return;
-      buttonSaveRequested.current = true;
-    };
-    document.addEventListener("click", handleClick);
-    return () => {
-      document.removeEventListener("click", handleClick);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!buttonSaveRequested.current) return;
-    if (!userId || !handle || !isDirty) {
-      buttonSaveRequested.current = false;
-      return;
-    }
-    if (loading) return;
-    buttonSaveRequested.current = false;
-    void persist();
-  }, [handle, isDirty, loading, persist, userId]);
+      if (!isTextInput(target)) return;
+      if (!userId || !handle || !isDirty) return;
+      if (loading || savingRef.current) return;
+      void persist();
+    },
+    [handle, isDirty, loading, persist, userId]
+  );
 
   const applyTemplate = useCallback(
     (template: Template) => {
@@ -597,7 +560,10 @@ export default function LeadFormBuilder({
   }, [fields, onPreviewChange, settings]);
 
   return (
-    <div className={cn("space-y-4", variant === "compact" && "space-y-3")}>
+    <div
+      className={cn("space-y-4", variant === "compact" && "space-y-3")}
+      onBlurCapture={handleBlurCapture}
+    >
       {variant !== "compact" && (
         <div className="sticky top-0 z-10 -mx-4 border-b border-border/60 bg-background/95 px-4 py-3 backdrop-blur sm:-mx-6 lg:-mx-8">
           <div className="flex flex-wrap items-center gap-3">
@@ -1682,4 +1648,17 @@ function formatShortDate(value: string) {
     hour: "numeric",
     minute: "2-digit",
   });
+}
+
+function isTextInput(target: HTMLElement) {
+  if (target.tagName === "TEXTAREA") return true;
+  if (target.tagName !== "INPUT") return false;
+  const input = target as HTMLInputElement;
+  const type = input.type?.toLowerCase();
+  return (
+    type !== "checkbox" &&
+    type !== "radio" &&
+    type !== "button" &&
+    type !== "submit"
+  );
 }

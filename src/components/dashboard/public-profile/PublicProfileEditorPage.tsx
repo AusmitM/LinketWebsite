@@ -7,6 +7,7 @@ import {
   useRef,
   useState,
   type CSSProperties,
+  type FocusEvent,
   type ReactNode,
 } from "react";
 import {
@@ -152,14 +153,12 @@ export default function PublicProfileEditorPage() {
     error: null,
   });
 
-  const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const autosavePending = useRef(false);
   const leadFormLoadRef = useRef(0);
   const draftRef = useRef<ProfileDraft | null>(null);
   const statusButtonRef = useRef<HTMLButtonElement | null>(null);
   const avatarButtonRef = useRef<HTMLButtonElement | null>(null);
   const viewButtonRef = useRef<HTMLButtonElement | null>(null);
-  const buttonSaveRequested = useRef(false);
 
   useEffect(() => {
     if (dashboardUser?.id) {
@@ -341,52 +340,17 @@ export default function PublicProfileEditorPage() {
     }
   }, [saving, draft, isDirty, userId, handleSave]);
 
-  useEffect(() => {
-    if (!draft || !isDirty || !userId) {
-      if (autosaveTimer.current) {
-        clearTimeout(autosaveTimer.current);
-        autosaveTimer.current = null;
-      }
-      return;
-    }
-    if (autosaveTimer.current) {
-      clearTimeout(autosaveTimer.current);
-    }
-    autosaveTimer.current = setTimeout(() => {
-      autosaveTimer.current = null;
-      void handleSave();
-    }, 2000);
-    return () => {
-      if (autosaveTimer.current) {
-        clearTimeout(autosaveTimer.current);
-        autosaveTimer.current = null;
-      }
-    };
-  }, [draft, isDirty, userId, handleSave]);
-
-  useEffect(() => {
-    const handleClick = (event: MouseEvent) => {
+  const handleBlurCapture = useCallback(
+    (event: FocusEvent<HTMLDivElement>) => {
       const target = event.target as HTMLElement | null;
       if (!target) return;
-      if (!target.closest("button, [role='button']")) return;
-      buttonSaveRequested.current = true;
-    };
-    document.addEventListener("click", handleClick);
-    return () => {
-      document.removeEventListener("click", handleClick);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!buttonSaveRequested.current) return;
-    if (!isDirty || !userId) {
-      buttonSaveRequested.current = false;
-      return;
-    }
-    if (saving) return;
-    buttonSaveRequested.current = false;
-    void handleSave();
-  }, [isDirty, saving, userId, handleSave]);
+      if (!isTextInput(target)) return;
+      if (!isDirty || !userId) return;
+      if (saving) return;
+      void handleSave();
+    },
+    [handleSave, isDirty, saving, userId]
+  );
 
   useEffect(() => {
     const handle = draft?.handle || accountHandle;
@@ -710,7 +674,7 @@ export default function PublicProfileEditorPage() {
     draft?.headline || "I do things | other things & more other things";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" onBlurCapture={handleBlurCapture}>
       <TopActionBar
         lastSavedAt={lastSavedAt}
         saveState={saveState}
@@ -1908,4 +1872,17 @@ function requestFocus(id: string) {
       (element as HTMLElement).focus();
     }
   });
+}
+
+function isTextInput(target: HTMLElement) {
+  if (target.tagName === "TEXTAREA") return true;
+  if (target.tagName !== "INPUT") return false;
+  const input = target as HTMLInputElement;
+  const type = input.type?.toLowerCase();
+  return (
+    type !== "checkbox" &&
+    type !== "radio" &&
+    type !== "button" &&
+    type !== "submit"
+  );
 }

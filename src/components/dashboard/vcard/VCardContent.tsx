@@ -57,11 +57,9 @@ export default function VCardContent({
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
-  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSavedRef = useRef<VCardFields | null>(null);
   const initialisedRef = useRef(false);
   const latestFieldsRef = useRef(fields);
-  const buttonSaveRequested = useRef(false);
 
   useEffect(() => {
     latestFieldsRef.current = fields;
@@ -189,35 +187,13 @@ export default function VCardContent({
     [userId]
   );
 
-  useEffect(() => {
+  const handleFieldBlur = useCallback(() => {
     if (!userId) return;
     if (!initialisedRef.current || loading) return;
-    if (lastSavedRef.current && areVCardFieldsEqual(lastSavedRef.current, fields)) {
-      return;
-    }
-    if (saveTimer.current) {
-      clearTimeout(saveTimer.current);
-    }
-    setStatus("saving");
-    saveTimer.current = setTimeout(() => {
-      saveTimer.current = null;
-      void persist(fields);
-    }, 2000);
-    return () => {
-      if (saveTimer.current) {
-        clearTimeout(saveTimer.current);
-        saveTimer.current = null;
-      }
-    };
-  }, [fields, userId, loading, persist]);
-
-  useEffect(() => {
-    return () => {
-      if (saveTimer.current) {
-        clearTimeout(saveTimer.current);
-      }
-    };
-  }, []);
+    if (!isDirty) return;
+    if (status === "saving") return;
+    void persist(fields);
+  }, [fields, isDirty, loading, persist, status, userId]);
 
   const isDirty = useMemo(() => {
     if (!lastSavedRef.current) {
@@ -233,30 +209,6 @@ export default function VCardContent({
   useEffect(() => {
     onStatusChange?.({ status, isDirty, error, lastSavedAt });
   }, [status, isDirty, error, lastSavedAt, onStatusChange]);
-
-  useEffect(() => {
-    const handleClick = (event: MouseEvent) => {
-      const target = event.target as HTMLElement | null;
-      if (!target) return;
-      if (!target.closest("button, [role='button']")) return;
-      buttonSaveRequested.current = true;
-    };
-    document.addEventListener("click", handleClick);
-    return () => {
-      document.removeEventListener("click", handleClick);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!buttonSaveRequested.current) return;
-    if (!isDirty || !userId) {
-      buttonSaveRequested.current = false;
-      return;
-    }
-    if (status === "saving" || loading) return;
-    buttonSaveRequested.current = false;
-    void persist(fields);
-  }, [fields, isDirty, loading, status, userId, persist]);
 
   const statusMessage = useMemo(() => {
     if (loading) return "Loading...";
@@ -323,16 +275,16 @@ export default function VCardContent({
         </section>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Full name" id="fullName" value={fields.fullName} onChange={updateField} required disabled={inputsDisabled} idPrefix={idPrefix} />
-          <Field label="Title" id="title" value={fields.title} onChange={updateField} disabled={inputsDisabled} idPrefix={idPrefix} />
-          <Field label="Email" id="email" type="email" value={fields.email} onChange={updateField} disabled={inputsDisabled} idPrefix={idPrefix} />
-          <Field label="Phone" id="phone" type="tel" value={fields.phone} onChange={updateField} disabled={inputsDisabled} idPrefix={idPrefix} />
-          <Field label="Company" id="company" value={fields.company} onChange={updateField} disabled={inputsDisabled} idPrefix={idPrefix} />
-          <Field label="Website" id="website" type="url" value={fields.website} onChange={updateField} disabled={inputsDisabled} idPrefix={idPrefix} />
+          <Field label="Full name" id="fullName" value={fields.fullName} onChange={updateField} onBlur={handleFieldBlur} required disabled={inputsDisabled} idPrefix={idPrefix} />
+          <Field label="Title" id="title" value={fields.title} onChange={updateField} onBlur={handleFieldBlur} disabled={inputsDisabled} idPrefix={idPrefix} />
+          <Field label="Email" id="email" type="email" value={fields.email} onChange={updateField} onBlur={handleFieldBlur} disabled={inputsDisabled} idPrefix={idPrefix} />
+          <Field label="Phone" id="phone" type="tel" value={fields.phone} onChange={updateField} onBlur={handleFieldBlur} disabled={inputsDisabled} idPrefix={idPrefix} />
+          <Field label="Company" id="company" value={fields.company} onChange={updateField} onBlur={handleFieldBlur} disabled={inputsDisabled} idPrefix={idPrefix} />
+          <Field label="Website" id="website" type="url" value={fields.website} onChange={updateField} onBlur={handleFieldBlur} disabled={inputsDisabled} idPrefix={idPrefix} />
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Address" id="address" component="textarea" value={fields.address} onChange={updateField} disabled={inputsDisabled} idPrefix={idPrefix} />
-          <Field label="Notes" id="note" component="textarea" value={fields.note} onChange={updateField} disabled={inputsDisabled} idPrefix={idPrefix} />
+          <Field label="Address" id="address" component="textarea" value={fields.address} onChange={updateField} onBlur={handleFieldBlur} disabled={inputsDisabled} idPrefix={idPrefix} />
+          <Field label="Notes" id="note" component="textarea" value={fields.note} onChange={updateField} onBlur={handleFieldBlur} disabled={inputsDisabled} idPrefix={idPrefix} />
         </div>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <span className={`text-sm ${status === "error" ? "text-destructive" : "text-muted-foreground"}`}>{statusMessage}</span>
@@ -352,6 +304,7 @@ type FieldProps = {
   id: keyof VCardFields;
   value: string;
   onChange: (key: keyof VCardFields, value: string) => void;
+  onBlur?: () => void;
   type?: string;
   component?: "input" | "textarea";
   required?: boolean;
@@ -364,6 +317,7 @@ function Field({
   id,
   value,
   onChange,
+  onBlur,
   type = "text",
   component = "input",
   required = false,
@@ -389,6 +343,7 @@ function Field({
           rows={4}
           placeholder={required ? undefined : "Optional"}
           onChange={handleChange}
+          onBlur={onBlur}
           required={required}
           disabled={disabled}
         />
@@ -399,6 +354,7 @@ function Field({
           type={type}
           placeholder={required ? undefined : "Optional"}
           onChange={handleChange}
+          onBlur={onBlur}
           required={required}
           disabled={disabled}
         />
