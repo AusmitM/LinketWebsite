@@ -71,11 +71,14 @@ export function Navbar() {
   const [user, setUser] = useState<UserLite>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [pkMenuOpen, setPkMenuOpen] = useState(false);
   const [isAtTop, setIsAtTop] = useState(true);
   const [currentHash, setCurrentHash] = useState("");
   const [lockedSection, setLockedSection] = useState<string | null>(null);
   const lockTimeout = useRef<number | null>(null);
   const lockedSectionRef = useRef<string | null>(null);
+  const pkMenuRef = useRef<HTMLDivElement | null>(null);
+  const pkButtonRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     lockedSectionRef.current = lockedSection;
@@ -165,6 +168,7 @@ export function Navbar() {
 
   useEffect(() => {
     setMobileOpen(false);
+    setPkMenuOpen(false);
   }, [pathname]);
 
   useEffect(() => {
@@ -217,6 +221,34 @@ export function Navbar() {
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, [isPublic]);
+
+  useEffect(() => {
+    if (!pkMenuOpen) return;
+    const handleClick = (event: MouseEvent) => {
+      const target = event.target as Node | null;
+      if (!target) return;
+      if (pkMenuRef.current?.contains(target)) return;
+      if (pkButtonRef.current?.contains(target)) return;
+      setPkMenuOpen(false);
+    };
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setPkMenuOpen(false);
+    };
+    window.addEventListener("mousedown", handleClick);
+    window.addEventListener("keydown", handleKey);
+    return () => {
+      window.removeEventListener("mousedown", handleClick);
+      window.removeEventListener("keydown", handleKey);
+    };
+  }, [pkMenuOpen]);
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+    } finally {
+      router.push("/auth?view=signin");
+    }
+  };
 
   const overlayMode = isPublic && isAtTop && isLandingPage;
 
@@ -480,6 +512,69 @@ export function Navbar() {
             >
               <Link href="/claim">New Linket</Link>
             </Button>
+            {user ? (
+              <div className="relative hidden lg:inline-flex">
+                <button
+                  ref={pkButtonRef}
+                  type="button"
+                  onClick={() => setPkMenuOpen((open) => !open)}
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-border/60 bg-muted/40 text-xs font-semibold text-muted-foreground"
+                  aria-label="Account menu"
+                  aria-haspopup="menu"
+                  aria-expanded={pkMenuOpen}
+                >
+                  {getUserInitials(user.fullName ?? user.email ?? "PK")}
+                </button>
+                {pkMenuOpen ? (
+                  <div
+                    ref={pkMenuRef}
+                    className="absolute right-0 top-12 z-50 w-64 rounded-2xl border border-border/60 bg-background p-4 shadow-xl"
+                    role="menu"
+                    aria-label="Account menu"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm font-semibold">Account menu</div>
+                      <button
+                        type="button"
+                        onClick={() => setPkMenuOpen(false)}
+                        className="rounded-full p-1 text-muted-foreground hover:bg-muted"
+                        aria-label="Close menu"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                    <div className="mt-3 space-y-1 text-sm">
+                      <Link
+                        href="/dashboard/settings"
+                        className="block rounded-lg px-2 py-2 hover:bg-muted"
+                      >
+                        Account settings
+                      </Link>
+                      <Link
+                        href="/dashboard/billing"
+                        className="block rounded-lg px-2 py-2 hover:bg-muted"
+                      >
+                        Billing
+                      </Link>
+                      <Link
+                        href="/dashboard/support"
+                        className="block rounded-lg px-2 py-2 hover:bg-muted"
+                      >
+                        Support
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={handleLogout}
+                        className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left hover:bg-muted"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        Logout
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
             {dashboardAvatar}
             <button
               type="button"
