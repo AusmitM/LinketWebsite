@@ -1573,49 +1573,56 @@ function LinkModal({
                 }
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="link-icon">Icon</Label>
-              <select
-                id="link-icon"
-                value={link.icon}
-                onChange={(event) =>
-                  onChange({ ...link, icon: event.target.value as LinkIconKey })
-                }
-                className="w-full rounded-md border border-border/60 bg-background px-3 py-2 text-sm"
-              >
-                {ICON_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="link-color">Color</Label>
-              <div className="flex items-center gap-2">
-                <input
-                  id="link-color"
-                  type="color"
-                  value={link.color}
-                  onChange={(event) =>
-                    onChange({ ...link, color: event.target.value })
-                  }
-                  className="h-10 w-10 rounded-md border border-border/60 bg-background"
-                />
-                <div className="flex flex-wrap gap-2">
-                  {LINK_COLORS.map((color) => (
-                    <button
-                      key={color}
-                      type="button"
-                      onClick={() => onChange({ ...link, color })}
-                      className="h-6 w-6 rounded-full border border-border/60"
-                      style={{ backgroundColor: color }}
-                      aria-label={`Set color ${color}`}
-                    />
-                  ))}
+            {mode !== "add" ? (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="link-icon">Icon</Label>
+                  <select
+                    id="link-icon"
+                    value={link.icon}
+                    onChange={(event) =>
+                      onChange({
+                        ...link,
+                        icon: event.target.value as LinkIconKey,
+                      })
+                    }
+                    className="w-full rounded-md border border-border/60 bg-background px-3 py-2 text-sm"
+                  >
+                    {ICON_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
-              </div>
-            </div>
+                <div className="space-y-2">
+                  <Label htmlFor="link-color">Color</Label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      id="link-color"
+                      type="color"
+                      value={link.color}
+                      onChange={(event) =>
+                        onChange({ ...link, color: event.target.value })
+                      }
+                      className="h-10 w-10 rounded-md border border-border/60 bg-background"
+                    />
+                    <div className="flex flex-wrap gap-2">
+                      {LINK_COLORS.map((color) => (
+                        <button
+                          key={color}
+                          type="button"
+                          onClick={() => onChange({ ...link, color })}
+                          className="h-6 w-6 rounded-full border border-border/60"
+                          style={{ backgroundColor: color }}
+                          aria-label={`Set color ${color}`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </>
+            ) : null}
             <div className="flex items-center gap-2">
               <input
                 id="link-visible"
