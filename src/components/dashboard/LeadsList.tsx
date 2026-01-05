@@ -16,6 +16,7 @@ import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 
 export default function LeadsList({ userId }: { userId: string }) {
   const [leads, setLeads] = useState<Lead[]>([]);
+  const [fieldLabels, setFieldLabels] = useState<Record<string, Record<string, string>>>({});
   const [loading, setLoading] = useState(true);
   const [fetching, setFetching] = useState(false);
   const [q, setQ] = useState("");
@@ -82,6 +83,30 @@ export default function LeadsList({ userId }: { userId: string }) {
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [like]);
+
+  useEffect(() => {
+    const handles = Array.from(new Set(leads.map((lead) => lead.handle).filter(Boolean)));
+    if (handles.length === 0) return;
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from("lead_form_fields")
+        .select("handle,key,label")
+        .in("handle", handles);
+      if (error || !data || cancelled) return;
+      const next: Record<string, Record<string, string>> = {};
+      for (const row of data as Array<{ handle: string; key: string | null; label: string }>) {
+        const normalized = normalizeLeadKey(row.key || row.label || "");
+        if (!normalized) continue;
+        if (!next[row.handle]) next[row.handle] = {};
+        next[row.handle][normalized] = row.label;
+      }
+      setFieldLabels((prev) => ({ ...prev, ...next }));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [leads]);
 
   // Live updates via Realtime
   useEffect(() => {
@@ -278,6 +303,7 @@ export default function LeadsList({ userId }: { userId: string }) {
                     {l.message}
                   </p>
                 ) : null}
+                {renderCustomFields(l, fieldLabels)}
                 <footer className="mt-3 flex flex-wrap items-center gap-2 text-xs">
                   <a
                     className="rounded-md border px-2 py-1 hover:bg-muted"
@@ -336,4 +362,59 @@ export default function LeadsList({ userId }: { userId: string }) {
       </CardContent>
     </Card>
   );
+}
+
+const CORE_FIELD_KEYS = new Set(["name", "email", "phone", "company", "message"]);
+
+function renderCustomFields(lead: Lead, labelsByHandle: Record<string, Record<string, string>>) {
+  const custom = lead.custom_fields;
+  if (!custom || typeof custom !== "object") return null;
+  const entries = Object.entries(custom)
+    .filter(([key, value]) => {
+      if (!key || CORE_FIELD_KEYS.has(key)) return false;
+      if (value === true || value === false) return true;
+      if (value == null) return false;
+      return String(value).trim().length > 0;
+    })
+    .map(([key, value]) => {
+      const label = labelsByHandle[lead.handle]?.[key] ?? toReadableLabel(key);
+      return { key, label, value: formatLeadValue(value) };
+    });
+
+  if (entries.length === 0) return null;
+
+  return (
+    <dl className="mt-2 grid gap-2 text-xs text-muted-foreground sm:grid-cols-2">
+      {entries.map((entry) => (
+        <div key={entry.key} className="min-w-0">
+          <dt className="font-medium text-foreground">{entry.label}</dt>
+          <dd className="break-words">{entry.value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+function formatLeadValue(value: string | boolean | null) {
+  if (value === true) return "Yes";
+  if (value === false) return "No";
+  if (value == null) return "";
+  return String(value);
+}
+
+function normalizeLeadKey(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 40);
+}
+
+function toReadableLabel(value: string) {
+  return value
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
 }

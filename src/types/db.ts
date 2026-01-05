@@ -35,6 +35,7 @@ export type Lead = {
   phone: string | null;
   company: string | null;
   message: string | null;
+  custom_fields: Record<string, string | boolean | null> | null;
   source_url: string | null;
   created_at: string;
 };
