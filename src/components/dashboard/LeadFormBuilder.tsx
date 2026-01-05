@@ -175,6 +175,14 @@ export default function LeadFormBuilder({
     return fields;
   }, [form]);
 
+  const fieldLabelMap = useMemo(() => {
+    const map = new Map<string, string>();
+    form?.fields.forEach((field) => {
+      map.set(field.id, field.label || field.id);
+    });
+    return map;
+  }, [form]);
+
   useEffect(() => {
     if (!userId || !handle) return;
     setLoading(true);
@@ -462,7 +470,10 @@ export default function LeadFormBuilder({
                           key={`${resp.response_id}-${fieldId}`}
                           className="text-xs"
                         >
-                          <span className="font-semibold">{fieldId}</span>: {formatAnswer(entry.value)}
+                          <span className="font-semibold">
+                            {fieldLabelMap.get(fieldId) || fieldId}
+                          </span>
+                          : {formatAnswer(entry.value)}
                         </div>
                       )
                     )}
