@@ -10,7 +10,7 @@ import type {
 
 type ValidationError = { fieldId: string; message: string };
 
-const DEFAULT_FORM_TITLE = "Lead capture";
+const DEFAULT_FORM_TITLE = "Let's Connect!";
 const DEFAULT_CONFIRMATION =
   "Thanks for reaching out. We will follow up soon.";
 
