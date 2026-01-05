@@ -37,7 +37,10 @@ import type {
   LeadFormConfig,
   LeadFormField,
   LeadFormFieldType,
+  LeadFormMultipleChoiceField,
   LeadFormOption,
+  LeadFormRatingField,
+  LeadFormTimeField,
   LeadFormValidation,
 } from "@/types/lead-form";
 
@@ -275,7 +278,9 @@ export default function LeadFormBuilder({
   const updateField = (fieldId: string, patch: Partial<LeadFormField>) => {
     if (!form) return;
     const nextFields = form.fields.map((field) =>
-      field.id === fieldId ? normalizeFieldPatch({ ...field, ...patch }) : field
+      field.id === fieldId
+        ? normalizeFieldPatch({ ...field, ...patch } as LeadFormField)
+        : field
     );
     updateForm({ fields: nextFields });
   };
@@ -1049,7 +1054,7 @@ function FieldTypeEditor({
               value={field.icon}
               onChange={(event) =>
                 onChange({
-                  icon: event.target.value as LeadFormField["icon"],
+                  icon: event.target.value as LeadFormRatingField["icon"],
                 })
               }
             >
@@ -1105,7 +1110,7 @@ function FieldTypeEditor({
               value={field.mode}
               onChange={(event) =>
                 onChange({
-                  mode: event.target.value as LeadFormField["mode"],
+                  mode: event.target.value as LeadFormTimeField["mode"],
                 })
               }
             >
@@ -1577,9 +1582,14 @@ function migrateFieldType(
   if ("options" in field && "options" in base) {
     base.options = field.options;
   }
-  if (field.type === "multiple_choice" && nextType === "dropdown") {
-    base.allowOther = field.allowOther;
-    base.otherLabel = field.otherLabel;
+  if (
+    field.type === "multiple_choice" &&
+    nextType === "dropdown" &&
+    "allowOther" in base
+  ) {
+    const multiField = field as LeadFormMultipleChoiceField;
+    base.allowOther = multiField.allowOther;
+    base.otherLabel = multiField.otherLabel;
   }
   return base;
 }
