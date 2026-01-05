@@ -63,7 +63,7 @@ const FIELD_PRESETS: Array<{
     id: "email",
     label: "Email",
     type: "short_text",
-    helpText: "Ex. JDoe@LinketCOnnect.com",
+    helpText: "Ex. JDoe@LinketConnect.com",
     validation: { rule: "email" },
   },
   {
