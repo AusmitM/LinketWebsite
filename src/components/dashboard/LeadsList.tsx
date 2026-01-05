@@ -186,13 +186,16 @@ export default function LeadsList({ userId }: { userId: string }) {
       const custom = lead.custom_fields;
       if (!custom || typeof custom !== "object") return;
       Object.entries(custom).forEach(([key, value]) => {
-        if (!key || CORE_FIELD_KEYS.has(key)) return;
+        if (!key || isCoreFieldKey(key)) return;
         if (value == null) return;
         if (value === "" || (typeof value === "string" && !value.trim())) return;
+        const parsed = parseCustomFieldKey(key);
         customKeySet.add(key);
         if (!labelByKey[key]) {
           labelByKey[key] =
-            fieldLabels[lead.handle]?.[key] ?? toReadableLabel(key);
+            parsed.label ||
+            fieldLabels[lead.handle]?.[parsed.id] ||
+            toReadableLabel(parsed.id);
         }
       });
     });
@@ -406,13 +409,17 @@ function renderCustomFields(lead: Lead, labelsByHandle: Record<string, Record<st
   if (!custom || typeof custom !== "object") return null;
   const entries = Object.entries(custom)
     .filter(([key, value]) => {
-      if (!key || CORE_FIELD_KEYS.has(key)) return false;
+      if (!key || isCoreFieldKey(key)) return false;
       if (value === true || value === false) return true;
       if (value == null) return false;
       return String(value).trim().length > 0;
     })
     .map(([key, value]) => {
-      const label = labelsByHandle[lead.handle]?.[key] ?? toReadableLabel(key);
+      const parsed = parseCustomFieldKey(key);
+      const label =
+        parsed.label ||
+        labelsByHandle[lead.handle]?.[parsed.id] ||
+        toReadableLabel(parsed.id);
       return { key, label, value: formatLeadValue(value) };
     });
 
@@ -435,6 +442,20 @@ function formatLeadValue(value: string | boolean | null) {
   if (value === false) return "No";
   if (value == null) return "";
   return String(value);
+}
+
+function isCoreFieldKey(key: string) {
+  const parsed = parseCustomFieldKey(key);
+  const candidate = (parsed.label || parsed.id).toLowerCase();
+  return CORE_FIELD_KEYS.has(candidate);
+}
+
+function parseCustomFieldKey(key: string) {
+  const parts = key.split("::");
+  if (parts.length < 2) return { id: key, label: null as string | null };
+  const id = parts[parts.length - 1]?.trim() || key;
+  const label = parts.slice(0, -1).join("::").trim() || null;
+  return { id, label };
 }
 
 function toReadableLabel(value: string) {

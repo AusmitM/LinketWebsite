@@ -21,7 +21,9 @@ function mapLeadFields(
   for (const [fieldId, entry] of Object.entries(answers)) {
     const field = fieldsById.get(fieldId);
     if (!field) continue;
-    values[fieldId] = entry.value;
+    const label = field.label?.trim() || fieldId;
+    const safeLabel = label.replace(/::/g, " ").trim() || fieldId;
+    values[`${safeLabel}::${fieldId}`] = entry.value;
   }
   return values;
 }
