@@ -1451,6 +1451,16 @@ function PreviewLeadField({ field }: { field: LeadFormField }) {
   }
 }
 
+function faviconForUrl(url: string) {
+  try {
+    const parsed = new URL(url);
+    if (!parsed.hostname) return null;
+    return `/api/favicon?u=${encodeURIComponent(parsed.toString())}`;
+  } catch {
+    return null;
+  }
+}
+
 function LinkListItem({
   link,
   onEdit,
@@ -1474,13 +1484,10 @@ function LinkListItem({
 }) {
   const Icon = ICON_OPTIONS.find((item) => item.value === link.icon)?.icon ?? Link2;
   const clicks = link.clicks ?? 0;
+  const favicon = faviconForUrl(link.url);
   return (
     <div
-      className="group relative flex items-center justify-between gap-3 rounded-2xl border border-border/60 bg-background/70 px-4 py-3 text-xs font-medium shadow-[0_12px_24px_-18px_rgba(15,23,42,0.2)]"
-      style={{
-        backgroundColor: link.color,
-        color: "#fff",
-      }}
+      className="group relative flex items-center justify-between gap-3 rounded-2xl border border-border/60 bg-card/80 px-4 py-3 text-xs font-medium shadow-[0_12px_24px_-18px_rgba(15,23,42,0.2)]"
       tabIndex={0}
       draggable={draggable}
       onDragStart={onDragStart}
@@ -1489,25 +1496,39 @@ function LinkListItem({
       onDragEnd={onDragEnd}
     >
       <div className="flex items-center gap-3">
-        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-black/10">
-          <Icon className="h-4 w-4" />
-        </span>
+        {favicon ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={favicon}
+            alt=""
+            className="h-7 w-7 rounded"
+            aria-hidden
+          />
+        ) : (
+          <span className="flex h-8 w-8 items-center justify-center rounded-full border border-border/60 bg-background/70 text-muted-foreground">
+            <Icon className="h-4 w-4" />
+          </span>
+        )}
         <div className="min-w-0">
-          <div className="truncate text-sm font-semibold">{link.label}</div>
-          <div className="truncate text-[11px] opacity-80">{link.url}</div>
-          <div className="text-[10px] opacity-75">
+          <div className="truncate text-sm font-semibold text-foreground">
+            {link.label}
+          </div>
+          <div className="truncate text-[11px] text-muted-foreground">
+            {link.url}
+          </div>
+          <div className="text-[10px] text-muted-foreground">
             {clicks.toLocaleString()} clicks
           </div>
         </div>
       </div>
-      <div className="absolute inset-2 hidden items-center justify-center gap-2 rounded-xl bg-black/30 text-[10px] font-semibold text-white group-hover:flex group-focus-within:flex">
-        <button type="button" onClick={onEdit} className="rounded-full px-2 py-1 hover:bg-white/10">
+      <div className="absolute inset-2 hidden items-center justify-center gap-2 rounded-xl bg-background/90 text-[10px] font-semibold text-foreground shadow-[0_12px_24px_-18px_rgba(15,23,42,0.25)] group-hover:flex group-focus-within:flex">
+        <button type="button" onClick={onEdit} className="rounded-full px-2 py-1 hover:bg-muted">
           Edit
         </button>
-        <button type="button" onClick={onToggle} className="rounded-full px-2 py-1 hover:bg-white/10">
+        <button type="button" onClick={onToggle} className="rounded-full px-2 py-1 hover:bg-muted">
           {link.visible ? "Hide" : "Show"}
         </button>
-        <button type="button" onClick={onRemove} className="rounded-full px-2 py-1 hover:bg-white/10">
+        <button type="button" onClick={onRemove} className="rounded-full px-2 py-1 hover:bg-muted">
           Delete
         </button>
       </div>
