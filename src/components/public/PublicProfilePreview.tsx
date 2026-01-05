@@ -74,7 +74,7 @@ export default function PublicProfilePreview({
         </div>
 
         {layout === "stacked" ? (
-          <main className="relative mx-auto w-full max-w-3xl px-6 pb-20 pt-12 sm:px-10">
+          <main className="relative mx-auto w-full max-w-3xl px-4 pb-20 pt-12 sm:px-8 lg:px-10">
             <section className="space-y-8">
               <div className="space-y-6">
                 <div className="flex flex-wrap items-center gap-4">
@@ -92,16 +92,16 @@ export default function PublicProfilePreview({
                       </span>
                     )}
                   </div>
-                  <div className="space-y-1">
-                    <h1 className="font-display text-3xl tracking-tight sm:text-4xl">
+                  <div className="min-w-0 space-y-1">
+                    <h1 className="break-words font-display text-3xl tracking-tight sm:text-4xl">
                       {displayName}
                     </h1>
                     {hasHeadline ? (
-                      <p className="text-sm text-muted-foreground">
+                      <p className="break-words text-sm text-muted-foreground">
                         {headline}
                       </p>
                     ) : null}
-                    <div className="text-xs text-muted-foreground">
+                    <div className="break-words text-xs text-muted-foreground">
                       @{publicHandle}
                     </div>
                   </div>
@@ -145,7 +145,7 @@ export default function PublicProfilePreview({
             </section>
           </main>
         ) : (
-          <main className="relative mx-auto w-full max-w-5xl px-6 pb-20 pt-12 sm:px-10">
+          <main className="relative mx-auto w-full max-w-5xl px-4 pb-20 pt-12 sm:px-8 lg:px-10">
             <section className="grid gap-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
               <div className="space-y-6">
                 <div className="flex flex-wrap items-center gap-4">
@@ -163,16 +163,16 @@ export default function PublicProfilePreview({
                       </span>
                     )}
                   </div>
-                  <div className="space-y-1">
-                    <h1 className="font-display text-3xl tracking-tight sm:text-4xl">
+                  <div className="min-w-0 space-y-1">
+                    <h1 className="break-words font-display text-3xl tracking-tight sm:text-4xl">
                       {displayName}
                     </h1>
                     {hasHeadline ? (
-                      <p className="text-sm text-muted-foreground">
+                      <p className="break-words text-sm text-muted-foreground">
                         {headline}
                       </p>
                     ) : null}
-                    <div className="text-xs text-muted-foreground">
+                    <div className="break-words text-xs text-muted-foreground">
                       @{publicHandle}
                     </div>
                   </div>

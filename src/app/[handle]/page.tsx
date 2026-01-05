@@ -68,7 +68,7 @@ export default async function PublicProfilePage({ params }: Props) {
           />
         </div>
 
-        <main className="relative mx-auto w-full max-w-5xl px-6 pb-20 pt-20 sm:px-10 sm:pt-24">
+        <main className="relative mx-auto w-full max-w-5xl px-4 pb-20 pt-16 sm:px-8 sm:pt-24 lg:px-10">
           <section className="grid gap-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
             <div className="space-y-6">
               <div className="flex flex-wrap items-center gap-4">
@@ -84,16 +84,18 @@ export default async function PublicProfilePage({ params }: Props) {
                     <span className="flex h-full w-full items-center justify-center text-2xl font-semibold text-foreground">
                       {displayName?.[0]?.toUpperCase() ?? "L"}
                     </span>
-                  )}
-                </div>
-                <div className="space-y-1">
-                  <h1 className="font-display text-3xl tracking-tight sm:text-4xl">
+                    )}
+                  </div>
+                <div className="min-w-0 space-y-1">
+                  <h1 className="break-words font-display text-3xl tracking-tight sm:text-4xl">
                     {displayName}
                   </h1>
                   {hasHeadline ? (
-                    <p className="text-sm text-muted-foreground">{headline}</p>
+                    <p className="break-words text-sm text-muted-foreground">
+                      {headline}
+                    </p>
                   ) : null}
-                  <div className="text-xs text-muted-foreground">
+                  <div className="break-words text-xs text-muted-foreground">
                     @{publicHandle}
                   </div>
                 </div>
