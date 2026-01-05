@@ -10,8 +10,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/system/toaster";
+import { normalizeLeadFormConfig } from "@/lib/lead-form";
 import { Trash2 } from "lucide-react";
 import type { Lead } from "@/types/db";
+import type { LeadFormConfig } from "@/types/lead-form";
 import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 
 export default function LeadsList({ userId }: { userId: string }) {
@@ -90,23 +92,27 @@ export default function LeadsList({ userId }: { userId: string }) {
     let cancelled = false;
     (async () => {
       const { data, error } = await supabase
-        .from("lead_form_fields")
-        .select("handle,key,label")
-        .in("handle", handles);
+        .from("lead_forms")
+        .select("handle, config")
+        .in("handle", handles)
+        .eq("user_id", userId);
       if (error || !data || cancelled) return;
       const next: Record<string, Record<string, string>> = {};
-      for (const row of data as Array<{ handle: string; key: string | null; label: string }>) {
-        const normalized = normalizeLeadKey(row.key || row.label || "");
-        if (!normalized) continue;
-        if (!next[row.handle]) next[row.handle] = {};
-        next[row.handle][normalized] = row.label;
+      for (const row of data as Array<{ handle: string | null; config: LeadFormConfig }>) {
+        if (!row.handle) continue;
+        const handle = row.handle;
+        const normalized = normalizeLeadFormConfig(row.config, handle);
+        if (!next[handle]) next[handle] = {};
+        normalized.fields.forEach((field) => {
+          next[handle][field.id] = field.label;
+        });
       }
       setFieldLabels((prev) => ({ ...prev, ...next }));
     })();
     return () => {
       cancelled = true;
     };
-  }, [leads]);
+  }, [leads, userId]);
 
   // Live updates via Realtime
   useEffect(() => {
@@ -400,15 +406,6 @@ function formatLeadValue(value: string | boolean | null) {
   if (value === false) return "No";
   if (value == null) return "";
   return String(value);
-}
-
-function normalizeLeadKey(value: string) {
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9_]+/g, "_")
-    .replace(/^_+|_+$/g, "")
-    .slice(0, 40);
 }
 
 function toReadableLabel(value: string) {
