@@ -21,7 +21,7 @@ import { brand } from "@/config/brand";
 import { AdaptiveNavPill } from "@/components/ui/3d-adaptive-navigation-bar";
 import { isPublicProfilePathname } from "@/lib/routing";
 
-type UserLite = { id: string; email: string | null } | null;
+type UserLite = { id: string; email: string | null; fullName?: string | null } | null;
 
 const LANDING_LINKS = [
   {
@@ -113,13 +113,25 @@ export function Navbar() {
         data: { user },
       } = await supabase.auth.getUser();
       if (!active) return;
-      if (user) setUser({ id: user.id, email: user.email ?? null });
+      if (user) {
+        setUser({
+          id: user.id,
+          email: user.email ?? null,
+          fullName: (user.user_metadata?.full_name as string | null) ?? null,
+        });
+      }
     })();
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(
         session?.user
-          ? { id: session.user.id, email: session.user.email ?? null }
+          ? {
+              id: session.user.id,
+              email: session.user.email ?? null,
+              fullName:
+                (session.user.user_metadata?.full_name as string | null) ??
+                null,
+            }
           : null
       );
     });
@@ -370,7 +382,7 @@ export function Navbar() {
           className="h-full w-full rounded-full object-cover"
         />
       ) : (
-        (user.email ?? "LL").slice(0, 2).toUpperCase()
+        getUserInitials(user.fullName ?? user.email ?? "PK")
       )}
     </Link>
   ) : (
@@ -710,6 +722,13 @@ export function Navbar() {
       )}
     </header>
   );
+}
+
+function getUserInitials(seed: string) {
+  const [first, second] = String(seed).split(" ");
+  const initialOne = first?.[0] ?? "P";
+  const initialTwo = second?.[0] ?? "K";
+  return `${initialOne}${initialTwo}`.toUpperCase();
 }
 
 export default Navbar;
