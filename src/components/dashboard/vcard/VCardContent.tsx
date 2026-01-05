@@ -187,13 +187,6 @@ export default function VCardContent({
     [userId]
   );
 
-  const handleFieldBlur = useCallback(() => {
-    if (!userId) return;
-    if (!initialisedRef.current || loading) return;
-    if (!isDirty) return;
-    if (status === "saving") return;
-    void persist(fields);
-  }, [fields, isDirty, loading, persist, status, userId]);
 
   const isDirty = useMemo(() => {
     if (!lastSavedRef.current) {
@@ -201,6 +194,14 @@ export default function VCardContent({
     }
     return !areVCardFieldsEqual(lastSavedRef.current, fields);
   }, [fields]);
+
+  const handleFieldBlur = useCallback(() => {
+    if (!userId) return;
+    if (!initialisedRef.current || loading) return;
+    if (!isDirty) return;
+    if (status === "saving") return;
+    void persist(fields);
+  }, [fields, isDirty, loading, persist, status, userId]);
 
   useEffect(() => {
     onFieldsChange?.(fields);
