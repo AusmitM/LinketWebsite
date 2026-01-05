@@ -726,15 +726,9 @@ export default function LeadFormBuilder({
                               </div>
                               <div className="flex-1 space-y-2">
                                 <div className="flex flex-wrap items-center justify-between gap-2">
-                                  <Input
-                                    value={field.label}
-                                    onChange={(event) =>
-                                      updateField(field.id, {
-                                        label: event.target.value,
-                                      })
-                                    }
-                                    className="h-9 text-sm"
-                                  />
+                                  <div className="text-sm font-semibold">
+                                    {field.label}
+                                  </div>
                                   <span className="rounded-full border border-border/60 px-2 py-1 text-xs text-muted-foreground">
                                     {fieldTypeLabel(field.type)}
                                   </span>
@@ -815,37 +809,6 @@ export default function LeadFormBuilder({
                             </div>
                             {expanded && (
                               <div className="mt-4 space-y-3 text-sm">
-                                <div className="grid gap-3 md:grid-cols-2">
-                                  <div className="space-y-2">
-                                    <Label className="text-xs text-muted-foreground">
-                                      Label
-                                    </Label>
-                                    <Input
-                                      value={field.label}
-                                      onChange={(event) =>
-                                        updateField(field.id, {
-                                          label: event.target.value,
-                                        })
-                                      }
-                                      className="h-9 text-sm"
-                                    />
-                                  </div>
-                                  <div className="space-y-2">
-                                    <Label className="text-xs text-muted-foreground">
-                                      Placeholder
-                                    </Label>
-                                    <Input
-                                      value={field.placeholder}
-                                      onChange={(event) =>
-                                        updateField(field.id, {
-                                          placeholder: event.target.value,
-                                        })
-                                      }
-                                      className="h-9 text-sm"
-                                    />
-                                  </div>
-                                </div>
-
                                 {field.type === "select" && (
                                   <div className="space-y-2">
                                     <Label className="text-xs text-muted-foreground">
