@@ -525,7 +525,7 @@ export default function PublicProfileEditor() {
           <LeadFormBuilder
             userId={userId}
             handle={accountHandle || draft?.handle || null}
-            variant="compact"
+            profileId={draft?.id ?? null}
           />
           <VCardContent variant="embedded" />
         </div>

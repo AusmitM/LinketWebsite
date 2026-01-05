@@ -1,89 +1,28 @@
-﻿"use client";
-
-/**
-SQL setup (run in Supabase SQL editor):
-
-```sql
-create extension if not exists pgcrypto;
-
-create table if not exists public.leads (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
-  handle text not null,
-  name text not null,
-  email text not null,
-  phone text,
-  company text,
-  message text,
-  custom_fields jsonb,
-  source_url text,
-  created_at timestamptz not null default now()
-);
-
-alter table public.leads enable row level security;
-
--- Allow anyone to submit a lead
-do $$ begin
-  if not exists (
-    select 1 from pg_policies where schemaname = 'public' and tablename = 'leads' and policyname = 'leads_anon_insert'
-  ) then
-    create policy leads_anon_insert on public.leads for insert with check (true);
-  end if;
-end $$;
-
--- Only the owner can read/update/delete their leads
-do $$ begin
-  if not exists (
-    select 1 from pg_policies where schemaname = 'public' and tablename = 'leads' and policyname = 'leads_owner_select'
-  ) then
-    create policy leads_owner_select on public.leads for select using (user_id = auth.uid());
-  end if;
-  if not exists (
-    select 1 from pg_policies where schemaname = 'public' and tablename = 'leads' and policyname = 'leads_owner_update'
-  ) then
-    create policy leads_owner_update on public.leads for update using (user_id = auth.uid());
-  end if;
-  if not exists (
-    select 1 from pg_policies where schemaname = 'public' and tablename = 'leads' and policyname = 'leads_owner_delete'
-  ) then
-    create policy leads_owner_delete on public.leads for delete using (user_id = auth.uid());
-  end if;
-end $$;
-
-grant usage on schema public to anon, authenticated;
-grant select on table public.leads to authenticated;
-grant insert on table public.leads to anon, authenticated;
-grant update, delete on table public.leads to authenticated;
-```
-*/
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/system/toaster";
 import { cn } from "@/lib/utils";
-
-const FIELD_TYPES = ["text", "email", "phone", "textarea", "select", "checkbox"] as const;
-
-type FieldType = (typeof FIELD_TYPES)[number];
-
-type DynamicField = {
-  id: string;
-  key: string | null;
-  label: string;
-  type: FieldType;
-  required: boolean;
-  placeholder: string | null;
-  options: string[] | null;
-  is_hidden: boolean | null;
-  order_index: number;
-};
-
-type AnswersMap = Record<string, string | boolean>;
+import {
+  shuffleFields,
+  shuffleOptions,
+  validateSubmission,
+} from "@/lib/lead-form";
+import type {
+  LeadFormCheckboxGridField,
+  LeadFormCheckboxesField,
+  LeadFormConfig,
+  LeadFormDropdownField,
+  LeadFormField,
+  LeadFormMultipleChoiceField,
+  LeadFormMultipleChoiceGridField,
+  LeadFormRatingField,
+} from "@/types/lead-form";
 
 type Appearance = {
   cardBackground: string;
@@ -91,16 +30,6 @@ type Appearance = {
   text: string;
   muted: string;
   buttonVariant: "default" | "secondary";
-};
-
-type FormSettings = {
-  submitLabel: string;
-  successMessage: string;
-  redirectEnabled: boolean;
-  redirectUrl: string;
-  consentEnabled: boolean;
-  consentLabel: string;
-  spamProtection: boolean;
 };
 
 type Props = {
@@ -111,82 +40,39 @@ type Props = {
   className?: string;
 };
 
-const DEFAULT_SETTINGS: FormSettings = {
-  submitLabel: "Send",
-  successMessage: "Thanks! I'll reach out soon.",
-  redirectEnabled: false,
-  redirectUrl: "",
-  consentEnabled: false,
-  consentLabel: "I agree to share my info.",
-  spamProtection: false,
-};
+type AnswerMap = Record<string, { value: unknown }>;
+
+type ErrorMap = Record<string, string>;
+
+const OTHER_VALUE = "__other__";
+const OTHER_PREFIX = "other:";
 
 export default function PublicLeadForm({
-  ownerId,
   handle,
   appearance,
   variant = "card",
   className,
 }: Props) {
-  const [fields, setFields] = useState<DynamicField[]>([]);
-  const [answers, setAnswers] = useState<AnswersMap>({});
-  const [settings, setSettings] = useState<FormSettings>(DEFAULT_SETTINGS);
-  const [consentChecked, setConsentChecked] = useState(false);
-  const [trap, setTrap] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [form, setForm] = useState<LeadFormConfig | null>(null);
+  const [formId, setFormId] = useState<string | null>(null);
+  const [answers, setAnswers] = useState<AnswerMap>({});
+  const [errors, setErrors] = useState<ErrorMap>({});
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [responseId, setResponseId] = useState<string | null>(null);
+  const [submitted, setSubmitted] = useState(false);
+  const [editingResponse, setEditingResponse] = useState(false);
+  const [emailValue, setEmailValue] = useState("");
 
-  const disabled = !ownerId;
-  const sourceUrl = useMemo(() => {
-    try {
-      return window?.location?.href ?? null;
-    } catch {
-      return null;
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!handle) {
-      setFields([]);
-      return;
-    }
-    (async () => {
-      try {
-        const { data, error } = await supabase
-          .from("lead_form_fields")
-          .select("id,key,label,type,required,placeholder,options,is_hidden,order_index")
-          .eq("handle", handle)
-          .eq("is_active", true)
-          .order("order_index", { ascending: true });
-        if (!error && data) {
-          const mapped = (data as unknown as DynamicField[])
-            .filter((field) => !field.is_hidden)
-            .map((field) => ({ ...field }));
-          setFields(mapped || []);
-        }
-      } catch {}
-    })();
-  }, [handle]);
-
-  useEffect(() => {
-    if (!handle) return;
-    (async () => {
-      try {
-        const { data, error } = await supabase
-          .from("lead_form_settings")
-          .select("settings")
-          .eq("handle", handle)
-          .maybeSingle();
-        if (!error && data?.settings) {
-          setSettings((prev) => ({ ...prev, ...(data.settings as FormSettings) }));
-        }
-      } catch {}
-    })();
-  }, [handle]);
+  const disabled = !form || form.status !== "published";
 
   const cardStyle = appearance
-    ? { background: appearance.cardBackground, borderColor: appearance.cardBorder, color: appearance.text }
+    ? {
+        background: appearance.cardBackground,
+        borderColor: appearance.cardBorder,
+        color: appearance.text,
+      }
     : undefined;
-
   const mutedStyle = appearance ? { color: appearance.muted } : undefined;
   const inputClassName =
     variant === "profile"
@@ -201,392 +87,725 @@ export default function PublicLeadForm({
       ? "w-fit rounded-full px-5 py-1.5 text-sm shadow-[0_10px_24px_-18px_var(--ring)]"
       : "rounded-2xl";
 
-  function setAnswer(key: string, value: string | boolean) {
-    setAnswers((prev) => ({ ...prev, [key]: value }));
-  }
-
-  function fieldKey(field: DynamicField) {
-    return normalizeKey(field.key || field.label || field.id);
-  }
-
-  function getValueForKey(key: string) {
-    return answers[key];
-  }
-
-  function buildLeadPayload() {
-    const values: Record<string, string | boolean> = {};
-    fields.forEach((field) => {
-      const key = fieldKey(field);
-      values[key] = answers[key] ?? (field.type === "checkbox" ? false : "");
-    });
-
-    const nameValue =
-      (values.name as string) ||
-      combineName(values.first_name as string, values.last_name as string) ||
-      (values.full_name as string) ||
-      "";
-    const emailValue = (values.email as string) || "";
-    const phoneValue = (values.phone as string) || "";
-    const companyValue = (values.company as string) || (values.school as string) || "";
-    const messageValue = (values.message as string) || (values.notes as string) || "";
-
-    return {
-      name: nameValue.trim(),
-      email: emailValue.trim(),
-      phone: phoneValue.trim() || null,
-      company: companyValue.trim() || null,
-      message: messageValue.trim() || null,
-      customFields: values,
-    };
-  }
-
-  function validateRequired() {
-    const missing = fields.filter((field) => {
-      if (!field.required) return false;
-      const key = fieldKey(field);
-      const value = answers[key];
-      if (field.type === "checkbox") return value !== true;
-      return !value || String(value).trim().length === 0;
-    });
-    if (settings.consentEnabled && !consentChecked) {
-      return { ok: false, message: "Please accept the consent checkbox." };
-    }
-    if (missing.length) {
-      return { ok: false, message: "Please fill in the required fields." };
-    }
-    return { ok: true };
-  }
-
-  async function onSubmit(event: React.FormEvent) {
-    event.preventDefault();
-    if (!ownerId) {
-      toast({ title: "Unavailable", description: "Owner not found.", variant: "destructive" });
-      return;
-    }
-
-    const validation = validateRequired();
-    if (!validation.ok) {
-      toast({ title: "Missing info", description: validation.message, variant: "destructive" });
-      return;
-    }
-
-    if (trap.trim().length > 0) {
-      toast({ title: "Thanks!", description: settings.successMessage, variant: "success" });
-      resetForm();
-      return;
-    }
-
-    const payloadData = buildLeadPayload();
-    if (!payloadData.name || !payloadData.email) {
-      toast({ title: "Missing info", description: "Name and email required.", variant: "destructive" });
-      return;
-    }
-
+  useEffect(() => {
+    if (!handle) return;
     setLoading(true);
-    try {
-      // TODO: enforce spamProtection in the server-side submit handler.
-      const payload: Record<string, unknown> = {
-        user_id: ownerId,
-        handle,
-        name: payloadData.name,
-        email: payloadData.email,
-        phone: payloadData.phone,
-        company: payloadData.company,
-        message: payloadData.message,
-        source_url: sourceUrl,
-        custom_fields: payloadData.customFields,
-      };
-      const { error } = await supabase.from("leads").insert(payload);
-      if (error) {
-        const resp = await fetch("/api/leads/submit", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-        if (!resp.ok) {
-          const info = await safeJson(resp);
-          const errMsg = (info?.error as string) || (error?.message as string);
-          throw new Error(errMsg || "Insert failed");
+    (async () => {
+      try {
+        const response = await fetch(
+          `/api/lead-forms/public?handle=${encodeURIComponent(handle)}`,
+          { cache: "no-store" }
+        );
+        if (!response.ok) {
+          const info = await response.json().catch(() => ({}));
+          throw new Error(info?.error || "Unable to load form");
         }
+        const payload = (await response.json()) as {
+          form: LeadFormConfig | null;
+          formId?: string;
+        };
+        const nextFormId = payload.formId ?? payload.form?.id ?? null;
+        setForm(payload.form);
+        setFormId(nextFormId);
+        if (nextFormId) {
+          const savedResponseId = localStorage.getItem(
+            `lead-form-response:${nextFormId}`
+          );
+          if (savedResponseId) setResponseId(savedResponseId);
+        }
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Lead form unavailable";
+        toast({
+          title: "Lead form unavailable",
+          description: message,
+          variant: "destructive",
+        });
+        setForm(null);
+        setFormId(null);
+      } finally {
+        setLoading(false);
       }
-      // TODO: send notifications in an edge function when notify settings are enabled.
-      fetch("/api/leads/notify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...payload, honeypot: trap || null }),
-      }).catch(() => {});
-      resetForm();
-      toast({ title: "Thanks!", description: settings.successMessage, variant: "success" });
-      if (settings.redirectEnabled && settings.redirectUrl) {
-        window.location.assign(settings.redirectUrl);
-      }
-    } catch (error) {
-      const errObj = error as { message?: string; details?: string; hint?: string } | string | undefined;
-      const msg = typeof errObj === "string" ? errObj : errObj?.message || errObj?.details || errObj?.hint || "";
-      console.error("lead-submit-failed", error);
-      toast({ title: "Could not submit", description: msg, variant: "destructive" });
-    } finally {
-      setLoading(false);
+    })();
+  }, [handle]);
+
+  useEffect(() => {
+    if (!form) return;
+    setAnswers((prev) => {
+      if (Object.keys(prev).length > 0) return prev;
+      const initial: AnswerMap = {};
+      form.fields.forEach((field) => {
+        if (field.defaultValue !== undefined) {
+          initial[field.id] = { value: field.defaultValue };
+        }
+      });
+      return initial;
+    });
+  }, [form]);
+
+  useEffect(() => {
+    if (!form) return;
+    if (form.settings.limitOneResponse === "on" && responseId) {
+      setSubmitted(true);
     }
+  }, [form, responseId]);
+
+  const orderedFields = useMemo(() => {
+    if (!form) return [];
+    return form.settings.shuffleQuestionOrder
+      ? shuffleFields(form.fields)
+      : form.fields;
+  }, [form]);
+
+  const progress = useMemo(() => {
+    if (!form || !form.settings.showProgressBar) return null;
+    const fields = form.fields.filter((field) => field.type !== "section");
+    if (!fields.length) return null;
+    const answered = fields.filter((field) =>
+      hasValue(answers[field.id]?.value)
+    ).length;
+    return Math.round((answered / fields.length) * 100);
+  }, [answers, form]);
+
+  function setAnswer(fieldId: string, value: unknown) {
+    setAnswers((prev) => ({ ...prev, [fieldId]: { value } }));
+    setErrors((prev) => {
+      if (!prev[fieldId]) return prev;
+      const next = { ...prev };
+      delete next[fieldId];
+      return next;
+    });
   }
 
-  function resetForm() {
-    setAnswers({});
-    setConsentChecked(false);
-    setTrap("");
+  function getAnswer(fieldId: string) {
+    return answers[fieldId]?.value;
   }
 
-  async function safeJson(response: Response) {
+  async function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    if (!form || !formId) return;
+    if (
+      form.settings.limitOneResponse === "on" &&
+      responseId &&
+      !form.settings.allowEditAfterSubmit
+    ) {
+      toast({
+        title: "Already submitted",
+        description: "Only one response is allowed.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (form.settings.collectEmail !== "off" && !emailValue.trim()) {
+      setErrors((prev) => ({ ...prev, _email: "Email is required." }));
+      return;
+    }
+
+    const validationErrors = validateSubmission(form, answers);
+    if (validationErrors.length) {
+      const nextErrors: ErrorMap = {};
+      validationErrors.forEach((err) => {
+        nextErrors[err.fieldId] = err.message;
+      });
+      setErrors(nextErrors);
+      toast({
+        title: "Missing info",
+        description: "Please fix the highlighted fields.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSubmitting(true);
+    setErrors({});
     try {
-      return await response.json();
-    } catch {
-      return null;
+      const shouldEdit =
+        editingResponse &&
+        form.settings.allowEditAfterSubmit &&
+        Boolean(responseId);
+      const endpoint = shouldEdit
+          ? "/api/lead-forms/response"
+          : "/api/lead-forms/submit";
+      const method = endpoint === "/api/lead-forms/response" ? "PUT" : "POST";
+      const response = await fetch(endpoint, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          formId,
+          responseId: shouldEdit ? responseId : undefined,
+          answers,
+          responderEmail: emailValue.trim() || null,
+        }),
+      });
+      if (!response.ok) {
+        const info = await response.json().catch(() => ({}));
+        const message = info?.error || "Unable to submit";
+        if (info?.fields) {
+          const nextErrors: ErrorMap = {};
+          info.fields.forEach((err: { fieldId: string; message: string }) => {
+            nextErrors[err.fieldId] = err.message;
+          });
+          setErrors(nextErrors);
+        }
+        throw new Error(message);
+      }
+      const payload = (await response.json()) as { responseId?: string };
+      const nextResponseId = payload.responseId ?? responseId;
+      if (nextResponseId) {
+        localStorage.setItem(`lead-form-response:${formId}`, nextResponseId);
+        setResponseId(nextResponseId);
+      }
+      setEditingResponse(false);
+      setSubmitted(true);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to submit";
+      toast({ title: "Submit failed", description: message, variant: "destructive" });
+    } finally {
+      setSubmitting(false);
     }
   }
 
-  const enabledFields = fields.filter((field) => !field.is_hidden);
+  function renderOptions(
+    field: LeadFormMultipleChoiceField | LeadFormCheckboxesField | LeadFormDropdownField
+  ) {
+    const optionIds = field.options.map((option) => option.id);
+    const orderedOptions = field.presentation?.shuffleOptions
+      ? shuffleOptions(field.options)
+      : field.options;
+    const value = getAnswer(field.id);
+    const hasOther =
+      field.allowOther &&
+      typeof value === "string" &&
+      value.startsWith(OTHER_PREFIX);
+    const otherValue =
+      hasOther && typeof value === "string"
+        ? value.slice(OTHER_PREFIX.length)
+        : "";
 
-  if (variant === "profile") {
-    return (
-      <section className={cn("space-y-3", className)} style={appearance ? { color: appearance.text } : undefined}>
-        <form className="space-y-3" onSubmit={onSubmit} aria-label="Contact the owner">
-          <div className="hidden" aria-hidden>
-            <label htmlFor="lead-website">Website</label>
-            <input
-              id="lead-website"
-              name="website"
-              autoComplete="off"
-              tabIndex={-1}
-              value={trap}
-              onChange={(event) => setTrap(event.target.value)}
-            />
-          </div>
-          {enabledFields.map((field) => {
-            const key = fieldKey(field);
-            const value = answers[key] ?? "";
-            return (
-              <div key={field.id} className="space-y-1.5">
-                <Label htmlFor={`lead-${key}`} className="text-xs text-muted-foreground">
-                  {field.label}
-                  {field.required ? " (required)" : ""}
-                </Label>
-                {renderFieldInput({
-                  field,
-                  id: `lead-${key}`,
-                  value,
-                  inputClassName,
-                  textareaClassName,
-                  disabled,
-                  onChange: (val) => setAnswer(key, val),
-                })}
-              </div>
-            );
-          })}
-          {settings.consentEnabled && (
-            <label className="flex items-center gap-2 text-xs text-muted-foreground">
+    if (field.type === "dropdown") {
+      return (
+        <div className="space-y-2">
+          <select
+            id={field.id}
+            className={cn(
+              "h-10 w-full rounded-md border border-border bg-background px-3 text-sm",
+              inputClassName
+            )}
+            value={
+              typeof value === "string"
+                ? optionIds.includes(value)
+                  ? value
+                  : field.allowOther && value.startsWith(OTHER_PREFIX)
+                  ? OTHER_VALUE
+                  : ""
+                : ""
+            }
+            onChange={(event) => {
+              const next = event.target.value;
+              if (next === OTHER_VALUE) {
+                setAnswer(field.id, `${OTHER_PREFIX}${otherValue}`);
+              } else {
+                setAnswer(field.id, next);
+              }
+            }}
+            disabled={disabled || submitting}
+          >
+            <option value="">Select...</option>
+            {orderedOptions.map((option) => (
+              <option key={option.id} value={option.id}>
+                {option.label}
+              </option>
+            ))}
+            {field.allowOther ? <option value={OTHER_VALUE}>Other</option> : null}
+          </select>
+          {field.allowOther && hasOther ? (
+            <div>
+              <Input
+                value={otherValue}
+                onChange={(event) =>
+                  setAnswer(field.id, `${OTHER_PREFIX}${event.target.value}`)
+                }
+                placeholder={field.otherLabel || "Other"}
+                className={inputClassName}
+                disabled={disabled || submitting}
+              />
+            </div>
+          ) : null}
+        </div>
+      );
+    }
+
+    if (field.type === "multiple_choice") {
+      return (
+        <div className="space-y-2">
+          {orderedOptions.map((option) => (
+            <label key={option.id} className="flex items-center gap-2 text-sm">
+              <input
+                type="radio"
+                name={field.id}
+                value={option.id}
+                checked={value === option.id}
+                onChange={() => setAnswer(field.id, option.id)}
+                disabled={disabled || submitting}
+              />
+              <span>{option.label}</span>
+            </label>
+          ))}
+          {field.allowOther ? (
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="radio"
+                name={field.id}
+                value={OTHER_VALUE}
+                checked={hasOther}
+                onChange={() =>
+                  setAnswer(field.id, `${OTHER_PREFIX}${otherValue}`)
+                }
+                disabled={disabled || submitting}
+              />
+              <span>{field.otherLabel || "Other"}</span>
+              {hasOther ? (
+                <Input
+                  value={otherValue}
+                  onChange={(event) =>
+                    setAnswer(field.id, `${OTHER_PREFIX}${event.target.value}`)
+                  }
+                  className={cn("h-9", inputClassName)}
+                  disabled={disabled || submitting}
+                />
+              ) : null}
+            </label>
+          ) : null}
+        </div>
+      );
+    }
+
+    if (field.type === "checkboxes") {
+      const selected = Array.isArray(value) ? value.slice() : [];
+      const otherSelected = selected.find(
+        (item) => typeof item === "string" && item.startsWith(OTHER_PREFIX)
+      );
+      const otherText =
+        typeof otherSelected === "string"
+          ? otherSelected.slice(OTHER_PREFIX.length)
+          : "";
+      return (
+        <div className="space-y-2">
+          {orderedOptions.map((option) => (
+            <label key={option.id} className="flex items-center gap-2 text-sm">
               <input
                 type="checkbox"
-                checked={consentChecked}
-                onChange={(event) => setConsentChecked(event.target.checked)}
-                disabled={disabled}
+                value={option.id}
+                checked={selected.includes(option.id)}
+                onChange={(event) => {
+                  const next = event.target.checked
+                    ? [...selected, option.id]
+                    : selected.filter((item) => item !== option.id);
+                  setAnswer(field.id, next);
+                }}
+                disabled={disabled || submitting}
               />
-              {settings.consentLabel}
+              <span>{option.label}</span>
             </label>
-          )}
-          <div>
-            <Button
-              className={cn(buttonClassName, "bg-[color:var(--primary)] text-[color:var(--primary-foreground)] hover:brightness-95")}
-              disabled={disabled || loading}
-              aria-label="Send your contact info"
-            >
-              {disabled ? "Lead capture unavailable" : loading ? "Sending..." : settings.submitLabel}
-            </Button>
-          </div>
-          <p className="text-xs text-muted-foreground" style={mutedStyle}>
-            Your information is shared privately with the owner.
+          ))}
+          {field.allowOther ? (
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                value={OTHER_VALUE}
+                checked={Boolean(otherSelected)}
+                onChange={(event) => {
+                  const next = event.target.checked
+                    ? [...selected, `${OTHER_PREFIX}${otherText}`]
+                    : selected.filter((item) => item !== otherSelected);
+                  setAnswer(field.id, next);
+                }}
+                disabled={disabled || submitting}
+              />
+              <span>{field.otherLabel || "Other"}</span>
+              {otherSelected ? (
+                <Input
+                  value={otherText}
+                  onChange={(event) => {
+                    const next = event.target.value;
+                    const withoutOther = selected.filter(
+                      (item) => item !== otherSelected
+                    );
+                    setAnswer(field.id, [
+                      ...withoutOther,
+                      `${OTHER_PREFIX}${next}`,
+                    ]);
+                  }}
+                  className={cn("h-9", inputClassName)}
+                  disabled={disabled || submitting}
+                />
+              ) : null}
+            </label>
+          ) : null}
+        </div>
+      );
+    }
+
+    return null;
+  }
+
+  function renderRating(field: LeadFormRatingField) {
+    const value = Number(getAnswer(field.id) || 0);
+    const icon = field.icon === "heart" ? "H" : field.icon === "thumbs" ? "T" : "*";
+    return (
+      <div className="flex flex-wrap gap-2">
+        {Array.from({ length: field.scale }, (_, index) => {
+          const score = index + 1;
+          return (
+            <label key={score} className="flex items-center gap-1 text-sm">
+              <input
+                type="radio"
+                name={field.id}
+                value={score}
+                checked={value === score}
+                onChange={() => setAnswer(field.id, score)}
+                disabled={disabled || submitting}
+              />
+              <span aria-hidden="true">{icon}</span>
+              <span>{score}</span>
+            </label>
+          );
+        })}
+      </div>
+    );
+  }
+
+  function renderLinearScale(field: LeadFormField) {
+    if (field.type !== "linear_scale") return null;
+    const value = Number(getAnswer(field.id) || 0);
+    const items = [];
+    for (let i = field.min; i <= field.max; i += 1) items.push(i);
+    return (
+      <div className="space-y-2">
+        <div className="flex flex-wrap gap-2">
+          {items.map((score) => (
+            <label key={score} className="flex items-center gap-1 text-sm">
+              <input
+                type="radio"
+                name={field.id}
+                value={score}
+                checked={value === score}
+                onChange={() => setAnswer(field.id, score)}
+                disabled={disabled || submitting}
+              />
+              <span>{score}</span>
+            </label>
+          ))}
+        </div>
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <span>{field.minLabel}</span>
+          <span>{field.maxLabel}</span>
+        </div>
+      </div>
+    );
+  }
+
+  function renderGrid(field: LeadFormMultipleChoiceGridField | LeadFormCheckboxGridField) {
+    const value = (getAnswer(field.id) as Record<string, unknown>) || {};
+    const rows = field.rows;
+    const columns = field.columns;
+    return (
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-sm">
+          <thead>
+            <tr>
+              <th className="border-b border-border/60 p-2 text-left" />
+              {columns.map((column) => (
+                <th
+                  key={column.id}
+                  className="border-b border-border/60 p-2 text-left font-medium"
+                >
+                  {column.label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.id}>
+                <td className="border-b border-border/60 p-2 text-left font-medium">
+                  {row.label}
+                </td>
+                {columns.map((column) => {
+                  const rowValue = value?.[row.id];
+                  const checked =
+                    field.type === "multiple_choice_grid"
+                      ? rowValue === column.id
+                      : Array.isArray(rowValue) && rowValue.includes(column.id);
+                  return (
+                    <td key={column.id} className="border-b border-border/60 p-2 text-center">
+                      <input
+                        type={field.type === "multiple_choice_grid" ? "radio" : "checkbox"}
+                        name={`${field.id}-${row.id}`}
+                        value={column.id}
+                        checked={checked}
+                        onChange={(event) => {
+                          if (field.type === "multiple_choice_grid") {
+                            setAnswer(field.id, { ...value, [row.id]: column.id });
+                            return;
+                          }
+                          const nextRow = Array.isArray(rowValue) ? rowValue.slice() : [];
+                          const next = event.target.checked
+                            ? [...nextRow, column.id]
+                            : nextRow.filter((item) => item !== column.id);
+                          setAnswer(field.id, { ...value, [row.id]: next });
+                        }}
+                        disabled={disabled || submitting}
+                      />
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+
+  function renderField(field: LeadFormField) {
+    if (field.type === "section") {
+      return (
+        <div className="space-y-1">
+          <h3 className="text-base font-semibold">{field.title}</h3>
+          {field.description ? (
+            <p className="text-sm text-muted-foreground">{field.description}</p>
+          ) : null}
+        </div>
+      );
+    }
+
+    const error = errors[field.id];
+    const label = (
+      <Label htmlFor={field.id} className="text-sm font-medium">
+        {field.label}
+        {field.required ? <span className="ml-1 text-destructive">*</span> : null}
+      </Label>
+    );
+    const help = field.helpText ? (
+      <p className="text-xs text-muted-foreground">{field.helpText}</p>
+    ) : null;
+    const errorText = error ? (
+      <p className="text-xs text-destructive">{error}</p>
+    ) : null;
+
+    return (
+      <div className="space-y-2">
+        {label}
+        {help}
+        {field.type === "short_text" ? (
+          <Input
+            id={field.id}
+            value={(getAnswer(field.id) as string) || ""}
+            onChange={(event) => setAnswer(field.id, event.target.value)}
+            className={inputClassName}
+            disabled={disabled || submitting}
+          />
+        ) : null}
+        {field.type === "long_text" ? (
+          <Textarea
+            id={field.id}
+            value={(getAnswer(field.id) as string) || ""}
+            onChange={(event) => setAnswer(field.id, event.target.value)}
+            className={textareaClassName}
+            disabled={disabled || submitting}
+          />
+        ) : null}
+        {field.type === "multiple_choice" ||
+        field.type === "checkboxes" ||
+        field.type === "dropdown"
+          ? renderOptions(field)
+          : null}
+        {field.type === "linear_scale" ? renderLinearScale(field) : null}
+        {field.type === "rating" ? renderRating(field) : null}
+        {field.type === "date" ? (
+          <Input
+            id={field.id}
+            type={field.includeTime ? "datetime-local" : "date"}
+            value={(getAnswer(field.id) as string) || ""}
+            onChange={(event) => setAnswer(field.id, event.target.value)}
+            className={inputClassName}
+            disabled={disabled || submitting}
+          />
+        ) : null}
+        {field.type === "time" ? (
+          <Input
+            id={field.id}
+            type={field.mode === "time_of_day" ? "time" : "number"}
+            value={(getAnswer(field.id) as string) || ""}
+            onChange={(event) => setAnswer(field.id, event.target.value)}
+            className={inputClassName}
+            min={field.mode === "duration" ? 0 : undefined}
+            step={field.mode === "time_of_day" ? field.stepMinutes * 60 : field.stepMinutes}
+            placeholder={field.mode === "duration" ? "Minutes" : undefined}
+            disabled={disabled || submitting}
+          />
+        ) : null}
+        {field.type === "file_upload" ? (
+          <Input
+            id={field.id}
+            type="file"
+            multiple={field.maxFiles > 1}
+            accept={field.acceptedTypes.map((ext) => `.${ext}`).join(",")}
+            onChange={(event) => {
+              const files = Array.from(event.target.files ?? []);
+              if (files.length > field.maxFiles) {
+                setErrors((prev) => ({
+                  ...prev,
+                  [field.id]: `Max ${field.maxFiles} files.`,
+                }));
+                return;
+              }
+              const maxBytes = field.maxSizeMB * 1024 * 1024;
+              const invalid = files.find((file) => file.size > maxBytes);
+              if (invalid) {
+                setErrors((prev) => ({
+                  ...prev,
+                  [field.id]: `File too large. Max ${field.maxSizeMB} MB.`,
+                }));
+                return;
+              }
+              setAnswer(
+                field.id,
+                files.map((file) => file.name)
+              );
+            }}
+            className={inputClassName}
+            disabled={disabled || submitting}
+          />
+        ) : null}
+        {field.type === "multiple_choice_grid" ||
+        field.type === "checkbox_grid"
+          ? renderGrid(field)
+          : null}
+        {errorText}
+      </div>
+    );
+  }
+
+  if (loading || disabled) return null;
+
+  if (submitted && form) {
+    return (
+      <Card
+        className={cn("border border-border/60", className)}
+        style={cardStyle}
+      >
+        <CardHeader>
+          <CardTitle>Thanks</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-sm text-muted-foreground" style={mutedStyle}>
+            {form.settings.confirmationMessage}
           </p>
-        </form>
-      </section>
+          {form.settings.allowEditAfterSubmit ? (
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => {
+                setEditingResponse(true);
+                setSubmitted(false);
+              }}
+              className={buttonClassName}
+            >
+              Edit response
+            </Button>
+          ) : null}
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <Card className={cn("rounded-2xl", className)} style={cardStyle}>
-      <CardHeader>
-        <CardTitle className="font-display" style={{ color: appearance?.text }}>
-          Get in touch
-        </CardTitle>
+    <Card
+      className={cn("border border-border/60", className)}
+      style={cardStyle}
+    >
+      <CardHeader className="space-y-2">
+        <CardTitle>{form?.title || "Lead capture"}</CardTitle>
+        {form?.description ? (
+          <p className="text-sm text-muted-foreground" style={mutedStyle}>
+            {form.description}
+          </p>
+        ) : null}
+        {typeof progress === "number" ? (
+          <div>
+            <div className="h-2 w-full rounded-full bg-muted">
+              <div
+                className="h-2 rounded-full bg-primary transition-all"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+            <div className="mt-1 text-xs text-muted-foreground">
+              {progress}% complete
+            </div>
+          </div>
+        ) : null}
       </CardHeader>
       <CardContent>
-        <form className="grid grid-cols-1 gap-4 sm:grid-cols-2" onSubmit={onSubmit} aria-label="Contact the owner">
-          <div className="hidden" aria-hidden>
-            <label htmlFor="lead-website">Website</label>
-            <input
-              id="lead-website"
-              name="website"
-              autoComplete="off"
-              tabIndex={-1}
-              value={trap}
-              onChange={(event) => setTrap(event.target.value)}
-            />
-          </div>
-          {enabledFields.map((field) => {
-            const key = fieldKey(field);
-            const value = answers[key] ?? "";
-            return (
-              <div
-                key={field.id}
-                className={`space-y-1.5 sm:col-span-1 ${field.type === "textarea" ? "sm:col-span-2" : ""}`}
-              >
-                <Label htmlFor={`lead-${key}`}>{field.label}</Label>
-                {renderFieldInput({
-                  field,
-                  id: `lead-${key}`,
-                  value,
-                  disabled,
-                  onChange: (val) => setAnswer(key, val),
-                })}
-              </div>
-            );
-          })}
-          {settings.consentEnabled && (
-            <div className="sm:col-span-2">
-              <label className="flex items-center gap-2 text-xs text-muted-foreground">
-                <input
-                  type="checkbox"
-                  checked={consentChecked}
-                  onChange={(event) => setConsentChecked(event.target.checked)}
-                  disabled={disabled}
-                />
-                {settings.consentLabel}
-              </label>
+        <form className="space-y-5" onSubmit={handleSubmit}>
+          {form?.settings.collectEmail !== "off" ? (
+            <div className="space-y-2">
+              <Label htmlFor="lead-email" className="text-sm font-medium">
+                Email
+                <span className="ml-1 text-destructive">*</span>
+              </Label>
+              <Input
+                id="lead-email"
+                type="email"
+                value={emailValue}
+                onChange={(event) => {
+                  setEmailValue(event.target.value);
+                  setErrors((prev) => {
+                    if (!prev._email) return prev;
+                    const next = { ...prev };
+                    delete next._email;
+                    return next;
+                  });
+                }}
+                className={inputClassName}
+                disabled={disabled || submitting}
+              />
+              {errors._email ? (
+                <p className="text-xs text-destructive">{errors._email}</p>
+              ) : null}
             </div>
-          )}
-          <div className="sm:col-span-2">
+          ) : null}
+
+          {orderedFields.map((field) => (
+            <div key={field.id}>{renderField(field)}</div>
+          ))}
+
+          <div className="pt-2">
             <Button
-              className={buttonClassName}
-              disabled={disabled || loading}
+              type="submit"
+              disabled={disabled || submitting}
               variant={appearance?.buttonVariant ?? "default"}
-              aria-label="Send your contact info"
+              className={buttonClassName}
             >
-              {disabled ? "Lead capture unavailable" : loading ? "Sending..." : settings.submitLabel}
+              {submitting ? "Submitting..." : "Submit"}
             </Button>
           </div>
-          <p className="sm:col-span-2 text-xs" style={mutedStyle}>
-            Your information is shared privately with the owner.
-          </p>
         </form>
       </CardContent>
     </Card>
   );
 }
 
-function renderFieldInput({
-  field,
-  id,
-  value,
-  onChange,
-  inputClassName,
-  textareaClassName,
-  disabled,
-}: {
-  field: DynamicField;
-  id: string;
-  value: string | boolean;
-  onChange: (value: string | boolean) => void;
-  inputClassName?: string;
-  textareaClassName?: string;
-  disabled?: boolean;
-}) {
-  if (field.type === "textarea") {
-    return (
-      <Textarea
-        id={id}
-        rows={3}
-        placeholder={field.placeholder || ""}
-        value={String(value ?? "")}
-        onChange={(event) => onChange(event.target.value)}
-        required={field.required}
-        disabled={disabled}
-        className={textareaClassName}
-      />
-    );
+function hasValue(value: unknown) {
+  if (value == null) return false;
+  if (typeof value === "string") return value.trim().length > 0;
+  if (Array.isArray(value)) return value.length > 0;
+  if (typeof value === "object") {
+    return Object.values(value).some((entry) => {
+      if (Array.isArray(entry)) return entry.length > 0;
+      return entry != null && String(entry).trim().length > 0;
+    });
   }
-  if (field.type === "select") {
-    return (
-      <select
-        id={id}
-        className={cn("h-10 rounded-xl border border-border/70 bg-muted/60 px-3 text-sm", inputClassName)}
-        value={String(value ?? "")}
-        onChange={(event) => onChange(event.target.value)}
-        required={field.required}
-        disabled={disabled}
-      >
-        <option value="">Select</option>
-        {(field.options || []).map((option) => (
-          <option key={option} value={option}>
-            {option}
-          </option>
-        ))}
-      </select>
-    );
-  }
-  if (field.type === "checkbox") {
-    return (
-      <label className="flex items-center gap-2 text-sm">
-        <input
-          id={id}
-          type="checkbox"
-          checked={Boolean(value)}
-          onChange={(event) => onChange(event.target.checked)}
-          required={field.required}
-          disabled={disabled}
-        />
-        {field.placeholder || "Yes"}
-      </label>
-    );
-  }
-  return (
-    <Input
-      id={id}
-      type={field.type === "phone" ? "tel" : field.type}
-      value={String(value ?? "")}
-      onChange={(event) => {
-        const nextValue =
-          field.type === "phone" && event.target instanceof HTMLInputElement
-            ? formatPhoneNumber(event.target.value)
-            : event.target.value;
-        onChange(nextValue);
-      }}
-      placeholder={field.placeholder || ""}
-      className={inputClassName}
-      required={field.required}
-      disabled={disabled}
-    />
-  );
-}
-
-function normalizeKey(value: string) {
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9_]+/g, "_")
-    .replace(/^_+|_+$/g, "")
-    .slice(0, 40);
-}
-
-function combineName(first?: string, last?: string) {
-  return [first || "", last || ""].filter(Boolean).join(" ").trim();
-}
-
-function formatPhoneNumber(value: string) {
-  const digits = value.replace(/\D/g, "").slice(0, 10);
-  if (!digits) return "";
-  if (digits.length <= 3) {
-    return `(${digits}`;
-  }
-  if (digits.length <= 6) {
-    return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
-  }
-  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)} - ${digits.slice(6)}`;
+  return true;
 }

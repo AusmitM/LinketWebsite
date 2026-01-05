@@ -27,15 +27,13 @@ import {
 } from "lucide-react";
 
 import AvatarUploader from "@/components/dashboard/AvatarUploader";
-import LeadFormBuilder, {
-  type BuilderField,
-  type LeadFormPreview,
-} from "@/components/dashboard/LeadFormBuilder";
+import LeadFormBuilder from "@/components/dashboard/LeadFormBuilder";
 import VCardContent from "@/components/dashboard/vcard/VCardContent";
 import { useDashboardUser } from "@/components/dashboard/DashboardSessionContext";
 import { useThemeOptional } from "@/components/theme/theme-provider";
 import { buildAvatarPublicUrl } from "@/lib/avatar-utils";
 import { cn } from "@/lib/utils";
+import { shuffleFields } from "@/lib/lead-form";
 import { toast } from "@/components/system/toaster";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -53,7 +51,7 @@ import {
 } from "@/components/ui/dialog";
 import type { ThemeName } from "@/lib/themes";
 import type { ProfileWithLinks } from "@/lib/profile-service";
-import type { LeadField } from "@/types/db";
+import type { LeadFormConfig, LeadFormField } from "@/types/lead-form";
 
 type SectionId = "profile" | "contact" | "links" | "lead" | "style";
 
@@ -141,7 +139,7 @@ export default function PublicProfileEditorPage() {
   const [editingLinkId, setEditingLinkId] = useState<string | null>(null);
   const [linkForm, setLinkForm] = useState<LinkItem | null>(null);
   const [draggingLinkId, setDraggingLinkId] = useState<string | null>(null);
-  const [leadFormPreview, setLeadFormPreview] = useState<LeadFormPreview | null>(
+  const [leadFormPreview, setLeadFormPreview] = useState<LeadFormConfig | null>(
     null
   );
   const [vcardSnapshot, setVcardSnapshot] = useState<VCardSnapshot>({
@@ -372,57 +370,16 @@ export default function PublicProfileEditorPage() {
     let active = true;
     (async () => {
       try {
-        const [fieldsRes, settingsRes] = await Promise.all([
-          supabase
-            .from("lead_form_fields")
-            .select(
-              "id,key,label,type,required,placeholder,options,is_hidden,is_active,order_index"
-            )
-            .eq("user_id", userId)
-            .eq("handle", handle)
-            .order("order_index", { ascending: true }),
-          supabase
-            .from("lead_form_settings")
-            .select("settings")
-            .eq("user_id", userId)
-            .eq("handle", handle)
-            .maybeSingle(),
-        ]);
+        const response = await fetch(
+          `/api/lead-forms?userId=${encodeURIComponent(
+            userId
+          )}&handle=${encodeURIComponent(handle)}`,
+          { cache: "no-store" }
+        );
+        if (!response.ok) throw new Error("Unable to load lead form");
+        const payload = (await response.json()) as { form: LeadFormConfig };
         if (!active || currentLoad !== leadFormLoadRef.current) return;
-        if (fieldsRes.error) throw fieldsRes.error;
-        if (settingsRes.error) throw settingsRes.error;
-        const mappedFields = ((fieldsRes.data ?? []) as LeadField[]).map(
-          (field) => ({
-            id: field.id,
-            key: field.key || field.label,
-            label: field.label,
-            type: field.type,
-            required: field.required,
-            enabled: field.is_active,
-            hidden: Boolean(field.is_hidden),
-            placeholder: field.placeholder || "",
-            options: field.options || [],
-            validation: field.validation || {},
-          })
-        ) as BuilderField[];
-        const settingsPayload =
-          (settingsRes.data?.settings as LeadFormPreview["settings"]) ?? null;
-        setLeadFormPreview({
-          fields: mappedFields,
-          settings: settingsPayload ?? {
-            submitLabel: "Send",
-            successMessage: "Thanks! I'll reach out soon.",
-            redirectEnabled: false,
-            redirectUrl: "",
-            consentEnabled: false,
-            consentLabel: "I agree to share my info.",
-            spamProtection: false,
-            notifyEnabled: false,
-            notifyEmail: true,
-            notifySms: false,
-            published: false,
-          },
-        });
+        setLeadFormPreview(payload.form ?? null);
       } catch {
         if (active && currentLoad === leadFormLoadRef.current) {
           setLeadFormPreview(null);
@@ -432,7 +389,7 @@ export default function PublicProfileEditorPage() {
     return () => {
       active = false;
     };
-  }, [accountHandle, draft?.handle, supabase, userId]);
+  }, [accountHandle, draft?.handle, userId]);
 
   const handleProfileChange = useCallback(
     (patch: Partial<ProfileDraft>) => {
@@ -1065,7 +1022,7 @@ function EditorPanel({
   avatarUrl: string | null;
   accountHandle: string | null;
   onAvatarUpdate: (url: string) => void;
-  onLeadFormPreview: (preview: LeadFormPreview | null) => void;
+  onLeadFormPreview: (preview: LeadFormConfig | null) => void;
   onProfileChange: (patch: Partial<ProfileDraft>) => void;
   onAddLink: () => void;
   onUpdateLink: (linkId: string, patch: Partial<LinkItem>) => void;
@@ -1276,13 +1233,13 @@ function EditorPanel({
   }
 
   if (activeSection === "lead") {
-    return userId ? (
-      <LeadFormBuilder
-        userId={userId}
-        handle={accountHandle || draft?.handle || null}
-        variant="compact"
-        onPreviewChange={onLeadFormPreview}
-      />
+      return userId ? (
+        <LeadFormBuilder
+          userId={userId}
+          handle={accountHandle || draft?.handle || null}
+          profileId={draft?.id ?? null}
+          onPreviewChange={onLeadFormPreview}
+        />
     ) : (
       <Card className="rounded-2xl border border-border/60 bg-card/80 shadow-sm">
         <CardContent className="py-6 text-sm text-muted-foreground">
@@ -1324,7 +1281,7 @@ function PhonePreviewCard({
   contactDisabledText: string;
   onContactClick: () => void;
   links: LinkItem[];
-  leadFormPreview: LeadFormPreview | null;
+  leadFormPreview: LeadFormConfig | null;
   onEditLink: (linkId: string) => void;
   onToggleLink: (linkId: string) => void;
   onRemoveLink: (linkId: string) => void;
@@ -1334,11 +1291,12 @@ function PhonePreviewCard({
   setDraggingLinkId: (id: string | null) => void;
 }) {
   const visibleLinks = links.filter((link) => link.visible);
-  const previewFields = (leadFormPreview?.fields ?? []).filter(
-    (field) => field.enabled && !field.hidden
-  );
-  const submitLabel =
-    leadFormPreview?.settings?.submitLabel?.trim() || "Send";
+  const previewFields = leadFormPreview
+    ? leadFormPreview.settings.shuffleQuestionOrder
+      ? shuffleFields(leadFormPreview.fields)
+      : leadFormPreview.fields
+    : [];
+  const submitLabel = "Submit";
 
   return (
     <div className="h-fit w-full max-w-[340px] overflow-hidden rounded-[36px] border border-border/60 bg-background shadow-[0_20px_40px_-30px_rgba(15,23,42,0.3)]">
@@ -1399,18 +1357,30 @@ function PhonePreviewCard({
         </div>
         <div className="mt-3 w-full space-y-2">
           {previewFields.length ? (
-            previewFields.map((field) => (
-              <div
-                key={field.id}
-                className="rounded-2xl border border-border/60 bg-background/70 px-3 py-2 text-xs text-muted-foreground"
-              >
-                <div className="text-[10px] uppercase tracking-[0.2em]">
-                  {field.label}
-                  {field.required ? " *" : ""}
+            previewFields.map((field) =>
+              field.type === "section" ? (
+                <div
+                  key={field.id}
+                  className="rounded-2xl border border-border/60 bg-muted/40 px-3 py-2 text-xs text-muted-foreground"
+                >
+                  <div className="text-[11px] font-semibold">{field.title}</div>
+                  {field.description ? (
+                    <div className="mt-1 text-[10px]">{field.description}</div>
+                  ) : null}
                 </div>
-                <PreviewLeadField field={field} />
-              </div>
-            ))
+              ) : (
+                <div
+                  key={field.id}
+                  className="rounded-2xl border border-border/60 bg-background/70 px-3 py-2 text-xs text-muted-foreground"
+                >
+                  <div className="text-[10px] uppercase tracking-[0.2em]">
+                    {field.label}
+                    {field.required ? " *" : ""}
+                  </div>
+                  <PreviewLeadField field={field} />
+                </div>
+              )
+            )
           ) : (
             <div className="rounded-2xl border border-dashed border-border/60 px-3 py-3 text-center text-[11px] text-muted-foreground">
               Add lead form fields to see them here.
@@ -1428,30 +1398,49 @@ function PhonePreviewCard({
   );
 }
 
-function PreviewLeadField({ field }: { field: BuilderField }) {
-  if (field.type === "textarea") {
-    return (
-      <div className="mt-2 h-10 rounded-xl border border-border/60 bg-muted/50" />
-    );
+function PreviewLeadField({ field }: { field: LeadFormField }) {
+  switch (field.type) {
+    case "long_text":
+      return (
+        <div className="mt-2 h-10 rounded-xl border border-border/60 bg-muted/50" />
+      );
+    case "dropdown":
+      return (
+        <div className="mt-2 flex h-8 items-center rounded-xl border border-border/60 bg-muted/50 px-2 text-[11px]">
+          Select
+        </div>
+      );
+    case "multiple_choice":
+    case "checkboxes":
+      return (
+        <div className="mt-2 flex items-center gap-2 text-[11px]">
+          <span className="h-3 w-3 rounded border border-border/60 bg-muted/50" />
+          {field.options[0]?.label || "Option"}
+        </div>
+      );
+    case "linear_scale":
+      return (
+        <div className="mt-2 flex items-center gap-2 text-[11px] text-muted-foreground">
+          {field.min} - {field.max}
+        </div>
+      );
+    case "rating":
+      return (
+        <div className="mt-2 flex items-center gap-1 text-[11px] text-muted-foreground">
+          {Array.from({ length: field.scale }).map((_, index) => (
+            <span key={index}>*</span>
+          ))}
+        </div>
+      );
+    case "date":
+    case "time":
+    case "short_text":
+    case "file_upload":
+    default:
+      return (
+        <div className="mt-2 h-8 rounded-xl border border-border/60 bg-muted/50" />
+      );
   }
-  if (field.type === "select") {
-    return (
-      <div className="mt-2 flex h-8 items-center rounded-xl border border-border/60 bg-muted/50 px-2 text-[11px]">
-        {field.placeholder || "Select"}
-      </div>
-    );
-  }
-  if (field.type === "checkbox") {
-    return (
-      <div className="mt-2 flex items-center gap-2 text-[11px]">
-        <span className="h-3 w-3 rounded border border-border/60 bg-muted/50" />
-        {field.placeholder || "Yes"}
-      </div>
-    );
-  }
-  return (
-    <div className="mt-2 h-8 rounded-xl border border-border/60 bg-muted/50" />
-  );
 }
 
 function LinkListItem({
