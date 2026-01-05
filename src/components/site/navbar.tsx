@@ -466,7 +466,7 @@ export function Navbar() {
               size="sm"
               className="hidden rounded-full bg-gradient-to-r from-[#6ee7b7] via-[#3b82f6] to-[#8b5cf6] text-white shadow-[0_20px_40px_rgba(59,130,246,0.35)] hover:scale-[1.01] lg:inline-flex"
             >
-              <Link href="/dashboard/linkets/new">New Linket</Link>
+              <Link href="/claim">New Linket</Link>
             </Button>
             {dashboardAvatar}
             <button
@@ -508,7 +508,7 @@ export function Navbar() {
                 size="sm"
                 className="mt-3 w-full rounded-2xl bg-gradient-to-r from-[#6ee7b7] via-[#3b82f6] to-[#8b5cf6] text-white shadow-[0_18px_35px_rgba(59,130,246,0.35)]"
               >
-                <Link href="/dashboard/linkets/new">New Linket</Link>
+                <Link href="/claim">New Linket</Link>
               </Button>
               <div className="mt-2 flex items-center gap-3 rounded-2xl border border-border/60 bg-card/80 px-4 py-3">
                 {dashboardAvatar}
