@@ -21,6 +21,7 @@ export type ProfileLinkRecord = {
   url: string;
   order_index: number;
   is_active: boolean;
+  click_count: number;
   created_at: string;
   updated_at: string | null;
 };

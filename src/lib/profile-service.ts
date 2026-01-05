@@ -25,6 +25,7 @@ create table if not exists public.profile_links (
   url text not null,
   order_index int not null default 0,
   is_active boolean not null default true,
+  click_count int not null default 0,
   created_at timestamptz not null default now(),
   updated_at timestamptz default now()
 );
@@ -243,6 +244,13 @@ function randomId(): string {
     .slice(2)}`;
 }
 
+function isUuid(value: string | null | undefined): value is string {
+  if (!value) return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+    value
+  );
+}
+
 function ensureMemoryProfiles(userId: string): ProfileWithLinks[] {
   let profiles = memoryProfiles.get(userId);
   if (!profiles) {
@@ -350,6 +358,7 @@ function memorySaveProfileForUser(
       url: link.url?.trim() || "",
       order_index: index,
       is_active: existing?.is_active ?? true,
+      click_count: existing?.click_count ?? 0,
       created_at: createdAt,
       updated_at: now,
     };
@@ -565,19 +574,58 @@ export async function saveProfileForUser(
     if (error) throw new Error(error.message);
   }
 
-  const { error: deleteErr } = await supabaseAdmin
+  const { data: existingLinks, error: existingErr } = await supabaseAdmin
     .from(PROFILE_LINKS_TABLE)
-    .delete()
+    .select("id")
     .eq("profile_id", profileId);
-  if (deleteErr) throw new Error(deleteErr.message);
+  if (existingErr) throw new Error(existingErr.message);
 
-  if (links.length) {
-    const formatted = links.map((link, index) => ({
+  const indexedLinks = links.map((link, index) => ({
+    ...link,
+    order_index: index,
+  }));
+  const incomingIds = new Set(
+    indexedLinks.filter((link) => isUuid(link.id)).map((link) => link.id!)
+  );
+  const idsToDelete = (existingLinks ?? [])
+    .map((row) => row.id as string)
+    .filter((id) => !incomingIds.has(id));
+
+  if (idsToDelete.length) {
+    const { error: deleteErr } = await supabaseAdmin
+      .from(PROFILE_LINKS_TABLE)
+      .delete()
+      .in("id", idsToDelete);
+    if (deleteErr) throw new Error(deleteErr.message);
+  }
+
+  const upsertLinks = indexedLinks
+    .filter((link) => isUuid(link.id))
+    .map((link) => ({
+      id: link.id!,
       profile_id: profileId!,
       user_id: userId,
       title: link.title?.trim() || "Link",
       url: link.url?.trim() || "https://",
-      order_index: index,
+      order_index: link.order_index,
+      is_active: true,
+    }));
+
+  if (upsertLinks.length) {
+    const { error: upsertErr } = await supabaseAdmin
+      .from(PROFILE_LINKS_TABLE)
+      .upsert(upsertLinks, { onConflict: "id" });
+    if (upsertErr) throw new Error(upsertErr.message);
+  }
+
+  const newLinks = indexedLinks.filter((link) => !isUuid(link.id));
+  if (newLinks.length) {
+    const formatted = newLinks.map((link) => ({
+      profile_id: profileId!,
+      user_id: userId,
+      title: link.title?.trim() || "Link",
+      url: link.url?.trim() || "https://",
+      order_index: link.order_index,
       is_active: true,
     }));
     const { error: insertErr } = await supabaseAdmin

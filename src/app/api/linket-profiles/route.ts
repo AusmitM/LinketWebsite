@@ -24,6 +24,13 @@ function sortLinks(links: ProfileLinkRecord[] | null | undefined) {
     );
 }
 
+function isUuid(value: string | null | undefined): value is string {
+  if (!value) return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+    value
+  );
+}
+
 async function ensureAuthedUser(userId: string) {
   const supabase = await createServerSupabase();
   const { data, error } = await supabase.auth.getUser();
@@ -203,19 +210,57 @@ export async function POST(request: NextRequest) {
       if (updateError) throw new Error(updateError.message);
     }
 
-    const { error: deleteError } = await supabase
+    const { data: existingLinks, error: existingError } = await supabase
       .from("profile_links")
-      .delete()
+      .select("id")
       .eq("profile_id", profileId);
-    if (deleteError) throw new Error(deleteError.message);
+    if (existingError) throw new Error(existingError.message);
 
-    if (profile.links?.length) {
-      const formatted = profile.links.map((link, index) => ({
+    const indexedLinks = (profile.links ?? []).map((link, index) => ({
+      ...link,
+      order_index: index,
+    }));
+    const incomingIds = new Set(
+      indexedLinks.filter((link) => isUuid(link.id)).map((link) => link.id!)
+    );
+    const idsToDelete = (existingLinks ?? [])
+      .map((row) => row.id as string)
+      .filter((id) => !incomingIds.has(id));
+
+    if (idsToDelete.length) {
+      const { error: deleteError } = await supabase
+        .from("profile_links")
+        .delete()
+        .in("id", idsToDelete);
+      if (deleteError) throw new Error(deleteError.message);
+    }
+
+    const upsertLinks = indexedLinks
+      .filter((link) => isUuid(link.id))
+      .map((link) => ({
+        id: link.id!,
         profile_id: profileId,
         user_id: userId,
         title: link.title?.trim() || "Link",
         url: link.url?.trim() || "https://",
-        order_index: index,
+        order_index: link.order_index,
+        is_active: true,
+      }));
+    if (upsertLinks.length) {
+      const { error: upsertLinksError } = await supabase
+        .from("profile_links")
+        .upsert(upsertLinks, { onConflict: "id" });
+      if (upsertLinksError) throw new Error(upsertLinksError.message);
+    }
+
+    const newLinks = indexedLinks.filter((link) => !isUuid(link.id));
+    if (newLinks.length) {
+      const formatted = newLinks.map((link) => ({
+        profile_id: profileId,
+        user_id: userId,
+        title: link.title?.trim() || "Link",
+        url: link.url?.trim() || "https://",
+        order_index: link.order_index,
         is_active: true,
       }));
       const { error: insertLinksError } = await supabase

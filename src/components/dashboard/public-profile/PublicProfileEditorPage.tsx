@@ -65,6 +65,7 @@ type LinkItem = {
   icon: LinkIconKey;
   color: string;
   visible: boolean;
+  clicks?: number;
 };
 
 type ProfileDraft = {
@@ -831,7 +832,7 @@ function TopActionBar({
   onPreviewClick: () => void;
 }) {
   return (
-    <div className="sticky top-0 z-20 -mx-4 border-b border-border/60 bg-background/95 px-4 py-3 backdrop-blur sm:-mx-6 lg:-mx-8">
+    <div className="-mx-4 border-b border-border/60 bg-background/95 px-4 py-3 sm:-mx-6 lg:-mx-8">
       <div className="flex flex-wrap items-center gap-3">
         <button
           type="button"
@@ -1467,6 +1468,7 @@ function LinkListItem({
   onDragEnd?: () => void;
 }) {
   const Icon = ICON_OPTIONS.find((item) => item.value === link.icon)?.icon ?? Link2;
+  const clicks = link.clicks ?? 0;
   return (
     <div
       className="group relative flex items-center justify-between gap-3 rounded-2xl border border-border/60 bg-background/70 px-4 py-3 text-xs font-medium shadow-[0_12px_24px_-18px_rgba(15,23,42,0.2)]"
@@ -1488,6 +1490,9 @@ function LinkListItem({
         <div className="min-w-0">
           <div className="truncate text-sm font-semibold">{link.label}</div>
           <div className="truncate text-[11px] opacity-80">{link.url}</div>
+          <div className="text-[10px] opacity-75">
+            {clicks.toLocaleString()} clicks
+          </div>
         </div>
       </div>
       <div className="absolute inset-2 hidden items-center justify-center gap-2 rounded-xl bg-black/30 text-[10px] font-semibold text-white group-hover:flex group-focus-within:flex">
@@ -1771,6 +1776,7 @@ function createLink(): LinkItem {
     icon: base.value,
     color: base.color,
     visible: true,
+    clicks: 0,
   };
 }
 
@@ -1795,6 +1801,7 @@ function mapProfile(record: ProfileWithLinks): ProfileDraft {
       icon,
       color: fallbackColor,
       visible: link.is_active ?? true,
+      clicks: link.click_count ?? 0,
     };
   });
   return {

@@ -86,6 +86,7 @@ type LinkItem = {
   id: string;
   label: string;
   url: string;
+  clicks?: number;
 };
 
 type LinketProfile = {
@@ -373,6 +374,7 @@ export default function ProfilesContent() {
                 id: `link-${cryptoRandom()}`,
                 label: "New link",
                 url: "https://",
+                clicks: 0,
               },
             ],
             updatedAt: new Date().toISOString(),
@@ -1101,6 +1103,9 @@ export default function ProfilesContent() {
                           }
                         />
                       </div>
+                      <div className="mt-2 text-xs text-muted-foreground">
+                        {Number(link.clicks ?? 0).toLocaleString()} clicks
+                      </div>
                       <div className="mt-2 flex justify-end">
                         <Button
                           variant="ghost"
@@ -1253,6 +1258,7 @@ function mapProfile(record: ProfileWithLinks): LinketProfile {
     id: link.id ?? `link-${index}`,
     label: link.title,
     url: link.url,
+    clicks: link.click_count ?? 0,
   }));
   return {
     id: record.id,
