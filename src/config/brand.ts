@@ -10,7 +10,7 @@ export const brand = {
   /**
    * One-line promise used across metadata and hero copy.
    */
-  tagline: "Don't just share it... LINKET!.",
+  tagline: "Don't just share it... LINKET!",
   /**
    * Optional horizontal logo that includes the wordmark.
    * Place your file at /public/brand/logo-full.svg (or adjust this path).
