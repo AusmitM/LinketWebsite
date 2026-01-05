@@ -415,14 +415,6 @@ export default function LeadFormBuilder({
             </div>
           </div>
           <div className="ml-auto flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-            <div className="rounded-full border border-border/60 px-3 py-1">
-              {stats.count} submissions
-            </div>
-            <div className="rounded-full border border-border/60 px-3 py-1">
-              {stats.lastSubmittedAt
-                ? `Last ${formatShortDate(stats.lastSubmittedAt)}`
-                : "No submissions yet"}
-            </div>
             <Button
               size="sm"
               variant="outline"
