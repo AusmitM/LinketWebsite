@@ -45,9 +45,9 @@ export const metadata: Metadata = {
     images: [
       {
         url: "/og.png",
-        width: 1200,
-        height: 630,
-        alt: "Linket hero preview showing NFC keychains floating above a phone.",
+        width: 300,
+        height: 300,
+        alt: "Linket logo mark.",
       },
     ],
   },
