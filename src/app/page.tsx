@@ -45,14 +45,14 @@ export const metadata: Metadata = {
     images: [
       {
         url: "/og.png",
-        width: 32,
-        height: 32,
+        width: 120,
+        height: 120,
         alt: "Linket logo mark.",
       },
     ],
   },
   twitter: {
-    card: "summary_large_image",
+    card: "summary",
     title: "Stay Connected",
     description:
       "Linket is the customizable tap-to-share keychain that keeps your information current with every scan.",

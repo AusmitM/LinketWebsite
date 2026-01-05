@@ -37,8 +37,8 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       { url: "/favicon.ico" },
+      { url: "/linket-favicon-16.png", type: "image/png", sizes: "16x16" },
       { url: "/linket-favicon-32.png", type: "image/png", sizes: "32x32" },
-      { url: "/linket-favicon.svg", type: "image/svg+xml" },
     ],
     apple: "/apple-touch-icon.png",
   },
@@ -56,8 +56,8 @@ export const metadata: Metadata = {
     images: [
       {
         url: "/og.png",
-        width: 32,
-        height: 32,
+        width: 120,
+        height: 120,
         alt: `${brand.name} logo`,
       },
     ],
@@ -65,7 +65,7 @@ export const metadata: Metadata = {
     type: "website",
   },
   twitter: {
-    card: "summary_large_image",
+    card: "summary",
     title: brand.name,
     description: brand.blurb,
     images: ["/og.png"],
