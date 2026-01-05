@@ -30,11 +30,17 @@ export function createDefaultLeadFormConfig(id: string): LeadFormConfig {
       confirmationMessage: DEFAULT_CONFIRMATION,
     },
     fields: [
-      createField("short_text", "Name"),
-      createField("short_text", "Email", {
-        validation: { rule: "email" },
-        required: true,
+      createField("short_text", "Name", {
+        helpText: "Ex. John Doe",
       }),
+      createField("short_text", "Phone Number", {
+        helpText: "(###) ### - ####",
+      }),
+      createField("short_text", "Email", {
+        helpText: "Ex. JDoe@LinketCOnnect.com",
+        validation: { rule: "email" },
+      }),
+      createField("long_text", "Note"),
     ],
     meta: { createdAt: now, updatedAt: now, version: 1 },
   };
