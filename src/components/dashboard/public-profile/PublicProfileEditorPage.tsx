@@ -1400,9 +1400,17 @@ function PhonePreviewCard({
 
 function PreviewLeadField({ field }: { field: LeadFormField }) {
   switch (field.type) {
+    case "short_text":
+      return (
+        <div className="mt-2 flex h-8 items-center rounded-xl border border-border/60 bg-muted/50 px-2 text-[11px] text-muted-foreground">
+          {field.helpText || "Short answer"}
+        </div>
+      );
     case "long_text":
       return (
-        <div className="mt-2 h-10 rounded-xl border border-border/60 bg-muted/50" />
+        <div className="mt-2 flex h-10 items-center rounded-xl border border-border/60 bg-muted/50 px-2 text-[11px] text-muted-foreground">
+          {field.helpText || "Long answer"}
+        </div>
       );
     case "dropdown":
       return (

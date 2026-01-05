@@ -589,9 +589,6 @@ export default function PublicLeadForm({
         {field.required ? <span className="ml-1 text-destructive">*</span> : null}
       </Label>
     );
-    const help = field.helpText ? (
-      <p className="text-xs text-muted-foreground">{field.helpText}</p>
-    ) : null;
     const errorText = error ? (
       <p className="text-xs text-destructive">{error}</p>
     ) : null;
@@ -599,12 +596,19 @@ export default function PublicLeadForm({
     return (
       <div className="space-y-2">
         {label}
-        {help}
         {field.type === "short_text" ? (
           <Input
             id={field.id}
             value={(getAnswer(field.id) as string) || ""}
-            onChange={(event) => setAnswer(field.id, event.target.value)}
+            onChange={(event) => {
+              const nextValue = event.target.value;
+              setAnswer(
+                field.id,
+                isPhoneField(field) ? formatPhoneNumber(nextValue) : nextValue
+              );
+            }}
+            type={isEmailField(field) ? "email" : "text"}
+            placeholder={field.helpText || undefined}
             className={inputClassName}
             disabled={disabled || submitting}
           />
@@ -614,6 +618,7 @@ export default function PublicLeadForm({
             id={field.id}
             value={(getAnswer(field.id) as string) || ""}
             onChange={(event) => setAnswer(field.id, event.target.value)}
+            placeholder={field.helpText || undefined}
             className={textareaClassName}
             disabled={disabled || submitting}
           />
@@ -631,6 +636,7 @@ export default function PublicLeadForm({
             type={field.includeTime ? "datetime-local" : "date"}
             value={(getAnswer(field.id) as string) || ""}
             onChange={(event) => setAnswer(field.id, event.target.value)}
+            placeholder={field.helpText || undefined}
             className={inputClassName}
             disabled={disabled || submitting}
           />
@@ -644,7 +650,10 @@ export default function PublicLeadForm({
             className={inputClassName}
             min={field.mode === "duration" ? 0 : undefined}
             step={field.mode === "time_of_day" ? field.stepMinutes * 60 : field.stepMinutes}
-            placeholder={field.mode === "duration" ? "Minutes" : undefined}
+            placeholder={
+              field.helpText ||
+              (field.mode === "duration" ? "Minutes" : undefined)
+            }
             disabled={disabled || submitting}
           />
         ) : null}
@@ -825,4 +834,25 @@ function hasValue(value: unknown) {
     });
   }
   return true;
+}
+
+function isPhoneField(field: LeadFormField) {
+  if (field.type !== "short_text") return false;
+  return field.label.toLowerCase().includes("phone");
+}
+
+function isEmailField(field: LeadFormField) {
+  if (field.type !== "short_text") return false;
+  if (field.validation?.rule === "email") return true;
+  return field.label.toLowerCase().includes("email");
+}
+
+function formatPhoneNumber(input: string) {
+  const digits = input.replace(/\D/g, "").slice(0, 10);
+  if (!digits) return "";
+  if (digits.length <= 3) return `(${digits}`;
+  if (digits.length <= 6) {
+    return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+  }
+  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)} - ${digits.slice(6)}`;
 }

@@ -46,24 +46,66 @@ import type {
 
 const SAVE_DEBOUNCE_MS = 900;
 
-const FIELD_TYPES: Array<{
-  type: LeadFormFieldType;
+const FIELD_PRESETS: Array<{
+  id: string;
   label: string;
-  category: "basic" | "advanced";
+  type: LeadFormFieldType;
+  helpText?: string;
+  validation?: LeadFormValidation;
 }> = [
-  { type: "short_text", label: "Short text", category: "basic" },
-  { type: "long_text", label: "Long text", category: "basic" },
-  { type: "multiple_choice", label: "Multiple choice", category: "basic" },
-  { type: "checkboxes", label: "Checkboxes", category: "basic" },
-  { type: "dropdown", label: "Dropdown", category: "basic" },
-  { type: "linear_scale", label: "Linear scale", category: "basic" },
-  { type: "rating", label: "Rating", category: "basic" },
-  { type: "date", label: "Date", category: "basic" },
-  { type: "time", label: "Time", category: "basic" },
-  { type: "file_upload", label: "File upload", category: "advanced" },
-  { type: "multiple_choice_grid", label: "Multiple choice grid", category: "advanced" },
-  { type: "checkbox_grid", label: "Checkbox grid", category: "advanced" },
-  { type: "section", label: "Section", category: "advanced" },
+  {
+    id: "name",
+    label: "Name",
+    type: "short_text",
+    helpText: "Ex. John Doe",
+  },
+  {
+    id: "email",
+    label: "Email",
+    type: "short_text",
+    helpText: "Ex. JDoe@LinketCOnnect.com",
+    validation: { rule: "email" },
+  },
+  {
+    id: "phone",
+    label: "Phone Number",
+    type: "short_text",
+    helpText: "(###) ### - ####",
+  },
+  {
+    id: "date",
+    label: "Date",
+    type: "date",
+    helpText: "MM/DD/YYYY",
+  },
+  {
+    id: "time",
+    label: "Time",
+    type: "time",
+    helpText: "##:## AM/PM",
+  },
+  {
+    id: "note",
+    label: "Note",
+    type: "long_text",
+  },
+  {
+    id: "short_text",
+    label: "Short Text",
+    type: "short_text",
+  },
+  {
+    id: "long_text",
+    label: "Long Text",
+    type: "long_text",
+  },
+];
+
+const ALLOWED_TYPES: Array<{ type: LeadFormFieldType; label: string }> = [
+  { type: "short_text", label: "Short text" },
+  { type: "long_text", label: "Long text" },
+  { type: "date", label: "Date" },
+  { type: "time", label: "Time" },
 ];
 
 type Props = {
@@ -105,7 +147,6 @@ export default function LeadFormBuilder({
   const [responsesLoading, setResponsesLoading] = useState(false);
   const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null);
   const [fieldPickerOpen, setFieldPickerOpen] = useState(false);
-  const [advancedPickerOpen, setAdvancedPickerOpen] = useState(false);
   const [draggingFieldId, setDraggingFieldId] = useState<string | null>(null);
 
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -285,9 +326,14 @@ export default function LeadFormBuilder({
     updateForm({ fields: nextFields });
   };
 
-  const addField = (type: LeadFormFieldType) => {
+  const addPresetField = (presetId: string) => {
     if (!form) return;
-    const newField = createField(type, "Untitled question");
+    const preset = FIELD_PRESETS.find((item) => item.id === presetId);
+    if (!preset) return;
+    const newField = createField(preset.type, preset.label, {
+      helpText: preset.helpText ?? "",
+      validation: preset.validation ?? { rule: "none" },
+    });
     updateForm({ fields: [...form.fields, newField] });
     setSelectedFieldId(newField.id);
   };
@@ -711,7 +757,7 @@ export default function LeadFormBuilder({
                         )
                       }
                     >
-                      {FIELD_TYPES.map((option) => (
+                      {ALLOWED_TYPES.map((option) => (
                         <option key={option.type} value={option.type}>
                           {option.label}
                         </option>
@@ -771,11 +817,6 @@ export default function LeadFormBuilder({
                           {field.label}
                           {field.required ? " *" : ""}
                         </Label>
-                        {field.helpText ? (
-                          <div className="text-[11px] text-muted-foreground">
-                            {field.helpText}
-                          </div>
-                        ) : null}
                         <PreviewField field={field} />
                       </>
                     )}
@@ -795,54 +836,20 @@ export default function LeadFormBuilder({
           <DialogHeader>
             <DialogTitle>Add a field</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <div className="text-xs font-semibold text-muted-foreground">
-                Core
-              </div>
-              <div className="grid gap-2 sm:grid-cols-2">
-                {FIELD_TYPES.filter((item) => item.category === "basic").map(
-                  (item) => (
-                    <Button
-                      key={item.type}
-                      variant="secondary"
-                      onClick={() => {
-                        addField(item.type);
-                        setFieldPickerOpen(false);
-                      }}
-                    >
-                      {item.label}
-                    </Button>
-                  )
-                )}
-              </div>
-            </div>
-            <div className="space-y-2">
-              <button
-                type="button"
-                className="text-xs font-semibold text-muted-foreground"
-                onClick={() => setAdvancedPickerOpen((prev) => !prev)}
-              >
-                {advancedPickerOpen ? "Hide" : "Show"} advanced fields
-              </button>
-              {advancedPickerOpen && (
-                <div className="grid gap-2 sm:grid-cols-2">
-                  {FIELD_TYPES.filter(
-                    (item) => item.category === "advanced"
-                  ).map((item) => (
-                    <Button
-                      key={item.type}
-                      variant="secondary"
-                      onClick={() => {
-                        addField(item.type);
-                        setFieldPickerOpen(false);
-                      }}
-                    >
-                      {item.label}
-                    </Button>
-                  ))}
-                </div>
-              )}
+          <div className="space-y-2">
+            <div className="grid gap-2 sm:grid-cols-2">
+              {FIELD_PRESETS.map((item) => (
+                <Button
+                  key={item.id}
+                  variant="secondary"
+                  onClick={() => {
+                    addPresetField(item.id);
+                    setFieldPickerOpen(false);
+                  }}
+                >
+                  {item.label}
+                </Button>
+              ))}
             </div>
           </div>
           <DialogFooter>
@@ -861,9 +868,19 @@ export default function LeadFormBuilder({
 function PreviewField({ field }: { field: LeadFormField }) {
   switch (field.type) {
     case "short_text":
-      return <Input placeholder="Short answer" disabled />;
+      return (
+        <Input
+          placeholder={field.helpText || "Short answer"}
+          disabled
+        />
+      );
     case "long_text":
-      return <Textarea placeholder="Long answer" disabled />;
+      return (
+        <Textarea
+          placeholder={field.helpText || "Long answer"}
+          disabled
+        />
+      );
     case "multiple_choice":
       return (
         <div className="space-y-2">
@@ -1623,7 +1640,7 @@ function getOptions(field: LeadFormField): LeadFormOption[] {
 }
 
 function fieldTypeLabel(type: LeadFormFieldType) {
-  return FIELD_TYPES.find((item) => item.type === type)?.label || type;
+  return ALLOWED_TYPES.find((item) => item.type === type)?.label || type;
 }
 
 function ratingIcon(icon: "star" | "heart" | "thumbs") {
