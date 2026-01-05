@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
-import { Menu, X } from "lucide-react";
+import { LogOut, Menu, X } from "lucide-react";
 
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
