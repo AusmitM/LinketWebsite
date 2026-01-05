@@ -215,9 +215,7 @@ export default function LeadsList({ userId }: { userId: string }) {
       "phone",
       "company",
       "message",
-      "source_url",
       "handle",
-      "id",
       ...customHeaders,
     ];
     const rows = leads.map((l) => [
@@ -227,9 +225,7 @@ export default function LeadsList({ userId }: { userId: string }) {
       safeCsv(l.phone || ""),
       safeCsv(l.company || ""),
       safeCsv(l.message || ""),
-      safeCsv(l.source_url || ""),
       safeCsv(l.handle),
-      safeCsv(l.id),
       ...customKeys.map((key) => {
         const value = l.custom_fields?.[key] as string | boolean | null | undefined;
         return safeCsv(formatLeadValue(value ?? null));
