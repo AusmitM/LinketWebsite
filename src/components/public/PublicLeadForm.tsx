@@ -37,6 +37,7 @@ type Props = {
   handle: string;
   appearance?: Appearance;
   variant?: "card" | "profile";
+  showHeader?: boolean;
   className?: string;
 };
 
@@ -51,6 +52,7 @@ export default function PublicLeadForm({
   handle,
   appearance,
   variant = "card",
+  showHeader = true,
   className,
 }: Props) {
   const [form, setForm] = useState<LeadFormConfig | null>(null);
@@ -726,15 +728,32 @@ export default function PublicLeadForm({
       className={cn("border border-border/60", className)}
       style={cardStyle}
     >
-      <CardHeader className="space-y-2">
-        <CardTitle>{form?.title || "Lead capture"}</CardTitle>
-        {form?.description ? (
-          <p className="text-sm text-muted-foreground" style={mutedStyle}>
-            {form.description}
-          </p>
-        ) : null}
-        {typeof progress === "number" ? (
-          <div>
+      {showHeader ? (
+        <CardHeader className="space-y-2">
+          <CardTitle>{form?.title || "Lead capture"}</CardTitle>
+          {form?.description ? (
+            <p className="text-sm text-muted-foreground" style={mutedStyle}>
+              {form.description}
+            </p>
+          ) : null}
+          {typeof progress === "number" ? (
+            <div>
+              <div className="h-2 w-full rounded-full bg-muted">
+                <div
+                  className="h-2 rounded-full bg-primary transition-all"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+              <div className="mt-1 text-xs text-muted-foreground">
+                {progress}% complete
+              </div>
+            </div>
+          ) : null}
+        </CardHeader>
+      ) : null}
+      <CardContent>
+        {!showHeader && typeof progress === "number" ? (
+          <div className="mb-4">
             <div className="h-2 w-full rounded-full bg-muted">
               <div
                 className="h-2 rounded-full bg-primary transition-all"
@@ -746,8 +765,6 @@ export default function PublicLeadForm({
             </div>
           </div>
         ) : null}
-      </CardHeader>
-      <CardContent>
         <form className="space-y-5" onSubmit={handleSubmit}>
           {form?.settings.collectEmail !== "off" ? (
             <div className="space-y-2">

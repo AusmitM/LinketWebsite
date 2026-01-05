@@ -1,8 +1,11 @@
 import { notFound } from "next/navigation";
 import { buildAvatarPublicUrl } from "@/lib/avatar-utils";
+import { normalizeLeadFormConfig } from "@/lib/lead-form";
 import { getActiveProfileForPublicHandle } from "@/lib/profile-service";
+import { createServerSupabase } from "@/lib/supabase/server";
 import { isDarkTheme } from "@/lib/themes";
 import type { ProfileLinkRecord } from "@/types/db";
+import type { LeadFormConfig } from "@/types/lead-form";
 import PublicProfileLinksList from "@/components/public/PublicProfileLinksList";
 import PublicLeadForm from "@/components/public/PublicLeadForm";
 import VCardDownload from "@/components/VCardDownload";
@@ -38,6 +41,19 @@ export default async function PublicProfilePage({ params }: Props) {
     account.avatar_updated_at
   );
   const publicHandle = account.username || profile.handle || handle;
+  const supabase = await createServerSupabase();
+  const { data: leadFormRow } = await supabase
+    .from("lead_forms")
+    .select("id, config")
+    .eq("handle", publicHandle)
+    .eq("status", "published")
+    .maybeSingle();
+  const leadFormTitle = leadFormRow?.config
+    ? normalizeLeadFormConfig(
+        leadFormRow.config as LeadFormConfig,
+        leadFormRow.id ?? `form-${publicHandle}`
+      ).title
+    : "Contact";
   const displayName = profile.name || account.display_name || publicHandle;
   const isDark = isDarkTheme(profile.theme);
   const themeClass = `theme-${profile.theme} ${isDark ? "dark" : ""}`;
@@ -122,7 +138,7 @@ export default async function PublicProfilePage({ params }: Props) {
             <div className="rounded-[28px] border border-border/60 bg-card/80 p-6 shadow-[0_24px_60px_-40px_rgba(15,23,42,0.7)]">
               <div className="space-y-2">
                 <h2 className="text-lg font-semibold text-foreground">
-                  Contact
+                  {leadFormTitle}
                 </h2>
                 <p className="text-sm text-muted-foreground">
                   Share your info with {displayName}.
@@ -133,6 +149,7 @@ export default async function PublicProfilePage({ params }: Props) {
                   ownerId={profile.user_id}
                   handle={publicHandle}
                   variant="profile"
+                  showHeader={false}
                 />
               </div>
             </div>

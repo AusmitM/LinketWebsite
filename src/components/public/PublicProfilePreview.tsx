@@ -1,8 +1,10 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { buildAvatarPublicUrl } from "@/lib/avatar-utils";
 import { isDarkTheme } from "@/lib/themes";
 import type { ProfileWithLinks } from "@/lib/profile-service";
+import type { LeadFormConfig } from "@/types/lead-form";
 import PublicProfileLinksList from "@/components/public/PublicProfileLinksList";
 import PublicLeadForm from "@/components/public/PublicLeadForm";
 import VCardDownload from "@/components/VCardDownload";
@@ -50,6 +52,32 @@ export default function PublicProfilePreview({
   const links = sortLinks(profile.links);
   const hasLinks = links.length > 0;
   const hasHeadline = Boolean(headline);
+  const [leadFormTitle, setLeadFormTitle] = useState("Contact");
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const response = await fetch(
+          `/api/lead-forms/public?handle=${encodeURIComponent(publicHandle)}`,
+          { cache: "no-store" }
+        );
+        if (!response.ok) return;
+        const payload = (await response.json()) as {
+          form: LeadFormConfig | null;
+        };
+        if (!active) return;
+        if (payload.form?.title) {
+          setLeadFormTitle(payload.form.title);
+        }
+      } catch {
+        if (active) setLeadFormTitle("Contact");
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [publicHandle]);
 
   return (
     <div className={`min-h-full bg-background text-foreground ${themeClass}`}>
@@ -128,7 +156,7 @@ export default function PublicProfilePreview({
               <div className="rounded-[28px] border border-border/60 bg-card/80 p-6 shadow-[0_24px_60px_-40px_rgba(15,23,42,0.7)]">
                 <div className="space-y-2">
                   <h2 className="text-lg font-semibold text-foreground">
-                    Contact
+                    {leadFormTitle}
                   </h2>
                   <p className="text-sm text-muted-foreground">
                     Share your info with {displayName}.
@@ -139,6 +167,7 @@ export default function PublicProfilePreview({
                     ownerId={profile.user_id}
                     handle={publicHandle}
                     variant="profile"
+                    showHeader={false}
                   />
                 </div>
               </div>
@@ -199,7 +228,7 @@ export default function PublicProfilePreview({
               <div className="rounded-[28px] border border-border/60 bg-card/80 p-6 shadow-[0_24px_60px_-40px_rgba(15,23,42,0.7)]">
                 <div className="space-y-2">
                   <h2 className="text-lg font-semibold text-foreground">
-                    Contact
+                    {leadFormTitle}
                   </h2>
                   <p className="text-sm text-muted-foreground">
                     Share your info with {displayName}.
@@ -210,6 +239,7 @@ export default function PublicProfilePreview({
                     ownerId={profile.user_id}
                     handle={publicHandle}
                     variant="profile"
+                    showHeader={false}
                   />
                 </div>
               </div>

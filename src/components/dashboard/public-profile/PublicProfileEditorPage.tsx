@@ -1353,7 +1353,7 @@ function PhonePreviewCard({
         </div>
 
         <div className="mt-4 w-full text-xs text-muted-foreground">
-          Get in Touch
+          {leadFormPreview?.title || "Get in Touch"}
         </div>
         <div className="mt-3 w-full space-y-2">
           {previewFields.length ? (
