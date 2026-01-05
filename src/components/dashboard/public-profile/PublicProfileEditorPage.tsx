@@ -1239,6 +1239,7 @@ function EditorPanel({
           handle={accountHandle || draft?.handle || null}
           profileId={draft?.id ?? null}
           onPreviewChange={onLeadFormPreview}
+          showPreview={false}
         />
     ) : (
       <Card className="rounded-2xl border border-border/60 bg-card/80 shadow-sm">

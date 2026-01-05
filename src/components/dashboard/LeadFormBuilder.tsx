@@ -113,6 +113,7 @@ type Props = {
   handle: string | null;
   profileId?: string | null;
   onPreviewChange?: (form: LeadFormConfig) => void;
+  showPreview?: boolean;
 };
 
 type ResponsesStats = {
@@ -132,6 +133,7 @@ export default function LeadFormBuilder({
   handle,
   profileId,
   onPreviewChange,
+  showPreview = true,
 }: Props) {
   const [form, setForm] = useState<LeadFormConfig | null>(null);
   const [loading, setLoading] = useState(true);
@@ -790,55 +792,57 @@ export default function LeadFormBuilder({
             </CardContent>
           </Card>
 
-          <Card className="rounded-2xl border border-border/60 bg-card/80 shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-sm font-semibold">Live preview</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <div className="text-sm font-semibold">{form.title}</div>
-                {form.description ? (
-                  <div className="text-xs text-muted-foreground">
-                    {form.description}
-                  </div>
-                ) : null}
-              </div>
-              {form.settings.showProgressBar && (
-                <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-                  <div className="h-full w-1/3 rounded-full bg-foreground/60" />
+          {showPreview ? (
+            <Card className="rounded-2xl border border-border/60 bg-card/80 shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-sm font-semibold">Live preview</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <div className="text-sm font-semibold">{form.title}</div>
+                  {form.description ? (
+                    <div className="text-xs text-muted-foreground">
+                      {form.description}
+                    </div>
+                  ) : null}
                 </div>
-              )}
-              <div className="space-y-4">
-                {previewFields.map((field) => (
-                  <div key={field.id} className="space-y-2">
-                    {field.type === "section" ? (
-                      <div className="rounded-xl border border-border/60 bg-muted/30 px-3 py-2">
-                        <div className="text-sm font-semibold">
-                          {field.title}
-                        </div>
-                        {field.description ? (
-                          <div className="text-xs text-muted-foreground">
-                            {field.description}
-                          </div>
-                        ) : null}
-                      </div>
-                    ) : (
-                      <>
-                        <Label className="text-xs text-muted-foreground">
-                          {field.label}
-                          {field.required ? " *" : ""}
-                        </Label>
-                        <PreviewField field={field} />
-                      </>
-                    )}
+                {form.settings.showProgressBar && (
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                    <div className="h-full w-1/3 rounded-full bg-foreground/60" />
                   </div>
-                ))}
-              </div>
-              <Button className="w-full" disabled>
-                Submit
-              </Button>
-            </CardContent>
-          </Card>
+                )}
+                <div className="space-y-4">
+                  {previewFields.map((field) => (
+                    <div key={field.id} className="space-y-2">
+                      {field.type === "section" ? (
+                        <div className="rounded-xl border border-border/60 bg-muted/30 px-3 py-2">
+                          <div className="text-sm font-semibold">
+                            {field.title}
+                          </div>
+                          {field.description ? (
+                            <div className="text-xs text-muted-foreground">
+                              {field.description}
+                            </div>
+                          ) : null}
+                        </div>
+                      ) : (
+                        <>
+                          <Label className="text-xs text-muted-foreground">
+                            {field.label}
+                            {field.required ? " *" : ""}
+                          </Label>
+                          <PreviewField field={field} />
+                        </>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <Button className="w-full" disabled>
+                  Submit
+                </Button>
+              </CardContent>
+            </Card>
+          ) : null}
         </div>
       </div>
 
@@ -876,22 +880,13 @@ export default function LeadFormBuilder({
     </div>
   );
 }
+
 function PreviewField({ field }: { field: LeadFormField }) {
   switch (field.type) {
     case "short_text":
-      return (
-        <Input
-          placeholder={field.helpText || "Short answer"}
-          disabled
-        />
-      );
+      return <Input placeholder={field.helpText || "Short answer"} disabled />;
     case "long_text":
-      return (
-        <Textarea
-          placeholder={field.helpText || "Long answer"}
-          disabled
-        />
-      );
+      return <Textarea placeholder={field.helpText || "Long answer"} disabled />;
     case "multiple_choice":
       return (
         <div className="space-y-2">
@@ -1659,7 +1654,6 @@ function ratingIcon(icon: "star" | "heart" | "thumbs") {
   if (icon === "thumbs") return "T";
   return "*";
 }
-
 function formatShortDate(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "Just now";
