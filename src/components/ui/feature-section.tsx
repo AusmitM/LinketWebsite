@@ -112,6 +112,7 @@ export function FeatureSteps({
                         className="h-full w-full object-cover transition-transform"
                         width={1000}
                         height={500}
+                        sizes="(min-width: 1024px) 50vw, 100vw"
                       />
                       <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-background via-background/50 to-transparent" />
                     </motion.div>

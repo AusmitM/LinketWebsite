@@ -242,6 +242,7 @@ function TestimonialSlider({
                         alt={testimonial.name}
                         width={64}
                         height={64}
+                        sizes="48px"
                         className="h-full w-full object-cover"
                       />
                     </div>

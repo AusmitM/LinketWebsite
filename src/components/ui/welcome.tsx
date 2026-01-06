@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Image from "next/image";
 import { motion, type Variants } from "framer-motion";
 import { PlayCircle } from "lucide-react";
 
@@ -116,10 +117,14 @@ export const WorkspaceWelcome = React.forwardRef<
           whileHover={{ scale: 1.02 }}
           transition={{ type: "spring", stiffness: 300, damping: 20 }}
         >
-          <img
+          <Image
             src={videoThumbnail}
             alt={videoTitle}
+            width={1200}
+            height={675}
+            sizes="(min-width: 768px) 640px, 100vw"
             className="aspect-video w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            loading="lazy"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
           <div className="absolute bottom-0 left-0 p-6 text-white">
