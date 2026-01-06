@@ -752,6 +752,9 @@ export default function PublicProfileEditorPage() {
             avatarUrl={avatarUrl}
             accountHandle={accountHandle}
             onLeadFormPreview={setLeadFormPreview}
+            onRegisterLeadFormReorder={(reorder) => {
+              leadFormReorderRef.current = reorder;
+            }}
             onAvatarUpdate={setAvatarUrl}
             onProfileChange={handleProfileChange}
             onAddLink={addLink}
@@ -1084,6 +1087,7 @@ function EditorPanel({
   accountHandle,
   onAvatarUpdate,
   onLeadFormPreview,
+  onRegisterLeadFormReorder,
   onProfileChange,
   onAddLink,
   onUpdateLink,
@@ -1104,6 +1108,9 @@ function EditorPanel({
   accountHandle: string | null;
   onAvatarUpdate: (url: string) => void;
   onLeadFormPreview: (preview: LeadFormConfig | null) => void;
+  onRegisterLeadFormReorder: (
+    reorder: ((sourceId: string, targetId: string) => void) | null
+  ) => void;
   onProfileChange: (patch: Partial<ProfileDraft>) => void;
   onAddLink: () => void;
   onUpdateLink: (linkId: string, patch: Partial<LinkItem>) => void;
@@ -1323,7 +1330,7 @@ function EditorPanel({
           showPreview={false}
           layout="stacked"
           onRegisterReorder={(reorder) => {
-            leadFormReorderRef.current = reorder;
+            onRegisterLeadFormReorder(reorder);
           }}
         />
     ) : (
