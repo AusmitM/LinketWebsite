@@ -155,6 +155,7 @@ export default function PublicProfileEditorPage() {
   const autosavePending = useRef(false);
   const leadFormLoadRef = useRef(0);
   const draftRef = useRef<ProfileDraft | null>(null);
+  const reorderSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const statusButtonRef = useRef<HTMLButtonElement | null>(null);
   const avatarButtonRef = useRef<HTMLButtonElement | null>(null);
   const viewButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -371,6 +372,29 @@ export default function PublicProfileEditorPage() {
     }
   }, [saving, draft, isDirty, userId, handleSave]);
 
+  const scheduleReorderSave = useCallback(() => {
+    if (!userId) return;
+    if (reorderSaveTimer.current) {
+      clearTimeout(reorderSaveTimer.current);
+    }
+    reorderSaveTimer.current = setTimeout(() => {
+      if (saving) {
+        autosavePending.current = true;
+        return;
+      }
+      if (!isDirty) return;
+      void handleSave();
+    }, 3000);
+  }, [handleSave, isDirty, saving, userId]);
+
+  useEffect(() => {
+    return () => {
+      if (reorderSaveTimer.current) {
+        clearTimeout(reorderSaveTimer.current);
+      }
+    };
+  }, []);
+
   const handleBlurCapture = useCallback(
     (event: FocusEvent<HTMLDivElement>) => {
       const target = event.target as HTMLElement | null;
@@ -508,7 +532,8 @@ export default function PublicProfileEditorPage() {
       links.splice(targetIndex, 0, moved);
       return { ...prev, links, updatedAt: new Date().toISOString() };
     });
-  }, []);
+    scheduleReorderSave();
+  }, [scheduleReorderSave]);
 
   const openEditLink = useCallback(
     (linkId: string) => {
