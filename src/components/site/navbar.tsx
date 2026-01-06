@@ -128,7 +128,29 @@ export function Navbar() {
           id: user.id,
           email: user.email ?? null,
           fullName: (user.user_metadata?.full_name as string | null) ?? null,
-  });
+        });
+      }
+    })();
+
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(
+        session?.user
+          ? {
+              id: session.user.id,
+              email: session.user.email ?? null,
+              fullName:
+                (session.user.user_metadata?.full_name as string | null) ?? null,
+            }
+          : null
+      );
+    });
+    unsubscribe = () => sub.subscription.unsubscribe();
+
+    return () => {
+      active = false;
+      unsubscribe?.();
+    };
+  }, [isDashboard]);
 
   const handleLogout = async () => {
     if (loggingOut) return;
@@ -157,29 +179,6 @@ export function Navbar() {
       setLoggingOut(false);
     }
   };
-      }
-    })();
-
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(
-        session?.user
-          ? {
-              id: session.user.id,
-              email: session.user.email ?? null,
-              fullName:
-                (session.user.user_metadata?.full_name as string | null) ??
-                null,
-            }
-          : null
-      );
-    });
-    unsubscribe = () => sub.subscription.unsubscribe();
-
-    return () => {
-      active = false;
-      unsubscribe?.();
-    };
-  }, [isDashboard]);
 
   useEffect(() => {
     if (!isDashboard || !user) {
