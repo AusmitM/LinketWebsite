@@ -481,6 +481,7 @@ export function Navbar() {
             >
               <Link href="/claim">New Linket</Link>
             </Button>
+            <span className="hidden lg:inline-flex">{dashboardAvatar}</span>
             {dashboardAvatar}
             <button
               type="button"
