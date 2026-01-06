@@ -157,6 +157,7 @@ export default function PublicProfileEditorPage() {
   const leadFormLoadRef = useRef(0);
   const draftRef = useRef<ProfileDraft | null>(null);
   const reorderSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const dragScrollFrame = useRef<number | null>(null);
   const leadFormReorderRef = useRef<
     ((sourceId: string, targetId: string) => void) | null
   >(null);
@@ -195,6 +196,38 @@ export default function PublicProfileEditorPage() {
       cancelled = true;
     };
   }, [userId, vcardLoaded]);
+
+  useEffect(() => {
+    if (!draggingLinkId) return;
+
+    const handleDragOver = (event: DragEvent) => {
+      const viewportHeight = window.innerHeight || 0;
+      if (!viewportHeight) return;
+      const edge = 120;
+      const y = event.clientY;
+      let delta = 0;
+      if (y < edge) {
+        delta = -Math.min(24, Math.max(4, (edge - y) / 6));
+      } else if (y > viewportHeight - edge) {
+        delta = Math.min(24, Math.max(4, (y - (viewportHeight - edge)) / 6));
+      }
+      if (!delta) return;
+      if (dragScrollFrame.current) return;
+      dragScrollFrame.current = window.requestAnimationFrame(() => {
+        window.scrollBy({ top: delta, left: 0, behavior: "auto" });
+        dragScrollFrame.current = null;
+      });
+    };
+
+    window.addEventListener("dragover", handleDragOver);
+    return () => {
+      window.removeEventListener("dragover", handleDragOver);
+      if (dragScrollFrame.current) {
+        window.cancelAnimationFrame(dragScrollFrame.current);
+        dragScrollFrame.current = null;
+      }
+    };
+  }, [draggingLinkId]);
 
   useEffect(() => {
     if (dashboardUser?.id) {
@@ -1598,7 +1631,6 @@ function LinkListItem({
   return (
     <div
       className="group relative flex items-center justify-between gap-3 rounded-2xl border border-border/60 bg-card/80 px-4 py-3 text-xs font-medium shadow-[0_12px_24px_-18px_rgba(15,23,42,0.2)] cursor-grab active:cursor-grabbing"
-      tabIndex={0}
       draggable={draggable}
       onDragStart={onDragStart}
       onDragOver={onDragOver}
@@ -1634,7 +1666,7 @@ function LinkListItem({
           </div>
         </div>
       </div>
-      <div className="absolute inset-2 hidden items-center justify-center gap-2 rounded-xl bg-background/90 text-[10px] font-semibold text-foreground shadow-[0_12px_24px_-18px_rgba(15,23,42,0.25)] group-hover:flex group-focus-within:flex">
+      <div className="absolute inset-2 hidden items-center justify-center gap-2 rounded-xl bg-background/90 text-[10px] font-semibold text-foreground shadow-[0_12px_24px_-18px_rgba(15,23,42,0.25)] group-hover:flex">
         <button type="button" onClick={onEdit} className="rounded-full px-2 py-1 hover:bg-muted">
           Edit
         </button>
