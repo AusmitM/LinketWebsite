@@ -6,9 +6,7 @@ import {
   useMemo,
   useRef,
   useState,
-  type CSSProperties,
   type FocusEvent,
-  type ReactNode,
 } from "react";
 import {
   Eye,
@@ -128,7 +126,6 @@ export default function PublicProfileEditorPage() {
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
   const [accountHandle, setAccountHandle] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [statusPanelOpen, setStatusPanelOpen] = useState(false);
   const [linkModalOpen, setLinkModalOpen] = useState(false);
   const [linkModalMode, setLinkModalMode] = useState<"add" | "edit">("add");
   const [editingLinkId, setEditingLinkId] = useState<string | null>(null);
@@ -155,7 +152,6 @@ export default function PublicProfileEditorPage() {
   const leadFormReorderRef = useRef<
     ((sourceId: string, targetId: string) => void) | null
   >(null);
-  const statusButtonRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     if (!userId || vcardLoaded) return;
@@ -657,21 +653,27 @@ export default function PublicProfileEditorPage() {
   const profileDisplayName = draft?.name || "John Doe";
   const profileTagline =
     draft?.headline || "I do things | other things & more other things";
+  const isPublished = Boolean(draft?.active);
 
   return (
     <div className="space-y-6" onBlurCapture={handleBlurCapture}>
-      <TopActionBar
-        lastSavedAt={lastSavedAt}
-        saveState={saveState}
-        isDirty={isDirty}
-        onPublish={handlePublish}
-        onUnpublish={handleUnpublish}
-        onRetrySave={handleSave}
-        isPublished={Boolean(draft?.active)}
-        statusPanelOpen={statusPanelOpen}
-        setStatusPanelOpen={setStatusPanelOpen}
-        statusButtonRef={statusButtonRef}
-      />
+      <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+        <span className="font-medium text-foreground">
+          {isPublished ? "Published" : "Draft"}
+        </span>
+        <span>
+          Last saved: {lastSavedAt ? formatShortDate(lastSavedAt) : "Just now"}
+        </span>
+        {isDirty && <span className="text-amber-600">Unsaved changes</span>}
+        {saveState === "failed" ? (
+          <Button variant="outline" size="sm" onClick={handleSave}>
+            Retry save
+          </Button>
+        ) : null}
+        <Button size="sm" onClick={isPublished ? handleUnpublish : handlePublish}>
+          {isPublished ? "Unpublish" : "Publish"}
+        </Button>
+      </div>
 
       <div className="grid gap-6 lg:grid-cols-[450px_minmax(0,1fr)_50px]">
         <div className="space-y-4">
@@ -756,107 +758,6 @@ export default function PublicProfileEditorPage() {
         onChange={setLinkForm}
         onSave={saveLinkModal}
       />
-    </div>
-  );
-}
-
-function TopActionBar({
-  lastSavedAt,
-  saveState,
-  isDirty,
-  onPublish,
-  onUnpublish,
-  onRetrySave,
-  isPublished,
-  statusPanelOpen,
-  setStatusPanelOpen,
-  statusButtonRef,
-}: {
-  lastSavedAt: string | null;
-  saveState: "saving" | "saved" | "failed";
-  isDirty: boolean;
-  onPublish: () => void;
-  onUnpublish: () => void;
-  onRetrySave: () => void;
-  isPublished: boolean;
-  statusPanelOpen: boolean;
-  setStatusPanelOpen: (open: boolean) => void;
-  statusButtonRef: React.RefObject<HTMLButtonElement | null>;
-}) {
-  return (
-    <div className="-mx-4 border-b border-border/60 bg-background/95 px-4 py-3 sm:-mx-6 lg:-mx-8">
-      <div className="flex flex-wrap items-center gap-3">
-        <button
-          type="button"
-          ref={statusButtonRef}
-          onClick={() => setStatusPanelOpen(true)}
-          className="flex items-center gap-2 text-xs text-muted-foreground"
-        >
-          <Link2 className="h-4 w-4" aria-hidden />
-          <span className="font-medium text-foreground">
-            {isPublished ? "Published" : "Draft"}
-          </span>
-          <span>
-            Last saved: {lastSavedAt ? formatShortDate(lastSavedAt) : "Just now"}
-          </span>
-          {isDirty && (
-            <span className="text-amber-600">Unsaved changes</span>
-          )}
-        </button>
-
-        <div className="ml-auto" />
-      </div>
-
-      <PopoverDialog
-        open={statusPanelOpen}
-        onOpenChange={setStatusPanelOpen}
-        anchorRef={statusButtonRef}
-        title="Profile status"
-      >
-        <div className="space-y-3 text-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-muted-foreground">Status</span>
-            <span className="font-medium text-foreground">
-              {isPublished ? "Published" : "Draft"}
-            </span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-muted-foreground">Last saved</span>
-            <span className="font-medium text-foreground">
-              {lastSavedAt ? formatShortDate(lastSavedAt) : "Just now"}
-            </span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-muted-foreground">Save state</span>
-            <span
-              className={cn(
-                "font-medium",
-                saveState === "failed" && "text-destructive",
-                saveState === "saving" && "text-muted-foreground",
-                saveState === "saved" &&
-                  (isDirty ? "text-amber-600" : "text-foreground")
-              )}
-            >
-              {saveState === "failed"
-                ? "Save failed"
-                : saveState === "saving"
-                ? "Saving..."
-                : isDirty
-                ? "Unsaved changes"
-                : "Saved"}
-            </span>
-          </div>
-          {saveState === "failed" ? (
-            <Button variant="outline" size="sm" onClick={onRetrySave}>
-              Retry save
-            </Button>
-          ) : null}
-          <Button size="sm" onClick={isPublished ? onUnpublish : onPublish}>
-            {isPublished ? "Unpublish" : "Publish"}
-          </Button>
-        </div>
-      </PopoverDialog>
-
     </div>
   );
 }
@@ -1605,70 +1506,6 @@ function LinkModal({
       </DialogContent>
     </Dialog>
   );
-}
-
-function PopoverDialog({
-  open,
-  onOpenChange,
-  anchorRef,
-  title,
-  children,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  anchorRef: React.RefObject<HTMLElement | null>;
-  title: string;
-  children: ReactNode;
-}) {
-  const position = usePopoverPosition(anchorRef, open);
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        className="w-72 translate-x-0 translate-y-0 rounded-2xl border border-border/60 bg-background p-4 shadow-lg"
-        style={position}
-      >
-        <DialogHeader>
-          <DialogTitle className="text-sm font-semibold">{title}</DialogTitle>
-        </DialogHeader>
-        {children}
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function usePopoverPosition(
-  anchorRef: React.RefObject<HTMLElement | null>,
-  open: boolean
-) {
-  const [style, setStyle] = useState<CSSProperties>({});
-
-  useEffect(() => {
-    if (!open) return;
-    const update = () => {
-      const anchor = anchorRef.current;
-      if (!anchor) return;
-      const rect = anchor.getBoundingClientRect();
-      const top = rect.bottom + 8;
-      const left = Math.min(
-        Math.max(12, rect.left),
-        window.innerWidth - 300
-      );
-      setStyle({
-        position: "fixed",
-        top,
-        left,
-      });
-    };
-    update();
-    window.addEventListener("resize", update);
-    window.addEventListener("scroll", update, true);
-    return () => {
-      window.removeEventListener("resize", update);
-      window.removeEventListener("scroll", update, true);
-    };
-  }, [anchorRef, open]);
-
-  return style;
 }
 
 function formatShortDate(value: string) {
