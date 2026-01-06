@@ -17,7 +17,6 @@ import {
   GripVertical,
   Instagram,
   Link2,
-  LogOut,
   MessageSquare,
   Palette,
   Pencil,
@@ -119,7 +118,6 @@ export default function PublicProfileEditorPage() {
   const dashboardUser = useDashboardUser();
   const { theme } = useThemeOptional();
   const supabase = useMemo(() => createClient(), []);
-  const [loggingOut, setLoggingOut] = useState(false);
   const [userId, setUserId] = useState<string | null>(dashboardUser?.id ?? null);
   const [activeSection, setActiveSection] = useState<SectionId>("profile");
   const [draft, setDraft] = useState<ProfileDraft | null>(null);
@@ -131,7 +129,6 @@ export default function PublicProfileEditorPage() {
   const [accountHandle, setAccountHandle] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [statusPanelOpen, setStatusPanelOpen] = useState(false);
-  const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
   const [linkModalOpen, setLinkModalOpen] = useState(false);
   const [linkModalMode, setLinkModalMode] = useState<"add" | "edit">("add");
   const [editingLinkId, setEditingLinkId] = useState<string | null>(null);
@@ -159,7 +156,6 @@ export default function PublicProfileEditorPage() {
     ((sourceId: string, targetId: string) => void) | null
   >(null);
   const statusButtonRef = useRef<HTMLButtonElement | null>(null);
-  const avatarButtonRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     if (!userId || vcardLoaded) return;
@@ -632,17 +628,6 @@ export default function PublicProfileEditorPage() {
     };
   }, [isDirty, vcardSnapshot.isDirty, saveError, vcardSnapshot.status]);
 
-  const userInitials = useMemo(() => {
-    const seed =
-      dashboardUser?.user_metadata?.full_name ||
-      dashboardUser?.email ||
-      "PK";
-    const [first, second] = String(seed).split(" ");
-    const initialOne = first?.[0] ?? "P";
-    const initialTwo = second?.[0] ?? "K";
-    return `${initialOne}${initialTwo}`.toUpperCase();
-  }, [dashboardUser]);
-
   const handleContactCta = useCallback(() => {
     if (!hasContactDetails) {
       setActiveSection("contact");
@@ -668,34 +653,6 @@ export default function PublicProfileEditorPage() {
     void handleSave();
   }, [handleProfileChange, handleSave]);
 
-  const handleLogout = useCallback(async () => {
-    if (loggingOut) return;
-    setLoggingOut(true);
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      await fetch("/auth/callback", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ event: "SIGNED_OUT" }),
-      }).catch(() => null);
-      toast({
-        title: "Signed out",
-        description: "You have been logged out safely.",
-        variant: "success",
-      });
-      window.location.assign("/auth?view=signin");
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Please try again.";
-      toast({
-        title: "Sign out failed",
-        description: message,
-        variant: "destructive",
-      });
-      setLoggingOut(false);
-    }
-  }, [loggingOut, supabase]);
 
   const profileDisplayName = draft?.name || "John Doe";
   const profileTagline =
@@ -711,15 +668,9 @@ export default function PublicProfileEditorPage() {
         onUnpublish={handleUnpublish}
         onRetrySave={handleSave}
         isPublished={Boolean(draft?.active)}
-        avatarInitials={userInitials}
-        onLogout={handleLogout}
-        logoutDisabled={loggingOut}
         statusPanelOpen={statusPanelOpen}
         setStatusPanelOpen={setStatusPanelOpen}
-        avatarMenuOpen={avatarMenuOpen}
-        setAvatarMenuOpen={setAvatarMenuOpen}
         statusButtonRef={statusButtonRef}
-        avatarButtonRef={avatarButtonRef}
       />
 
       <div className="grid gap-6 lg:grid-cols-[450px_minmax(0,1fr)_50px]">
@@ -817,15 +768,9 @@ function TopActionBar({
   onUnpublish,
   onRetrySave,
   isPublished,
-  avatarInitials,
-  onLogout,
-  logoutDisabled,
   statusPanelOpen,
   setStatusPanelOpen,
-  avatarMenuOpen,
-  setAvatarMenuOpen,
   statusButtonRef,
-  avatarButtonRef,
 }: {
   lastSavedAt: string | null;
   saveState: "saving" | "saved" | "failed";
@@ -834,15 +779,9 @@ function TopActionBar({
   onUnpublish: () => void;
   onRetrySave: () => void;
   isPublished: boolean;
-  avatarInitials: string;
-  onLogout: () => void;
-  logoutDisabled: boolean;
   statusPanelOpen: boolean;
   setStatusPanelOpen: (open: boolean) => void;
-  avatarMenuOpen: boolean;
-  setAvatarMenuOpen: (open: boolean) => void;
   statusButtonRef: React.RefObject<HTMLButtonElement | null>;
-  avatarButtonRef: React.RefObject<HTMLButtonElement | null>;
 }) {
   return (
     <div className="-mx-4 border-b border-border/60 bg-background/95 px-4 py-3 sm:-mx-6 lg:-mx-8">
@@ -865,16 +804,7 @@ function TopActionBar({
           )}
         </button>
 
-        <div className="ml-auto flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            ref={avatarButtonRef}
-            onClick={() => setAvatarMenuOpen(true)}
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-border/60 bg-muted/40 text-xs font-semibold text-muted-foreground"
-          >
-            {avatarInitials}
-          </button>
-        </div>
+        <div className="ml-auto" />
       </div>
 
       <PopoverDialog
@@ -927,27 +857,6 @@ function TopActionBar({
         </div>
       </PopoverDialog>
 
-      <PopoverDialog
-        open={avatarMenuOpen}
-        onOpenChange={setAvatarMenuOpen}
-        anchorRef={avatarButtonRef}
-        title="Account menu"
-      >
-        <div className="space-y-2 text-sm">
-          <MenuLink href="/dashboard/settings">Account settings</MenuLink>
-          <MenuLink href="/dashboard/billing">Billing</MenuLink>
-          <MenuButton
-            onClick={() =>
-              window.dispatchEvent(new CustomEvent("open-support"))
-            }
-          >
-            Support
-          </MenuButton>
-          <MenuButton onClick={onLogout} disabled={logoutDisabled}>
-            <LogOut className="mr-2 h-4 w-4" /> Logout
-          </MenuButton>
-        </div>
-      </PopoverDialog>
     </div>
   );
 }
@@ -1724,38 +1633,6 @@ function PopoverDialog({
         {children}
       </DialogContent>
     </Dialog>
-  );
-}
-
-function MenuButton({
-  children,
-  onClick,
-  disabled,
-}: {
-  children: ReactNode;
-  onClick: () => void;
-  disabled?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className="flex w-full items-center rounded-lg px-2 py-2 text-left text-sm text-foreground hover:bg-accent disabled:opacity-50"
-    >
-      {children}
-    </button>
-  );
-}
-
-function MenuLink({ href, children }: { href: string; children: ReactNode }) {
-  return (
-    <a
-      href={href}
-      className="flex w-full items-center rounded-lg px-2 py-2 text-left text-sm text-foreground hover:bg-accent"
-    >
-      {children}
-    </a>
   );
 }
 
