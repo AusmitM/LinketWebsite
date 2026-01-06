@@ -88,6 +88,12 @@ export default function PublicLeadForm({
     variant === "profile"
       ? "w-fit rounded-full px-5 py-1.5 text-sm shadow-[0_10px_24px_-18px_var(--ring)]"
       : "rounded-2xl";
+  const cardClassName = cn(
+    "border border-border/60",
+    showHeader ? null : "gap-0 py-4",
+    variant === "profile" ? "py-4" : null,
+    className
+  );
 
   useEffect(() => {
     if (!handle) return;
@@ -733,10 +739,7 @@ export default function PublicLeadForm({
   }
 
   return (
-    <Card
-      className={cn("border border-border/60", className)}
-      style={cardStyle}
-    >
+    <Card className={cardClassName} style={cardStyle}>
       {showHeader ? (
         <CardHeader className="space-y-2">
           <CardTitle>{form?.title || "Lead capture"}</CardTitle>
