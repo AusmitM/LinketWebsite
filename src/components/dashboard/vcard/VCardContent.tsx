@@ -230,7 +230,7 @@ export default function VCardContent({
       }
     >
       <CardHeader>
-        <CardTitle className="text-lg font-semibold">vCard details</CardTitle>
+        <CardTitle className="text-lg font-semibold">Contact Details</CardTitle>
         <p className="text-sm text-muted-foreground">
           Fill in the contact fields that appear when someone taps your NFC tag.
         </p>
