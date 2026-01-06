@@ -115,6 +115,7 @@ type Props = {
   onPreviewChange?: (form: LeadFormConfig) => void;
   showPreview?: boolean;
   layout?: "side" | "stacked";
+  onRegisterReorder?: (reorder: (sourceId: string, targetId: string) => void) => void;
 };
 
 type ResponsesStats = {
@@ -136,6 +137,7 @@ export default function LeadFormBuilder({
   onPreviewChange,
   showPreview = true,
   layout = "side",
+  onRegisterReorder,
 }: Props) {
   const [form, setForm] = useState<LeadFormConfig | null>(null);
   const [loading, setLoading] = useState(true);
@@ -374,6 +376,10 @@ export default function LeadFormBuilder({
     next.splice(targetIndex, 0, moved);
     updateForm({ fields: next });
   };
+
+  useEffect(() => {
+    onRegisterReorder?.(reorderFields);
+  }, [onRegisterReorder, reorderFields]);
 
   const handleFieldTypeChange = (
     fieldId: string,

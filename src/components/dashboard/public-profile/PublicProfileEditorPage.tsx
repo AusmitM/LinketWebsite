@@ -15,6 +15,7 @@ import {
   Eye,
   EyeOff,
   Globe,
+  GripVertical,
   Instagram,
   Link2,
   LogOut,
@@ -156,6 +157,9 @@ export default function PublicProfileEditorPage() {
   const leadFormLoadRef = useRef(0);
   const draftRef = useRef<ProfileDraft | null>(null);
   const reorderSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const leadFormReorderRef = useRef<
+    ((sourceId: string, targetId: string) => void) | null
+  >(null);
   const statusButtonRef = useRef<HTMLButtonElement | null>(null);
   const avatarButtonRef = useRef<HTMLButtonElement | null>(null);
   const viewButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -535,6 +539,24 @@ export default function PublicProfileEditorPage() {
     scheduleReorderSave();
   }, [scheduleReorderSave]);
 
+  const reorderLeadFormFields = useCallback(
+    (sourceId: string, targetId: string) => {
+      if (sourceId === targetId) return;
+      setLeadFormPreview((prev) => {
+        if (!prev) return prev;
+        const fields = [...prev.fields];
+        const sourceIndex = fields.findIndex((field) => field.id === sourceId);
+        const targetIndex = fields.findIndex((field) => field.id === targetId);
+        if (sourceIndex === -1 || targetIndex === -1) return prev;
+        const [moved] = fields.splice(sourceIndex, 1);
+        fields.splice(targetIndex, 0, moved);
+        return { ...prev, fields };
+      });
+      leadFormReorderRef.current?.(sourceId, targetId);
+    },
+    []
+  );
+
   const openEditLink = useCallback(
     (linkId: string) => {
       const link = draft?.links.find((item) => item.id === linkId);
@@ -771,6 +793,7 @@ export default function PublicProfileEditorPage() {
               onContactClick={handleContactCta}
               links={draft?.links ?? []}
               leadFormPreview={leadFormPreview}
+              onReorderLeadField={reorderLeadFormFields}
               onEditLink={openEditLink}
               onToggleLink={(linkId) =>
                 updateLink(linkId, {
@@ -1299,6 +1322,9 @@ function EditorPanel({
           onPreviewChange={onLeadFormPreview}
           showPreview={false}
           layout="stacked"
+          onRegisterReorder={(reorder) => {
+            leadFormReorderRef.current = reorder;
+          }}
         />
     ) : (
       <Card className="rounded-2xl border border-border/60 bg-card/80 shadow-sm">
@@ -1328,6 +1354,7 @@ function PhonePreviewCard({
   onContactClick,
   links,
   leadFormPreview,
+  onReorderLeadField,
   onEditLink,
   onToggleLink,
   onRemoveLink,
@@ -1342,6 +1369,7 @@ function PhonePreviewCard({
   onContactClick: () => void;
   links: LinkItem[];
   leadFormPreview: LeadFormConfig | null;
+  onReorderLeadField?: (sourceId: string, targetId: string) => void;
   onEditLink: (linkId: string) => void;
   onToggleLink: (linkId: string) => void;
   onRemoveLink: (linkId: string) => void;
@@ -1357,6 +1385,9 @@ function PhonePreviewCard({
       : leadFormPreview.fields
     : [];
   const submitLabel = "Submit";
+  const [draggingLeadFieldId, setDraggingLeadFieldId] = useState<string | null>(
+    null
+  );
 
   return (
     <div className="h-fit w-full max-w-[340px] overflow-hidden rounded-[36px] border border-border/60 bg-background shadow-[0_20px_40px_-30px_rgba(15,23,42,0.3)]">
@@ -1431,11 +1462,23 @@ function PhonePreviewCard({
               ) : (
                 <div
                   key={field.id}
-                  className="rounded-2xl border border-border/60 bg-background/70 px-3 py-2 text-xs text-muted-foreground"
+                  className="rounded-2xl border border-border/60 bg-background/70 px-3 py-2 text-xs text-muted-foreground cursor-grab active:cursor-grabbing"
+                  draggable
+                  onDragStart={() => setDraggingLeadFieldId(field.id)}
+                  onDragOver={(event) => event.preventDefault()}
+                  onDrop={() => {
+                    if (draggingLeadFieldId) {
+                      onReorderLeadField?.(draggingLeadFieldId, field.id);
+                    }
+                  }}
+                  onDragEnd={() => setDraggingLeadFieldId(null)}
                 >
-                  <div className="text-[10px] uppercase tracking-[0.2em]">
-                    {field.label}
-                    {field.required ? " *" : ""}
+                  <div className="flex items-center gap-2">
+                    <GripVertical className="h-3 w-3 text-muted-foreground" />
+                    <div className="text-[10px] uppercase tracking-[0.2em]">
+                      {field.label}
+                      {field.required ? " *" : ""}
+                    </div>
                   </div>
                   <PreviewLeadField field={field} />
                 </div>
@@ -1547,7 +1590,7 @@ function LinkListItem({
   const favicon = faviconForUrl(link.url);
   return (
     <div
-      className="group relative flex items-center justify-between gap-3 rounded-2xl border border-border/60 bg-card/80 px-4 py-3 text-xs font-medium shadow-[0_12px_24px_-18px_rgba(15,23,42,0.2)]"
+      className="group relative flex items-center justify-between gap-3 rounded-2xl border border-border/60 bg-card/80 px-4 py-3 text-xs font-medium shadow-[0_12px_24px_-18px_rgba(15,23,42,0.2)] cursor-grab active:cursor-grabbing"
       tabIndex={0}
       draggable={draggable}
       onDragStart={onDragStart}
@@ -1556,6 +1599,9 @@ function LinkListItem({
       onDragEnd={onDragEnd}
     >
       <div className="flex min-w-0 items-center gap-3">
+        <span className="text-muted-foreground">
+          <GripVertical className="h-4 w-4" />
+        </span>
         {favicon ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
