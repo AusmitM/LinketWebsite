@@ -1,13 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
-import { Menu, X } from "lucide-react";
+import { LogOut, Menu, X } from "lucide-react";
 
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -20,6 +26,7 @@ import { buildAvatarPublicUrl } from "@/lib/avatar-utils";
 import { brand } from "@/config/brand";
 import { AdaptiveNavPill } from "@/components/ui/3d-adaptive-navigation-bar";
 import { isPublicProfilePathname } from "@/lib/routing";
+import { toast } from "@/components/system/toaster";
 
 type UserLite = { id: string; email: string | null; fullName?: string | null } | null;
 
@@ -76,6 +83,9 @@ export function Navbar() {
   const [lockedSection, setLockedSection] = useState<string | null>(null);
   const lockTimeout = useRef<number | null>(null);
   const lockedSectionRef = useRef<string | null>(null);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+  const accountButtonRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     lockedSectionRef.current = lockedSection;
@@ -118,7 +128,35 @@ export function Navbar() {
           id: user.id,
           email: user.email ?? null,
           fullName: (user.user_metadata?.full_name as string | null) ?? null,
-        });
+  });
+
+  const handleLogout = async () => {
+    if (loggingOut) return;
+    setLoggingOut(true);
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      await fetch("/auth/callback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ event: "SIGNED_OUT" }),
+      }).catch(() => null);
+      toast({
+        title: "Signed out",
+        description: "You have been logged out safely.",
+        variant: "success",
+      });
+      window.location.assign("/auth?view=signin");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Please try again.";
+      toast({
+        title: "Sign out failed",
+        description: message,
+        variant: "destructive",
+      });
+      setLoggingOut(false);
+    }
+  };
       }
     })();
 
@@ -370,10 +408,12 @@ export function Navbar() {
     LANDING_LINKS[0].id) as LandingSectionId;
 
   const dashboardAvatar = user ? (
-    <Link
-      href="/dashboard/profile"
+    <button
+      type="button"
+      ref={accountButtonRef}
+      onClick={() => setAccountMenuOpen(true)}
       className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border/60 bg-card/90 text-sm font-semibold uppercase text-foreground transition hover:bg-card"
-      aria-label="Account"
+      aria-label="Account menu"
     >
       {avatarUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
@@ -385,7 +425,7 @@ export function Navbar() {
       ) : (
         getUserInitials(user.fullName ?? user.email ?? "PK")
       )}
-    </Link>
+    </button>
   ) : (
     <Button
       variant="outline"
@@ -481,7 +521,6 @@ export function Navbar() {
             >
               <Link href="/claim">New Linket</Link>
             </Button>
-            <span className="hidden lg:inline-flex">{dashboardAvatar}</span>
             {dashboardAvatar}
             <button
               type="button"
@@ -532,6 +571,29 @@ export function Navbar() {
               </div>
             </nav>
           </div>
+        )}
+        {user && (
+          <PopoverDialog
+            open={accountMenuOpen}
+            onOpenChange={setAccountMenuOpen}
+            anchorRef={accountButtonRef}
+            title="Account menu"
+          >
+            <div className="space-y-2 text-sm">
+              <MenuLink href="/dashboard/settings">Account settings</MenuLink>
+              <MenuLink href="/dashboard/billing">Billing</MenuLink>
+              <MenuButton
+                onClick={() =>
+                  window.dispatchEvent(new CustomEvent("open-support"))
+                }
+              >
+                Support
+              </MenuButton>
+              <MenuButton onClick={handleLogout} disabled={loggingOut}>
+                <LogOut className="mr-2 h-4 w-4" /> Logout
+              </MenuButton>
+            </div>
+          </PopoverDialog>
         )}
       </header>
     );
@@ -724,6 +786,99 @@ export function Navbar() {
       )}
     </header>
   );
+}
+
+function PopoverDialog({
+  open,
+  onOpenChange,
+  anchorRef,
+  title,
+  children,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  anchorRef: React.RefObject<HTMLElement | null>;
+  title: string;
+  children: React.ReactNode;
+}) {
+  const position = usePopoverPosition(anchorRef, open);
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent
+        className="w-72 translate-x-0 translate-y-0 rounded-2xl border border-border/60 bg-background p-4 shadow-lg"
+        style={position}
+      >
+        <DialogHeader>
+          <DialogTitle className="text-sm font-semibold">{title}</DialogTitle>
+        </DialogHeader>
+        {children}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function MenuButton({
+  children,
+  onClick,
+  disabled,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="flex w-full items-center rounded-lg px-2 py-2 text-left text-sm text-foreground hover:bg-accent disabled:opacity-50"
+    >
+      {children}
+    </button>
+  );
+}
+
+function MenuLink({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <a
+      href={href}
+      className="flex w-full items-center rounded-lg px-2 py-2 text-left text-sm text-foreground hover:bg-accent"
+    >
+      {children}
+    </a>
+  );
+}
+
+function usePopoverPosition(
+  anchorRef: React.RefObject<HTMLElement | null>,
+  open: boolean
+) {
+  const [style, setStyle] = useState<CSSProperties>({});
+
+  useEffect(() => {
+    if (!open) return;
+    const update = () => {
+      const anchor = anchorRef.current;
+      if (!anchor) return;
+      const rect = anchor.getBoundingClientRect();
+      const top = rect.bottom + 8;
+      const left = Math.min(Math.max(12, rect.left), window.innerWidth - 300);
+      setStyle({
+        position: "fixed",
+        top,
+        left,
+      });
+    };
+    update();
+    window.addEventListener("resize", update);
+    window.addEventListener("scroll", update, true);
+    return () => {
+      window.removeEventListener("resize", update);
+      window.removeEventListener("scroll", update, true);
+    };
+  }, [anchorRef, open]);
+
+  return style;
 }
 
 function getUserInitials(seed: string) {
