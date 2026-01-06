@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
-import { LogOut, Menu, X } from "lucide-react";
+import { ChevronDown, LogOut, Menu, X } from "lucide-react";
 
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
@@ -86,6 +86,9 @@ export function Navbar() {
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const accountButtonRef = useRef<HTMLButtonElement | null>(null);
+  const [viewMenuOpen, setViewMenuOpen] = useState(false);
+  const [accountHandle, setAccountHandle] = useState<string | null>(null);
+  const viewMenuButtonRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     lockedSectionRef.current = lockedSection;
@@ -112,6 +115,7 @@ export function Navbar() {
   useEffect(() => {
     if (!isDashboard) {
       setUser(null);
+      setAccountHandle(null);
       return;
     }
 
@@ -151,6 +155,50 @@ export function Navbar() {
       unsubscribe?.();
     };
   }, [isDashboard]);
+
+  useEffect(() => {
+    if (!isDashboard || !user?.id) {
+      setAccountHandle(null);
+      return;
+    }
+    let active = true;
+    (async () => {
+      try {
+        const response = await fetch(
+          `/api/account/handle?userId=${encodeURIComponent(user.id)}`,
+          { cache: "no-store" }
+        );
+        if (!response.ok) return;
+        const payload = (await response.json()) as { handle?: string | null };
+        if (!active) return;
+        setAccountHandle(payload.handle ?? null);
+      } catch {
+        if (active) setAccountHandle(null);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [isDashboard, user?.id]);
+
+  const profileUrl = accountHandle ? buildPublicProfileUrl(accountHandle) : null;
+
+  const handleViewProfile = () => {
+    if (!profileUrl) return;
+    window.open(profileUrl, "_blank", "noreferrer");
+  };
+
+  const handleCopyProfileLink = async () => {
+    if (!profileUrl) return;
+    try {
+      await navigator.clipboard.writeText(profileUrl);
+      toast({ title: "Link copied", variant: "success" });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to copy link";
+      toast({ title: "Copy failed", description: message, variant: "destructive" });
+    }
+  };
 
   const handleLogout = async () => {
     if (loggingOut) return;
@@ -513,6 +561,29 @@ export function Navbar() {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            {user && (
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="rounded-full border border-border/60"
+                  onClick={handleViewProfile}
+                  disabled={!profileUrl}
+                >
+                  View Public Profile
+                </Button>
+                <button
+                  type="button"
+                  ref={viewMenuButtonRef}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border/60 text-muted-foreground hover:bg-accent"
+                  onClick={() => setViewMenuOpen(true)}
+                  aria-label="Copy profile link"
+                  disabled={!profileUrl}
+                >
+                  <ChevronDown className="h-4 w-4" />
+                </button>
+              </div>
+            )}
             <Button
               asChild
               size="sm"
@@ -570,6 +641,20 @@ export function Navbar() {
               </div>
             </nav>
           </div>
+        )}
+        {user && (
+          <PopoverDialog
+            open={viewMenuOpen}
+            onOpenChange={setViewMenuOpen}
+            anchorRef={viewMenuButtonRef}
+            title="Copy link"
+          >
+            <div className="space-y-2 text-sm">
+              <MenuButton onClick={handleCopyProfileLink} disabled={!profileUrl}>
+                Copy link
+              </MenuButton>
+            </div>
+          </PopoverDialog>
         )}
         {user && (
           <PopoverDialog
@@ -878,6 +963,17 @@ function usePopoverPosition(
   }, [anchorRef, open]);
 
   return style;
+}
+
+function buildPublicProfileUrl(handle: string) {
+  const envBase = process.env.NEXT_PUBLIC_SITE_URL;
+  const base =
+    envBase && envBase.length > 0
+      ? envBase
+      : typeof window !== "undefined"
+      ? window.location.origin
+      : "https://linketconnect.com";
+  return `${base.replace(/\/$/, "")}/${encodeURIComponent(handle)}`;
 }
 
 function getUserInitials(seed: string) {

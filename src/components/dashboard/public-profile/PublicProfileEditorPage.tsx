@@ -11,7 +11,6 @@ import {
   type ReactNode,
 } from "react";
 import {
-  ChevronDown,
   Eye,
   EyeOff,
   Globe,
@@ -131,10 +130,8 @@ export default function PublicProfileEditorPage() {
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
   const [accountHandle, setAccountHandle] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [profileUrl, setProfileUrl] = useState<string | null>(null);
   const [statusPanelOpen, setStatusPanelOpen] = useState(false);
   const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
-  const [viewMenuOpen, setViewMenuOpen] = useState(false);
   const [linkModalOpen, setLinkModalOpen] = useState(false);
   const [linkModalMode, setLinkModalMode] = useState<"add" | "edit">("add");
   const [editingLinkId, setEditingLinkId] = useState<string | null>(null);
@@ -163,7 +160,6 @@ export default function PublicProfileEditorPage() {
   >(null);
   const statusButtonRef = useRef<HTMLButtonElement | null>(null);
   const avatarButtonRef = useRef<HTMLButtonElement | null>(null);
-  const viewButtonRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     if (!userId || vcardLoaded) return;
@@ -445,15 +441,6 @@ export default function PublicProfileEditorPage() {
   );
 
   useEffect(() => {
-    const handle = draft?.handle || accountHandle;
-    if (!handle) {
-      setProfileUrl(null);
-      return;
-    }
-    setProfileUrl(buildPublicProfileUrl(handle));
-  }, [accountHandle, draft?.handle]);
-
-  useEffect(() => {
     if (!userId) return;
     const handle = draft?.handle || accountHandle;
     if (!handle) {
@@ -620,18 +607,6 @@ export default function PublicProfileEditorPage() {
     setLinkModalOpen(false);
   }, [editingLinkId, linkForm, linkModalMode, updateLink]);
 
-  const handleCopyProfileLink = useCallback(async () => {
-    if (!profileUrl) return;
-    try {
-      await navigator.clipboard.writeText(profileUrl);
-      toast({ title: "Link copied", variant: "success" });
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Unable to copy link";
-      toast({ title: "Copy failed", description: message, variant: "destructive" });
-    }
-  }, [profileUrl]);
-
   const hasContactDetails = Boolean(
     vcardSnapshot.email?.trim() || vcardSnapshot.phone?.trim()
   );
@@ -683,18 +658,6 @@ export default function PublicProfileEditorPage() {
     });
   }, [hasContactDetails, vcardSnapshot.email]);
 
-  const previewUrl = useMemo(() => {
-    const handle = draft?.handle || accountHandle;
-    if (!handle) return null;
-    return buildPreviewUrl(handle);
-  }, [accountHandle, draft?.handle]);
-  const viewProfileUrl = Boolean(draft?.active) ? profileUrl : previewUrl;
-
-  const handleViewProfile = useCallback(() => {
-    if (!viewProfileUrl) return;
-    window.open(viewProfileUrl, "_blank", "noreferrer");
-  }, [viewProfileUrl]);
-
   const handlePublish = useCallback(() => {
     handleProfileChange({ active: true });
     void handleSave();
@@ -704,11 +667,6 @@ export default function PublicProfileEditorPage() {
     handleProfileChange({ active: false });
     void handleSave();
   }, [handleProfileChange, handleSave]);
-
-  const handlePreviewClick = useCallback(() => {
-    if (!previewUrl) return;
-    window.open(previewUrl, "_blank", "noreferrer");
-  }, [previewUrl]);
 
   const handleLogout = useCallback(async () => {
     if (loggingOut) return;
@@ -754,21 +712,14 @@ export default function PublicProfileEditorPage() {
         onRetrySave={handleSave}
         isPublished={Boolean(draft?.active)}
         avatarInitials={userInitials}
-        profileUrl={profileUrl}
-        onViewProfile={handleViewProfile}
-        onCopyProfile={handleCopyProfileLink}
         onLogout={handleLogout}
         logoutDisabled={loggingOut}
         statusPanelOpen={statusPanelOpen}
         setStatusPanelOpen={setStatusPanelOpen}
         avatarMenuOpen={avatarMenuOpen}
         setAvatarMenuOpen={setAvatarMenuOpen}
-        viewMenuOpen={viewMenuOpen}
-        setViewMenuOpen={setViewMenuOpen}
         statusButtonRef={statusButtonRef}
         avatarButtonRef={avatarButtonRef}
-        viewButtonRef={viewButtonRef}
-        onPreviewClick={handlePreviewClick}
       />
 
       <div className="grid gap-6 lg:grid-cols-[450px_minmax(0,1fr)_50px]">
@@ -867,21 +818,14 @@ function TopActionBar({
   onRetrySave,
   isPublished,
   avatarInitials,
-  profileUrl,
-  onViewProfile,
-  onCopyProfile,
   onLogout,
   logoutDisabled,
   statusPanelOpen,
   setStatusPanelOpen,
   avatarMenuOpen,
   setAvatarMenuOpen,
-  viewMenuOpen,
-  setViewMenuOpen,
   statusButtonRef,
   avatarButtonRef,
-  viewButtonRef,
-  onPreviewClick,
 }: {
   lastSavedAt: string | null;
   saveState: "saving" | "saved" | "failed";
@@ -891,21 +835,14 @@ function TopActionBar({
   onRetrySave: () => void;
   isPublished: boolean;
   avatarInitials: string;
-  profileUrl: string | null;
-  onViewProfile: () => void;
-  onCopyProfile: () => void;
   onLogout: () => void;
   logoutDisabled: boolean;
   statusPanelOpen: boolean;
   setStatusPanelOpen: (open: boolean) => void;
   avatarMenuOpen: boolean;
   setAvatarMenuOpen: (open: boolean) => void;
-  viewMenuOpen: boolean;
-  setViewMenuOpen: (open: boolean) => void;
   statusButtonRef: React.RefObject<HTMLButtonElement | null>;
   avatarButtonRef: React.RefObject<HTMLButtonElement | null>;
-  viewButtonRef: React.RefObject<HTMLButtonElement | null>;
-  onPreviewClick: () => void;
 }) {
   return (
     <div className="-mx-4 border-b border-border/60 bg-background/95 px-4 py-3 sm:-mx-6 lg:-mx-8">
@@ -929,27 +866,6 @@ function TopActionBar({
         </button>
 
         <div className="ml-auto flex flex-wrap items-center gap-2">
-          <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="rounded-full border border-border/60"
-              onClick={onViewProfile}
-              disabled={!profileUrl}
-              ref={viewButtonRef}
-            >
-              <Eye className="mr-2 h-4 w-4" aria-hidden />
-              View Public Profile
-            </Button>
-            <button
-              type="button"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border/60 text-muted-foreground hover:bg-accent"
-              onClick={() => setViewMenuOpen(true)}
-              aria-label="View profile menu"
-            >
-              <ChevronDown className="h-4 w-4" />
-            </button>
-          </div>
           <button
             type="button"
             ref={avatarButtonRef}
@@ -1008,25 +924,6 @@ function TopActionBar({
           <Button size="sm" onClick={isPublished ? onUnpublish : onPublish}>
             {isPublished ? "Unpublish" : "Publish"}
           </Button>
-        </div>
-      </PopoverDialog>
-
-      <PopoverDialog
-        open={viewMenuOpen}
-        onOpenChange={setViewMenuOpen}
-        anchorRef={viewButtonRef}
-        title="View options"
-      >
-        <div className="space-y-2 text-sm">
-          <MenuButton onClick={onPreviewClick} disabled={!profileUrl}>
-            Preview
-          </MenuButton>
-          <MenuButton onClick={onCopyProfile} disabled={!profileUrl}>
-            Copy link
-          </MenuButton>
-          {!isPublished && (
-            <MenuButton onClick={onPublish}>Publish</MenuButton>
-          )}
         </div>
       </PopoverDialog>
 
@@ -1901,28 +1798,6 @@ function formatShortDate(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "Just now";
   return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-}
-
-function buildPublicProfileUrl(handle: string) {
-  const envBase = process.env.NEXT_PUBLIC_SITE_URL;
-  const base =
-    envBase && envBase.length > 0
-      ? envBase
-      : typeof window !== "undefined"
-      ? window.location.origin
-      : "https://linketconnect.com";
-  return `${base.replace(/\/$/, "")}/${encodeURIComponent(handle)}`;
-}
-
-function buildPreviewUrl(handle: string) {
-  const envBase = process.env.NEXT_PUBLIC_SITE_URL;
-  const base =
-    envBase && envBase.length > 0
-      ? envBase
-      : typeof window !== "undefined"
-      ? window.location.origin
-      : "https://linketconnect.com";
-  return `${base.replace(/\/$/, "")}/u/${encodeURIComponent(handle)}/preview`;
 }
 
 function buildFallbackDraft(
