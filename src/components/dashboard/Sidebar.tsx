@@ -25,7 +25,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Package,
-  IdCard,
+  User,
 } from "lucide-react";
 
 const BASE_NAV = [
@@ -33,7 +33,7 @@ const BASE_NAV = [
   {
     href: "/dashboard/profiles",
     label: "Linket Public Profile",
-    icon: IdCard,
+    icon: User,
   },
   { href: "/dashboard/leads", label: "Leads", icon: MessageSquare },
   { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
