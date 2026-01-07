@@ -13,6 +13,7 @@ import {
   EyeOff,
   Globe,
   GripVertical,
+  IdCard,
   Instagram,
   Link2,
   MessageSquare,
@@ -86,7 +87,7 @@ type VCardSnapshot = {
 
 const SECTIONS: Array<{ id: SectionId; label: string; icon: typeof User }> = [
   { id: "profile", label: "Profile", icon: User },
-  { id: "contact", label: "Contact Card", icon: MessageSquare },
+  { id: "contact", label: "Contact Card", icon: IdCard },
   { id: "links", label: "Links", icon: Link2 },
   { id: "lead", label: "Lead Form", icon: MessageSquare },
 ];
@@ -793,6 +794,7 @@ function ProfileSectionsNav({
           {SECTIONS.map((item) => {
             const Icon = item.icon;
             const active = activeSection === item.id;
+            const iconClassName = item.id === "contact" ? "h-6 w-6" : "h-5 w-5";
             return (
               <button
                 key={item.id}
@@ -805,7 +807,7 @@ function ProfileSectionsNav({
                     : "text-muted-foreground hover:bg-accent/60"
                 )}
               >
-                <Icon className="h-4 w-4" aria-hidden />
+                <Icon className={iconClassName} aria-hidden />
                 {item.label}
               </button>
             );
