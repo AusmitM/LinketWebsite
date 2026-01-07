@@ -296,7 +296,7 @@ export default function PublicProfileEditorPage() {
           name: "Linket Public Profile",
           handle,
           headline: "",
-          links: [{ title: "Website", url: "https://linketconnect.com" }],
+          links: [{ title: "Website", url: "https://www.linketconnect.com" }],
           theme,
           active: true,
         };
@@ -1076,14 +1076,14 @@ function EditorPanel({
                     }
                     className="h-9 text-sm"
                   />
-                  <Input
-                    value={link.url}
-                    placeholder="https://"
-                    onChange={(event) =>
-                      onUpdateLink(link.id, { url: event.target.value })
-                    }
-                    className="h-9 text-sm"
-                  />
+                    <Input
+                      value={link.url}
+                      placeholder="https://www."
+                      onChange={(event) =>
+                        onUpdateLink(link.id, { url: event.target.value })
+                      }
+                      className="h-9 text-sm"
+                    />
                 </div>
                 <div className="flex flex-col gap-2">
                   <Button
@@ -1525,6 +1525,7 @@ function LinkModal({
               <Input
                 id="link-url"
                 value={link.url}
+                placeholder="https://www."
                 onChange={(event) =>
                   onChange({ ...link, url: event.target.value })
                 }
@@ -1639,7 +1640,7 @@ function createLink(): LinkItem {
   return {
     id: `link-${cryptoRandom()}`,
     label: "New link",
-    url: "https://linketconnect.com",
+    url: "https://www.linketconnect.com",
     icon: base.value,
     color: base.color,
     visible: true,

@@ -372,7 +372,7 @@ export default function ProfilesContent() {
               {
                 id: `link-${cryptoRandom()}`,
                 label: "New link",
-                url: "https://linketconnect.com",
+                url: "https://www.linketconnect.com",
                 clicks: 0,
               },
             ],
@@ -410,7 +410,7 @@ export default function ProfilesContent() {
         name: "New profile",
         handle: `profile-${profiles.length + 1}`,
         headline: "",
-        links: [{ title: "Website", url: "https://linketconnect.com" }],
+        links: [{ title: "Website", url: "https://www.linketconnect.com" }],
         theme: DEFAULT_THEME,
         active: profiles.length === 0,
       };
@@ -1096,7 +1096,7 @@ export default function ProfilesContent() {
                         />
                         <Input
                           value={link.url}
-                          placeholder="https://"
+                          placeholder="https://www."
                           onChange={(event) =>
                             updateLink(link.id, { url: event.target.value })
                           }
