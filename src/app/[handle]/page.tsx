@@ -3,7 +3,7 @@ import { getSignedAvatarUrl } from "@/lib/avatar-server";
 import { getSignedProfileHeaderUrl } from "@/lib/profile-header-server";
 import { normalizeLeadFormConfig } from "@/lib/lead-form";
 import { getActiveProfileForPublicHandle } from "@/lib/profile-service";
-import { createServerSupabase } from "@/lib/supabase/server";
+import { createServerSupabaseReadonly } from "@/lib/supabase/server";
 import { isDarkTheme } from "@/lib/themes";
 import type { ProfileLinkRecord } from "@/types/db";
 import type { LeadFormConfig } from "@/types/lead-form";
@@ -46,7 +46,7 @@ export default async function PublicProfilePage({ params }: Props) {
     profile.header_image_updated_at
   );
   const publicHandle = account.username || profile.handle || handle;
-  const supabase = await createServerSupabase();
+  const supabase = await createServerSupabaseReadonly();
   const { data: leadFormRow } = await supabase
     .from("lead_forms")
     .select("id, config")
@@ -89,7 +89,7 @@ export default async function PublicProfilePage({ params }: Props) {
           />
         </div>
 
-        <main className="relative mx-auto w-full max-w-5xl px-4 pb-20 pt-16 sm:px-8 sm:pt-24 lg:px-10">
+        <main className="relative mx-auto w-full max-w-5xl px-4 pb-20 pt-8 sm:px-8 sm:pt-24 lg:px-10">
           <section className="grid gap-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
             <div className="space-y-6">
               <div className="sm:hidden">
