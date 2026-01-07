@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { buildAvatarPublicUrl } from "@/lib/avatar-utils";
+import { getSignedAvatarUrl } from "@/lib/avatar-client";
 import { brand } from "@/config/brand";
 import { AdaptiveNavPill } from "@/components/ui/3d-adaptive-navigation-bar";
 import { isPublicProfilePathname } from "@/lib/routing";
@@ -239,12 +239,11 @@ export function Navbar() {
         .select("avatar_url, updated_at")
         .eq("user_id", user.id)
         .maybeSingle();
-      setAvatarUrl(
-        buildAvatarPublicUrl(
+        const signed = await getSignedAvatarUrl(
           (data?.avatar_url as string | null) ?? null,
           (data?.updated_at as string | null) ?? null
-        )
-      );
+        );
+        setAvatarUrl(signed);
     })();
   }, [user, isDashboard]);
 

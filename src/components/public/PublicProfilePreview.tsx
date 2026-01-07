@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { buildAvatarPublicUrl } from "@/lib/avatar-utils";
+import { getSignedAvatarUrl } from "@/lib/avatar-client";
 import { isDarkTheme } from "@/lib/themes";
 import type { ProfileWithLinks } from "@/lib/profile-service";
 import type { LeadFormConfig } from "@/types/lead-form";
@@ -40,10 +40,7 @@ export default function PublicProfilePreview({
   handle,
   layout = "split",
 }: Props) {
-  const avatar = buildAvatarPublicUrl(
-    account.avatarPath,
-    account.avatarUpdatedAt
-  );
+  const [avatar, setAvatar] = useState<string | null>(null);
   const publicHandle = account.handle || profile.handle || handle;
   const displayName = profile.name || account.displayName || publicHandle;
   const isDark = isDarkTheme(profile.theme);
@@ -53,6 +50,21 @@ export default function PublicProfilePreview({
   const hasLinks = links.length > 0;
   const hasHeadline = Boolean(headline);
   const [leadFormTitle, setLeadFormTitle] = useState("Contact");
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const signed = await getSignedAvatarUrl(
+        account.avatarPath,
+        account.avatarUpdatedAt
+      );
+      if (!active) return;
+      setAvatar(signed);
+    })();
+    return () => {
+      active = false;
+    };
+  }, [account.avatarPath, account.avatarUpdatedAt]);
 
   useEffect(() => {
     let active = true;

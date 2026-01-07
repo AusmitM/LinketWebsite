@@ -28,7 +28,7 @@ import LeadFormBuilder from "@/components/dashboard/LeadFormBuilder";
 import VCardContent from "@/components/dashboard/vcard/VCardContent";
 import { useDashboardUser } from "@/components/dashboard/DashboardSessionContext";
 import { useThemeOptional } from "@/components/theme/theme-provider";
-import { buildAvatarPublicUrl } from "@/lib/avatar-utils";
+import { getSignedAvatarUrl } from "@/lib/avatar-client";
 import { cn } from "@/lib/utils";
 import { shuffleFields } from "@/lib/lead-form";
 import { toast } from "@/components/system/toaster";
@@ -50,7 +50,7 @@ import type { ThemeName } from "@/lib/themes";
 import type { ProfileWithLinks } from "@/lib/profile-service";
 import type { LeadFormConfig, LeadFormField } from "@/types/lead-form";
 
-type SectionId = "profile" | "contact" | "links" | "lead" | "style";
+type SectionId = "profile" | "contact" | "links" | "lead";
 
 type LinkIconKey = "instagram" | "globe" | "twitter" | "link";
 
@@ -89,7 +89,6 @@ const SECTIONS: Array<{ id: SectionId; label: string; icon: typeof User }> = [
   { id: "contact", label: "Contact Card", icon: MessageSquare },
   { id: "links", label: "Links", icon: Link2 },
   { id: "lead", label: "Lead Form", icon: MessageSquare },
-  { id: "style", label: "Style", icon: Palette },
 ];
 
 const ICON_OPTIONS: Array<{
@@ -239,12 +238,11 @@ export default function PublicProfileEditorPage() {
         };
         if (!active) return;
         setAccountHandle(payload.handle ?? null);
-        setAvatarUrl(
-          buildAvatarPublicUrl(
-            payload.avatarPath ?? null,
-            payload.avatarUpdatedAt ?? null
-          )
+        const signed = await getSignedAvatarUrl(
+          payload.avatarPath ?? null,
+          payload.avatarUpdatedAt ?? null
         );
+        setAvatarUrl(signed);
       } catch {
         if (active) setAccountHandle(null);
       }
@@ -675,7 +673,7 @@ export default function PublicProfileEditorPage() {
         </Button>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[450px_minmax(0,1fr)_50px]">
+      <div className="grid gap-6 lg:grid-cols-[550px_minmax(0,1fr)_50px]">
         <div className="space-y-4">
           <ProfileSectionsNav
             activeSection={activeSection}
@@ -791,7 +789,7 @@ function ProfileSectionsNav({
         <div className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
           PROFILE SECTIONS
         </div>
-        <div className="mt-3 space-y-1">
+        <div className="mt-3 grid grid-cols-2 gap-2">
           {SECTIONS.map((item) => {
             const Icon = item.icon;
             const active = activeSection === item.id;

@@ -1,11 +1,11 @@
 import { redirect } from "next/navigation";
 
-import { createServerSupabase } from "@/lib/supabase/server";
+import { createServerSupabaseReadonly } from "@/lib/supabase/server";
 
 export const revalidate = 0;
 
 export default async function Dashboard() {
-  const supabase = await createServerSupabase();
+  const supabase = await createServerSupabaseReadonly();
   const {
     data: { user },
   } = await supabase.auth.getUser();

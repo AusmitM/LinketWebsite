@@ -2,6 +2,7 @@
 "use client";
 
 import { supabase } from "@/lib/supabase";
+import { appendVersion } from "@/lib/avatar-utils";
 
 export type UploadResult = { publicUrl: string; thumbUrl: string; path: string; thumbPath: string };
 
@@ -45,11 +46,25 @@ export async function uploadAvatar(
   });
   if (upErr2) throw new Error(upErr2.message ?? "Failed to upload avatar thumbnail");
 
-  const { data } = supabase.storage.from("avatars").getPublicUrl(path);
-  const { data: d2 } = supabase.storage.from("avatars").getPublicUrl(pathThumb);
-  const publicUrl = `${data.publicUrl}?v=${Date.now()}`; // cache-bust
-  const thumbUrl = `${d2.publicUrl}?v=${Date.now()}`;
-  if (!publicUrl) throw new Error("Failed to get public URL");
+  const { data, error: signErr } = await supabase
+    .storage
+    .from("avatars")
+    .createSignedUrl(path, 3600);
+  if (signErr || !data?.signedUrl) {
+    throw new Error(signErr?.message ?? "Failed to sign avatar URL");
+  }
+
+  const { data: d2, error: signThumbErr } = await supabase
+    .storage
+    .from("avatars")
+    .createSignedUrl(pathThumb, 3600);
+  if (signThumbErr || !d2?.signedUrl) {
+    throw new Error(signThumbErr?.message ?? "Failed to sign thumbnail URL");
+  }
+
+  const publicUrl = appendVersion(data.signedUrl, Date.now());
+  const thumbUrl = appendVersion(d2.signedUrl, Date.now());
+  if (!publicUrl || !thumbUrl) throw new Error("Failed to sign avatar URL");
 
   return { publicUrl, thumbUrl, path, thumbPath: pathThumb };
 }

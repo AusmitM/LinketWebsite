@@ -17,7 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/system/toaster";
 import { supabase } from "@/lib/supabase";
 import AvatarUploader from "@/components/dashboard/AvatarUploader";
-import { buildAvatarPublicUrl } from "@/lib/avatar-utils";
+import { getSignedAvatarUrl } from "@/lib/avatar-client";
 import type { ThemeName } from "@/lib/themes";
 import type { ProfileWithLinks } from "@/lib/profile-service";
 import { useDashboardUser } from "@/components/dashboard/DashboardSessionContext";
@@ -275,12 +275,11 @@ export default function ProfilesContent() {
           avatarUpdatedAt?: string | null;
         };
         if (cancelled) return;
-        setAvatarUrl(
-          buildAvatarPublicUrl(
-            payload.avatarPath ?? null,
-            payload.avatarUpdatedAt ?? null
-          )
+        const signed = await getSignedAvatarUrl(
+          payload.avatarPath ?? null,
+          payload.avatarUpdatedAt ?? null
         );
+        setAvatarUrl(signed);
         setAccountHandle(payload.handle ?? null);
         setAccountError(null);
       } catch (error) {

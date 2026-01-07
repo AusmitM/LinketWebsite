@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import DashboardPrefetcher from "@/components/dashboard/DashboardPrefetcher";
 import DashboardThemeSync from "@/components/dashboard/DashboardThemeSync";
-import { createServerSupabase } from "@/lib/supabase/server";
+import { createServerSupabaseReadonly } from "@/lib/supabase/server";
 import { DashboardSessionProvider } from "@/components/dashboard/DashboardSessionContext";
 import DashboardAppShell from "@/components/dashboard/DashboardAppShell";
 
@@ -13,7 +13,7 @@ export default async function DashboardLayout({
 }: {
   children: ReactNode;
 }) {
-  const supabase = await createServerSupabase();
+  const supabase = await createServerSupabaseReadonly();
   const {
     data: { user },
   } = await supabase.auth.getUser();

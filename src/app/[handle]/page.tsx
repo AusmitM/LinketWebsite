@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { buildAvatarPublicUrl } from "@/lib/avatar-utils";
+import { getSignedAvatarUrl } from "@/lib/avatar-server";
 import { normalizeLeadFormConfig } from "@/lib/lead-form";
 import { getActiveProfileForPublicHandle } from "@/lib/profile-service";
 import { createServerSupabase } from "@/lib/supabase/server";
@@ -36,7 +36,7 @@ export default async function PublicProfilePage({ params }: Props) {
   if (!payload) notFound();
 
   const { account, profile } = payload;
-  const avatar = buildAvatarPublicUrl(
+  const avatar = await getSignedAvatarUrl(
     account.avatar_url,
     account.avatar_updated_at
   );
