@@ -267,7 +267,7 @@ export default function PublicProfilePreview({
                         className="h-full w-full object-cover"
                       />
                     ) : (
-                      <div className="h-full w-full bg-gradient-to-r from-[#fcce58] via-[#6cdadd] to-[#53bede]" />
+                      <div className="h-full w-full bg-gradient-to-r from-[#e6a639] via-[#6cdadd] to-[#53bede]" />
                     )}
                     <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background/40" />
                   </div>
