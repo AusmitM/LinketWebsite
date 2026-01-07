@@ -30,13 +30,13 @@ import {
 
 const BASE_NAV = [
   { href: "/dashboard/overview", label: "Overview", icon: LayoutDashboard },
-  { href: "/dashboard/leads", label: "Leads", icon: MessageSquare },
-  { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
   {
     href: "/dashboard/profiles",
     label: "Linket Public Profile",
     icon: IdCard,
   },
+  { href: "/dashboard/leads", label: "Leads", icon: MessageSquare },
+  { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/dashboard/billing", label: "Billing", icon: CreditCard },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
