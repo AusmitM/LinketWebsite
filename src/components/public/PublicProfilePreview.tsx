@@ -22,6 +22,7 @@ type Props = {
   account: AccountPreview;
   handle: string;
   layout?: "split" | "stacked";
+  forceMobile?: boolean;
 };
 
 function sortLinks(links: ProfileWithLinks["links"]) {
@@ -40,6 +41,7 @@ export default function PublicProfilePreview({
   account,
   handle,
   layout = "split",
+  forceMobile = false,
 }: Props) {
   const [avatar, setAvatar] = useState<string | null>(null);
   const [headerImage, setHeaderImage] = useState<string | null>(null);
@@ -137,7 +139,7 @@ export default function PublicProfilePreview({
           <main className="relative mx-auto w-full max-w-3xl px-4 pb-20 pt-12 sm:px-8 lg:px-10">
             <section className="space-y-8">
               <div className="space-y-6">
-              <div className="sm:hidden">
+              <div className={forceMobile ? "" : "sm:hidden"}>
                 <div className="overflow-hidden rounded-3xl border border-border/60 bg-card/70">
                   <div className="relative h-32">
                     {headerImage ? (
@@ -187,6 +189,7 @@ export default function PublicProfilePreview({
                   </div>
                 </div>
               </div>
+              {forceMobile ? null : (
               <div className="hidden flex-wrap items-center gap-4 sm:flex">
                 <div className="h-20 w-20 overflow-hidden rounded-3xl border border-border/60 bg-muted/40">
                   {avatar ? (
@@ -216,6 +219,7 @@ export default function PublicProfilePreview({
                     </div>
                   </div>
                 </div>
+              )}
 
                 <div className="flex flex-wrap items-center gap-3">
                   <VCardDownload
@@ -261,7 +265,7 @@ export default function PublicProfilePreview({
           <main className="relative mx-auto w-full max-w-5xl px-4 pb-20 pt-8 sm:px-8 lg:px-10">
             <section className="grid gap-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
               <div className="space-y-6">
-              <div className="sm:hidden">
+              <div className={forceMobile ? "" : "sm:hidden"}>
                 <div className="overflow-hidden rounded-3xl border border-border/60 bg-card/70">
                   <div className="relative h-32">
                     {headerImage ? (
@@ -311,6 +315,7 @@ export default function PublicProfilePreview({
                   </div>
                 </div>
               </div>
+              {forceMobile ? null : (
               <div className="hidden flex-wrap items-center gap-4 sm:flex">
                 <div className="h-20 w-20 overflow-hidden rounded-3xl border border-border/60 bg-muted/40">
                   {avatar ? (
@@ -340,7 +345,9 @@ export default function PublicProfilePreview({
                     </div>
                   </div>
                 </div>
+              )}
 
+                {forceMobile ? null : (
                 <div className="flex flex-wrap items-center gap-3">
                   <VCardDownload
                     handle={publicHandle}
@@ -348,8 +355,9 @@ export default function PublicProfilePreview({
                     className="w-full rounded-full bg-foreground text-background shadow-[0_16px_32px_-24px_rgba(15,23,42,0.6)] hover:bg-foreground/90 sm:w-auto"
                   />
                 </div>
+                )}
 
-                {hasLinks ? (
+                {!forceMobile && hasLinks ? (
                   <div className="space-y-3">
                     <h2 className="text-sm font-semibold uppercase tracking-[0.3em] text-muted-foreground">
                       Links

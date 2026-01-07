@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   BarChart3,
@@ -25,7 +25,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useDashboardUser } from "@/components/dashboard/DashboardSessionContext";
 import { supabase } from "@/lib/supabase";
-import { toast } from "@/components/system/toaster";
 import PublicProfilePreview from "@/components/public/PublicProfilePreview";
 import type { UserAnalytics } from "@/lib/analytics-service";
 import type { ProfileWithLinks } from "@/lib/profile-service";
@@ -673,14 +672,17 @@ function PublicProfilePreviewPanel({ userId }: { userId: string | null }) {
   }
 
   return (
-    <div className="h-full w-full overflow-hidden rounded-[36px] border border-border/60 bg-background shadow-[0_20px_40px_-30px_rgba(15,23,42,0.3)]">
-      <div className="h-full w-full overflow-y-auto">
-      <PublicProfilePreview
-        profile={profile}
-        account={account}
-        handle={account.handle || profile.handle}
-        layout="stacked"
-      />
+    <div className="flex h-full w-full items-center justify-center">
+      <div className="h-full w-full max-w-sm overflow-hidden rounded-[36px] border border-border/60 bg-background shadow-[0_20px_40px_-30px_rgba(15,23,42,0.3)]">
+        <div className="h-full w-full overflow-y-auto">
+          <PublicProfilePreview
+            profile={profile}
+            account={account}
+            handle={account.handle || profile.handle}
+            layout="stacked"
+            forceMobile
+          />
+        </div>
       </div>
     </div>
   );
