@@ -12,7 +12,7 @@ create table if not exists public.user_profiles (
   headline text,
   header_image_url text,
   header_image_updated_at timestamptz,
-  theme text not null default 'light',
+  theme text not null default 'autumn',
   is_active boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
@@ -144,7 +144,7 @@ function normaliseTheme(
     "silver",
     "autumn",
   ];
-  const value = (theme ?? "light").toLowerCase();
+  const value = (theme ?? "autumn").toLowerCase();
   return allowed.includes(value as ThemeName) ? (value as ThemeName) : "light";
 }
 

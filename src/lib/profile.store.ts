@@ -50,7 +50,7 @@ store.set("punit", {
     postcode: "77840",
     country: "USA",
   },
-  website: "https://linket.example",
+  website: "https://linketconnect.com",
   note: "Photography + product design.",
   uid: "urn:uuid:punit-0001",
   updatedAt: new Date().toISOString(),

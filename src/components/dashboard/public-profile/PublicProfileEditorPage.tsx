@@ -296,7 +296,7 @@ export default function PublicProfileEditorPage() {
           name: "Linket Public Profile",
           handle,
           headline: "",
-          links: [{ title: "Website", url: "https://" }],
+          links: [{ title: "Website", url: "https://linketconnect.com" }],
           theme,
           active: true,
         };
@@ -1639,7 +1639,7 @@ function createLink(): LinkItem {
   return {
     id: `link-${cryptoRandom()}`,
     label: "New link",
-    url: "https://",
+    url: "https://linketconnect.com",
     icon: base.value,
     color: base.color,
     visible: true,

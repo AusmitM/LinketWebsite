@@ -80,7 +80,7 @@ const THEME_OPTIONS: Array<{
   },
 ];
 
-const DEFAULT_THEME: ThemeName = "light";
+const DEFAULT_THEME: ThemeName = "autumn";
 
 type LinkItem = {
   id: string;
@@ -372,7 +372,7 @@ export default function ProfilesContent() {
               {
                 id: `link-${cryptoRandom()}`,
                 label: "New link",
-                url: "https://",
+                url: "https://linketconnect.com",
                 clicks: 0,
               },
             ],
@@ -410,7 +410,7 @@ export default function ProfilesContent() {
         name: "New profile",
         handle: `profile-${profiles.length + 1}`,
         headline: "",
-        links: [{ title: "Website", url: "https://" }],
+        links: [{ title: "Website", url: "https://linketconnect.com" }],
         theme: DEFAULT_THEME,
         active: profiles.length === 0,
       };
