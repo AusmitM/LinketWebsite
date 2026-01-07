@@ -67,6 +67,7 @@ export default function PublicLeadForm({
   const [emailValue, setEmailValue] = useState("");
 
   const disabled = !form || form.status !== "published";
+  const hasFields = Boolean(form?.fields?.length);
 
   const cardStyle = appearance
     ? {
@@ -136,6 +137,10 @@ export default function PublicLeadForm({
       }
     })();
   }, [handle]);
+
+  if (!loading && (disabled || !hasFields)) {
+    return null;
+  }
 
   useEffect(() => {
     if (!form) return;

@@ -53,12 +53,14 @@ export default async function PublicProfilePage({ params }: Props) {
     .eq("handle", publicHandle)
     .eq("status", "published")
     .maybeSingle();
-  const leadFormTitle = leadFormRow?.config
+  const normalizedLeadForm = leadFormRow?.config
     ? normalizeLeadFormConfig(
         leadFormRow.config as LeadFormConfig,
         leadFormRow.id ?? `form-${publicHandle}`
-      ).title
-    : "Contact";
+      )
+    : null;
+  const leadFormTitle = normalizedLeadForm?.title ?? "Contact";
+  const hasLeadForm = Boolean(normalizedLeadForm?.fields?.length);
   const displayName = profile.name || account.display_name || publicHandle;
   const isDark = isDarkTheme(profile.theme);
   const themeClass = `theme-${profile.theme} ${isDark ? "dark" : ""}`;
@@ -190,24 +192,26 @@ export default async function PublicProfilePage({ params }: Props) {
                 ) : null}
             </div>
 
-            <div className="rounded-[28px] border border-border/60 bg-card/80 p-6 shadow-[0_24px_60px_-40px_rgba(15,23,42,0.7)]">
-              <div className="space-y-2">
-                <h2 className="text-lg font-semibold text-foreground">
-                  {leadFormTitle}
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  Share your info with {displayName}.
-                </p>
+            {hasLeadForm ? (
+              <div className="rounded-[28px] border border-border/60 bg-card/80 p-6 shadow-[0_24px_60px_-40px_rgba(15,23,42,0.7)]">
+                <div className="space-y-2">
+                  <h2 className="text-lg font-semibold text-foreground">
+                    {leadFormTitle}
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    Share your info with {displayName}.
+                  </p>
+                </div>
+                <div className="mt-5">
+                  <PublicLeadForm
+                    ownerId={profile.user_id}
+                    handle={publicHandle}
+                    variant="profile"
+                    showHeader={false}
+                  />
+                </div>
               </div>
-              <div className="mt-5">
-                <PublicLeadForm
-                  ownerId={profile.user_id}
-                  handle={publicHandle}
-                  variant="profile"
-                  showHeader={false}
-                />
-              </div>
-            </div>
+            ) : null}
           </section>
         </main>
       </div>

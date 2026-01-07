@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/components/system/toaster";
 import { Button } from "@/components/ui/button";
@@ -23,8 +25,36 @@ import {
 } from "@/lib/dashboard/mock-data";
 import { CreditCard, Download, TrendingUp, PiggyBank } from "lucide-react";
 export default function SettingsContent() {
+  const router = useRouter();
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const notify = (title: string, description: string) =>
     toast({ title, description });
+
+  const handleDeleteAccount = async () => {
+    if (deleting) return;
+    setDeleting(true);
+    try {
+      const response = await fetch("/api/account/delete", { method: "POST" });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload?.error || "Unable to delete account");
+      }
+      toast({
+        title: "Account deleted",
+        description: "Your account has been removed.",
+      });
+      setDeleteOpen(false);
+      router.push("/");
+      router.refresh();
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to delete account";
+      toast({ title: "Delete failed", description: message, variant: "destructive" });
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -119,6 +149,46 @@ export default function SettingsContent() {
           </CardContent>
         </Card>
       </section>
+
+      <Card className="rounded-3xl border border-destructive/20 bg-card/80 shadow-sm">
+        <CardHeader>
+          <CardTitle className="text-lg font-semibold text-destructive">
+            Danger zone
+          </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Permanently delete your account and all associated data.
+          </p>
+        </CardHeader>
+        <CardContent className="flex flex-wrap items-center gap-3">
+          <Button
+            variant="destructive"
+            className="rounded-full"
+            onClick={() => setDeleteOpen(true)}
+          >
+            Delete account
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete account</DialogTitle>
+            <DialogDescription>
+              This permanently deletes your account and removes your profile,
+              links, lead forms, and stored images. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteAccount} disabled={deleting}>
+              {deleting ? "Deleting..." : "Delete account"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* <section className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
         <Card className="rounded-3xl border bg-card/80 shadow-sm">

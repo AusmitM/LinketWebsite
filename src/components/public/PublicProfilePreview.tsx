@@ -52,6 +52,7 @@ export default function PublicProfilePreview({
   const hasLinks = links.length > 0;
   const hasHeadline = Boolean(headline);
   const [leadFormTitle, setLeadFormTitle] = useState("Contact");
+  const [hasLeadForm, setHasLeadForm] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -96,6 +97,8 @@ export default function PublicProfilePreview({
           form: LeadFormConfig | null;
         };
         if (!active) return;
+        const fields = payload.form?.fields ?? [];
+        setHasLeadForm(fields.length > 0);
         if (payload.form?.title) {
           setLeadFormTitle(payload.form.title);
         }
@@ -232,24 +235,26 @@ export default function PublicProfilePreview({
                 </div>
               ) : null}
 
-              <div className="rounded-[28px] border border-border/60 bg-card/80 p-6 shadow-[0_24px_60px_-40px_rgba(15,23,42,0.7)]">
-                <div className="space-y-2">
-                  <h2 className="text-lg font-semibold text-foreground">
-                    {leadFormTitle}
-                  </h2>
-                  <p className="text-sm text-muted-foreground">
-                    Share your info with {displayName}.
-                  </p>
+              {hasLeadForm ? (
+                <div className="rounded-[28px] border border-border/60 bg-card/80 p-6 shadow-[0_24px_60px_-40px_rgba(15,23,42,0.7)]">
+                  <div className="space-y-2">
+                    <h2 className="text-lg font-semibold text-foreground">
+                      {leadFormTitle}
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                      Share your info with {displayName}.
+                    </p>
+                  </div>
+                  <div className="mt-5">
+                    <PublicLeadForm
+                      ownerId={profile.user_id}
+                      handle={publicHandle}
+                      variant="profile"
+                      showHeader={false}
+                    />
+                  </div>
                 </div>
-                <div className="mt-5">
-                  <PublicLeadForm
-                    ownerId={profile.user_id}
-                    handle={publicHandle}
-                    variant="profile"
-                    showHeader={false}
-                  />
-                </div>
-              </div>
+              ) : null}
             </section>
           </main>
         ) : (
@@ -354,24 +359,26 @@ export default function PublicProfilePreview({
                 ) : null}
               </div>
 
-              <div className="rounded-[28px] border border-border/60 bg-card/80 p-6 shadow-[0_24px_60px_-40px_rgba(15,23,42,0.7)]">
-                <div className="space-y-2">
-                  <h2 className="text-lg font-semibold text-foreground">
-                    {leadFormTitle}
-                  </h2>
-                  <p className="text-sm text-muted-foreground">
-                    Share your info with {displayName}.
-                  </p>
+              {hasLeadForm ? (
+                <div className="rounded-[28px] border border-border/60 bg-card/80 p-6 shadow-[0_24px_60px_-40px_rgba(15,23,42,0.7)]">
+                  <div className="space-y-2">
+                    <h2 className="text-lg font-semibold text-foreground">
+                      {leadFormTitle}
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                      Share your info with {displayName}.
+                    </p>
+                  </div>
+                  <div className="mt-5">
+                    <PublicLeadForm
+                      ownerId={profile.user_id}
+                      handle={publicHandle}
+                      variant="profile"
+                      showHeader={false}
+                    />
+                  </div>
                 </div>
-                <div className="mt-5">
-                  <PublicLeadForm
-                    ownerId={profile.user_id}
-                    handle={publicHandle}
-                    variant="profile"
-                    showHeader={false}
-                  />
-                </div>
-              </div>
+              ) : null}
             </section>
           </main>
         )}
