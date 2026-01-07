@@ -29,7 +29,7 @@ export async function POST() {
   const userId = auth.user.id;
 
   try {
-    const tableDeletes: Array<Promise<{ error: { message?: string } | null }>> = [
+    const tableDeletes = [
       supabaseAdmin.from("lead_form_settings").delete().eq("user_id", userId),
       supabaseAdmin.from("lead_form_fields").delete().eq("user_id", userId),
       supabaseAdmin.from("lead_forms").delete().eq("user_id", userId),
