@@ -727,6 +727,7 @@ export default function PublicProfileEditorPage() {
           <div className="origin-top-left scale-[1] -mt-2">
             <PhonePreviewCard
               profile={{ name: profileDisplayName, tagline: profileTagline }}
+              avatarUrl={avatarUrl}
               contactEnabled={hasContactDetails}
               contactDisabledText="Add email or phone to enable Save contact"
               onContactClick={handleContactCta}
@@ -1096,6 +1097,7 @@ function EditorPanel({
 
 function PhonePreviewCard({
   profile,
+  avatarUrl,
   contactEnabled,
   contactDisabledText,
   onContactClick,
@@ -1111,6 +1113,7 @@ function PhonePreviewCard({
   setDraggingLinkId,
 }: {
   profile: { name: string; tagline: string };
+  avatarUrl: string | null;
   contactEnabled: boolean;
   contactDisabledText: string;
   onContactClick: () => void;
@@ -1140,7 +1143,16 @@ function PhonePreviewCard({
     <div className="h-fit w-full max-w-[340px] overflow-hidden rounded-[36px] border border-border/60 bg-background shadow-[0_20px_40px_-30px_rgba(15,23,42,0.3)]">
       <div className="h-28 rounded-t-[36px] bg-gradient-to-r from-[#7C4DA0] via-[#B26A85] to-[#E1A37B]" />
       <div className="flex flex-col items-center px-6 pb-6">
-        <div className="-mt-10 h-20 w-20 overflow-hidden rounded-full border-4 border-background bg-muted shadow-sm" />
+        <div className="-mt-10 h-20 w-20 overflow-hidden rounded-3xl border-4 border-background bg-muted shadow-sm">
+          {avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={avatarUrl}
+              alt=""
+              className="h-full w-full object-cover"
+            />
+          ) : null}
+        </div>
         <div className="mt-3 text-center">
           <div className="mx-auto max-w-[240px] truncate text-base font-semibold text-foreground">
             {profile.name}
