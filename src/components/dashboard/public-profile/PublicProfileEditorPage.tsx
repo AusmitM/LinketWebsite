@@ -677,7 +677,7 @@ export default function PublicProfileEditorPage() {
 
   const profileDisplayName = draft?.name || "John Doe";
   const profileTagline =
-    draft?.headline || "I do things | other things & more other things";
+    draft?.headline || "I do things | other things & mores";
   const isPublished = Boolean(draft?.active);
 
   return (
@@ -985,7 +985,7 @@ function EditorPanel({
                 onProfileChange({ headline: event.target.value })
               }
               disabled={loading || !userId}
-              placeholder="Engineer, founder, creative..."
+              placeholder="I do things | other things & more things..."
               className="min-h-16 text-sm"
             />
           </div>
