@@ -25,11 +25,13 @@ import {
 } from "lucide-react";
 
 import AvatarUploader from "@/components/dashboard/AvatarUploader";
+import ProfileHeaderUploader from "@/components/dashboard/ProfileHeaderUploader";
 import LeadFormBuilder from "@/components/dashboard/LeadFormBuilder";
 import VCardContent from "@/components/dashboard/vcard/VCardContent";
 import { useDashboardUser } from "@/components/dashboard/DashboardSessionContext";
 import { useThemeOptional } from "@/components/theme/theme-provider";
 import { getSignedAvatarUrl } from "@/lib/avatar-client";
+import { getSignedProfileHeaderUrl } from "@/lib/profile-header-client";
 import { cn } from "@/lib/utils";
 import { shuffleFields } from "@/lib/lead-form";
 import { toast } from "@/components/system/toaster";
@@ -70,6 +72,8 @@ type ProfileDraft = {
   name: string;
   handle: string;
   headline: string;
+  headerImageUrl: string | null;
+  headerImageUpdatedAt: string | null;
   links: LinkItem[];
   theme: ThemeName;
   active: boolean;
@@ -126,6 +130,7 @@ export default function PublicProfileEditorPage() {
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
   const [accountHandle, setAccountHandle] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [headerImageUrl, setHeaderImageUrl] = useState<string | null>(null);
   const [linkModalOpen, setLinkModalOpen] = useState(false);
   const [linkModalMode, setLinkModalMode] = useState<"add" | "edit">("add");
   const [editingLinkId, setEditingLinkId] = useState<string | null>(null);
@@ -253,6 +258,25 @@ export default function PublicProfileEditorPage() {
     };
   }, [userId]);
 
+  useEffect(() => {
+    if (!draft?.headerImageUrl) {
+      setHeaderImageUrl(null);
+      return;
+    }
+    let active = true;
+    (async () => {
+      const signed = await getSignedProfileHeaderUrl(
+        draft.headerImageUrl,
+        draft.headerImageUpdatedAt
+      );
+      if (!active) return;
+      setHeaderImageUrl(signed);
+    })();
+    return () => {
+      active = false;
+    };
+  }, [draft?.headerImageUrl, draft?.headerImageUpdatedAt]);
+
   const loadProfile = useCallback(async () => {
     if (!userId) return;
     setLoading(true);
@@ -348,6 +372,8 @@ export default function PublicProfileEditorPage() {
         name: draftSnapshot.name,
         handle: draftSnapshot.handle,
         headline: draftSnapshot.headline,
+        headerImageUrl: draftSnapshot.headerImageUrl,
+        headerImageUpdatedAt: draftSnapshot.headerImageUpdatedAt,
         theme: draftSnapshot.theme,
         links: draftSnapshot.links.map((link) => ({
           id: link.id,
@@ -687,11 +713,38 @@ export default function PublicProfileEditorPage() {
             userId={userId}
             avatarUrl={avatarUrl}
             accountHandle={accountHandle}
+            headerImageUrl={headerImageUrl}
             onLeadFormPreview={setLeadFormPreview}
             onRegisterLeadFormReorder={(reorder) => {
               leadFormReorderRef.current = reorder;
             }}
             onAvatarUpdate={setAvatarUrl}
+            onHeaderImageUpdate={(payload) => {
+              const nextPath = payload.path || null;
+              const nextUpdatedAt = payload.path ? payload.version : null;
+              setHeaderImageUrl(payload.publicUrl || null);
+              setLastSavedAt(payload.version);
+              setDraft((prev) =>
+                prev
+                  ? {
+                      ...prev,
+                      headerImageUrl: nextPath,
+                      headerImageUpdatedAt: nextUpdatedAt,
+                      updatedAt: payload.version,
+                    }
+                  : prev
+              );
+              setSavedProfile((prev) =>
+                prev
+                  ? {
+                      ...prev,
+                      headerImageUrl: nextPath,
+                      headerImageUpdatedAt: nextUpdatedAt,
+                      updatedAt: payload.version,
+                    }
+                  : prev
+              );
+            }}
             onProfileChange={handleProfileChange}
             onAddLink={addLink}
             onUpdateLink={updateLink}
@@ -728,6 +781,7 @@ export default function PublicProfileEditorPage() {
             <PhonePreviewCard
               profile={{ name: profileDisplayName, tagline: profileTagline }}
               avatarUrl={avatarUrl}
+              headerImageUrl={headerImageUrl}
               contactEnabled={hasContactDetails}
               contactDisabledText="Add email or phone to enable Save contact"
               onContactClick={handleContactCta}
@@ -826,7 +880,9 @@ function EditorPanel({
   userId,
   avatarUrl,
   accountHandle,
+  headerImageUrl,
   onAvatarUpdate,
+  onHeaderImageUpdate,
   onLeadFormPreview,
   onRegisterLeadFormReorder,
   onProfileChange,
@@ -847,7 +903,9 @@ function EditorPanel({
   userId: string | null;
   avatarUrl: string | null;
   accountHandle: string | null;
+  headerImageUrl: string | null;
   onAvatarUpdate: (url: string) => void;
+  onHeaderImageUpdate: (payload: { path: string; version: string; publicUrl: string }) => void;
   onLeadFormPreview: (preview: LeadFormConfig | null) => void;
   onRegisterLeadFormReorder: (
     reorder: ((sourceId: string, targetId: string) => void) | null
@@ -889,6 +947,18 @@ function EditorPanel({
             />
           ) : (
             <div className="h-20 rounded-2xl border border-dashed border-border/60 bg-muted/30" />
+          )}
+          {userId && draft?.id ? (
+            <ProfileHeaderUploader
+              userId={userId}
+              profileId={draft.id}
+              headerUrl={headerImageUrl}
+              onUploaded={onHeaderImageUpdate}
+              variant="compact"
+              inputId="profile-header-upload"
+            />
+          ) : (
+            <div className="h-24 rounded-2xl border border-dashed border-border/60 bg-muted/30" />
           )}
 
           <div className="space-y-2">
@@ -1098,6 +1168,7 @@ function EditorPanel({
 function PhonePreviewCard({
   profile,
   avatarUrl,
+  headerImageUrl,
   contactEnabled,
   contactDisabledText,
   onContactClick,
@@ -1114,6 +1185,7 @@ function PhonePreviewCard({
 }: {
   profile: { name: string; tagline: string };
   avatarUrl: string | null;
+  headerImageUrl: string | null;
   contactEnabled: boolean;
   contactDisabledText: string;
   onContactClick: () => void;
@@ -1141,9 +1213,19 @@ function PhonePreviewCard({
 
   return (
     <div className="h-fit w-full max-w-[340px] overflow-hidden rounded-[36px] border border-border/60 bg-background shadow-[0_20px_40px_-30px_rgba(15,23,42,0.3)]">
-      <div className="h-28 rounded-t-[36px] bg-gradient-to-r from-[#7C4DA0] via-[#B26A85] to-[#E1A37B]" />
+      <div className="relative h-28 rounded-t-[36px] bg-gradient-to-r from-[#7C4DA0] via-[#B26A85] to-[#E1A37B]">
+        {headerImageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={headerImageUrl}
+            alt=""
+            className="h-full w-full object-cover"
+          />
+        ) : null}
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background/20" />
+      </div>
       <div className="flex flex-col items-center px-6 pb-6">
-        <div className="-mt-10 h-20 w-20 overflow-hidden rounded-3xl border-4 border-background bg-muted shadow-sm">
+        <div className="-mt-16 h-28 w-28 overflow-hidden rounded-3xl border-4 border-background bg-muted shadow-sm relative z-10">
           {avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -1539,6 +1621,8 @@ function buildFallbackDraft(
     name: "",
     handle: fallbackHandle,
     headline: "",
+    headerImageUrl: null,
+    headerImageUpdatedAt: null,
     links: [createLink()],
     theme,
     active: true,
@@ -1588,6 +1672,8 @@ function mapProfile(record: ProfileWithLinks): ProfileDraft {
     name: record.name,
     handle: record.handle,
     headline: record.headline ?? "",
+    headerImageUrl: record.header_image_url ?? null,
+    headerImageUpdatedAt: record.header_image_updated_at ?? null,
     links,
     theme: record.theme as ThemeName,
     active: record.is_active,

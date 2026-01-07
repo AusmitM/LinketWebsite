@@ -236,7 +236,7 @@ export default function VCardContent({
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
-        <section className="flex flex-col gap-4 rounded-2xl border border-dashed border-muted/70 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <section className="flex flex-col gap-4 rounded-2xl border border-dashed border-muted/70 p-4 sm:flex-row sm:items-center">
           <div className="flex items-center gap-4">
             <div className="h-20 w-20 overflow-hidden rounded-full border bg-muted">
               {photoPreview ? (
@@ -270,10 +270,10 @@ export default function VCardContent({
               </div>
             </div>
           </div>
-          <p className="text-xs text-muted-foreground sm:max-w-xs">
-            Include a friendly headshot or company logo. It will be embedded when you export your vCard.
-          </p>
         </section>
+        <p className="text-xs text-muted-foreground">
+          Include a friendly headshot or company logo. It will be embedded when you export your vCard.
+        </p>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Full name" id="fullName" value={fields.fullName} onChange={updateField} onBlur={handleFieldBlur} required disabled={inputsDisabled} idPrefix={idPrefix} />

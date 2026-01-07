@@ -10,6 +10,8 @@ create table if not exists public.user_profiles (
   name text not null,
   handle text not null,
   headline text,
+  header_image_url text,
+  header_image_updated_at timestamptz,
   theme text not null default 'light',
   is_active boolean not null default false,
   created_at timestamptz not null default now(),
@@ -119,6 +121,8 @@ export type ProfilePayload = {
   name: string;
   handle: string;
   headline?: string | null;
+  headerImageUrl?: string | null;
+  headerImageUpdatedAt?: string | null;
   theme: ThemeName;
   links: Array<{ id?: string; title: string; url: string }>;
   active?: boolean;
@@ -311,6 +315,8 @@ function memorySaveProfileForUser(
   const handle = normaliseHandle(payload.handle);
   const theme = normaliseTheme(payload.theme);
   const headline = payload.headline?.trim() || null;
+  const headerImageUrl = payload.headerImageUrl ?? null;
+  const headerImageUpdatedAt = payload.headerImageUpdatedAt ?? null;
   const links = payload.links ?? [];
   const name = payload.name?.trim();
   if (!name) throw new Error("Profile name is required");
@@ -330,6 +336,8 @@ function memorySaveProfileForUser(
       name,
       handle,
       headline,
+      header_image_url: payload.headerImageUrl ?? null,
+      header_image_updated_at: payload.headerImageUpdatedAt ?? null,
       theme,
       is_active: false,
       created_at: now,
@@ -342,6 +350,12 @@ function memorySaveProfileForUser(
     profile.handle = handle;
     profile.headline = headline;
     profile.theme = theme;
+    if (payload.headerImageUrl !== undefined) {
+      profile.header_image_url = payload.headerImageUrl;
+    }
+    if (payload.headerImageUpdatedAt !== undefined) {
+      profile.header_image_updated_at = payload.headerImageUpdatedAt;
+    }
     profile.updated_at = now;
   }
 
@@ -552,6 +566,8 @@ export async function saveProfileForUser(
         name,
         handle,
         headline,
+        header_image_url: headerImageUrl,
+        header_image_updated_at: headerImageUpdatedAt,
         theme,
         is_active: false,
       })
@@ -560,15 +576,22 @@ export async function saveProfileForUser(
     if (error) throw new Error(error.message);
     profileId = (data as UserProfileRecord).id;
   } else {
+    const updatePayload: Record<string, unknown> = {
+      name,
+      handle,
+      headline,
+      theme,
+      updated_at: new Date().toISOString(),
+    };
+    if (payload.headerImageUrl !== undefined) {
+      updatePayload.header_image_url = payload.headerImageUrl;
+    }
+    if (payload.headerImageUpdatedAt !== undefined) {
+      updatePayload.header_image_updated_at = payload.headerImageUpdatedAt;
+    }
     const { error } = await supabaseAdmin
       .from(PROFILE_TABLE)
-      .update({
-        name,
-        handle,
-        headline,
-        theme,
-        updated_at: new Date().toISOString(),
-      })
+      .update(updatePayload)
       .eq("id", profileId)
       .eq("user_id", userId);
     if (error) throw new Error(error.message);

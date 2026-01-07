@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { appendVersion } from "@/lib/avatar-utils";
 
 export type UploadResult = { publicUrl: string; thumbUrl: string; path: string; thumbPath: string };
+export type HeaderUploadResult = { publicUrl: string; path: string };
 
 /**
  * Upload an avatar to the `avatars` bucket.
@@ -67,6 +68,49 @@ export async function uploadAvatar(
   if (!publicUrl || !thumbUrl) throw new Error("Failed to sign avatar URL");
 
   return { publicUrl, thumbUrl, path, thumbPath: pathThumb };
+}
+
+/**
+ * Upload a profile header image to the `profile-headers` bucket.
+ * - Max 6MB
+ * - Accepts png/jpg/jpeg/webp
+ */
+export async function uploadProfileHeaderImage(
+  file: File,
+  userId: string,
+  profileId: string
+): Promise<HeaderUploadResult> {
+  if (!file) throw new Error("No file selected");
+  if (file.size > 6 * 1024 * 1024) throw new Error("File too large (max 6MB)");
+
+  const type = (file.type || "").toLowerCase();
+  const ok = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
+  if (!ok.includes(type)) {
+    throw new Error("Only PNG, JPG or WEBP images allowed");
+  }
+
+  const webpFile = await toWebP(file, 1400).catch(() => file);
+  const path = `${userId}/profile-headers/${profileId}.webp`;
+
+  const { error: upErr } = await supabase.storage.from("profile-headers").upload(path, webpFile, {
+    cacheControl: "3600",
+    upsert: true,
+    contentType: "image/webp",
+  });
+  if (upErr) throw new Error(upErr.message ?? "Failed to upload header image");
+
+  const { data, error: signErr } = await supabase
+    .storage
+    .from("profile-headers")
+    .createSignedUrl(path, 3600);
+  if (signErr || !data?.signedUrl) {
+    throw new Error(signErr?.message ?? "Failed to sign header image URL");
+  }
+
+  const publicUrl = appendVersion(data.signedUrl, Date.now());
+  if (!publicUrl) throw new Error("Failed to sign header image URL");
+
+  return { publicUrl, path };
 }
 
 async function toWebP(file: File, maxSize = 512): Promise<File> {

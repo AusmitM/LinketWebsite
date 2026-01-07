@@ -188,6 +188,8 @@ export async function POST(request: NextRequest) {
           name,
           handle,
           headline: profile.headline?.trim() || null,
+          header_image_url: profile.headerImageUrl ?? null,
+          header_image_updated_at: profile.headerImageUpdatedAt ?? null,
           theme: profile.theme,
           is_active: false,
         })
@@ -196,15 +198,22 @@ export async function POST(request: NextRequest) {
       if (insertError) throw new Error(insertError.message);
       profileId = (data as UserProfileRecord).id;
     } else {
+      const updatePayload: Record<string, unknown> = {
+        name,
+        handle,
+        headline: profile.headline?.trim() || null,
+        theme: profile.theme,
+        updated_at: new Date().toISOString(),
+      };
+      if (profile.headerImageUrl !== undefined) {
+        updatePayload.header_image_url = profile.headerImageUrl;
+      }
+      if (profile.headerImageUpdatedAt !== undefined) {
+        updatePayload.header_image_updated_at = profile.headerImageUpdatedAt;
+      }
       const { error: updateError } = await supabase
         .from("user_profiles")
-        .update({
-          name,
-          handle,
-          headline: profile.headline?.trim() || null,
-          theme: profile.theme,
-          updated_at: new Date().toISOString(),
-        })
+        .update(updatePayload)
         .eq("id", profileId)
         .eq("user_id", userId);
       if (updateError) throw new Error(updateError.message);
