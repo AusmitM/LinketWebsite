@@ -27,6 +27,11 @@ export async function GET(request: Request) {
     return errorResponse(400, "Unsupported protocol");
   }
 
+  const host = target.hostname.toLowerCase();
+  if (host === "linketconnect.com" || host === "www.linketconnect.com") {
+    return NextResponse.redirect(new URL("/linket-favicon.svg", request.url));
+  }
+
   const faviconUrl = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(
     target.hostname
   )}&sz=64`;
