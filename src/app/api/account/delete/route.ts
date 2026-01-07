@@ -29,6 +29,20 @@ export async function POST() {
   const userId = auth.user.id;
 
   try {
+    const tableDeletes: Array<Promise<{ error: { message?: string } | null }>> = [
+      supabaseAdmin.from("lead_form_settings").delete().eq("user_id", userId),
+      supabaseAdmin.from("lead_form_fields").delete().eq("user_id", userId),
+      supabaseAdmin.from("lead_forms").delete().eq("user_id", userId),
+      supabaseAdmin.from("profile_links").delete().eq("user_id", userId),
+      supabaseAdmin.from("user_profiles").delete().eq("user_id", userId),
+      supabaseAdmin.from("vcard_profiles").delete().eq("user_id", userId),
+      supabaseAdmin.from("profiles").delete().eq("user_id", userId),
+      supabaseAdmin.from("admin_users").delete().eq("user_id", userId),
+    ];
+    const results = await Promise.all(tableDeletes);
+    const deleteError = results.find((result) => result.error)?.error;
+    if (deleteError) throw new Error(deleteError.message ?? "Failed to delete account data");
+
     await supabaseAdmin.storage.from("avatars").remove([
       `${userId}/avatar.webp`,
       `${userId}/avatar_128.webp`,
