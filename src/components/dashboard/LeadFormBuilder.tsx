@@ -559,26 +559,6 @@ export default function LeadFormBuilder({
                     <option value="published">Published</option>
                   </select>
                 </div>
-                <div className="space-y-2">
-                  <Label>Collect email</Label>
-                  <select
-                    className="h-10 w-full rounded-md border border-border/60 bg-background px-3 text-sm"
-                    value={form.settings.collectEmail}
-                    onChange={(event) =>
-                      updateForm({
-                        settings: {
-                          ...form.settings,
-                          collectEmail:
-                            event.target.value as LeadFormConfig["settings"]["collectEmail"],
-                        },
-                      })
-                    }
-                  >
-                    <option value="off">Off</option>
-                    <option value="verified">Verified</option>
-                    <option value="user_input">User input</option>
-                  </select>
-                </div>
               </div>
               <div className="grid gap-3 md:grid-cols-2">
                 <label className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -764,6 +744,22 @@ export default function LeadFormBuilder({
                     />
                     Required
                   </label>
+                  {isEmailField(activeField) ? (
+                    <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Switch
+                        checked={form.settings.collectEmail === "verified"}
+                        onCheckedChange={(value) =>
+                          updateForm({
+                            settings: {
+                              ...form.settings,
+                              collectEmail: value ? "verified" : "user_input",
+                            },
+                          })
+                        }
+                      />
+                      Verify email
+                    </label>
+                  ) : null}
                   <div className="space-y-2">
                     <Label>Type</Label>
                     <select
@@ -1659,6 +1655,12 @@ function ratingIcon(icon: "star" | "heart" | "thumbs") {
   if (icon === "heart") return "H";
   if (icon === "thumbs") return "T";
   return "*";
+}
+
+function isEmailField(field: LeadFormField) {
+  if (field.type !== "short_text") return false;
+  if (field.validation?.rule === "email") return true;
+  return field.label.toLowerCase().includes("email");
 }
 function formatShortDate(value: string) {
   const date = new Date(value);

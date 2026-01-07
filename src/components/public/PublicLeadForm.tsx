@@ -64,7 +64,6 @@ export default function PublicLeadForm({
   const [responseId, setResponseId] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [editingResponse, setEditingResponse] = useState(false);
-  const [emailValue, setEmailValue] = useState("");
 
   const disabled = !form || form.status !== "published";
   const hasFields = Boolean(form?.fields?.length);
@@ -169,6 +168,15 @@ export default function PublicLeadForm({
       ? shuffleFields(form.fields)
       : form.fields;
   }, [form]);
+  const emailField = useMemo(() => {
+    if (!form) return null;
+    return form.fields.find((field) => isEmailField(field)) ?? null;
+  }, [form]);
+  const emailAnswer = emailField ? answers[emailField.id]?.value : null;
+  const emailValue =
+    typeof emailAnswer === "string" ? emailAnswer.trim() : "";
+  const shouldCaptureResponderEmail =
+    Boolean(emailField) && form?.settings.collectEmail !== "off";
 
   const progress = useMemo(() => {
     if (!form || !form.settings.showProgressBar) return null;
@@ -209,8 +217,11 @@ export default function PublicLeadForm({
       });
       return;
     }
-    if (form.settings.collectEmail !== "off" && !emailValue.trim()) {
-      setErrors((prev) => ({ ...prev, _email: "Email is required." }));
+    if (form.settings.collectEmail === "verified" && emailField && !emailValue) {
+      setErrors((prev) => ({
+        ...prev,
+        [emailField.id]: "Email is required.",
+      }));
       return;
     }
 
@@ -247,7 +258,7 @@ export default function PublicLeadForm({
           formId,
           responseId: shouldEdit ? responseId : undefined,
           answers,
-          responderEmail: emailValue.trim() || null,
+          responderEmail: shouldCaptureResponderEmail ? emailValue || null : null,
         }),
       });
       if (!response.ok) {
@@ -783,34 +794,6 @@ export default function PublicLeadForm({
           </div>
         ) : null}
         <form className="space-y-5" onSubmit={handleSubmit}>
-          {form?.settings.collectEmail !== "off" ? (
-            <div className="space-y-2">
-              <Label htmlFor="lead-email" className="text-sm font-medium">
-                Email
-                <span className="ml-1 text-destructive">*</span>
-              </Label>
-              <Input
-                id="lead-email"
-                type="email"
-                value={emailValue}
-                onChange={(event) => {
-                  setEmailValue(event.target.value);
-                  setErrors((prev) => {
-                    if (!prev._email) return prev;
-                    const next = { ...prev };
-                    delete next._email;
-                    return next;
-                  });
-                }}
-                className={inputClassName}
-                disabled={disabled || submitting}
-              />
-              {errors._email ? (
-                <p className="text-xs text-destructive">{errors._email}</p>
-              ) : null}
-            </div>
-          ) : null}
-
           {orderedFields.map((field) => (
             <div key={field.id}>{renderField(field)}</div>
           ))}

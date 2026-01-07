@@ -22,7 +22,7 @@ export function createDefaultLeadFormConfig(id: string): LeadFormConfig {
     description: "",
     status: "draft",
     settings: {
-      collectEmail: "off",
+      collectEmail: "user_input",
       allowEditAfterSubmit: false,
       limitOneResponse: "off",
       showProgressBar: false,
@@ -32,6 +32,7 @@ export function createDefaultLeadFormConfig(id: string): LeadFormConfig {
     fields: [
       createField("short_text", "Name", {
         helpText: "Ex. John Doe",
+        required: true,
       }),
       createField("short_text", "Phone Number", {
         helpText: "(###) ### - ####",
@@ -39,6 +40,7 @@ export function createDefaultLeadFormConfig(id: string): LeadFormConfig {
       createField("short_text", "Email", {
         helpText: "JDoe@LinketConnect.com",
         validation: { rule: "email" },
+        required: true,
       }),
       createField("long_text", "Note"),
     ],
