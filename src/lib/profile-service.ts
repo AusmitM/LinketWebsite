@@ -551,6 +551,8 @@ export async function saveProfileForUser(
   }
   const theme = normaliseTheme(payload.theme);
   const headline = payload.headline?.trim() || null;
+  const headerImageUrl = payload.headerImageUrl ?? null;
+  const headerImageUpdatedAt = payload.headerImageUpdatedAt ?? null;
   const links = payload.links ?? [];
   const name = payload.name?.trim();
   if (!name) throw new Error("Profile name is required");
