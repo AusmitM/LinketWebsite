@@ -49,10 +49,10 @@ export async function POST() {
     ]);
     await removeStorageFolder("profile-headers", `${userId}/profile-headers`);
 
-    const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(
+    const { error: authDeleteError } = await supabaseAdmin.auth.admin.deleteUser(
       userId
     );
-    if (deleteError) throw new Error(deleteError.message);
+    if (authDeleteError) throw new Error(authDeleteError.message);
 
     return NextResponse.json({ ok: true });
   } catch (error) {
