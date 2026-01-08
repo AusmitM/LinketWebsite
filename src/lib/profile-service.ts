@@ -143,6 +143,7 @@ function normaliseTheme(
     "gilded",
     "silver",
     "autumn",
+    "honey",
   ];
   const value = (theme ?? "autumn").toLowerCase();
   return allowed.includes(value as ThemeName) ? (value as ThemeName) : "light";

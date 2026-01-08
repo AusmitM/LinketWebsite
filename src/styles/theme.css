@@ -51,6 +51,7 @@
   --border: #d7deed;
   --input: #d7deed;
   --ring: var(--brand-blue);
+  --avatar-border: var(--background);
 
   --sidebar: #ffffff;
   --sidebar-foreground: #101828;
@@ -263,6 +264,36 @@
   --sidebar-accent-foreground: #47240f;
   --sidebar-border: #efcaa6;
   --sidebar-ring: #d97706;
+}
+
+.theme-honey {
+  --background: #f7dcab;
+  --foreground: #3f1f0c;
+  --card: rgba(255, 242, 217, 0.95);
+  --card-foreground: #3f1f0c;
+  --popover: rgba(255, 242, 217, 0.98);
+  --popover-foreground: #3f1f0c;
+  --primary: #df6206;
+  --primary-foreground: #2e1206;
+  --secondary: #f4c25a;
+  --secondary-foreground: #4b240f;
+  --muted: #f4c25a;
+  --muted-foreground: #6f3a1c;
+  --accent: #ebaa32;
+  --accent-foreground: #3b1a07;
+  --destructive: #ef4444;
+  --border: #f4c25a;
+  --input: #f4c25a;
+  --ring: #df6206;
+  --sidebar: #fddb9c;
+  --sidebar-foreground: #3f1f0c;
+  --sidebar-primary: #df6206;
+  --sidebar-primary-foreground: #2e1206;
+  --sidebar-accent: #f4c25a;
+  --sidebar-accent-foreground: #4b240f;
+  --sidebar-border: #f4c25a;
+  --sidebar-ring: #df6206;
+  --avatar-border: #df6206;
 }
 
 /* Typography harmony */

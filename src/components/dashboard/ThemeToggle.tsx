@@ -1,14 +1,23 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Sun, Moon, MoonStar, Trees, Sparkles, Gem, Leaf } from "lucide-react";
+import { Hexagon, Sun, Moon, MoonStar, Trees, Sparkles, Gem, Leaf } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useThemeOptional } from "@/components/theme/theme-provider";
 import { useDashboardUser } from "@/components/dashboard/DashboardSessionContext";
 
 type ThemeName = import("@/components/theme/theme-provider").ThemeName;
 
-const ORDER: ThemeName[] = ["light", "dark", "midnight", "forest", "gilded", "silver", "autumn"];
+const ORDER: ThemeName[] = [
+  "light",
+  "dark",
+  "midnight",
+  "forest",
+  "gilded",
+  "silver",
+  "autumn",
+  "honey",
+];
 const ICONS: Record<ThemeName, React.ComponentType<{ className?: string }>> = {
   light: Sun,
   dark: Moon,
@@ -17,6 +26,7 @@ const ICONS: Record<ThemeName, React.ComponentType<{ className?: string }>> = {
   gilded: Sparkles,
   silver: Gem,
   autumn: Leaf,
+  honey: Hexagon,
 };
 
 const LABELS: Record<ThemeName, string> = {
@@ -27,6 +37,7 @@ const LABELS: Record<ThemeName, string> = {
   gilded: "Gilded",
   silver: "Silver",
   autumn: "Autumn",
+  honey: "Honey",
 };
 
 export default function ThemeToggle() {

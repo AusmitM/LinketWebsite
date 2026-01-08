@@ -78,6 +78,13 @@ const THEME_OPTIONS: Array<{
     preview: "linear-gradient(135deg, #fff0e0 0%, #f6b97a 100%)",
     textTone: "dark",
   },
+  {
+    id: "honey",
+    label: "Honey",
+    description: "Burnt orange to honey glow with cozy warmth",
+    preview: "linear-gradient(135deg, #c32701 0%, #fddb9c 100%)",
+    textTone: "dark",
+  },
 ];
 
 const DEFAULT_THEME: ThemeName = "autumn";

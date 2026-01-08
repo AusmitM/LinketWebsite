@@ -111,7 +111,7 @@ export default async function PublicProfilePage({ params }: Props) {
                   </div>
                   <div className="-mt-16 flex flex-col items-center px-4 pb-4 text-center">
                     <div
-                      className={`h-28 w-28 overflow-hidden rounded-3xl border-4 border-background shadow-sm relative z-10 ${
+                      className={`h-28 w-28 overflow-hidden rounded-3xl border-4 border-[var(--avatar-border)] shadow-sm relative z-10 ${
                         avatar ? "bg-muted/40" : "bg-background"
                       }`}
                     >

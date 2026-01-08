@@ -1230,7 +1230,7 @@ function PhonePreviewCard({
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background/20" />
       </div>
       <div className="flex flex-col items-center px-6 pb-6">
-        <div className="-mt-16 h-28 w-28 overflow-hidden rounded-3xl border-4 border-background bg-background shadow-sm relative z-10">
+        <div className="-mt-16 h-28 w-28 overflow-hidden rounded-3xl border-4 border-[var(--avatar-border)] bg-background shadow-sm relative z-10">
           {avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img

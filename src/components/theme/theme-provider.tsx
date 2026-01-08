@@ -3,7 +3,15 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 
-export type ThemeName = "light" | "dark" | "midnight" | "forest" | "gilded" | "silver" | "autumn";
+export type ThemeName =
+  | "light"
+  | "dark"
+  | "midnight"
+  | "forest"
+  | "gilded"
+  | "silver"
+  | "autumn"
+  | "honey";
 
 type ThemeContextValue = {
   theme: ThemeName;

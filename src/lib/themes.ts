@@ -1,4 +1,12 @@
-export type ThemeName = "light" | "dark" | "midnight" | "forest" | "gilded" | "silver" | "autumn";
+export type ThemeName =
+  | "light"
+  | "dark"
+  | "midnight"
+  | "forest"
+  | "gilded"
+  | "silver"
+  | "autumn"
+  | "honey";
 
 type Vars = Record<string, string>;
 
@@ -16,6 +24,7 @@ const themes: Record<ThemeName, Vars> = {
     "--border": "#d7deed",
     "--input": "#d7deed",
     "--ring": "#2563eb",
+    "--avatar-border": "#f5f7fb",
   },
   dark: {
     "--background": "#121826",
@@ -30,6 +39,7 @@ const themes: Record<ThemeName, Vars> = {
     "--border": "#1f2b45",
     "--input": "#1f2b45",
     "--ring": "#60a5fa",
+    "--avatar-border": "#121826",
   },
   midnight: {
     "--background": "#050414",
@@ -44,6 +54,7 @@ const themes: Record<ThemeName, Vars> = {
     "--border": "#1f1a3d",
     "--input": "#1f1a3d",
     "--ring": "#8b5cf6",
+    "--avatar-border": "#050414",
   },
   forest: {
     "--background": "#0f2418",
@@ -58,6 +69,7 @@ const themes: Record<ThemeName, Vars> = {
     "--border": "#1c3f2c",
     "--input": "#1c3f2c",
     "--ring": "#34d399",
+    "--avatar-border": "#0f2418",
   },
   gilded: {
     "--background": "#080705",
@@ -72,6 +84,7 @@ const themes: Record<ThemeName, Vars> = {
     "--border": "#2e2514",
     "--input": "#2e2514",
     "--ring": "#f5c76d",
+    "--avatar-border": "#080705",
   },
   silver: {
     "--background": "#f5f7f8",
@@ -86,6 +99,7 @@ const themes: Record<ThemeName, Vars> = {
     "--border": "#cbd2dd",
     "--input": "#cbd2dd",
     "--ring": "#94a3b8",
+    "--avatar-border": "#f5f7f8",
   },
   autumn: {
     "--background": "#fff6ed",
@@ -100,6 +114,22 @@ const themes: Record<ThemeName, Vars> = {
     "--border": "#f1cfb0",
     "--input": "#f1cfb0",
     "--ring": "#d97706",
+    "--avatar-border": "#fff6ed",
+  },
+  honey: {
+    "--background": "#f7dcab",
+    "--foreground": "#3f1f0c",
+    "--card": "#fff2d9",
+    "--card-foreground": "#3f1f0c",
+    "--muted": "#f4c25a",
+    "--muted-foreground": "#7c3a1a",
+    "--accent": "#ebaa32",
+    "--accent-foreground": "#3b1a07",
+    "--destructive": "#ef4444",
+    "--border": "#f4c25a",
+    "--input": "#f4c25a",
+    "--ring": "#df6206",
+    "--avatar-border": "#df6206",
   },
 };
 
