@@ -773,7 +773,7 @@ export default function PublicProfileEditorPage() {
         </span>
         {isDirty && <span className="text-amber-600">Unsaved changes</span>}
         {saveState === "failed" ? (
-          <Button variant="outline" size="sm" onClick={handleSave}>
+          <Button variant="outline" size="sm" onClick={() => void handleSave()}>
             Retry save
           </Button>
         ) : null}
