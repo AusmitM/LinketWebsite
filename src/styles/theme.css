@@ -296,6 +296,12 @@
   --avatar-border: #df6206;
 }
 
+.theme-honey .dashboard-topbar,
+.theme-honey .dashboard-navbar {
+  background: linear-gradient(90deg, #f17b26 0%, #f4c25a 55%, #fddb9c 100%);
+  border-color: rgba(223, 98, 6, 0.4);
+}
+
 /* Typography harmony */
 html:where(.typography-smooth) h1 { font-size: var(--step-4); line-height: 1.1; letter-spacing: -0.01em; }
 html:where(.typography-smooth) h2 { font-size: var(--step-3); line-height: 1.15; }

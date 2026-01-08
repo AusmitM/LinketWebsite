@@ -33,7 +33,7 @@ export default function DashboardAppShell({
         <Sidebar />
       </div>
       <div className="flex flex-1 flex-col overflow-hidden">
-        <div className="sticky top-0 z-30 flex items-center justify-between border-b border-border/60 bg-background/90 px-4 py-3 backdrop-blur lg:hidden">
+        <div className="dashboard-topbar sticky top-0 z-30 flex items-center justify-between border-b border-border/60 bg-background/90 px-4 py-3 backdrop-blur lg:hidden">
           <button
             type="button"
             onClick={() => setSidebarOpen(true)}
