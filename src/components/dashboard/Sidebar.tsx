@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import ThemeToggle from "@/components/dashboard/ThemeToggle";
+import { useThemeOptional } from "@/components/theme/theme-provider";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
@@ -54,6 +55,7 @@ export default function Sidebar({
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { theme } = useThemeOptional();
   const [collapsed, setCollapsed] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -112,6 +114,29 @@ export default function Sidebar({
       { href: "/dashboard/admin/mint", label: "Manufacturing", icon: Package },
     ];
   }, [isAdmin]);
+
+  const themeLabel = useMemo(() => {
+    switch (theme) {
+      case "light":
+        return "Light";
+      case "dark":
+        return "Dark";
+      case "midnight":
+        return "Midnight";
+      case "forest":
+        return "Forest";
+      case "gilded":
+        return "Gilded";
+      case "silver":
+        return "Silver";
+      case "autumn":
+        return "Autumn";
+      case "honey":
+        return "Honey";
+      default:
+        return "Theme";
+    }
+  }, [theme]);
 
   const shouldConfirmLeave = useCallback(() => {
     if (typeof window === "undefined") return false;
@@ -181,7 +206,7 @@ export default function Sidebar({
             <ThemeToggle />
             {!isCollapsed && !isMobile && (
               <span className="text-xs font-medium text-muted-foreground">
-                Theme
+                {themeLabel}
               </span>
             )}
           </div>

@@ -148,11 +148,59 @@ export default function PublicProfileEditorPage() {
     error: null,
   });
   const [vcardLoaded, setVcardLoaded] = useState(false);
+  const handleVCardFieldsChange = useCallback(
+    (fields: { email: string; phone: string; photoData: string | null }) => {
+      setVcardSnapshot((prev) => {
+        const next = {
+          ...prev,
+          email: fields.email ?? "",
+          phone: fields.phone ?? "",
+          hasPhoto: Boolean(fields.photoData),
+        };
+        if (
+          prev.email === next.email &&
+          prev.phone === next.phone &&
+          prev.hasPhoto === next.hasPhoto
+        ) {
+          return prev;
+        }
+        return next;
+      });
+    },
+    []
+  );
+  const handleVCardStatusChange = useCallback(
+    (payload: {
+      status: "idle" | "saving" | "saved" | "error";
+      isDirty: boolean;
+      error: string | null;
+    }) => {
+      setVcardSnapshot((prev) => {
+        const next = {
+          ...prev,
+          status: payload.status,
+          isDirty: payload.isDirty,
+          error: payload.error,
+        };
+        if (
+          prev.status === next.status &&
+          prev.isDirty === next.isDirty &&
+          prev.error === next.error
+        ) {
+          return prev;
+        }
+        return next;
+      });
+    },
+    []
+  );
 
   const autosavePending = useRef(false);
   const leadFormLoadRef = useRef(0);
   const draftRef = useRef<ProfileDraft | null>(null);
   const reorderSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const themeSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastThemeRef = useRef<ThemeName | null>(null);
   const dragScrollFrame = useRef<number | null>(null);
   const leadFormReorderRef = useRef<
     ((sourceId: string, targetId: string) => void) | null
@@ -347,12 +395,23 @@ export default function PublicProfileEditorPage() {
   }, [theme, draft]);
 
   useEffect(() => {
+    return () => {
+      if (themeSaveTimer.current) {
+        clearTimeout(themeSaveTimer.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
     draftRef.current = draft;
   }, [draft]);
 
   const isDirty = useMemo(() => {
     if (!draft || !savedProfile) return false;
-    return JSON.stringify(draft) !== JSON.stringify(savedProfile);
+    return (
+      JSON.stringify(normalizeDraftForCompare(draft)) !==
+      JSON.stringify(normalizeDraftForCompare(savedProfile))
+    );
   }, [draft, savedProfile]);
 
   const handleSave = useCallback(async (overrideDraft?: ProfileDraft) => {
@@ -414,6 +473,24 @@ export default function PublicProfileEditorPage() {
       setSaving(false);
     }
   }, [draft, userId, saving]);
+
+  useEffect(() => {
+    if (!draft || !userId) return;
+    if (lastThemeRef.current === null) {
+      lastThemeRef.current = draft.theme;
+      return;
+    }
+    if (draft.theme === lastThemeRef.current) return;
+    lastThemeRef.current = draft.theme;
+    if (themeSaveTimer.current) {
+      clearTimeout(themeSaveTimer.current);
+    }
+    themeSaveTimer.current = setTimeout(() => {
+      themeSaveTimer.current = null;
+      if (!isDirty) return;
+      void handleSave();
+    }, 1000);
+  }, [draft, handleSave, isDirty, userId]);
 
   useEffect(() => {
     if (!saving && autosavePending.current && draft && isDirty && userId) {
@@ -763,22 +840,8 @@ export default function PublicProfileEditorPage() {
             onReorderLink={reorderLinks}
             draggingLinkId={draggingLinkId}
             setDraggingLinkId={setDraggingLinkId}
-            onVCardFields={(fields) =>
-              setVcardSnapshot((prev) => ({
-                ...prev,
-                email: fields.email ?? "",
-                phone: fields.phone ?? "",
-                hasPhoto: Boolean(fields.photoData),
-              }))
-            }
-            onVCardStatus={(payload) =>
-              setVcardSnapshot((prev) => ({
-                ...prev,
-                status: payload.status,
-                isDirty: payload.isDirty,
-                error: payload.error,
-              }))
-            }
+            onVCardFields={handleVCardFieldsChange}
+            onVCardStatus={handleVCardStatusChange}
           />
         </div>
         <div className="flex justify-end self-start pt-0">
@@ -935,6 +998,26 @@ function EditorPanel({
     error: string | null;
   }) => void;
 }) {
+  const handleFieldsChange = useCallback(
+    (fields: { email: string; phone: string; photoData: string | null }) => {
+      onVCardFields({
+        email: fields.email,
+        phone: fields.phone,
+        photoData: fields.photoData,
+      });
+    },
+    [onVCardFields]
+  );
+  const handleStatusChange = useCallback(
+    (payload: { status: "idle" | "saving" | "saved" | "error"; isDirty: boolean; error: string | null }) => {
+      onVCardStatus({
+        status: payload.status,
+        isDirty: payload.isDirty,
+        error: payload.error,
+      });
+    },
+    [onVCardStatus]
+  );
   if (activeSection === "profile") {
     return (
       <Card className="rounded-2xl border border-border/60 bg-card/80 shadow-sm">
@@ -1020,28 +1103,16 @@ function EditorPanel({
     );
   }
 
-  if (activeSection === "contact") {
-    return (
-      <VCardContent
-        variant="embedded"
-        idPrefix="profile-contact"
-        onFieldsChange={(fields) =>
-          onVCardFields({
-            email: fields.email,
-            phone: fields.phone,
-            photoData: fields.photoData,
-          })
-        }
-        onStatusChange={(payload) =>
-          onVCardStatus({
-            status: payload.status,
-            isDirty: payload.isDirty,
-            error: payload.error,
-          })
-        }
-      />
-    );
-  }
+    if (activeSection === "contact") {
+      return (
+        <VCardContent
+          variant="embedded"
+          idPrefix="profile-contact"
+          onFieldsChange={handleFieldsChange}
+          onStatusChange={handleStatusChange}
+        />
+      );
+    }
 
   if (activeSection === "links") {
     return (
@@ -1704,6 +1775,28 @@ function mergeProfileUi(next: ProfileDraft, previous: ProfileDraft | null) {
     links: next.links.map((link) => ({
       ...link,
       ...(uiById.get(link.id) ?? {}),
+    })),
+  };
+}
+
+function normalizeDraftForCompare(draft: ProfileDraft) {
+  return {
+    id: draft.id,
+    name: draft.name,
+    handle: draft.handle,
+    headline: draft.headline,
+    headerImageUrl: draft.headerImageUrl,
+    headerImageUpdatedAt: draft.headerImageUpdatedAt,
+    theme: draft.theme,
+    active: draft.active,
+    links: draft.links.map((link) => ({
+      id: link.id,
+      label: link.label,
+      url: link.url,
+      icon: link.icon,
+      color: link.color,
+      visible: link.visible,
+      clicks: link.clicks ?? 0,
     })),
   };
 }

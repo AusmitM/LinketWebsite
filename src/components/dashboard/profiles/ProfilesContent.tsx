@@ -131,6 +131,8 @@ export default function ProfilesContent() {
   const [accountHandle, setAccountHandle] = useState<string | null>(null);
   const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const autosavePending = useRef(false);
+  const lastThemeRef = useRef<ThemeName | null>(null);
+  const themeSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (dashboardUser?.id) {
@@ -611,6 +613,32 @@ export default function ProfilesContent() {
     const nextOption = THEME_OPTIONS[(currentIndex + 1) % THEME_OPTIONS.length];
     updateDraft({ theme: nextOption.id });
   }
+
+  useEffect(() => {
+    if (!draft || inputsDisabled || !userId) return;
+    if (lastThemeRef.current === null) {
+      lastThemeRef.current = draft.theme;
+      return;
+    }
+    if (draft.theme === lastThemeRef.current) return;
+    lastThemeRef.current = draft.theme;
+    if (themeSaveTimer.current) {
+      clearTimeout(themeSaveTimer.current);
+    }
+    themeSaveTimer.current = setTimeout(() => {
+      themeSaveTimer.current = null;
+      if (!isDirty) return;
+      void handleSave({ quiet: true });
+    }, 1000);
+  }, [draft, handleSave, inputsDisabled, isDirty, userId]);
+
+  useEffect(() => {
+    return () => {
+      if (themeSaveTimer.current) {
+        clearTimeout(themeSaveTimer.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!draft || !isDirty || !userId) {
