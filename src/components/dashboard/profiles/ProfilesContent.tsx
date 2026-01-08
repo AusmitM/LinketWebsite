@@ -347,6 +347,7 @@ export default function ProfilesContent() {
     const nextIndex = (currentIndex + 1) % THEME_OPTIONS.length;
     return THEME_OPTIONS[nextIndex];
   }, [draftTheme]);
+  const inputsDisabled = loading || accountLoading || saving || !userId;
 
   function updateDraft(patch: Partial<LinketProfile>) {
     setAutoSaveError(null);
@@ -691,7 +692,6 @@ export default function ProfilesContent() {
   }, [accountLoading, accountError, autoSaveError, saving, isDirty]);
 
   const hasAutoSaveError = Boolean(autoSaveError);
-  const inputsDisabled = loading || accountLoading || saving || !userId;
 
   const effectiveHandle =
     accountHandle ?? draft?.handle ?? activeProfile?.handle ?? null;
