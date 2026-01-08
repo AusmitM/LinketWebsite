@@ -61,7 +61,7 @@ const THEME_OPTIONS: Array<{
     id: "gilded",
     label: "Gilded",
     description: "Velvet black with molten gold accents",
-    preview: "linear-gradient(135deg, #050505 0%, #171008 45%, #d4af37 120%)",
+    preview: "linear-gradient(135deg, #010203 0%, #1d1d1f 50%, #b16c04 100%)",
     textTone: "light",
   },
   {
