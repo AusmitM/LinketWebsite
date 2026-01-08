@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
-import { ChevronDown, LogOut, Menu, X } from "lucide-react";
+import { LogOut, Menu, X } from "lucide-react";
 
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
@@ -86,9 +86,7 @@ export function Navbar() {
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const accountButtonRef = useRef<HTMLButtonElement | null>(null);
-  const [viewMenuOpen, setViewMenuOpen] = useState(false);
   const [accountHandle, setAccountHandle] = useState<string | null>(null);
-  const viewMenuButtonRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     lockedSectionRef.current = lockedSection;
@@ -484,10 +482,6 @@ export function Navbar() {
   );
 
   if (isDashboard) {
-    const mobileNavItemClass = cn(
-      "rounded-2xl border px-4 py-2 text-base font-semibold transition",
-      "border-border/60 bg-card/80 text-foreground hover:bg-card"
-    );
     const overviewHref = "/dashboard/overview";
     const activeDashboardHref = (() => {
       if (!pathname) return null;
@@ -571,16 +565,15 @@ export function Navbar() {
                 >
                   View Public Profile
                 </Button>
-                <button
-                  type="button"
-                  ref={viewMenuButtonRef}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border/60 text-muted-foreground hover:bg-accent"
-                  onClick={() => setViewMenuOpen(true)}
-                  aria-label="Copy profile link"
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="rounded-full border border-border/60"
+                  onClick={handleCopyProfileLink}
                   disabled={!profileUrl}
                 >
-                  <ChevronDown className="h-4 w-4" />
-                </button>
+                  Copy link
+                </Button>
               </div>
             )}
             <Button
@@ -590,10 +583,17 @@ export function Navbar() {
             >
               <Link href="/claim">New Linket</Link>
             </Button>
+            <Button
+              asChild
+              size="sm"
+              className="rounded-full bg-gradient-to-r from-[#6ee7b7] via-[#3b82f6] to-[#8b5cf6] text-white shadow-[0_18px_35px_rgba(59,130,246,0.35)] lg:hidden"
+            >
+              <Link href="/claim">New Linket</Link>
+            </Button>
             {dashboardAvatar}
             <button
               type="button"
-              className="inline-flex items-center justify-center rounded-full border border-border/60 p-2 text-foreground lg:hidden"
+              className="hidden items-center justify-center rounded-full border border-border/60 p-2 text-foreground lg:hidden"
               onClick={() => setMobileOpen((prev) => !prev)}
               aria-label={mobileOpen ? "Close navigation" : "Open navigation"}
             >
@@ -605,64 +605,18 @@ export function Navbar() {
             </button>
           </div>
         </nav>
-        {mobileOpen && (
-          <div className="border-t border-border/60 bg-background/95 px-4 pb-6 pt-4 text-foreground lg:hidden">
-            <nav
-              className="flex flex-col gap-2"
-              aria-label="Dashboard sections"
-            >
-              {DASHBOARD_NAV.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={cn(
-                    mobileNavItemClass,
-                    isNavActive(link.href) &&
-                      "border-foreground/40 bg-card text-foreground font-semibold"
-                  )}
-                  onClick={() => setMobileOpen(false)}
-                >
-                  {link.label}
-                </Link>
-              ))}
-              <Button
-                asChild
-                size="sm"
-                className="mt-3 w-full rounded-2xl bg-gradient-to-r from-[#6ee7b7] via-[#3b82f6] to-[#8b5cf6] text-white shadow-[0_18px_35px_rgba(59,130,246,0.35)]"
-              >
-                <Link href="/claim">New Linket</Link>
-              </Button>
-              <div className="mt-2 flex items-center gap-3 rounded-2xl border border-border/60 bg-card/80 px-4 py-3">
-                {dashboardAvatar}
-                <div className="text-sm text-muted-foreground">
-                  {user?.email ?? "Not signed in"}
-                </div>
-              </div>
-            </nav>
-          </div>
-        )}
-        {user && (
-          <PopoverDialog
-            open={viewMenuOpen}
-            onOpenChange={setViewMenuOpen}
-            anchorRef={viewMenuButtonRef}
-            title="Copy link"
-          >
-            <div className="space-y-2 text-sm">
-              <MenuButton onClick={handleCopyProfileLink} disabled={!profileUrl}>
-                Copy link
-              </MenuButton>
-            </div>
-          </PopoverDialog>
-        )}
         {user && (
           <PopoverDialog
             open={accountMenuOpen}
             onOpenChange={setAccountMenuOpen}
             anchorRef={accountButtonRef}
+            align="end"
             title="Account menu"
           >
             <div className="space-y-2 text-sm">
+              <div className="rounded-lg border border-border/60 bg-card/80 px-3 py-2 text-xs text-muted-foreground">
+                {user?.email ?? "Not signed in"}
+              </div>
               <MenuLink href="/dashboard/settings">Account settings</MenuLink>
               <MenuLink href="/dashboard/billing">Billing</MenuLink>
               <MenuButton
@@ -875,25 +829,29 @@ function PopoverDialog({
   open,
   onOpenChange,
   anchorRef,
+  align = "start",
   title,
   children,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   anchorRef: React.RefObject<HTMLElement | null>;
-  title: string;
+  align?: "start" | "end";
+  title?: string;
   children: React.ReactNode;
 }) {
-  const position = usePopoverPosition(anchorRef, open);
+  const position = usePopoverPosition(anchorRef, open, align);
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className="w-72 translate-x-0 translate-y-0 rounded-2xl border border-border/60 bg-background p-4 shadow-lg"
         style={position}
       >
-        <DialogHeader>
-          <DialogTitle className="text-sm font-semibold">{title}</DialogTitle>
-        </DialogHeader>
+        {title ? (
+          <DialogHeader>
+            <DialogTitle className="text-sm font-semibold">{title}</DialogTitle>
+          </DialogHeader>
+        ) : null}
         {children}
       </DialogContent>
     </Dialog>
@@ -934,18 +892,22 @@ function MenuLink({ href, children }: { href: string; children: React.ReactNode 
 
 function usePopoverPosition(
   anchorRef: React.RefObject<HTMLElement | null>,
-  open: boolean
+  open: boolean,
+  align: "start" | "end"
 ) {
   const [style, setStyle] = useState<CSSProperties>({});
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!open) return;
     const update = () => {
       const anchor = anchorRef.current;
       if (!anchor) return;
       const rect = anchor.getBoundingClientRect();
-      const top = rect.bottom + 8;
-      const left = Math.min(Math.max(12, rect.left), window.innerWidth - 300);
+      const padding = 12;
+      const maxWidth = Math.min(288, window.innerWidth - padding * 2);
+      const desiredLeft = align === "end" ? rect.right - maxWidth : rect.left;
+      const left = Math.min(Math.max(padding, desiredLeft), window.innerWidth - maxWidth - padding);
+      const top = Math.min(rect.bottom + 8, window.innerHeight - padding);
       setStyle({
         position: "fixed",
         top,

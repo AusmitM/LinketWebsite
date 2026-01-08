@@ -40,7 +40,7 @@ const LABELS: Record<ThemeName, string> = {
   honey: "Honey",
 };
 
-export default function ThemeToggle() {
+export default function ThemeToggle({ showLabel = false }: { showLabel?: boolean }) {
   const { theme, setTheme } = useThemeOptional();
   const user = useDashboardUser();
   const abortRef = useRef<AbortController | null>(null);
@@ -123,8 +123,16 @@ export default function ThemeToggle() {
   const label = LABELS[current];
 
   return (
-    <Button variant="ghost" size="icon" aria-label={`Theme: ${label}`} onClick={next} title={`Theme: ${label}`}>
+    <Button
+      variant="ghost"
+      size={showLabel ? "sm" : "icon"}
+      aria-label={`Theme: ${label}`}
+      onClick={next}
+      title={`Theme: ${label}`}
+      className={showLabel ? "gap-2 px-2" : undefined}
+    >
       <Icon className="h-5 w-5" />
+      {showLabel ? <span className="text-xs font-medium text-muted-foreground">{label}</span> : null}
     </Button>
   );
 }
