@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import DashboardPrefetcher from "@/components/dashboard/DashboardPrefetcher";
 import DashboardThemeSync from "@/components/dashboard/DashboardThemeSync";
+import DashboardThemeRemoteSync from "@/components/dashboard/DashboardThemeRemoteSync";
 import { createServerSupabaseReadonly } from "@/lib/supabase/server";
 import { DashboardSessionProvider } from "@/components/dashboard/DashboardSessionContext";
 import DashboardAppShell from "@/components/dashboard/DashboardAppShell";
@@ -29,6 +30,7 @@ export default async function DashboardLayout({
     >
       <DashboardSessionProvider user={user}>
         <DashboardThemeSync />
+        <DashboardThemeRemoteSync />
         <DashboardAppShell>
           <DashboardPrefetcher />
           {children}
