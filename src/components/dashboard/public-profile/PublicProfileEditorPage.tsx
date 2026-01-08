@@ -355,13 +355,13 @@ export default function PublicProfileEditorPage() {
     return JSON.stringify(draft) !== JSON.stringify(savedProfile);
   }, [draft, savedProfile]);
 
-  const handleSave = useCallback(async () => {
-    if (!draft || !userId) return;
+  const handleSave = useCallback(async (overrideDraft?: ProfileDraft) => {
+    const draftSnapshot = overrideDraft ?? draft;
+    if (!draftSnapshot || !userId) return;
     if (saving) {
       autosavePending.current = true;
       return;
     }
-    const draftSnapshot = draft;
     const snapshotUpdatedAt = draftSnapshot.updatedAt;
     autosavePending.current = false;
     setSaving(true);
@@ -609,6 +609,7 @@ export default function PublicProfileEditorPage() {
   const saveLinkModal = useCallback(() => {
     if (!linkForm) return;
     if (linkModalMode === "add") {
+      let nextDraft: ProfileDraft | null = null;
       setDraft((prev) => {
         if (!prev) return prev;
         const nextLinks = prev.links.some((link) => link.id === linkForm.id)
@@ -616,13 +617,17 @@ export default function PublicProfileEditorPage() {
               link.id === linkForm.id ? linkForm : link
             )
           : [...prev.links, linkForm];
-        return { ...prev, links: nextLinks, updatedAt: new Date().toISOString() };
+        nextDraft = { ...prev, links: nextLinks, updatedAt: new Date().toISOString() };
+        return nextDraft;
       });
+      if (nextDraft) {
+        void handleSave(nextDraft);
+      }
     } else if (editingLinkId) {
       updateLink(editingLinkId, linkForm);
     }
     setLinkModalOpen(false);
-  }, [editingLinkId, linkForm, linkModalMode, updateLink]);
+  }, [editingLinkId, handleSave, linkForm, linkModalMode, updateLink]);
 
   const hasContactDetails = Boolean(
     vcardSnapshot.email?.trim() || vcardSnapshot.phone?.trim()
