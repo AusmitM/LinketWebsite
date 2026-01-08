@@ -568,7 +568,7 @@ export function Navbar() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="rounded-full border border-border/60"
+                  className="hidden rounded-full border border-border/60 lg:inline-flex"
                   onClick={handleCopyProfileLink}
                   disabled={!profileUrl}
                 >

@@ -221,7 +221,13 @@ export default function PublicProfilePreview({
                 </div>
               )}
 
-                <div className="flex flex-wrap items-center justify-center gap-3 sm:justify-start">
+                <div
+                  className={
+                    forceMobile
+                      ? "flex flex-wrap items-center justify-center gap-3"
+                      : "flex flex-wrap items-center justify-center gap-3 sm:justify-start"
+                  }
+                >
                   <VCardDownload
                     handle={publicHandle}
                     label="Download contact information"
