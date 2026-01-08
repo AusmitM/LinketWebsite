@@ -413,20 +413,20 @@ export default function LeadFormBuilder({
   }
   return (
     <div className="space-y-6">
-      <Card className="rounded-2xl border border-border/60 bg-card/80 shadow-sm">
-        <CardContent className="flex flex-wrap items-center gap-3 py-4">
-          <div className="space-y-1">
-            <div className="text-sm font-semibold">Lead capture form</div>
-            <div className="text-xs text-muted-foreground">
-              {form.status === "published" ? "Published" : "Draft"}
-              {lastSavedAt ? ` - Updated ${formatShortDate(lastSavedAt)}` : ""}
+        <Card className="rounded-2xl border border-border/60 bg-card/80 shadow-sm">
+          <CardContent className="flex flex-col items-center gap-3 py-4 text-center sm:flex-row sm:text-left">
+            <div className="space-y-1">
+              <div className="text-sm font-semibold">Lead capture form</div>
+              <div className="text-xs text-muted-foreground">
+                {form.status === "published" ? "Published" : "Draft"}
+                {lastSavedAt ? ` - Updated ${formatShortDate(lastSavedAt)}` : ""}
+              </div>
             </div>
-          </div>
-          <div className="ml-auto flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => {
+            <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-muted-foreground sm:ml-auto sm:justify-end">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
                 const next = !responsesOpen;
                 setResponsesOpen(next);
                 if (next) void fetchResponses();
@@ -500,11 +500,11 @@ export default function LeadFormBuilder({
       >
         <div className="space-y-6">
           <Card className="rounded-2xl border border-border/60 bg-card/80 shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-sm font-semibold">
-                Form details
-              </CardTitle>
-            </CardHeader>
+              <CardHeader>
+                <CardTitle className="text-sm font-semibold whitespace-nowrap">
+                  Form details
+                </CardTitle>
+              </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="lead-form-title">Title</Label>
@@ -622,18 +622,27 @@ export default function LeadFormBuilder({
           </Card>
           <Card className="rounded-2xl border border-border/60 bg-card/80 shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-sm font-semibold">
+              <CardTitle className="text-sm font-semibold whitespace-nowrap">
                 Questions
               </CardTitle>
               <Button
                 size="sm"
                 variant="secondary"
                 onClick={() => setFieldPickerOpen(true)}
+                className="hidden sm:inline-flex"
               >
                 <Plus className="mr-2 h-4 w-4" /> Add field
               </Button>
             </CardHeader>
             <CardContent className="space-y-3">
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => setFieldPickerOpen(true)}
+                className="w-full justify-center sm:hidden"
+              >
+                <Plus className="mr-2 h-4 w-4" /> Add field
+              </Button>
               {form.fields.length ? (
                 form.fields.map((field) => (
                   <div
@@ -700,7 +709,7 @@ export default function LeadFormBuilder({
         <div className="space-y-6">
           <Card className="rounded-2xl border border-border/60 bg-card/80 shadow-sm">
             <CardHeader>
-              <CardTitle className="text-sm font-semibold">
+              <CardTitle className="text-sm font-semibold whitespace-nowrap">
                 Field settings
               </CardTitle>
             </CardHeader>
@@ -797,7 +806,9 @@ export default function LeadFormBuilder({
           {showPreview ? (
             <Card className="rounded-2xl border border-border/60 bg-card/80 shadow-sm">
               <CardHeader>
-                <CardTitle className="text-sm font-semibold">Live preview</CardTitle>
+                <CardTitle className="text-sm font-semibold whitespace-nowrap">
+                  Live preview
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">

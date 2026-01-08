@@ -37,8 +37,21 @@ export default function AvatarUploader({
   inputId,
 }: Props) {
   const isCompact = variant === "compact";
-  const previewSize = isCompact ? 240 : 340;
-  const cropSize = isCompact ? 180 : 260;
+  const [isSmallScreen, setIsSmallScreen] = useState(false);
+  const previewSize = isCompact
+    ? isSmallScreen
+      ? 200
+      : 240
+    : isSmallScreen
+      ? 280
+      : 340;
+  const cropSize = isCompact
+    ? isSmallScreen
+      ? 150
+      : 180
+    : isSmallScreen
+      ? 210
+      : 260;
   const cropHalf = cropSize / 2;
   const cropCorner = Math.round(cropSize * 0.22);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -126,6 +139,19 @@ export default function AvatarUploader({
       setLatestAvatarUrl(avatarUrl ?? null);
     }
   }, [avatarUrl, latestAvatarUrl]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const media = window.matchMedia("(max-width: 640px)");
+    const update = () => setIsSmallScreen(media.matches);
+    update();
+    if (typeof media.addEventListener === "function") {
+      media.addEventListener("change", update);
+      return () => media.removeEventListener("change", update);
+    }
+    media.addListener(update);
+    return () => media.removeListener(update);
+  }, []);
 
   useEffect(() => {
     if (!sourceUrl) return;
@@ -289,7 +315,9 @@ export default function AvatarUploader({
   );
   const previewContainerClassName = cn(
     "relative flex aspect-square items-center justify-center overflow-hidden border bg-muted/40",
-    isCompact ? "max-w-[320px] rounded-2xl" : "max-w-[420px] rounded-3xl",
+    isCompact
+      ? "max-w-[260px] rounded-2xl sm:max-w-[320px]"
+      : "max-w-[320px] rounded-3xl sm:max-w-[420px]",
     !sourceUrl && "border-dashed"
   );
   const dropButtonClassName = cn(

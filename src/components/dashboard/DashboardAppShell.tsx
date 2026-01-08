@@ -26,7 +26,7 @@ export default function DashboardAppShell({
   return (
     <div
       id="dashboard-theme-scope"
-      className="flex min-h-screen bg-[var(--background)]"
+      className="flex min-h-[100svh] bg-[var(--background)]"
       style={{ "--dashboard-nav-height": "64px" } as CSSProperties}
     >
       <div className="hidden h-[calc(100vh-var(--dashboard-nav-height))] lg:sticky lg:top-[var(--dashboard-nav-height)] lg:block">
@@ -48,8 +48,8 @@ export default function DashboardAppShell({
           </span>
           <div className="h-8 w-8" aria-hidden />
         </div>
-        <div className="flex-1 overflow-auto px-4 pb-10 pt-4 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-7xl">{children}</div>
+        <div className="flex-1 overflow-auto px-3 pb-6 pt-3 sm:px-4 sm:pb-8 sm:pt-4 lg:px-8 lg:pb-10">
+          <div className="dashboard-content mx-auto max-w-7xl">{children}</div>
         </div>
       </div>
       <div

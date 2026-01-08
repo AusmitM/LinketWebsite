@@ -53,7 +53,7 @@ import type { ThemeName } from "@/lib/themes";
 import type { ProfileWithLinks } from "@/lib/profile-service";
 import type { LeadFormConfig, LeadFormField } from "@/types/lead-form";
 
-type SectionId = "profile" | "contact" | "links" | "lead";
+type SectionId = "profile" | "contact" | "links" | "lead" | "preview";
 
 type LinkIconKey = "instagram" | "globe" | "twitter" | "link";
 
@@ -94,6 +94,11 @@ const SECTIONS: Array<{ id: SectionId; label: string; icon: typeof User }> = [
   { id: "contact", label: "Contact Card", icon: IdCard },
   { id: "links", label: "Links", icon: Link2 },
   { id: "lead", label: "Lead Form", icon: MessageSquare },
+];
+
+const MOBILE_SECTIONS: Array<{ id: SectionId; label: string; icon: typeof User }> = [
+  ...SECTIONS,
+  { id: "preview", label: "Preview", icon: Eye },
 ];
 
 const ICON_OPTIONS: Array<{
@@ -439,7 +444,7 @@ export default function PublicProfileEditorPage() {
           title: link.label,
           url: link.url,
         })),
-        active: draftSnapshot.active,
+        active: true,
       };
       const res = await fetch("/api/linket-profiles", {
         method: "POST",
@@ -746,21 +751,10 @@ export default function PublicProfileEditorPage() {
     });
   }, [hasContactDetails, vcardSnapshot.email]);
 
-  const handlePublish = useCallback(() => {
-    handleProfileChange({ active: true });
-    void handleSave();
-  }, [handleProfileChange, handleSave]);
-
-  const handleUnpublish = useCallback(() => {
-    handleProfileChange({ active: false });
-    void handleSave();
-  }, [handleProfileChange, handleSave]);
-
-
   const profileDisplayName = draft?.name || "John Doe";
   const profileTagline =
     draft?.headline || "I do things | other things & mores";
-  const isPublished = Boolean(draft?.active);
+  const isPublished = true;
 
   return (
     <div className="space-y-6" onBlurCapture={handleBlurCapture}>
@@ -777,29 +771,57 @@ export default function PublicProfileEditorPage() {
             Retry save
           </Button>
         ) : null}
-        <Button size="sm" onClick={isPublished ? handleUnpublish : handlePublish}>
-          {isPublished ? "Unpublish" : "Publish"}
-        </Button>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[550px_minmax(0,1fr)_50px]">
-        <div className="space-y-4">
-          <ProfileSectionsNav
-            activeSection={activeSection}
-            onSectionChange={setActiveSection}
-          />
-          <EditorPanel
-            activeSection={activeSection}
-            draft={draft}
-            loading={loading}
-            userId={userId}
-            avatarUrl={avatarUrl}
-            accountHandle={accountHandle}
-            headerImageUrl={headerImageUrl}
-            onLeadFormPreview={setLeadFormPreview}
-            onRegisterLeadFormReorder={(reorder) => {
-              leadFormReorderRef.current = reorder;
-            }}
+        {/*
+          On phones, the preview lives in its own "Preview" section.
+          Keep the live preview column on desktop/tablet.
+        */}
+        <div className="grid gap-6 lg:grid-cols-[550px_minmax(0,1fr)_50px]">
+          <div className="space-y-4">
+            <ProfileSectionsNav
+              activeSection={activeSection}
+              onSectionChange={setActiveSection}
+            />
+            {/*
+              Keep a single preview instance for reuse.
+            */}
+            <EditorPanel
+              activeSection={activeSection}
+              draft={draft}
+              loading={loading}
+              userId={userId}
+              avatarUrl={avatarUrl}
+              accountHandle={accountHandle}
+              headerImageUrl={headerImageUrl}
+              previewNode={
+                <PhonePreviewCard
+                  profile={{ name: profileDisplayName, tagline: profileTagline }}
+                  avatarUrl={avatarUrl}
+                  headerImageUrl={headerImageUrl}
+                  contactEnabled={hasContactDetails}
+                  contactDisabledText="Add email or phone to enable Save contact"
+                  onContactClick={handleContactCta}
+                  links={draft?.links ?? []}
+                  leadFormPreview={leadFormPreview}
+                  onReorderLeadField={reorderLeadFormFields}
+                  onEditLink={openEditLink}
+                  onToggleLink={(linkId) =>
+                    updateLink(linkId, {
+                      visible: !draft?.links.find((link) => link.id === linkId)?.visible,
+                    })
+                  }
+                  onRemoveLink={removeLink}
+                  onAddLink={addLink}
+                  onReorderLink={reorderLinks}
+                  draggingLinkId={draggingLinkId}
+                  setDraggingLinkId={setDraggingLinkId}
+                />
+              }
+              onLeadFormPreview={setLeadFormPreview}
+              onRegisterLeadFormReorder={(reorder) => {
+                leadFormReorderRef.current = reorder;
+              }}
             onAvatarUpdate={setAvatarUrl}
             onHeaderImageUpdate={(payload) => {
               const nextPath = payload.path || null;
@@ -837,39 +859,41 @@ export default function PublicProfileEditorPage() {
                 visible: !draft?.links.find((link) => link.id === linkId)?.visible,
               })
             }
-            onReorderLink={reorderLinks}
-            draggingLinkId={draggingLinkId}
-            setDraggingLinkId={setDraggingLinkId}
-            onVCardFields={handleVCardFieldsChange}
-            onVCardStatus={handleVCardStatusChange}
-          />
-        </div>
-        <div className="flex justify-end self-start pt-0">
-          <div className="origin-top-left scale-[1] -mt-2">
-            <PhonePreviewCard
-              profile={{ name: profileDisplayName, tagline: profileTagline }}
-              avatarUrl={avatarUrl}
-              headerImageUrl={headerImageUrl}
-              contactEnabled={hasContactDetails}
-              contactDisabledText="Add email or phone to enable Save contact"
-              onContactClick={handleContactCta}
-              links={draft?.links ?? []}
-              leadFormPreview={leadFormPreview}
-              onReorderLeadField={reorderLeadFormFields}
-              onEditLink={openEditLink}
-              onToggleLink={(linkId) =>
-                updateLink(linkId, {
-                  visible: !draft?.links.find((link) => link.id === linkId)?.visible,
-                })
-              }
-              onRemoveLink={removeLink}
-              onAddLink={addLink}
               onReorderLink={reorderLinks}
               draggingLinkId={draggingLinkId}
               setDraggingLinkId={setDraggingLinkId}
+              onVCardFields={handleVCardFieldsChange}
+              onVCardStatus={handleVCardStatusChange}
             />
           </div>
-        </div>
+          {activeSection !== "preview" ? (
+          <div className="hidden justify-end self-start pt-0 lg:flex">
+            <div className="origin-top-left scale-[1] -mt-2">
+              <PhonePreviewCard
+                profile={{ name: profileDisplayName, tagline: profileTagline }}
+                avatarUrl={avatarUrl}
+                headerImageUrl={headerImageUrl}
+                contactEnabled={hasContactDetails}
+                contactDisabledText="Add email or phone to enable Save contact"
+                onContactClick={handleContactCta}
+                links={draft?.links ?? []}
+                leadFormPreview={leadFormPreview}
+                onReorderLeadField={reorderLeadFormFields}
+                onEditLink={openEditLink}
+                onToggleLink={(linkId) =>
+                  updateLink(linkId, {
+                    visible: !draft?.links.find((link) => link.id === linkId)?.visible,
+                  })
+                }
+                onRemoveLink={removeLink}
+                onAddLink={addLink}
+                onReorderLink={reorderLinks}
+                draggingLinkId={draggingLinkId}
+                setDraggingLinkId={setDraggingLinkId}
+              />
+            </div>
+          </div>
+          ) : null}
       </div>
 
       <LinkModal
@@ -884,31 +908,31 @@ export default function PublicProfileEditorPage() {
   );
 }
 
-function ProfileSectionsNav({
-  activeSection,
-  onSectionChange,
-}: {
-  activeSection: SectionId;
-  onSectionChange: (section: SectionId) => void;
-}) {
-  return (
-    <div className="space-y-4">
-      <div className="lg:hidden">
-        <label className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
-          Profile sections
-        </label>
-        <select
-          value={activeSection}
-          onChange={(event) => onSectionChange(event.target.value as SectionId)}
-          className="mt-2 w-full rounded-xl border border-border/60 bg-background px-3 py-2 text-sm"
-        >
-          {SECTIONS.map((item) => (
-            <option key={item.id} value={item.id}>
-              {item.label}
-            </option>
-          ))}
-        </select>
-      </div>
+  function ProfileSectionsNav({
+    activeSection,
+    onSectionChange,
+  }: {
+    activeSection: SectionId;
+    onSectionChange: (section: SectionId) => void;
+  }) {
+    return (
+      <div className="space-y-4">
+        <div className="lg:hidden">
+          <label className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
+            Profile sections
+          </label>
+          <select
+            value={activeSection}
+            onChange={(event) => onSectionChange(event.target.value as SectionId)}
+            className="mt-2 w-full rounded-xl border border-border/60 bg-background px-3 py-2 text-sm"
+          >
+            {MOBILE_SECTIONS.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.label}
+              </option>
+            ))}
+          </select>
+        </div>
       <aside className="hidden rounded-2xl border border-border/60 bg-card/80 p-4 shadow-sm lg:block">
         <div className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
           PROFILE SECTIONS
@@ -949,6 +973,7 @@ function EditorPanel({
   avatarUrl,
   accountHandle,
   headerImageUrl,
+  previewNode,
   onAvatarUpdate,
   onHeaderImageUpdate,
   onLeadFormPreview,
@@ -971,9 +996,10 @@ function EditorPanel({
   userId: string | null;
   avatarUrl: string | null;
   accountHandle: string | null;
-  headerImageUrl: string | null;
-  onAvatarUpdate: (url: string) => void;
-  onHeaderImageUpdate: (payload: { path: string; version: string; publicUrl: string }) => void;
+    headerImageUrl: string | null;
+    previewNode: React.ReactNode;
+    onAvatarUpdate: (url: string) => void;
+    onHeaderImageUpdate: (payload: { path: string; version: string; publicUrl: string }) => void;
   onLeadFormPreview: (preview: LeadFormConfig | null) => void;
   onRegisterLeadFormReorder: (
     reorder: ((sourceId: string, targetId: string) => void) | null
@@ -998,6 +1024,9 @@ function EditorPanel({
     error: string | null;
   }) => void;
 }) {
+  if (activeSection === "preview") {
+    return <div className="flex justify-center">{previewNode}</div>;
+  }
   const handleFieldsChange = useCallback(
     (fields: { email: string; phone: string; photoData: string | null }) => {
       onVCardFields({
@@ -1116,13 +1145,20 @@ function EditorPanel({
 
   if (activeSection === "links") {
     return (
-      <Card className="rounded-2xl border border-border/60 bg-card/80 shadow-sm">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-sm font-semibold">Links</CardTitle>
-          <Button variant="ghost" size="sm" onClick={onAddLink}>
-            Add link
-          </Button>
-        </CardHeader>
+        <Card className="rounded-2xl border border-border/60 bg-card/80 shadow-sm">
+          <CardHeader className="flex flex-col items-start gap-2 text-left sm:flex-row sm:items-center sm:justify-between">
+            <CardTitle className="text-sm font-semibold">Links</CardTitle>
+            <div className="flex w-full justify-center sm:w-auto sm:justify-end">
+              <Button
+                variant="default"
+                size="sm"
+                className="justify-center rounded-full px-6"
+                onClick={onAddLink}
+              >
+                Add link
+              </Button>
+            </div>
+          </CardHeader>
         <CardContent className="space-y-3">
           {draft?.links.map((link, index) => (
             <div
@@ -1143,22 +1179,22 @@ function EditorPanel({
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="flex-1 space-y-2">
-                  <Input
-                    id={`link-label-${index}`}
-                    value={link.label}
-                    placeholder="Label"
-                    onChange={(event) =>
-                      onUpdateLink(link.id, { label: event.target.value })
-                    }
-                    className="h-9 text-sm"
-                  />
+                    <Input
+                      id={`link-label-${index}`}
+                      value={link.label}
+                      placeholder="Label"
+                      onChange={(event) =>
+                        onUpdateLink(link.id, { label: event.target.value })
+                      }
+                      className="h-9 text-left text-sm"
+                    />
                     <Input
                       value={link.url}
                       placeholder="https://www."
+                      className="h-9 text-left text-sm"
                       onChange={(event) =>
                         onUpdateLink(link.id, { url: event.target.value })
                       }
-                      className="h-9 text-sm"
                     />
                 </div>
                 <div className="flex flex-col gap-2">
@@ -1591,6 +1627,7 @@ function LinkModal({
               <Input
                 id="link-label"
                 value={link.label}
+                className="text-left"
                 onChange={(event) =>
                   onChange({ ...link, label: event.target.value })
                 }
@@ -1602,6 +1639,7 @@ function LinkModal({
                 id="link-url"
                 value={link.url}
                 placeholder="https://www."
+                className="text-left"
                 onChange={(event) =>
                   onChange({ ...link, url: event.target.value })
                 }

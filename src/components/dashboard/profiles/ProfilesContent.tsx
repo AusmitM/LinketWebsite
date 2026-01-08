@@ -1132,6 +1132,7 @@ export default function ProfilesContent() {
                         <Input
                           value={link.url}
                           placeholder="https://www."
+                          className="text-left"
                           onChange={(event) =>
                             updateLink(link.id, { url: event.target.value })
                           }

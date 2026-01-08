@@ -238,7 +238,7 @@ export default function VCardContent({
       <CardContent className="space-y-4">
         <section className="flex flex-col gap-4 rounded-2xl border border-dashed border-muted/70 p-4 sm:flex-row sm:items-center">
           <div className="flex items-center gap-4">
-            <div className="h-20 w-20 overflow-hidden rounded-full border bg-muted">
+            <div className="h-16 w-16 overflow-hidden rounded-full border bg-muted sm:h-20 sm:w-20">
               {photoPreview ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={photoPreview} alt="Selected profile" className="h-full w-full object-cover" />

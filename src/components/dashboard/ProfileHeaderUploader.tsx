@@ -40,10 +40,35 @@ export default function ProfileHeaderUploader({
   inputId,
 }: Props) {
   const isCompact = variant === "compact";
-  const previewWidth = isCompact ? 340 : 420;
-  const previewHeight = isCompact ? 210 : 260;
-  const cropWidth = isCompact ? 300 : 360;
-  const cropHeight = isCompact ? 150 : 180;
+  const [isSmallScreen, setIsSmallScreen] = useState(false);
+  const previewWidth = isCompact
+    ? isSmallScreen
+      ? 280
+      : 340
+    : isSmallScreen
+      ? 340
+      : 420;
+  const previewHeight = isCompact
+    ? isSmallScreen
+      ? 170
+      : 210
+    : isSmallScreen
+      ? 210
+      : 260;
+  const cropWidth = isCompact
+    ? isSmallScreen
+      ? 250
+      : 300
+    : isSmallScreen
+      ? 300
+      : 360;
+  const cropHeight = isCompact
+    ? isSmallScreen
+      ? 120
+      : 150
+    : isSmallScreen
+      ? 150
+      : 180;
   const cropHalfWidth = cropWidth / 2;
   const cropHalfHeight = cropHeight / 2;
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -131,6 +156,19 @@ export default function ProfileHeaderUploader({
       setLatestHeaderUrl(headerUrl ?? null);
     }
   }, [headerUrl, latestHeaderUrl]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const media = window.matchMedia("(max-width: 640px)");
+    const update = () => setIsSmallScreen(media.matches);
+    update();
+    if (typeof media.addEventListener === "function") {
+      media.addEventListener("change", update);
+      return () => media.removeEventListener("change", update);
+    }
+    media.addListener(update);
+    return () => media.removeListener(update);
+  }, []);
 
   useEffect(() => {
     if (!sourceUrl) return;
@@ -306,7 +344,9 @@ export default function ProfileHeaderUploader({
 
   const previewContainerClassName = cn(
     "relative flex items-center justify-center overflow-hidden border bg-muted/40",
-    isCompact ? "max-w-[360px] rounded-2xl" : "max-w-[440px] rounded-3xl",
+    isCompact
+      ? "max-w-[300px] rounded-2xl sm:max-w-[360px]"
+      : "max-w-[360px] rounded-3xl sm:max-w-[440px]",
     !sourceUrl && "border-dashed"
   );
 
