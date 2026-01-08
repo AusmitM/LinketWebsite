@@ -240,7 +240,22 @@ export default function VCardBuilder() {
                   </div>
                   <div className="md:col-span-3">
                     <Label className="sr-only" htmlFor={`tel-${idx}`}>Number</Label>
-                    <Input id={`tel-${idx}`} value={p.value} onChange={(e) => setForm((f)=> ({...f, phones: f.phones.map((x,i)=> i===idx? { ...x, value: e.target.value }: x)}))} placeholder="+1 555 123 4567" />
+                    <Input
+                      id={`tel-${idx}`}
+                      type="tel"
+                      value={p.value}
+                      onChange={(e) =>
+                        setForm((f) => ({
+                          ...f,
+                          phones: f.phones.map((x, i) =>
+                            i === idx
+                              ? { ...x, value: formatPhoneNumber(e.target.value) }
+                              : x
+                          ),
+                        }))
+                      }
+                      placeholder="(555) 123 - 4567"
+                    />
                   </div>
                   <div className="flex items-center gap-2">
                     <Button variant="outline" className="rounded-2xl" onClick={()=> setForm((f)=> ({...f, phones: f.phones.filter((_,i)=> i!==idx)}))}>Remove</Button>
@@ -499,4 +514,16 @@ export default function VCardBuilder() {
       </CardContent>
     </Card>
   );
+}
+
+function formatPhoneNumber(value: string) {
+  const digits = value.replace(/\D/g, "").slice(0, 10);
+  if (!digits) return "";
+  if (digits.length <= 3) {
+    return `(${digits}`;
+  }
+  if (digits.length <= 6) {
+    return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+  }
+  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)} - ${digits.slice(6)}`;
 }
