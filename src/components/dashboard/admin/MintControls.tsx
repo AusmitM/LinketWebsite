@@ -13,8 +13,17 @@ type MintControlsProps = {
   defaultLabel: string;
 };
 
+const MIN_QTY = 1;
+const MAX_QTY = 20000;
+const LABEL_MAX = 64;
+
 function sanitizeLabel(raw: string) {
-  return raw.trim().slice(0, 64);
+  return raw.trim().slice(0, LABEL_MAX);
+}
+
+function clampQty(value: number) {
+  if (!Number.isFinite(value)) return MIN_QTY;
+  return Math.min(MAX_QTY, Math.max(MIN_QTY, Math.trunc(value)));
 }
 
 function makeFilenameFromHeader(header: string | null, fallback: string) {
@@ -37,13 +46,13 @@ export default function MintControls({ defaultQty, defaultLabel }: MintControlsP
 
   const filenameFallback = useMemo(() => {
     const safeLabel = sanitizeLabel(label) || new Date().toISOString().slice(0, 10);
-    const safeQty = Number.isFinite(qty) ? Math.max(1, Math.min(qty, 20000)) : 1;
+    const safeQty = clampQty(qty);
     return `linkets_${safeLabel.replace(/\s+/g, "_")}_${safeQty}.csv`;
   }, [label, qty]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const safeQty = Number.isFinite(qty) ? Math.max(1, Math.min(qty, 20000)) : 1;
+    const safeQty = clampQty(qty);
     const safeLabel = sanitizeLabel(label) || new Date().toISOString().slice(0, 10);
 
     setPending(true);
@@ -59,12 +68,15 @@ export default function MintControls({ defaultQty, defaultLabel }: MintControlsP
       });
 
       if (!response.ok) {
-        const message = await response.text();
-        throw new Error(message || "Mint failed");
+        const payload = await response.json().catch(() => null);
+        throw new Error(payload?.error || response.statusText || "Mint failed");
       }
 
       const blob = await response.blob();
-      const downloadName = makeFilenameFromHeader(response.headers.get("Content-Disposition"), filenameFallback);
+      const downloadName = makeFilenameFromHeader(
+        response.headers.get("Content-Disposition"),
+        filenameFallback
+      );
       const url = window.URL.createObjectURL(blob);
 
       const anchor = document.createElement("a");
@@ -83,10 +95,10 @@ export default function MintControls({ defaultQty, defaultLabel }: MintControlsP
 
       router.refresh();
     } catch (error) {
-      console.error(error);
+      const message = error instanceof Error ? error.message : "Please try again.";
       toast({
         title: "Mint failed",
-        description: error instanceof Error ? error.message : "Please try again.",
+        description: message,
         variant: "destructive",
       });
     } finally {
@@ -95,23 +107,35 @@ export default function MintControls({ defaultQty, defaultLabel }: MintControlsP
   }
 
   return (
-    <section className="rounded-3xl border border-border/60 bg-card/80 p-6 shadow-sm">
-      <form className="space-y-6" onSubmit={handleSubmit}>
-        <div className="grid gap-6 sm:grid-cols-2">
+    <section className="rounded-[28px] border border-border/60 bg-card/80 p-6 shadow-sm">
+      <div className="space-y-2">
+        <p className="text-xs font-semibold uppercase tracking-[0.35em] text-muted-foreground">
+          Admin minting
+        </p>
+        <h2 className="text-xl font-semibold text-foreground">Generate Linket codes</h2>
+        <p className="text-sm text-muted-foreground">
+          Create a new batch of claimable tags and download a CSV for fulfillment.
+        </p>
+      </div>
+
+      <form className="mt-6 space-y-6" onSubmit={handleSubmit}>
+        <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="admin-mint-qty">Quantity</Label>
             <Input
               id="admin-mint-qty"
               type="number"
-              min={1}
-              max={20000}
+              min={MIN_QTY}
+              max={MAX_QTY}
               step={50}
               value={qty}
               onChange={(event) => setQty(Number(event.target.value))}
               className="max-w-xs"
               required
             />
-            <p className="text-xs text-muted-foreground">Between 1 and 20,000 units per batch.</p>
+            <p className="text-xs text-muted-foreground">
+              Between {MIN_QTY} and {MAX_QTY} units per batch.
+            </p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="admin-mint-label">Batch label</Label>
@@ -123,22 +147,26 @@ export default function MintControls({ defaultQty, defaultLabel }: MintControlsP
               className="max-w-xs"
               required
             />
-            <p className="text-xs text-muted-foreground">Shown in reports and exported CSV filename.</p>
+            <p className="text-xs text-muted-foreground">
+              Used in reports and the CSV filename.
+            </p>
           </div>
         </div>
 
-        <div className="flex flex-col gap-2 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            CSV will include `public_token`, claim code (raw + display), and the Linket URL.
-          </div>
-          <div className="text-xs">
-            Filename preview: <span className="font-mono text-foreground">{filenameFallback}</span>
-          </div>
+        <div className="rounded-2xl border border-border/60 bg-background/60 p-4 text-xs text-muted-foreground">
+          <div className="text-sm font-semibold text-foreground">CSV output</div>
+          <p className="mt-1">
+            Includes public token, Linket URL, raw claim code, display claim code, and batch metadata.
+          </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <Button type="submit" disabled={pending} className="rounded-full px-6">
-            {pending ? "Minting…" : "Generate CSV"}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="text-xs text-muted-foreground">
+            Filename preview:{" "}
+            <span className="font-mono text-foreground">{filenameFallback}</span>
+          </div>
+          <Button type="submit" disabled={pending} className="rounded-full px-6" aria-busy={pending}>
+            {pending ? "Minting..." : "Generate CSV"}
           </Button>
         </div>
       </form>

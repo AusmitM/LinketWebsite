@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef } from "react";
 
 import type { ThemeName } from "@/components/theme/theme-provider";
-import { useTheme } from "@/components/theme/theme-provider";
+import { useThemeOptional } from "@/components/theme/theme-provider";
 import { useDashboardUser } from "@/components/dashboard/DashboardSessionContext";
 
 const THEMES: ThemeName[] = [
@@ -40,12 +40,12 @@ async function fetchActiveProfileTheme(userId: string, signal: AbortSignal) {
 }
 
 export default function DashboardThemeRemoteSync() {
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, hasProvider } = useThemeOptional();
   const user = useDashboardUser();
   const abortRef = useRef<AbortController | null>(null);
 
   const syncTheme = useCallback(async () => {
-    if (!user?.id) return;
+    if (!hasProvider || !user?.id) return;
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
@@ -58,10 +58,10 @@ export default function DashboardThemeRemoteSync() {
       if (error instanceof DOMException && error.name === "AbortError") return;
       console.warn("Theme sync failed.");
     }
-  }, [setTheme, theme, user?.id]);
+  }, [hasProvider, setTheme, theme, user?.id]);
 
   useEffect(() => {
-    if (!user?.id) return;
+    if (!hasProvider || !user?.id) return;
     void syncTheme();
 
     const handleFocus = () => {

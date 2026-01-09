@@ -169,7 +169,7 @@ export default function AnalyticsContent() {
       </header>
 
       {error && (
-        <Card className="rounded-3xl border bg-card/80 shadow-sm">
+        <Card className="dashboard-analytics-card rounded-3xl border bg-card/80 shadow-sm">
           <CardContent className="py-8 text-center text-sm text-destructive">{error}</CardContent>
         </Card>
       )}
@@ -197,7 +197,7 @@ export default function AnalyticsContent() {
         />
       </section>
 
-      <Card className="rounded-3xl border bg-card/80 shadow-sm">
+      <Card className="dashboard-analytics-card rounded-3xl border bg-card/80 shadow-sm">
         <CardHeader>
           <CardTitle className="text-lg font-semibold">Scans and leads</CardTitle>
           <p className="text-sm text-muted-foreground">Daily totals for the selected window.</p>
@@ -208,7 +208,7 @@ export default function AnalyticsContent() {
           ) : chartData.length === 0 ? (
             <EmptyState message="No scans recorded in this range." />
           ) : (
-            <div className="h-72 w-full">
+            <div className="dashboard-analytics-chart h-72 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData} margin={{ left: 0, right: 0, top: 12, bottom: 0 }}>
                   <CartesianGrid vertical={false} strokeDasharray="4 4" className="stroke-muted" />
@@ -231,7 +231,7 @@ export default function AnalyticsContent() {
         </CardContent>
       </Card>
 
-      <Card className="rounded-3xl border bg-card/80 shadow-sm">
+      <Card className="dashboard-analytics-card rounded-3xl border bg-card/80 shadow-sm">
         <CardHeader>
           <CardTitle className="text-lg font-semibold">Conversion trend</CardTitle>
           <p className="text-sm text-muted-foreground">Lead capture rate per day.</p>
@@ -242,7 +242,7 @@ export default function AnalyticsContent() {
           ) : conversionSeries.length === 0 ? (
             <EmptyState message="No data available." />
           ) : (
-            <div className="h-56 w-full">
+            <div className="dashboard-analytics-chart h-56 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={conversionSeries} margin={{ left: 0, right: 0, top: 12, bottom: 0 }}>
                   <CartesianGrid vertical={false} strokeDasharray="4 4" className="stroke-muted" />
@@ -265,7 +265,7 @@ export default function AnalyticsContent() {
       </Card>
 
       <section className="grid gap-6 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]">
-        <Card className="rounded-3xl border bg-card/80 shadow-sm">
+        <Card className="dashboard-analytics-card rounded-3xl border bg-card/80 shadow-sm">
           <CardHeader>
             <CardTitle className="text-lg font-semibold">Top Linkets</CardTitle>
             <p className="text-sm text-muted-foreground">Scans and leads by assigned profile or tag.</p>
@@ -303,7 +303,7 @@ export default function AnalyticsContent() {
           </CardContent>
         </Card>
 
-        <Card className="rounded-3xl border bg-card/80 shadow-sm">
+        <Card className="dashboard-analytics-card rounded-3xl border bg-card/80 shadow-sm">
           <CardHeader>
             <CardTitle className="text-lg font-semibold">Recent leads</CardTitle>
             <p className="text-sm text-muted-foreground">Last submissions across all Linkets.</p>
@@ -351,7 +351,7 @@ type StatCardProps = {
 
 function StatCard({ label, value, helper }: StatCardProps) {
   return (
-    <Card className="rounded-3xl border bg-card/80 shadow-sm">
+    <Card className="dashboard-analytics-card rounded-3xl border bg-card/80 shadow-sm">
       <CardHeader>
         <CardTitle className="text-sm text-muted-foreground">{label}</CardTitle>
       </CardHeader>

@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 
 import type { ThemeName } from "@/components/theme/theme-provider";
-import { useTheme } from "@/components/theme/theme-provider";
+import { useThemeOptional } from "@/components/theme/theme-provider";
 import { isDarkTheme } from "@/lib/themes";
 
 const THEME_PREFIX = "theme-";
@@ -37,10 +37,11 @@ function applyTheme(target: Element | null, theme: ThemeName) {
 }
 
 export default function DashboardThemeSync() {
-  const { theme } = useTheme();
+  const { theme, hasProvider } = useThemeOptional();
   const snapshot = useRef<Snapshot | null>(null);
 
   useEffect(() => {
+    if (!hasProvider) return;
     if (typeof document === "undefined") return;
     const body = document.body;
     const root = document.documentElement;
@@ -63,10 +64,11 @@ export default function DashboardThemeSync() {
   }, []);
 
   useEffect(() => {
+    if (!hasProvider) return;
     if (typeof document === "undefined") return;
     applyTheme(document.body, theme);
     applyTheme(document.documentElement, theme);
-  }, [theme]);
+  }, [hasProvider, theme]);
 
   return null;
 }

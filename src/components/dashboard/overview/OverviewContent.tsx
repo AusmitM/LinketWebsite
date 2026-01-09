@@ -219,7 +219,11 @@ export default function OverviewContent() {
     };
   }, [userId]);
 
-  const dateLabel = dateTimeFormatter.format(now);
+  const [dateLabel, setDateLabel] = useState<string>("");
+
+  useEffect(() => {
+    setDateLabel(dateTimeFormatter.format(new Date()));
+  }, []);
 
   const rangeDays: Record<TimeRange, number> = {
     week: 7,
@@ -263,15 +267,15 @@ export default function OverviewContent() {
   );
 
   return (
-    <div className="space-y-6">
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="space-y-1">
+    <div className="dashboard-overview-page space-y-6">
+      <header className="dashboard-overview-header flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="dashboard-overview-intro space-y-1">
           <h1 className="text-2xl font-semibold text-foreground">Dashboard</h1>
           <p className="text-sm text-muted-foreground">
             Overview of taps, leads, analytics, and your public profile.
           </p>
         </div>
-        <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-card/80 px-4 py-2 text-xs font-medium text-muted-foreground shadow-sm">
+        <div className="dashboard-date-pill inline-flex items-center gap-2 rounded-full border border-border/60 bg-card/80 px-4 py-2 text-xs font-medium text-muted-foreground shadow-sm">
           <Calendar className="h-4 w-4 text-muted-foreground" aria-hidden />
           {dateLabel}
         </div>
@@ -290,9 +294,9 @@ export default function OverviewContent() {
         </Card>
       ) : null}
 
-      <div className="grid gap-6 lg:grid-cols-12">
-        <div className="space-y-6 lg:col-span-7">
-          <Card className="rounded-3xl border border-border/70 bg-card/90 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
+      <div className="dashboard-overview-grid grid gap-6 lg:grid-cols-12">
+        <div className="dashboard-overview-column space-y-6 lg:col-span-7">
+          <Card className="dashboard-overview-card dashboard-overview-section-card rounded-3xl border border-border/70 bg-card/90 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
             <CardHeader className="space-y-1">
               <CardTitle className="text-lg font-semibold text-foreground">
                 Overview
@@ -301,7 +305,7 @@ export default function OverviewContent() {
                 Your latest Linket performance snapshot.
               </p>
             </CardHeader>
-            <CardContent className="grid gap-4">
+            <CardContent className="dashboard-overview-metrics grid gap-4">
               {overviewItems.map((item) => (
                 <MetricRow
                   key={item.label}
@@ -314,7 +318,7 @@ export default function OverviewContent() {
             </CardContent>
           </Card>
 
-          <Card className="rounded-3xl border border-border/70 bg-card/90 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
+          <Card className="dashboard-overview-section-card rounded-3xl border border-border/70 bg-card/90 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
             <CardHeader className="space-y-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
@@ -501,14 +505,14 @@ function MetricRow({
   loading: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-2xl border border-border/60 bg-background/70 px-4 py-3">
+    <div className="dashboard-metric-row flex items-center justify-between gap-3 rounded-2xl border border-border/60 bg-background/70 px-4 py-3">
       <div className="flex items-center gap-3">
-        <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
+        <span className="dashboard-metric-icon inline-flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
           <Icon className="h-4 w-4" aria-hidden />
         </span>
-        <span className="text-sm font-medium text-foreground">{label}</span>
+        <span className="dashboard-metric-label text-sm font-medium text-foreground">{label}</span>
       </div>
-      <span className="text-sm font-semibold text-foreground">
+      <span className="dashboard-metric-value text-sm font-semibold text-foreground">
         {loading ? <span className="text-muted-foreground">--</span> : value}
       </span>
     </div>
@@ -531,8 +535,8 @@ function AnalyticsTile({
   loading?: boolean;
 }) {
   return (
-    <div className="rounded-3xl border border-border/60 bg-background/70 p-4 shadow-sm">
-      <div className="flex items-start justify-between gap-3">
+    <div className="dashboard-analytics-tile rounded-3xl border border-border/60 bg-background/70 p-4 shadow-sm">
+      <div className="dashboard-analytics-tile-header flex items-start justify-between gap-3">
         <div className="flex items-center gap-2">
           <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10 text-primary">
             <Icon className="h-4 w-4" aria-hidden />
@@ -542,14 +546,14 @@ function AnalyticsTile({
           </div>
         </div>
         {range && onRangeChange ? (
-          <div className="flex items-center gap-1 rounded-full border border-border/60 bg-background px-2 py-1 text-xs">
+          <div className="dashboard-analytics-range flex items-center gap-1 rounded-full border border-border/60 bg-background px-2 py-1 text-xs">
             {(["week", "month", "quarter", "year"] as TimeRange[]).map(
               (option) => (
                 <button
                   key={option}
                   type="button"
                   onClick={() => onRangeChange(option)}
-                  className={`rounded-full px-2 py-0.5 text-xs font-medium transition ${
+                  className={`dashboard-analytics-range-button rounded-full px-2 py-0.5 text-xs font-medium transition ${
                     range === option
                       ? "bg-primary text-primary-foreground"
                       : "text-muted-foreground hover:text-foreground"
@@ -703,7 +707,7 @@ function ChartPanel({
     );
   }
   return (
-    <div className="h-40 w-full">
+    <div className="dashboard-analytics-chart-panel h-40 w-full">
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={data}>
           <CartesianGrid

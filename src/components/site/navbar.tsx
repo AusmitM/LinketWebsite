@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
-import { LogOut, Menu, X } from "lucide-react";
+import { Link as LinkIcon, LogOut, Menu, X } from "lucide-react";
 
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
@@ -456,7 +456,7 @@ export function Navbar() {
       type="button"
       ref={accountButtonRef}
       onClick={() => setAccountMenuOpen(true)}
-      className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border/60 bg-card/90 text-sm font-semibold uppercase text-foreground transition hover:bg-card"
+      className="dashboard-avatar-button inline-flex h-11 w-11 items-center justify-center rounded-full border border-border/60 bg-card/90 text-sm font-semibold uppercase text-foreground transition hover:bg-card"
       aria-label="Account menu"
     >
       {avatarUrl ? (
@@ -533,7 +533,7 @@ export function Navbar() {
               aria-label={`${brand.name} dashboard`}
             >
               {brand.logo ? (
-                <span className="relative h-15 w-32 overflow-hidden">
+                <span className="dashboard-logo relative h-15 w-32 overflow-hidden">
                   <Image
                     src={brand.logo}
                     alt={`${brand.name} logo`}
@@ -553,26 +553,32 @@ export function Navbar() {
               {DASHBOARD_NAV.map(dashboardLink)}
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="dashboard-nav-actions flex items-center gap-3">
             {user && (
               <div className="flex items-center gap-1">
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="rounded-full border border-border/60"
+                  className="dashboard-view-profile-button rounded-full border border-border/60"
                   onClick={handleViewProfile}
                   disabled={!profileUrl}
                 >
-                  View Public Profile
+                  <span className="dashboard-view-profile-label hidden lg:inline">
+                    View Public Profile
+                  </span>
+                  <span className="dashboard-view-profile-icon inline-flex lg:hidden" aria-hidden>
+                    <LinkIcon className="h-4 w-4" />
+                  </span>
                 </Button>
                 <Button
                   variant="ghost"
-                  size="sm"
-                  className="hidden rounded-full border border-border/60 lg:inline-flex"
+                  size="icon"
+                  className="dashboard-copy-link-button hidden rounded-full border border-border/60 lg:inline-flex"
                   onClick={handleCopyProfileLink}
                   disabled={!profileUrl}
+                  aria-label="Copy link"
                 >
-                  Copy link
+                  <LinkIcon className="h-4 w-4" />
                 </Button>
               </div>
             )}
@@ -581,14 +587,14 @@ export function Navbar() {
               size="sm"
               className="hidden rounded-full bg-gradient-to-r from-[#6ee7b7] via-[#3b82f6] to-[#8b5cf6] text-white shadow-[0_20px_40px_rgba(59,130,246,0.35)] hover:scale-[1.01] lg:inline-flex"
             >
-              <Link href="/claim">New Linket</Link>
+              <Link href="/dashboard/linkets">New Linket</Link>
             </Button>
             <Button
               asChild
               size="sm"
-              className="rounded-full bg-gradient-to-r from-[#6ee7b7] via-[#3b82f6] to-[#8b5cf6] text-white shadow-[0_18px_35px_rgba(59,130,246,0.35)] lg:hidden"
+              className="dashboard-new-linket-button rounded-full bg-gradient-to-r from-[#6ee7b7] via-[#3b82f6] to-[#8b5cf6] text-white shadow-[0_18px_35px_rgba(59,130,246,0.35)] lg:hidden"
             >
-              <Link href="/claim">New Linket</Link>
+              <Link href="/dashboard/linkets">New Linket</Link>
             </Button>
             {dashboardAvatar}
             <button

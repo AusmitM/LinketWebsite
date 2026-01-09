@@ -91,10 +91,10 @@ export function useTheme() {
   return ctx;
 }
 
-export function useThemeOptional(): { theme: ThemeName; setTheme: (t: ThemeName) => void } {
+export function useThemeOptional(): { theme: ThemeName; setTheme: (t: ThemeName) => void; hasProvider: boolean } {
   const ctx = useContext(ThemeContext);
-  if (ctx) return ctx;
-  return { theme: "light", setTheme: () => {} };
+  if (ctx) return { ...ctx, hasProvider: true };
+  return { theme: "light", setTheme: () => {}, hasProvider: false };
 }
 
 export default ThemeProvider;

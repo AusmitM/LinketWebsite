@@ -88,15 +88,15 @@ export default function Sidebar({
 
       const { data, error } = await supabase
         .from("admin_users")
-        .select("user_id")
+        .select("id,user_id")
         .eq("user_id", userId)
-        .maybeSingle();
+        .limit(1);
       if (!active) return;
       if (error) {
         setIsAdmin(false);
         return;
       }
-      setIsAdmin(Boolean(data));
+      setIsAdmin(Array.isArray(data) ? data.length > 0 : Boolean(data));
     })().catch(() => {
       if (active) setIsAdmin(false);
     });
@@ -109,7 +109,7 @@ export default function Sidebar({
     if (!isAdmin) return BASE_NAV;
     return [
       ...BASE_NAV,
-      { href: "/dashboard/admin/mint", label: "Manufacturing", icon: Package },
+      { href: "/dashboard/admin/mint", label: "Minting", icon: Package },
     ];
   }, [isAdmin]);
 

@@ -70,13 +70,13 @@ export async function proxy(req: NextRequest) {
   }
 
   if (path.startsWith("/dashboard/admin") && session?.user?.id) {
-    const { data: adminRow, error: adminError } = await supabase
+    const { data: adminRows, error: adminError } = await supabase
       .from("admin_users")
       .select("user_id")
       .eq("user_id", session.user.id)
-      .maybeSingle();
+      .limit(1);
 
-    if (adminError || !adminRow) {
+    if (adminError || !adminRows || adminRows.length === 0) {
       const redirectUrl = new URL("/dashboard", req.url);
       const redirect = NextResponse.redirect(redirectUrl);
       applyCookies(res, redirect);
