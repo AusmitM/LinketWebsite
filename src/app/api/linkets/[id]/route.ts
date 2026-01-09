@@ -12,7 +12,7 @@ type PatchPayload = {
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   if (!isSupabaseAdminAvailable) {
     return NextResponse.json(
@@ -27,7 +27,7 @@ export async function PATCH(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const assignmentId = params.id;
+  const { id: assignmentId } = await params;
   if (!assignmentId) {
     return NextResponse.json({ error: "Missing assignment id." }, { status: 400 });
   }

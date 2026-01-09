@@ -162,10 +162,13 @@ export default async function AdminMintPage() {
           ) : (
             batches.map((batch) => {
               const label = batch.label?.trim() || "Untitled batch";
+              const downloadHref = `/api/admin/mint/batch/${batch.id}`;
               return (
-                <div
+                <a
                   key={batch.id}
-                  className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border/60 bg-background/60 px-4 py-3"
+                  href={downloadHref}
+                  className="group flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border/60 bg-background/60 px-4 py-3 transition-colors hover:border-foreground/30 hover:bg-background/80"
+                  aria-label={`Download CSV for ${label}`}
                 >
                   <div className="min-w-0">
                     <div className="truncate text-sm font-semibold text-foreground">{label}</div>
@@ -178,8 +181,11 @@ export default async function AdminMintPage() {
                     <div className="text-base font-semibold text-foreground">
                       {batch.totalTags.toLocaleString()}
                     </div>
+                    <div className="mt-1 text-xs font-medium text-muted-foreground group-hover:text-foreground">
+                      Download CSV
+                    </div>
                   </div>
-                </div>
+                </a>
               );
             })
           )}

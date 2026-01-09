@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseReadonly } from "@/lib/supabase/server";
 import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
 
-const MIN_QTY = 1;
-const MAX_QTY = 20000;
 const LABEL_MAX = 64;
 
 function sanitizeLabel(raw: string) {
@@ -46,7 +44,22 @@ function csvEscape(value: unknown) {
   return text;
 }
 
-export async function GET(req: NextRequest) {
+function formatClaimCode(value: string | null | undefined) {
+  const cleaned = value?.replace(/-/g, "").toUpperCase() ?? "";
+  if (!cleaned) return "";
+  return [cleaned.slice(0, 4), cleaned.slice(4, 8), cleaned.slice(8, 12)]
+    .filter(Boolean)
+    .join("-");
+}
+
+function getSiteBase() {
+  return (process.env.NEXT_PUBLIC_SITE_URL ?? "https://linketconnect.com").replace(/\/$/, "");
+}
+
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ batchId: string }> }
+) {
   if (!isSupabaseAdminAvailable) {
     return NextResponse.json(
       { error: "Admin minting is not configured." },
@@ -69,30 +82,47 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const { searchParams } = new URL(req.url);
-  const qtyRaw = searchParams.get("qty");
-  const labelRaw = searchParams.get("label") ?? "";
-  const qtyParsed = Number(qtyRaw);
-  if (!Number.isFinite(qtyParsed) || qtyParsed < MIN_QTY || qtyParsed > MAX_QTY) {
-    return NextResponse.json(
-      { error: `Quantity must be between ${MIN_QTY} and ${MAX_QTY}.` },
-      { status: 400 }
-    );
+  const { batchId: rawBatchId } = await params;
+  const batchId = rawBatchId?.trim();
+  if (!batchId) {
+    return NextResponse.json({ error: "Batch id is required." }, { status: 400 });
   }
 
-  const label = sanitizeLabel(labelRaw);
-  const safeLabel = label || new Date().toISOString().slice(0, 10);
+  const { data: batch, error: batchError } = await supabaseAdmin
+    .from("hardware_tag_batches")
+    .select("id,label,created_at")
+    .eq("id", batchId)
+    .limit(1)
+    .maybeSingle();
 
-  const { data, error } = await supabaseAdmin.rpc("mint_linkets_csv", {
-    p_qty: Math.trunc(qtyParsed),
-    p_batch_label: label || null,
-  });
-  if (error) {
+  if (batchError) {
     return NextResponse.json(
-      { error: error.message || "Mint failed." },
+      { error: batchError.message || "Unable to load batch." },
       { status: 500 }
     );
   }
+  if (!batch) {
+    return NextResponse.json({ error: "Batch not found." }, { status: 404 });
+  }
+
+  const { data: tags, error: tagsError } = await supabaseAdmin
+    .from("hardware_tags")
+    .select("id, public_token, claim_code, batch_id, created_at")
+    .eq("batch_id", batchId)
+    .order("created_at", { ascending: true });
+
+  if (tagsError) {
+    return NextResponse.json(
+      { error: tagsError.message || "Unable to load batch tags." },
+      { status: 500 }
+    );
+  }
+
+  const safeLabel =
+    sanitizeLabel(batch.label ?? "") ||
+    batch.created_at?.slice(0, 10) ||
+    `batch_${batch.id.slice(0, 8)}`;
+  const baseUrl = getSiteBase();
 
   const columns = [
     "id",
@@ -103,30 +133,27 @@ export async function GET(req: NextRequest) {
     "batch_id",
     "batch_label",
   ];
-  const rows = Array.isArray(data) ? data : [];
+
+  const rows = Array.isArray(tags) ? tags : [];
   const csv = [
     columns.join(","),
-    ...rows.map((row) =>
-      columns.map((key) => csvEscape((row as Record<string, unknown>)[key])).join(",")
-    ),
+    ...rows.map((row) => {
+      const record = {
+        id: row.id,
+        public_token: row.public_token,
+        url: row.public_token ? `${baseUrl}/l/${row.public_token}` : "",
+        claim_code: row.claim_code ?? "",
+        claim_code_display: formatClaimCode(row.claim_code),
+        batch_id: row.batch_id,
+        batch_label: safeLabel,
+      };
+      return columns.map((key) => csvEscape(record[key as keyof typeof record])).join(",");
+    }),
   ].join("\n");
 
-  const batchId = (rows[0] as { batch_id?: string } | undefined)?.batch_id ?? null;
-  let batchIndex: number | null = null;
-  if (batchId) {
-    const { data: batchRow } = await supabaseAdmin
-      .from("hardware_tag_batches")
-      .select("created_at")
-      .eq("id", batchId)
-      .limit(1)
-      .maybeSingle();
-    if (batchRow?.created_at) {
-      batchIndex = await getBatchIndexForDay(batchId, batchRow.created_at);
-    }
-  }
-
+  const batchIndex = await getBatchIndexForDay(batch.id, batch.created_at);
   const suffix = batchIndex ? `_b${String(batchIndex).padStart(2, "0")}` : "";
-  const filename = `linkets_${safeLabel.replace(/\s+/g, "_")}${suffix}_${Math.trunc(qtyParsed)}.csv`;
+  const filename = `linkets_${safeLabel.replace(/\s+/g, "_")}${suffix}_${rows.length}.csv`;
 
   return new NextResponse(csv, {
     status: 200,
