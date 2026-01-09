@@ -17,6 +17,41 @@ const THEMES: ThemeName[] = [
   "honey",
 ];
 
+const PENDING_THEME_KEY = "linket:dashboard-theme:pending";
+const PENDING_TTL_MS = 8000;
+
+type PendingThemePayload = {
+  theme: ThemeName;
+  at: number;
+};
+
+function readPendingTheme(): PendingThemePayload | null {
+  if (typeof localStorage === "undefined") return null;
+  const raw = localStorage.getItem(PENDING_THEME_KEY);
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as PendingThemePayload;
+    if (!parsed || typeof parsed.theme !== "string" || typeof parsed.at !== "number") {
+      localStorage.removeItem(PENDING_THEME_KEY);
+      return null;
+    }
+    const age = Date.now() - parsed.at;
+    if (age > PENDING_TTL_MS) {
+      localStorage.removeItem(PENDING_THEME_KEY);
+      return null;
+    }
+    return parsed;
+  } catch {
+    localStorage.removeItem(PENDING_THEME_KEY);
+    return null;
+  }
+}
+
+function clearPendingTheme() {
+  if (typeof localStorage === "undefined") return;
+  localStorage.removeItem(PENDING_THEME_KEY);
+}
+
 function coerceTheme(value: unknown): ThemeName | null {
   if (typeof value !== "string") return null;
   const lowered = value.toLowerCase();
@@ -50,7 +85,15 @@ export default function DashboardThemeRemoteSync() {
     const controller = new AbortController();
     abortRef.current = controller;
     try {
+      const pending = readPendingTheme();
       const nextTheme = await fetchActiveProfileTheme(user.id, controller.signal);
+      if (pending?.theme) {
+        if (nextTheme === pending.theme) {
+          clearPendingTheme();
+        } else if (nextTheme && nextTheme !== pending.theme) {
+          return;
+        }
+      }
       if (nextTheme && nextTheme !== theme) {
         setTheme(nextTheme);
       }

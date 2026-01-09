@@ -40,6 +40,24 @@ const LABELS: Record<ThemeName, string> = {
   honey: "Honey",
 };
 
+const PENDING_THEME_KEY = "linket:dashboard-theme:pending";
+
+type PendingThemePayload = {
+  theme: ThemeName;
+  at: number;
+};
+
+function writePendingTheme(theme: ThemeName) {
+  if (typeof localStorage === "undefined") return;
+  const payload: PendingThemePayload = { theme, at: Date.now() };
+  localStorage.setItem(PENDING_THEME_KEY, JSON.stringify(payload));
+}
+
+function clearPendingTheme() {
+  if (typeof localStorage === "undefined") return;
+  localStorage.removeItem(PENDING_THEME_KEY);
+}
+
 export default function ThemeToggle({ showLabel = false }: { showLabel?: boolean }) {
   const { theme, setTheme } = useThemeOptional();
   const user = useDashboardUser();
@@ -102,11 +120,13 @@ export default function ThemeToggle({ showLabel = false }: { showLabel?: boolean
         const info = await saveRes.json().catch(() => ({}));
         throw new Error(info?.error || "Unable to update public theme.");
       }
+      clearPendingTheme();
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") return;
       const message =
         error instanceof Error ? error.message : "Unable to update public theme.";
       console.warn("Theme update failed:", message);
+      clearPendingTheme();
     }
   }
 
@@ -114,6 +134,7 @@ export default function ThemeToggle({ showLabel = false }: { showLabel?: boolean
     const nextIndex = (index + 1) % ORDER.length;
     const value = ORDER[nextIndex];
     setIndex(nextIndex);
+    writePendingTheme(value);
     setTheme(value);
     void syncPublicTheme(value);
   }
