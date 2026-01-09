@@ -206,11 +206,6 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
             <Button variant="outline" onClick={() => userId && loadData(userId)} className="rounded-full" aria-label="Refresh Linkets">
               <RefreshCcw className="mr-2 h-4 w-4" /> Refresh
             </Button>
-            <Button asChild variant="ghost" className="rounded-full">
-              <Link href="/claim">
-                <ShieldCheck className="mr-2 h-4 w-4" /> Claim via tap
-              </Link>
-            </Button>
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
