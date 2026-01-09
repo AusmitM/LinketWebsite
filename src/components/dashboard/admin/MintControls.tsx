@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -43,12 +43,56 @@ export default function MintControls({ defaultQty, defaultLabel }: MintControlsP
   const [qty, setQty] = useState<number>(defaultQty);
   const [label, setLabel] = useState<string>(defaultLabel);
   const [pending, setPending] = useState(false);
+  const [batchIndex, setBatchIndex] = useState<number | null>(null);
+  const [batchIndexLabel, setBatchIndexLabel] = useState<string | null>(null);
 
   const filenameFallback = useMemo(() => {
     const safeLabel = sanitizeLabel(label) || new Date().toISOString().slice(0, 10);
     const safeQty = clampQty(qty);
-    return `linkets_${safeLabel.replace(/\s+/g, "_")}_${safeQty}.csv`;
-  }, [label, qty]);
+    const index = batchIndex ? `b${String(batchIndex).padStart(2, "0")}` : "bXX";
+    return `linkets_${safeLabel.replace(/\s+/g, "_")}_${index}_${safeQty}.csv`;
+  }, [label, qty, batchIndex]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const safeLabel = sanitizeLabel(label) || new Date().toISOString().slice(0, 10);
+
+    const timeout = setTimeout(async () => {
+      try {
+        const params = new URLSearchParams({ label: safeLabel });
+        const response = await fetch(`/api/admin/mint/next-batch?${params.toString()}`, {
+          credentials: "include",
+          signal: controller.signal,
+        });
+        if (!response.ok) {
+          setBatchIndex(null);
+          setBatchIndexLabel(null);
+          return;
+        }
+        const payload = (await response.json()) as {
+          nextIndex?: number;
+          date?: string;
+        };
+        if (typeof payload.nextIndex === "number") {
+          setBatchIndex(payload.nextIndex);
+          setBatchIndexLabel(payload.date ?? safeLabel);
+        } else {
+          setBatchIndex(null);
+          setBatchIndexLabel(null);
+        }
+      } catch (error) {
+        if ((error as { name?: string }).name !== "AbortError") {
+          setBatchIndex(null);
+          setBatchIndexLabel(null);
+        }
+      }
+    }, 250);
+
+    return () => {
+      controller.abort();
+      clearTimeout(timeout);
+    };
+  }, [label]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -164,6 +208,12 @@ export default function MintControls({ defaultQty, defaultLabel }: MintControlsP
           <div className="text-xs text-muted-foreground">
             Filename preview:{" "}
             <span className="font-mono text-foreground">{filenameFallback}</span>
+          </div>
+          <div className="text-xs text-muted-foreground">
+            Batch #{batchIndex ?? "--"}{" "}
+            <span className="text-muted-foreground/70">
+              {batchIndexLabel ? `for ${batchIndexLabel}` : ""}
+            </span>
           </div>
           <Button type="submit" disabled={pending} className="rounded-full px-6" aria-busy={pending}>
             {pending ? "Minting..." : "Generate CSV"}
