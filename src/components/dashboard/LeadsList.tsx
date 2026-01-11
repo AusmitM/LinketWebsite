@@ -256,13 +256,54 @@ export default function LeadsList({ userId }: { userId: string }) {
     return needs ? `"${val}"` : val;
   }
 
-  async function copy(text: string) {
-    try {
-      await navigator.clipboard.writeText(text);
-      toast({ title: "Copied" });
-    } catch {
-      toast({ title: "Could not copy", variant: "destructive" });
-    }
+  function escapeVCardValue(value: string) {
+    return value
+      .replace(/\\/g, "\\\\")
+      .replace(/\n/g, "\\n")
+      .replace(/;/g, "\\;")
+      .replace(/,/g, "\\,");
+  }
+
+  function buildVCard(lead: Lead) {
+    const name = (lead.name || "").trim();
+    const nameParts = name.split(/\s+/).filter(Boolean);
+    const firstName = nameParts[0] || "";
+    const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : "";
+    const middleName =
+      nameParts.length > 2 ? nameParts.slice(1, -1).join(" ") : "";
+    const noteParts: string[] = [];
+    if (lead.message) noteParts.push(lead.message.trim());
+    const customFields = formatCustomFieldsForNote(lead);
+    if (customFields.length) noteParts.push(customFields.join("\n"));
+
+    const lines = [
+      "BEGIN:VCARD",
+      "VERSION:3.0",
+      `FN:${escapeVCardValue(name || "Linket Contact")}`,
+      `N:${escapeVCardValue(lastName)};${escapeVCardValue(firstName)};${escapeVCardValue(middleName)};;`,
+    ];
+
+    if (lead.email) lines.push(`EMAIL;TYPE=INTERNET:${escapeVCardValue(lead.email)}`);
+    if (lead.phone) lines.push(`TEL;TYPE=CELL:${escapeVCardValue(lead.phone)}`);
+    if (lead.company) lines.push(`ORG:${escapeVCardValue(lead.company)}`);
+    if (noteParts.length) lines.push(`NOTE:${escapeVCardValue(noteParts.join("\n"))}`);
+
+    lines.push("END:VCARD");
+    return lines.join("\n");
+  }
+
+  function downloadVCard(lead: Lead) {
+    const vcard = buildVCard(lead);
+    const blob = new Blob([vcard], { type: "text/vcard;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const fileNameBase = (lead.name || "linket-contact").trim().replace(/\s+/g, "-");
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `${fileNameBase || "linket-contact"}.vcf`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
   }
 
   return (
@@ -349,24 +390,14 @@ export default function LeadsList({ userId }: { userId: string }) {
                 ) : null}
                 {renderCustomFields(l, fieldLabels)}
                 <footer className="mt-2 flex flex-wrap items-center gap-2 text-xs">
-                  {l.email ? (
+                  {(l.name || l.email || l.phone || l.company || l.message) ? (
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => copy(l.email)}
-                      aria-label="Copy email"
+                      onClick={() => downloadVCard(l)}
+                      aria-label="Download contact"
                     >
-                      Copy email
-                    </Button>
-                  ) : null}
-                  {l.phone ? (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => copy(l.phone || "")}
-                      aria-label="Copy phone number"
-                    >
-                      Copy phone
+                      Download contact
                     </Button>
                   ) : null}
                   <Button
@@ -433,6 +464,23 @@ function renderCustomFields(lead: Lead, labelsByHandle: Record<string, Record<st
       ))}
     </dl>
   );
+}
+
+function formatCustomFieldsForNote(lead: Lead) {
+  const custom = lead.custom_fields;
+  if (!custom || typeof custom !== "object") return [];
+  return Object.entries(custom)
+    .filter(([key, value]) => {
+      if (!key || isCoreFieldKey(key)) return false;
+      if (value === true || value === false) return true;
+      if (value == null) return false;
+      return String(value).trim().length > 0;
+    })
+    .map(([key, value]) => {
+      const parsed = parseCustomFieldKey(key);
+      const label = parsed.label || toReadableLabel(parsed.id);
+      return `${label}: ${formatLeadValue(value)}`;
+    });
 }
 
 function formatLeadValue(value: string | boolean | null) {

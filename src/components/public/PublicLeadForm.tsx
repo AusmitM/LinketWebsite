@@ -76,13 +76,17 @@ export default function PublicLeadForm({
       }
     : undefined;
   const mutedStyle = appearance ? { color: appearance.muted } : undefined;
+  const fieldBaseClassName =
+    variant === "profile"
+      ? "border-border/70 bg-muted/60 text-foreground placeholder:text-muted-foreground shadow-sm"
+      : "";
   const inputClassName =
     variant === "profile"
-      ? "h-10 rounded-xl border-border/70 bg-muted/60 px-3 text-sm shadow-sm"
+      ? cn("h-10 rounded-xl px-3 text-sm", fieldBaseClassName)
       : "";
   const textareaClassName =
     variant === "profile"
-      ? "min-h-20 rounded-xl border-border/70 bg-muted/60 px-3 py-2 text-sm shadow-sm"
+      ? cn("min-h-20 rounded-xl px-3 py-2 text-sm", fieldBaseClassName)
       : "";
   const buttonClassName =
     variant === "profile"

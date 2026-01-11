@@ -123,13 +123,6 @@ type ResponsesStats = {
   lastSubmittedAt: string | null;
 };
 
-type LeadFormResponse = {
-  response_id: string;
-  submitted_at: string;
-  updated_at: string | null;
-  answers: Record<string, { value: unknown }>;
-  responder_email: string | null;
-};
 export default function LeadFormBuilder({
   userId,
   handle,
@@ -148,9 +141,6 @@ export default function LeadFormBuilder({
     count: 0,
     lastSubmittedAt: null,
   });
-  const [responses, setResponses] = useState<LeadFormResponse[]>([]);
-  const [responsesOpen, setResponsesOpen] = useState(false);
-  const [responsesLoading, setResponsesLoading] = useState(false);
   const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null);
   const [fieldPickerOpen, setFieldPickerOpen] = useState(false);
   const [draggingFieldId, setDraggingFieldId] = useState<string | null>(null);
@@ -179,14 +169,6 @@ export default function LeadFormBuilder({
       ? shuffleFields(form.fields)
       : form.fields.slice();
     return fields;
-  }, [form]);
-
-  const fieldLabelMap = useMemo(() => {
-    const map = new Map<string, string>();
-    form?.fields.forEach((field) => {
-      map.set(field.id, field.label || field.id);
-    });
-    return map;
   }, [form]);
 
   useEffect(() => {
@@ -285,37 +267,6 @@ export default function LeadFormBuilder({
     };
   }, [form, isDirty, loading, persist]);
 
-  const fetchResponses = useCallback(async () => {
-    if (!form || !userId) return;
-    setResponsesLoading(true);
-    try {
-      const response = await fetch(
-        `/api/lead-forms/responses?userId=${encodeURIComponent(
-          userId
-        )}&formId=${encodeURIComponent(form.id)}`,
-        { cache: "no-store" }
-      );
-      if (!response.ok) {
-        const info = await response.json().catch(() => ({}));
-        throw new Error(info?.error || "Unable to load responses");
-      }
-      const payload = (await response.json()) as {
-        responses: LeadFormResponse[];
-      };
-      setResponses(payload.responses ?? []);
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Unable to load responses";
-      toast({
-        title: "Responses unavailable",
-        description: message,
-        variant: "destructive",
-      });
-    } finally {
-      setResponsesLoading(false);
-    }
-  }, [form, userId]);
-
   const updateForm = (patch: Partial<LeadFormConfig>) => {
     if (!form) return;
     const next: LeadFormConfig = {
@@ -413,99 +364,24 @@ export default function LeadFormBuilder({
   }
   return (
     <div className="space-y-6">
-        <Card className="rounded-2xl border border-border/60 bg-card/80 shadow-sm">
-          <CardContent className="flex flex-col items-center gap-3 py-4 text-center sm:flex-row sm:text-left">
-            <div className="space-y-1">
-              <div className="text-sm font-semibold">Lead capture form</div>
-              <div className="text-xs text-muted-foreground">
-                {form.status === "published" ? "Published" : "Draft"}
-                {lastSavedAt ? ` - Updated ${formatShortDate(lastSavedAt)}` : ""}
-              </div>
-            </div>
-            <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-muted-foreground sm:ml-auto sm:justify-end">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => {
-                const next = !responsesOpen;
-                setResponsesOpen(next);
-                if (next) void fetchResponses();
-              }}
-            >
-              {responsesOpen ? "Hide responses" : "View responses"}
-            </Button>
-            <Button size="sm" onClick={() => void persist()} disabled={saving}>
-              {saving ? "Saving" : "Save"}
-            </Button>
-          </div>
-        </CardContent>
-        {saveError && (
-          <CardContent className="pt-0 text-xs text-destructive">
-            {saveError}
-          </CardContent>
-        )}
-      </Card>
-
-      {responsesOpen && (
-        <Card className="rounded-2xl border border-border/60 bg-card/80 shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-sm font-semibold">Responses</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {responsesLoading ? (
-              <div className="text-sm text-muted-foreground">
-                Loading responses...
-              </div>
-            ) : responses.length ? (
-              responses.map((resp) => (
-                <div
-                  key={resp.response_id}
-                  className="rounded-xl border border-border/60 p-3 text-sm"
-                >
-                  <div className="text-xs text-muted-foreground">
-                    {new Date(resp.submitted_at).toLocaleString()}
-                  </div>
-                  <div className="mt-2 space-y-1">
-                    {Object.entries(resp.answers || {}).map(
-                      ([fieldId, entry]) => (
-                        <div
-                          key={`${resp.response_id}-${fieldId}`}
-                          className="text-xs"
-                        >
-                          <span className="font-semibold">
-                            {fieldLabelMap.get(fieldId) || fieldId}
-                          </span>
-                          : {formatAnswer(entry.value)}
-                        </div>
-                      )
-                    )}
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="text-sm text-muted-foreground">
-                No responses yet.
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      <div
-        className={
-          layout === "stacked"
-            ? "grid gap-6"
-            : "grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]"
-        }
-      >
-        <div className="space-y-6">
-          <Card className="rounded-2xl border border-border/60 bg-card/80 shadow-sm">
-              <CardHeader>
+      <div className="space-y-6" data-layout={layout}>
+          <Card className="w-full max-w-none self-start rounded-2xl border border-border/60 bg-card/80 shadow-sm">
+            <CardHeader className="gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="space-y-1">
                 <CardTitle className="text-sm font-semibold whitespace-nowrap">
                   Form details
                 </CardTitle>
-              </CardHeader>
-            <CardContent className="space-y-4">
+                <div className="text-xs text-muted-foreground">
+                  {form.status === "published" ? "Published" : "Draft"}
+                  {lastSavedAt ? ` - Updated ${formatShortDate(lastSavedAt)}` : ""}
+                </div>
+              </div>
+              <Button size="sm" onClick={() => void persist()} disabled={saving}>
+                {saving ? "Saving" : "Save"}
+              </Button>
+            </CardHeader>
+            <CardContent className="space-y-3">
+            <div className="space-y-2">
               <div className="space-y-2">
                 <Label htmlFor="lead-form-title">Title</Label>
                 <Input
@@ -516,6 +392,8 @@ export default function LeadFormBuilder({
                   }
                 />
               </div>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="lead-form-description">Description</Label>
                 <Textarea
@@ -543,23 +421,7 @@ export default function LeadFormBuilder({
                   }
                 />
               </div>
-              <div className="grid gap-3 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>Status</Label>
-                  <select
-                    className="h-10 w-full rounded-md border border-border/60 bg-background px-3 text-sm"
-                    value={form.status}
-                    onChange={(event) =>
-                      updateForm({
-                        status: event.target.value as LeadFormConfig["status"],
-                      })
-                    }
-                  >
-                    <option value="draft">Draft</option>
-                    <option value="published">Published</option>
-                  </select>
-                </div>
-              </div>
+            </div>
               <div className="grid gap-3 md:grid-cols-2">
                 <label className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Switch
@@ -618,8 +480,17 @@ export default function LeadFormBuilder({
                   Shuffle question order
                 </label>
               </div>
+              {saveError ? (
+                <div className="text-xs text-destructive">{saveError}</div>
+              ) : null}
             </CardContent>
           </Card>
+        <div
+          className={cn(
+            "grid gap-6",
+            layout === "side" && "lg:grid-cols-3"
+          )}
+        >
           <Card className="rounded-2xl border border-border/60 bg-card/80 shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-sm font-semibold whitespace-nowrap">
@@ -704,9 +575,6 @@ export default function LeadFormBuilder({
               )}
             </CardContent>
           </Card>
-        </div>
-
-        <div className="space-y-6">
           <Card className="rounded-2xl border border-border/60 bg-card/80 shadow-sm">
             <CardHeader>
               <CardTitle className="text-sm font-semibold whitespace-nowrap">
@@ -1475,16 +1343,6 @@ function ValidationEditor({
           }
         />
       )}
-      <div className="space-y-2">
-        <Label>Error message</Label>
-        <Input
-          value={field.validation?.message || ""}
-          onChange={(event) =>
-            onChange({ ...field.validation, message: event.target.value })
-          }
-          placeholder="Optional"
-        />
-      </div>
     </div>
   );
 }
@@ -1682,13 +1540,6 @@ function formatShortDate(value: string) {
     hour: "numeric",
     minute: "2-digit",
   });
-}
-
-function formatAnswer(value: unknown) {
-  if (value == null) return "";
-  if (Array.isArray(value)) return value.join(", ");
-  if (typeof value === "object") return JSON.stringify(value);
-  return String(value);
 }
 
 function randomId() {
