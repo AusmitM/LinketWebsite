@@ -164,6 +164,7 @@ function TestimonialSlider({
                   : "hover:bg-white/10"
                 : "opacity-40"
             )}
+            aria-label="Previous testimonial"
           >
             <ChevronLeft className="h-5 w-5" aria-hidden />
           </button>
@@ -182,6 +183,7 @@ function TestimonialSlider({
                   : "hover:bg-white/10"
                 : "opacity-40"
             )}
+            aria-label="Next testimonial"
           >
             <ChevronRight className="h-5 w-5" aria-hidden />
           </button>
@@ -274,18 +276,22 @@ function TestimonialSlider({
               key={index}
               type="button"
               onClick={() => goTo(index)}
-              className={cn(
-                "h-2 w-2 rounded-full transition",
-                isLight
-                  ? currentIndex === index
-                    ? "bg-[#ff9776]"
-                    : "bg-[#ffd7c0] hover:bg-[#ffc4a1]"
-                  : currentIndex === index
-                  ? "bg-white"
-                  : "bg-white/30 hover:bg-white/60"
-              )}
+              className="flex h-6 w-6 items-center justify-center rounded-full transition"
               aria-label={`Go to testimonial ${index + 1}`}
-            />
+            >
+              <span
+                className={cn(
+                  "h-2 w-2 rounded-full transition",
+                  isLight
+                    ? currentIndex === index
+                      ? "bg-[#ff9776]"
+                      : "bg-[#ffd7c0] hover:bg-[#ffc4a1]"
+                    : currentIndex === index
+                    ? "bg-white"
+                    : "bg-white/30 hover:bg-white/60"
+                )}
+              />
+            </button>
           ))}
         </div>
       </div>

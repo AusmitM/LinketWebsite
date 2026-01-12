@@ -467,7 +467,7 @@ function HeroDashboardPreview() {
             AK
           </div>
           <div>
-            <p className="text-xs uppercase tracking-[0.35em] text-slate-500">
+            <p className="text-xs uppercase tracking-[0.35em] text-slate-700">
               Operator
             </p>
             <p className="font-semibold text-slate-900">Alicia Koch</p>
@@ -481,8 +481,8 @@ function HeroDashboardPreview() {
                 className={cn(
                   "rounded-full border px-4 py-1.5 text-sm font-medium transition",
                   index === 0
-                    ? "border-[#ff9776] bg-[#ff9776] text-white"
-                    : "border-slate-200 text-slate-500"
+                    ? "border-[#ff9776] bg-[#ff9776] text-[#0f172a]"
+                    : "border-slate-200 text-slate-700"
                 )}
               >
                 {tab}
@@ -516,7 +516,7 @@ function HeroDashboardPreview() {
       </div>
       <div className="mt-8 space-y-6">
         <div className="flex flex-wrap items-center gap-4">
-          <h3 className="text-3xl font-semibold text-slate-900">Dashboard</h3>
+          <h2 className="text-3xl font-semibold text-slate-900">Dashboard</h2>
           <div className="flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-[0.2em]">
             {DASHBOARD_VIEWS.map((view, index) => (
               <span
@@ -525,7 +525,7 @@ function HeroDashboardPreview() {
                   "rounded-full border px-3 py-1",
                   index === 0
                     ? "border-[#7dd3fc] bg-[#7dd3fc]/20 text-[#0f172a]"
-                    : "border-slate-200 text-slate-400"
+                    : "border-slate-200 text-slate-600"
                 )}
               >
                 {view}
@@ -539,13 +539,13 @@ function HeroDashboardPreview() {
               key={stat.label}
               className="rounded-2xl border border-slate-200 bg-[#fff9f3] p-4"
             >
-              <p className="text-xs uppercase tracking-[0.35em] text-slate-400">
+              <p className="text-xs uppercase tracking-[0.35em] text-slate-600">
                 {stat.label}
               </p>
               <p className="mt-3 text-2xl font-semibold text-slate-900">
                 {stat.value}
               </p>
-              <p className="text-xs text-emerald-500">{stat.delta}</p>
+              <p className="text-xs text-emerald-700">{stat.delta}</p>
             </div>
           ))}
         </div>
@@ -561,18 +561,18 @@ function HeroDashboardPreview() {
                   <p className="text-lg font-semibold text-slate-900">
                     Scans and leads over time
                   </p>
-                  <p className="mt-1 text-xs uppercase tracking-[0.35em] text-slate-400">
+                  <p className="mt-1 text-xs uppercase tracking-[0.35em] text-slate-600">
                     Activity pulse
                   </p>
                 </div>
               </div>
               <div className="grid gap-4 lg:grid-cols-1">
                 <div className="flex min-h-[320px] flex-col rounded-2xl border border-slate-100 bg-white/90 p-5">
-                  <div className="flex items-center justify-between text-xs text-slate-400">
+                  <div className="flex items-center justify-between text-xs text-slate-600">
                     <span className="uppercase tracking-[0.35em]">
                       Scans trend
                     </span>
-                    <span className="font-semibold text-slate-500">
+                    <span className="font-semibold text-slate-700">
                       Last 12 months
                     </span>
                   </div>
@@ -634,7 +634,7 @@ function HeroDashboardPreview() {
           </div>
           <div className="rounded-3xl border border-slate-200 bg-white p-5">
             <p className="text-lg font-semibold text-slate-900">Recent leads</p>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-600">
               You made {RECENT_SALES.length} new connections this period.
             </p>
             <div className="mt-6 space-y-4">
@@ -659,10 +659,10 @@ function HeroDashboardPreview() {
                         <p className="text-sm font-semibold text-slate-900">
                           {sale.name}
                         </p>
-                        <p className="text-xs text-slate-500">{sale.email}</p>
+                        <p className="text-xs text-slate-600">{sale.email}</p>
                       </div>
                     </div>
-                    <p className="text-sm font-semibold text-emerald-500">
+                    <p className="text-sm font-semibold text-emerald-700">
                       {sale.amount}
                     </p>
                   </div>

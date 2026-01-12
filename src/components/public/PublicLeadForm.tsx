@@ -294,8 +294,12 @@ export default function PublicLeadForm({
   }
 
   function renderOptions(
-    field: LeadFormMultipleChoiceField | LeadFormCheckboxesField | LeadFormDropdownField
+    field: LeadFormMultipleChoiceField | LeadFormCheckboxesField | LeadFormDropdownField,
+    options?: { describedBy?: string; hasError?: boolean; required?: boolean }
   ) {
+    const describedBy = options?.describedBy;
+    const hasError = options?.hasError;
+    const required = options?.required;
     const optionIds = field.options.map((option) => option.id);
     const orderedOptions = field.presentation?.shuffleOptions
       ? shuffleOptions(field.options)
@@ -319,6 +323,9 @@ export default function PublicLeadForm({
               "h-10 w-full rounded-md border border-border bg-background px-3 text-sm",
               inputClassName
             )}
+            aria-invalid={hasError || undefined}
+            aria-describedby={describedBy}
+            aria-required={required || undefined}
             value={
               typeof value === "string"
                 ? optionIds.includes(value)
@@ -542,11 +549,16 @@ export default function PublicLeadForm({
         <table className="w-full border-collapse text-sm">
           <thead>
             <tr>
-              <th className="border-b border-border/60 p-2 text-left" />
+              <th
+                className="border-b border-border/60 p-2 text-left"
+                scope="col"
+                aria-hidden="true"
+              />
               {columns.map((column) => (
                 <th
                   key={column.id}
                   className="border-b border-border/60 p-2 text-left font-medium"
+                  scope="col"
                 >
                   {column.label}
                 </th>
@@ -556,9 +568,12 @@ export default function PublicLeadForm({
           <tbody>
             {rows.map((row) => (
               <tr key={row.id}>
-                <td className="border-b border-border/60 p-2 text-left font-medium">
+                <th
+                  className="border-b border-border/60 p-2 text-left font-medium"
+                  scope="row"
+                >
                   {row.label}
-                </td>
+                </th>
                 {columns.map((column) => {
                   const rowValue = value?.[row.id];
                   const checked =
@@ -609,19 +624,55 @@ export default function PublicLeadForm({
     }
 
     const error = errors[field.id];
-    const label = (
+    const hasError = Boolean(error);
+    const helpText = field.helpText?.trim();
+    const helpId = helpText ? `${field.id}-help` : undefined;
+    const errorId = hasError ? `${field.id}-error` : undefined;
+    const describedBy =
+      [helpId, errorId].filter(Boolean).join(" ") || undefined;
+    const isGroupField = [
+      "multiple_choice",
+      "checkboxes",
+      "linear_scale",
+      "rating",
+      "multiple_choice_grid",
+      "checkbox_grid",
+    ].includes(field.type);
+    const labelId = `${field.id}-label`;
+    const label = isGroupField ? (
+      <Label id={labelId} className="text-sm font-medium">
+        {field.label}
+        {field.required ? <span className="ml-1 text-destructive">*</span> : null}
+      </Label>
+    ) : (
       <Label htmlFor={field.id} className="text-sm font-medium">
         {field.label}
         {field.required ? <span className="ml-1 text-destructive">*</span> : null}
       </Label>
     );
     const errorText = error ? (
-      <p className="text-xs text-destructive">{error}</p>
+      <p id={errorId} className="text-xs text-destructive" role="alert">
+        {error}
+      </p>
     ) : null;
+    const groupProps = isGroupField
+      ? {
+          role: "group",
+          "aria-labelledby": labelId,
+          "aria-describedby": describedBy,
+          "aria-invalid": hasError || undefined,
+          "aria-required": field.required || undefined,
+        }
+      : {};
 
     return (
-      <div className="space-y-2">
+      <div className="space-y-2" {...groupProps}>
         {label}
+        {helpText ? (
+          <p id={helpId} className="sr-only">
+            {helpText}
+          </p>
+        ) : null}
         {field.type === "short_text" ? (
           <Input
             id={field.id}
@@ -636,6 +687,9 @@ export default function PublicLeadForm({
             type={isEmailField(field) ? "email" : "text"}
             placeholder={field.helpText || undefined}
             className={inputClassName}
+            aria-invalid={hasError || undefined}
+            aria-describedby={describedBy}
+            aria-required={field.required || undefined}
             disabled={disabled || submitting}
           />
         ) : null}
@@ -646,13 +700,20 @@ export default function PublicLeadForm({
             onChange={(event) => setAnswer(field.id, event.target.value)}
             placeholder={field.helpText || undefined}
             className={textareaClassName}
+            aria-invalid={hasError || undefined}
+            aria-describedby={describedBy}
+            aria-required={field.required || undefined}
             disabled={disabled || submitting}
           />
         ) : null}
         {field.type === "multiple_choice" ||
         field.type === "checkboxes" ||
         field.type === "dropdown"
-          ? renderOptions(field)
+          ? renderOptions(field, {
+              describedBy,
+              hasError,
+              required: field.required,
+            })
           : null}
         {field.type === "linear_scale" ? renderLinearScale(field) : null}
         {field.type === "rating" ? renderRating(field) : null}
@@ -664,6 +725,9 @@ export default function PublicLeadForm({
             onChange={(event) => setAnswer(field.id, event.target.value)}
             placeholder={field.helpText || undefined}
             className={inputClassName}
+            aria-invalid={hasError || undefined}
+            aria-describedby={describedBy}
+            aria-required={field.required || undefined}
             disabled={disabled || submitting}
           />
         ) : null}
@@ -680,6 +744,9 @@ export default function PublicLeadForm({
               field.helpText ||
               (field.mode === "duration" ? "Minutes" : undefined)
             }
+            aria-invalid={hasError || undefined}
+            aria-describedby={describedBy}
+            aria-required={field.required || undefined}
             disabled={disabled || submitting}
           />
         ) : null}
@@ -713,6 +780,9 @@ export default function PublicLeadForm({
               );
             }}
             className={inputClassName}
+            aria-invalid={hasError || undefined}
+            aria-describedby={describedBy}
+            aria-required={field.required || undefined}
             disabled={disabled || submitting}
           />
         ) : null}
@@ -770,7 +840,14 @@ export default function PublicLeadForm({
           ) : null}
           {typeof progress === "number" ? (
             <div>
-              <div className="h-2 w-full rounded-full bg-muted">
+              <div
+                className="h-2 w-full rounded-full bg-muted"
+                role="progressbar"
+                aria-label="Form completion"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={progress}
+              >
                 <div
                   className="h-2 rounded-full bg-primary transition-all"
                   style={{ width: `${progress}%` }}
@@ -786,7 +863,14 @@ export default function PublicLeadForm({
       <CardContent>
         {!showHeader && typeof progress === "number" ? (
           <div className="mb-4">
-            <div className="h-2 w-full rounded-full bg-muted">
+            <div
+              className="h-2 w-full rounded-full bg-muted"
+              role="progressbar"
+              aria-label="Form completion"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={progress}
+            >
               <div
                 className="h-2 rounded-full bg-primary transition-all"
                 style={{ width: `${progress}%` }}

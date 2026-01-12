@@ -77,12 +77,12 @@ export const WorkspaceWelcome = React.forwardRef<
         initial="hidden"
         animate="visible"
       >
-        <motion.h1
+        <motion.h3
           className="text-center text-2xl font-bold tracking-tight text-foreground md:text-3xl"
           variants={itemVariants}
         >
           Welcome to your workspace, {userName}! 👋
-        </motion.h1>
+        </motion.h3>
 
         <motion.div
           className="flex flex-wrap items-center justify-center gap-3"
@@ -128,7 +128,7 @@ export const WorkspaceWelcome = React.forwardRef<
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
           <div className="absolute bottom-0 left-0 p-6 text-white">
-            <h3 className="text-lg font-bold">{videoTitle}</h3>
+            <p className="text-lg font-bold">{videoTitle}</p>
             <p className="text-sm text-white/80">{videoDescription}</p>
           </div>
           <div className="absolute inset-0 flex items-center justify-center">

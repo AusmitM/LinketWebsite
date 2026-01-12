@@ -1135,6 +1135,7 @@ function OptionsEditor({
                 onClick={() =>
                   updateOptions(options.filter((item) => item.id !== option.id))
                 }
+                aria-label="Remove option"
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
@@ -1218,6 +1219,7 @@ function GridEditor({
               onClick={() =>
                 updateRows(field.rows.filter((item) => item.id !== row.id))
               }
+              aria-label="Remove row"
             >
               <Trash2 className="h-4 w-4" />
             </Button>
@@ -1254,6 +1256,7 @@ function GridEditor({
               onClick={() =>
                 updateColumns(field.columns.filter((item) => item.id !== col.id))
               }
+              aria-label="Remove column"
             >
               <Trash2 className="h-4 w-4" />
             </Button>

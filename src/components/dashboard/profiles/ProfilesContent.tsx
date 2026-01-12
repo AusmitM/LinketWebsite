@@ -1018,6 +1018,7 @@ export default function ProfilesContent() {
                             href={publicProfileUrl}
                             target="_blank"
                             rel="noreferrer"
+                            aria-label="Open public profile in a new tab"
                           >
                             <ExternalLink className="h-4 w-4" />
                           </Link>

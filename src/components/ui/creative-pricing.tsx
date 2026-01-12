@@ -29,7 +29,7 @@ function CreativePricing({
   return (
     <div className="w-full rounded-[40px] bg-gradient-to-br from-[#fff7ed] via-white to-[#e8f7ff] p-8 shadow-[0_40px_120px_rgba(255,151,118,0.25)] sm:p-12">
       <div className="text-center">
-        <span className="inline-flex items-center gap-2 rounded-full border border-[#ffd7c0] bg-white px-4 py-1 text-xs font-semibold uppercase tracking-[0.35em] text-[#ff9776]">
+        <span className="inline-flex items-center gap-2 rounded-full border border-[#ffd7c0] bg-white px-4 py-1 text-xs font-semibold uppercase tracking-[0.35em] text-[#b45309]">
           {tag}
         </span>
         <h2 className="mt-5 font-display text-3xl tracking-tight text-[#0f172a] sm:text-4xl">
@@ -49,7 +49,7 @@ function CreativePricing({
             )}
           >
             {tier.popular && (
-              <span className="inline-flex items-center gap-2 rounded-full bg-[#ff9776]/15 px-3 py-1 text-xs font-semibold text-[#ff9776]">
+              <span className="inline-flex items-center gap-2 rounded-full bg-[#ff9776]/15 px-3 py-1 text-xs font-semibold text-[#b45309]">
                 Most popular
               </span>
             )}
@@ -58,7 +58,7 @@ function CreativePricing({
                 {tier.icon}
               </div>
               <div>
-                <p className="text-xs uppercase tracking-[0.35em] text-slate-500">
+                <p className="text-xs uppercase tracking-[0.35em] text-slate-700">
                   {tier.description}
                 </p>
                 <h3 className="text-xl font-semibold text-[#0f172a]">
@@ -71,7 +71,7 @@ function CreativePricing({
               <p className="text-4xl font-semibold text-[#0f172a]">
                 ${tier.price}
               </p>
-              <p className="text-sm text-slate-500">per month</p>
+              <p className="text-sm text-slate-600">per month</p>
             </div>
 
             <ul className="space-y-3 text-sm text-slate-600">

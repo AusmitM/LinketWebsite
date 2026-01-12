@@ -57,8 +57,8 @@ export function FeatureSteps({
               <motion.div
                 key={`${feature.step}-${index}`}
                 className="flex items-center gap-6 md:gap-8"
-                initial={{ opacity: 0.3 }}
-                animate={{ opacity: index === currentFeature ? 1 : 0.3 }}
+                initial={{ opacity: 0.85 }}
+                animate={{ opacity: index === currentFeature ? 1 : 0.85 }}
                 transition={{ duration: 0.5 }}
               >
                 <motion.div
@@ -80,7 +80,7 @@ export function FeatureSteps({
                   <h3 className="text-xl font-semibold md:text-2xl">
                     {feature.title || feature.step}
                   </h3>
-                  <p className="text-sm text-muted-foreground md:text-lg">
+                  <p className="text-sm text-slate-600 md:text-lg">
                     {feature.content}
                   </p>
                 </div>
