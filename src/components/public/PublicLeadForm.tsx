@@ -78,7 +78,7 @@ export default function PublicLeadForm({
   const mutedStyle = appearance ? { color: appearance.muted } : undefined;
   const fieldBaseClassName =
     variant === "profile"
-      ? "border-border/70 bg-muted/60 text-foreground placeholder:text-muted-foreground shadow-sm"
+      ? "border-border/70 bg-input text-foreground placeholder:text-muted-foreground shadow-sm"
       : "";
   const inputClassName =
     variant === "profile"

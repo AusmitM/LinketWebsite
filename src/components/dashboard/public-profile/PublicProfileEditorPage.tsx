@@ -809,6 +809,7 @@ export default function PublicProfileEditorPage() {
               draft={draft}
               loading={loading}
               userId={userId}
+              userEmail={dashboardUser?.email ?? null}
               avatarUrl={avatarUrl}
               accountHandle={accountHandle}
               headerImageUrl={headerImageUrl}
@@ -988,6 +989,7 @@ function EditorPanel({
   draft,
   loading,
   userId,
+  userEmail,
   avatarUrl,
   accountHandle,
   headerImageUrl,
@@ -1012,6 +1014,7 @@ function EditorPanel({
   draft: ProfileDraft | null;
   loading: boolean;
   userId: string | null;
+  userEmail: string | null;
   avatarUrl: string | null;
   accountHandle: string | null;
     headerImageUrl: string | null;
@@ -1075,7 +1078,7 @@ function EditorPanel({
           {userId ? (
             <AvatarUploader
               userId={userId}
-              userEmail={dashboardUser?.email ?? null}
+              userEmail={userEmail}
               avatarUrl={avatarUrl}
               onUploaded={({ publicUrl }) => onAvatarUpdate(publicUrl)}
               variant="compact"
