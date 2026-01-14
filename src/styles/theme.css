@@ -1,6 +1,7 @@
 /* Linket theme system ---------------------------------------------------- */
 
 :root {
+  --dashboard-nav-height: 64px;
   /* Core scales */
   --brand-blue: #2563eb;
   --brand-amber: #f59e0b;
@@ -333,6 +334,12 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
   to { opacity: 0; }
 }
 
+@keyframes dashboard-theme-pulse {
+  0% { opacity: 0.7; transform: scale(0.1); }
+  65% { opacity: 0.6; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.25); }
+}
+
 #dashboard-theme-scope,
 #dashboard-theme-scope .dashboard-topbar,
 #dashboard-theme-scope .dashboard-navbar,
@@ -345,6 +352,29 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
   transition-property: background-color, color, border-color, box-shadow, fill, stroke;
   transition-duration: var(--duration-base);
   transition-timing-function: var(--ease-smooth);
+}
+
+#dashboard-theme-scope.theme-transition,
+#dashboard-theme-scope.theme-transition .dashboard-topbar,
+#dashboard-theme-scope.theme-transition .dashboard-navbar,
+#dashboard-theme-scope.theme-transition .dashboard-sidebar,
+#dashboard-theme-scope.theme-transition .dashboard-content,
+#dashboard-theme-scope.theme-transition [data-slot=card],
+#dashboard-theme-scope.theme-transition [data-slot=input],
+#dashboard-theme-scope.theme-transition [data-slot=button],
+#dashboard-theme-scope.theme-transition .dashboard-menu-button {
+  transition-duration: 1200ms;
+}
+
+#dashboard-theme-scope {
+  position: relative;
+  isolation: isolate;
+  padding-top: var(--dashboard-nav-height);
+}
+
+#dashboard-theme-scope > * {
+  position: relative;
+  z-index: 1;
 }
 
 #dashboard-theme-scope .dashboard-content > * {
@@ -423,6 +453,10 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
 
 #dashboard-theme-scope .dashboard-sidebar {
   transition: width var(--duration-slow) var(--ease-smooth), background-color var(--duration-base) var(--ease-smooth), border-color var(--duration-base) var(--ease-smooth);
+  position: sticky;
+  top: var(--dashboard-nav-height);
+  height: calc(100vh - var(--dashboard-nav-height));
+  align-self: flex-start;
 }
 
 #dashboard-theme-scope .dashboard-sidebar-overlay {
@@ -440,7 +474,8 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
   #dashboard-theme-scope .dashboard-skeleton [data-skeleton]::after,
   #dashboard-theme-scope .dashboard-saving-indicator,
   #dashboard-theme-scope [data-slot=dialog-overlay],
-  #dashboard-theme-scope [data-slot=dialog-content] {
+  #dashboard-theme-scope [data-slot=dialog-content],
+  #dashboard-theme-scope::before {
     animation: none;
   }
 
@@ -458,9 +493,20 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
   position: absolute;
   inset: 0;
   pointer-events: none;
-  z-index: -1;
+  z-index: 0;
   opacity: 0;
   transition: opacity var(--duration-base) var(--ease-smooth), transform var(--duration-base) var(--ease-smooth);
+}
+
+#dashboard-theme-scope::before {
+  background: radial-gradient(
+    circle at var(--theme-pulse-x, 20%) var(--theme-pulse-y, 20%),
+    rgba(255, 255, 255, 0.22) 0%,
+    rgba(255, 255, 255, 0.18) 25%,
+    rgba(255, 255, 255, 0) 55%
+  );
+  transform: scale(0.1);
+  transform-origin: center;
 }
 
 #dashboard-theme-scope::after {
@@ -469,19 +515,20 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
     linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, transparent 45%);
 }
 
-#dashboard-theme-scope.theme-forest::before {
-  opacity: 0.42;
-  background-image: url("/illustrations/forest-canopy.svg"), radial-gradient(120% 120% at 50% 0%, rgba(56, 216, 160, 0.25) 0%, transparent 70%);
-  background-size: cover, 140% 100%;
-  background-position: center top, center;
-}
-
 #dashboard-theme-scope.theme-forest::after {
   opacity: 0.75;
   transform: translateY(0);
-  background: radial-gradient(100% 70% at 20% 10%, rgba(34, 197, 94, 0.25) 0%, transparent 70%),
+  background-image: url("/illustrations/forest-canopy.svg"),
+    radial-gradient(100% 70% at 20% 10%, rgba(34, 197, 94, 0.25) 0%, transparent 70%),
     radial-gradient(100% 80% at 80% 0%, rgba(59, 130, 246, 0.18) 0%, transparent 70%),
     linear-gradient(180deg, rgba(12, 80, 45, 0.5) 0%, transparent 55%);
+  background-size: cover, 100% 70%, 100% 80%, 100% 100%;
+  background-position: center top, 20% 10%, 80% 0%, top;
+}
+
+#dashboard-theme-scope.theme-transition::before {
+  opacity: 1;
+  animation: dashboard-theme-pulse 1400ms var(--ease-smooth);
 }
 body.theme-forest .dashboard-forest-pin {
   opacity: 1;

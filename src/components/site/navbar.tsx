@@ -521,9 +521,9 @@ export function Navbar() {
     };
 
     return (
-      <header className="dashboard-navbar sticky top-0 z-50 w-full border-b border-border/60 bg-background/90 text-foreground backdrop-blur supports-[backdrop-filter]:bg-background/70">
+      <header className="dashboard-navbar fixed top-0 left-0 right-0 z-50 h-[var(--dashboard-nav-height)] w-full border-b border-border/60 bg-background/90 text-foreground backdrop-blur supports-[backdrop-filter]:bg-background/70">
         <nav
-          className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 text-foreground md:px-6"
+          className="mx-auto flex h-full max-w-6xl items-center justify-between px-4 text-foreground md:px-6"
           aria-label="Dashboard"
         >
           <div className="flex items-center gap-6">
