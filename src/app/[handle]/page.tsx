@@ -1,9 +1,10 @@
 import { notFound } from "next/navigation";
 import { getSignedAvatarUrl } from "@/lib/avatar-server";
 import { getSignedProfileHeaderUrl } from "@/lib/profile-header-server";
-import { normalizeLeadFormConfig } from "@/lib/lead-form";
+import { createDefaultLeadFormConfig, normalizeLeadFormConfig } from "@/lib/lead-form";
 import { getActiveProfileForPublicHandle } from "@/lib/profile-service";
 import { createServerSupabaseReadonly } from "@/lib/supabase/server";
+import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
 import { isDarkTheme } from "@/lib/themes";
 import type { ProfileLinkRecord } from "@/types/db";
 import type { LeadFormConfig } from "@/types/lead-form";
@@ -46,12 +47,56 @@ export default async function PublicProfilePage({ params }: Props) {
     profile.header_image_updated_at
   );
   const publicHandle = profile.handle || handle;
-  const supabase = await createServerSupabaseReadonly();
-  const { data: leadFormRow } = await supabase
-    .from("lead_forms")
-    .select("id, config")
-    .eq("handle", publicHandle)
-    .maybeSingle();
+  let leadFormRow: { id: string; config: LeadFormConfig | null; status?: string } | null =
+    null;
+  if (isSupabaseAdminAvailable) {
+    const { data } = await supabaseAdmin
+      .from("lead_forms")
+      .select("id, config, status")
+      .eq("handle", publicHandle)
+      .maybeSingle();
+    leadFormRow = (data as { id: string; config: LeadFormConfig | null; status?: string }) ?? null;
+
+    if (!leadFormRow) {
+      const now = new Date().toISOString();
+      const config = createDefaultLeadFormConfig(`form-${publicHandle}`);
+      const { data: created } = await supabaseAdmin
+        .from("lead_forms")
+        .insert({
+          user_id: profile.user_id,
+          profile_id: profile.id,
+          handle: publicHandle,
+          status: "published",
+          title: config.title,
+          description: config.description,
+          config,
+          created_at: now,
+          updated_at: now,
+        })
+        .select("id, config, status")
+        .single();
+      leadFormRow = (created as { id: string; config: LeadFormConfig | null; status?: string }) ?? null;
+    } else if (leadFormRow.status !== "published" && leadFormRow.config) {
+      const normalized = normalizeLeadFormConfig(
+        leadFormRow.config,
+        leadFormRow.id ?? `form-${publicHandle}`
+      );
+      await supabaseAdmin
+        .from("lead_forms")
+        .update({ status: "published", config: normalized })
+        .eq("id", leadFormRow.id);
+      leadFormRow = { ...leadFormRow, config: normalized, status: "published" };
+    }
+  } else {
+    const supabase = await createServerSupabaseReadonly();
+    const { data } = await supabase
+      .from("lead_forms")
+      .select("id, config")
+      .eq("handle", publicHandle)
+      .maybeSingle();
+    leadFormRow = (data as { id: string; config: LeadFormConfig | null } | null) ?? null;
+  }
+
   const normalizedLeadForm = leadFormRow?.config
     ? normalizeLeadFormConfig(
         leadFormRow.config as LeadFormConfig,
