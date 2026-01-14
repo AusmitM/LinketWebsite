@@ -779,7 +779,9 @@ export default function PublicProfileEditorPage() {
           Last saved: {lastSavedAt ? formatShortDate(lastSavedAt) : "Just now"}
         </span>
         {(saveState === "saving" || sidebarSavePulse) && (
-          <span className="text-foreground">Saving...</span>
+          <span className="dashboard-saving-indicator text-foreground">
+            Saving...
+          </span>
         )}
         {isDirty && <span className="text-amber-600">Unsaved changes</span>}
         {saveState === "failed" ? (
@@ -1180,8 +1182,8 @@ function EditorPanel({
             <div
               key={link.id}
               className={cn(
-                "group rounded-xl border border-border/60 bg-background/70 p-3",
-                draggingLinkId === link.id && "opacity-70"
+                "dashboard-drag-item group rounded-xl border border-border/60 bg-background/70 p-3",
+                draggingLinkId === link.id && "is-dragging opacity-70"
               )}
               draggable
               onDragStart={() => setDraggingLinkId(link.id)}
@@ -1416,6 +1418,7 @@ function PhonePreviewCard({
                 onEdit={() => onEditLink(link.id)}
                 onToggle={() => onToggleLink(link.id)}
                 onRemove={() => onRemoveLink(link.id)}
+                isDragging={draggingLinkId === link.id}
                 draggable
                 onDragStart={() => setDraggingLinkId(link.id)}
                 onDragOver={(event) => event.preventDefault()}
@@ -1449,7 +1452,10 @@ function PhonePreviewCard({
               ) : (
                 <div
                   key={field.id}
-                  className="rounded-2xl border border-border/60 bg-background/70 px-3 py-2 text-xs text-muted-foreground cursor-grab active:cursor-grabbing"
+                  className={cn(
+                    "dashboard-drag-item rounded-2xl border border-border/60 bg-background/70 px-3 py-2 text-xs text-muted-foreground cursor-grab active:cursor-grabbing",
+                    draggingLeadFieldId === field.id && "is-dragging"
+                  )}
                   draggable
                   onDragStart={() => setDraggingLeadFieldId(field.id)}
                   onDragOver={(event) => event.preventDefault()}
@@ -1556,6 +1562,7 @@ function LinkListItem({
   onEdit,
   onToggle,
   onRemove,
+  isDragging,
   draggable,
   onDragStart,
   onDragOver,
@@ -1566,6 +1573,7 @@ function LinkListItem({
   onEdit: () => void;
   onToggle: () => void;
   onRemove: () => void;
+  isDragging?: boolean;
   draggable?: boolean;
   onDragStart?: () => void;
   onDragOver?: (event: React.DragEvent<HTMLDivElement>) => void;
@@ -1577,7 +1585,10 @@ function LinkListItem({
   const favicon = faviconForUrl(link.url);
   return (
     <div
-      className="group relative flex items-center justify-between gap-3 rounded-2xl border border-border/60 bg-card/80 px-4 py-3 text-xs font-medium shadow-[0_12px_24px_-18px_rgba(15,23,42,0.2)] cursor-grab active:cursor-grabbing"
+      className={cn(
+        "dashboard-drag-item group relative flex items-center justify-between gap-3 rounded-2xl border border-border/60 bg-card/80 px-4 py-3 text-xs font-medium shadow-[0_12px_24px_-18px_rgba(15,23,42,0.2)] cursor-grab active:cursor-grabbing",
+        isDragging && "is-dragging"
+      )}
       draggable={draggable}
       onDragStart={onDragStart}
       onDragOver={onDragOver}

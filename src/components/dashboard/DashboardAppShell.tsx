@@ -63,14 +63,14 @@ export default function DashboardAppShell({
       >
         <div
           className={cn(
-            "absolute inset-0 bg-black/40 transition-opacity",
+            "dashboard-sidebar-overlay absolute inset-0 bg-black/40 transition-opacity",
             sidebarOpen ? "opacity-100" : "opacity-0"
           )}
           onClick={() => setSidebarOpen(false)}
         />
         <div
           className={cn(
-            "absolute inset-y-0 left-0 w-72 transform border-r border-border/60 bg-background shadow-2xl transition-transform",
+            "dashboard-sidebar-panel absolute inset-y-0 left-0 w-72 transform border-r border-border/60 bg-background shadow-2xl transition-transform",
             sidebarOpen ? "translate-x-0" : "-translate-x-full"
           )}
         >

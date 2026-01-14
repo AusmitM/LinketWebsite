@@ -344,7 +344,8 @@ export default function OverviewContent() {
                   {Array.from({ length: 3 }).map((_, index) => (
                     <div
                       key={`lead-skeleton-${index}`}
-                      className="h-10 animate-pulse rounded-2xl bg-muted"
+                      className="dashboard-skeleton h-10 animate-pulse rounded-2xl bg-muted"
+                      data-skeleton
                     />
                   ))}
                 </div>
@@ -569,7 +570,7 @@ function AnalyticsTile({
       </div>
       <div className="mt-3">
         {loading ? (
-          <div className="h-40 animate-pulse rounded-2xl bg-muted" />
+          <div className="dashboard-skeleton h-40 animate-pulse rounded-2xl bg-muted" data-skeleton />
         ) : (
           children
         )}

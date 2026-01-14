@@ -259,8 +259,8 @@ export default function VCardContent({
       <Card
         className={
           variant === "embedded"
-            ? "rounded-2xl border border-border/60 bg-background/70 shadow-sm"
-            : "rounded-3xl border bg-card/80 shadow-sm"
+            ? "dashboard-skeleton rounded-2xl border border-border/60 bg-background/70 shadow-sm"
+            : "dashboard-skeleton rounded-3xl border bg-card/80 shadow-sm"
         }
       >
         <CardHeader>
@@ -269,19 +269,19 @@ export default function VCardContent({
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-3">
-            <div className="h-10 w-3/4 animate-pulse rounded-xl bg-muted/60" />
-            <div className="h-10 w-2/3 animate-pulse rounded-xl bg-muted/60" />
-            <div className="h-10 w-5/6 animate-pulse rounded-xl bg-muted/60" />
+            <div className="h-10 w-3/4 animate-pulse rounded-xl bg-muted/60" data-skeleton />
+            <div className="h-10 w-2/3 animate-pulse rounded-xl bg-muted/60" data-skeleton />
+            <div className="h-10 w-5/6 animate-pulse rounded-xl bg-muted/60" data-skeleton />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="h-10 animate-pulse rounded-xl bg-muted/60" />
-            <div className="h-10 animate-pulse rounded-xl bg-muted/60" />
-            <div className="h-10 animate-pulse rounded-xl bg-muted/60" />
-            <div className="h-10 animate-pulse rounded-xl bg-muted/60" />
+            <div className="h-10 animate-pulse rounded-xl bg-muted/60" data-skeleton />
+            <div className="h-10 animate-pulse rounded-xl bg-muted/60" data-skeleton />
+            <div className="h-10 animate-pulse rounded-xl bg-muted/60" data-skeleton />
+            <div className="h-10 animate-pulse rounded-xl bg-muted/60" data-skeleton />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="h-20 animate-pulse rounded-xl bg-muted/60" />
-            <div className="h-20 animate-pulse rounded-xl bg-muted/60" />
+            <div className="h-20 animate-pulse rounded-xl bg-muted/60" data-skeleton />
+            <div className="h-20 animate-pulse rounded-xl bg-muted/60" data-skeleton />
           </div>
         </CardContent>
       </Card>
@@ -360,7 +360,11 @@ export default function VCardContent({
           <Field label="Notes" id="note" component="textarea" value={fields.note} onChange={updateField} onBlur={handleFieldBlur} disabled={inputsDisabled} idPrefix={idPrefix} />
         </div>
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <span className={`text-sm ${status === "error" ? "text-destructive" : "text-muted-foreground"}`}>{statusMessage}</span>
+          <span
+            className={`text-sm ${status === "error" ? "text-destructive" : "text-muted-foreground"}${status === "saving" ? " dashboard-saving-indicator" : ""}`}
+          >
+            {statusMessage}
+          </span>
           {status === "error" && userId && (
             <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => void persist(fields)}>
               Retry save

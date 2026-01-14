@@ -20,7 +20,9 @@
 
   /* Motion + shadows */
   --shadow-ambient: 0 1px 2px rgba(15, 23, 42, 0.08), 0 16px 40px -24px rgba(15, 23, 42, 0.35);
+  --duration-fast: 160ms;
   --duration-base: 220ms;
+  --duration-slow: 360ms;
   --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
 
   /* Fluid type scale */
@@ -319,6 +321,164 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
 [data-slot=card] { box-shadow: var(--shadow-ambient); }
 [data-slot=button] { transition: all var(--duration-base) var(--ease-smooth); }
 [data-slot=input] { transition: color var(--duration-base) var(--ease-smooth), box-shadow var(--duration-base) var(--ease-smooth); }
+
+@keyframes dashboard-page-enter {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes dashboard-card-enter {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes dashboard-skeleton-shimmer {
+  0% { transform: translateX(-120%); }
+  100% { transform: translateX(120%); }
+}
+
+@keyframes dashboard-saving-pulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+
+@keyframes dashboard-modal-in {
+  from { opacity: 0; transform: translate(-50%, -48%) scale(0.96); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes dashboard-modal-out {
+  from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  to { opacity: 0; transform: translate(-50%, -48%) scale(0.96); }
+}
+
+@keyframes dashboard-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes dashboard-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+#dashboard-theme-scope,
+#dashboard-theme-scope .dashboard-topbar,
+#dashboard-theme-scope .dashboard-navbar,
+#dashboard-theme-scope .dashboard-sidebar,
+#dashboard-theme-scope .dashboard-content,
+#dashboard-theme-scope [data-slot=card],
+#dashboard-theme-scope [data-slot=input],
+#dashboard-theme-scope [data-slot=button],
+#dashboard-theme-scope .dashboard-menu-button {
+  transition-property: background-color, color, border-color, box-shadow, fill, stroke;
+  transition-duration: var(--duration-base);
+  transition-timing-function: var(--ease-smooth);
+}
+
+#dashboard-theme-scope .dashboard-content > * {
+  animation: dashboard-page-enter var(--duration-slow) var(--ease-smooth);
+  animation-fill-mode: both;
+}
+
+#dashboard-theme-scope [data-slot=card] {
+  animation: dashboard-card-enter var(--duration-slow) var(--ease-smooth);
+  animation-fill-mode: both;
+}
+
+#dashboard-theme-scope .dashboard-skeleton [data-skeleton],
+#dashboard-theme-scope .dashboard-skeleton[data-skeleton] {
+  position: relative;
+  overflow: hidden;
+}
+
+#dashboard-theme-scope .dashboard-skeleton [data-skeleton]::after,
+#dashboard-theme-scope .dashboard-skeleton[data-skeleton]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    110deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.35) 45%,
+    rgba(255, 255, 255, 0) 90%
+  );
+  transform: translateX(-120%);
+  animation: dashboard-skeleton-shimmer 1.4s linear infinite;
+}
+
+#dashboard-theme-scope .dashboard-saving-indicator {
+  animation: dashboard-saving-pulse 1.2s ease-in-out infinite;
+}
+
+#dashboard-theme-scope .dashboard-drag-item {
+  transition: transform var(--duration-base) var(--ease-smooth), box-shadow var(--duration-base) var(--ease-smooth);
+  will-change: transform, box-shadow;
+}
+
+#dashboard-theme-scope .dashboard-drag-item.is-dragging {
+  transform: translateY(-2px) scale(1.01);
+  box-shadow: 0 18px 30px -20px rgba(15, 23, 42, 0.35);
+}
+
+#dashboard-theme-scope [data-slot=dialog-overlay][data-state="open"] {
+  animation: dashboard-fade-in var(--duration-base) var(--ease-smooth);
+}
+
+#dashboard-theme-scope [data-slot=dialog-overlay][data-state="closed"] {
+  animation: dashboard-fade-out var(--duration-fast) var(--ease-smooth);
+}
+
+#dashboard-theme-scope [data-slot=dialog-content][data-state="open"] {
+  animation: dashboard-modal-in var(--duration-base) var(--ease-smooth);
+}
+
+#dashboard-theme-scope [data-slot=dialog-content][data-state="closed"] {
+  animation: dashboard-modal-out var(--duration-fast) var(--ease-smooth);
+}
+
+#dashboard-theme-scope [data-slot=button] {
+  will-change: transform, box-shadow;
+}
+
+#dashboard-theme-scope [data-slot=button]:not(:disabled):not([aria-disabled="true"]):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px -12px rgba(15, 23, 42, 0.3);
+}
+
+#dashboard-theme-scope [data-slot=button]:not(:disabled):not([aria-disabled="true"]):active {
+  transform: translateY(0) scale(0.98);
+}
+
+#dashboard-theme-scope .dashboard-sidebar {
+  transition: width var(--duration-slow) var(--ease-smooth), background-color var(--duration-base) var(--ease-smooth), border-color var(--duration-base) var(--ease-smooth);
+}
+
+#dashboard-theme-scope .dashboard-sidebar-overlay {
+  transition: opacity var(--duration-base) var(--ease-smooth);
+}
+
+#dashboard-theme-scope .dashboard-sidebar-panel {
+  transition: transform var(--duration-slow) var(--ease-smooth);
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #dashboard-theme-scope .dashboard-content > *,
+  #dashboard-theme-scope [data-slot=card],
+  #dashboard-theme-scope .dashboard-skeleton [data-skeleton]::after,
+  #dashboard-theme-scope .dashboard-saving-indicator,
+  #dashboard-theme-scope [data-slot=dialog-overlay],
+  #dashboard-theme-scope [data-slot=dialog-content] {
+    animation: none;
+  }
+
+  #dashboard-theme-scope,
+  #dashboard-theme-scope * {
+    transition: none;
+    scroll-behavior: auto;
+  }
+}
 
 
 #dashboard-theme-scope::before,

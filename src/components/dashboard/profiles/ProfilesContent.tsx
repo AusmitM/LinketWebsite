@@ -972,7 +972,7 @@ export default function ProfilesContent() {
                   </span>
                 </div>
                 {accountLoading ? (
-                  <div className="h-32 w-full animate-pulse rounded-2xl border border-dashed border-muted" />
+                  <div className="dashboard-skeleton h-32 w-full animate-pulse rounded-2xl border border-dashed border-muted" data-skeleton />
                 ) : userId ? (
                   <AvatarUploader
                     userId={userId}

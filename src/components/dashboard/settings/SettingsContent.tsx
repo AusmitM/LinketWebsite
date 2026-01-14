@@ -193,7 +193,7 @@ export default function SettingsContent() {
           <div className="flex items-center gap-4 rounded-2xl border border-border/60 bg-background/60 p-4">
             <div className="relative h-16 w-16 overflow-hidden rounded-full border border-border/60 bg-muted">
               {avatarLoading ? (
-                <div className="h-full w-full animate-pulse bg-muted" />
+                <div className="dashboard-skeleton h-full w-full animate-pulse bg-muted" data-skeleton />
               ) : avatarUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={avatarUrl} alt="Profile" className="h-full w-full object-cover" />

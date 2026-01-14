@@ -204,7 +204,7 @@ export default function AnalyticsContent() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="h-72 w-full animate-pulse rounded-2xl bg-muted" />
+            <div className="dashboard-skeleton h-72 w-full animate-pulse rounded-2xl bg-muted" data-skeleton />
           ) : chartData.length === 0 ? (
             <EmptyState message="No scans recorded in this range." />
           ) : (
@@ -238,7 +238,7 @@ export default function AnalyticsContent() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="h-56 w-full animate-pulse rounded-2xl bg-muted" />
+            <div className="dashboard-skeleton h-56 w-full animate-pulse rounded-2xl bg-muted" data-skeleton />
           ) : conversionSeries.length === 0 ? (
             <EmptyState message="No data available." />
           ) : (
@@ -273,9 +273,9 @@ export default function AnalyticsContent() {
           <CardContent>
             {loading ? (
               <div className="space-y-2">
-                <div className="h-12 animate-pulse rounded-2xl bg-muted" />
-                <div className="h-12 animate-pulse rounded-2xl bg-muted" />
-                <div className="h-12 animate-pulse rounded-2xl bg-muted" />
+                <div className="dashboard-skeleton h-12 animate-pulse rounded-2xl bg-muted" data-skeleton />
+                <div className="dashboard-skeleton h-12 animate-pulse rounded-2xl bg-muted" data-skeleton />
+                <div className="dashboard-skeleton h-12 animate-pulse rounded-2xl bg-muted" data-skeleton />
               </div>
             ) : analytics?.topProfiles?.length ? (
               <div className="space-y-2">
@@ -310,7 +310,7 @@ export default function AnalyticsContent() {
           </CardHeader>
           <CardContent>
             {loading ? (
-              <div className="h-64 animate-pulse rounded-2xl bg-muted" />
+              <div className="dashboard-skeleton h-64 animate-pulse rounded-2xl bg-muted" data-skeleton />
             ) : analytics?.recentLeads?.length ? (
               <div className="space-y-3">
                 {analytics.recentLeads.map((lead) => (

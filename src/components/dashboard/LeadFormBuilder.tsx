@@ -378,7 +378,12 @@ export default function LeadFormBuilder({
                   {lastSavedAt ? ` - Updated ${formatShortDate(lastSavedAt)}` : ""}
                 </div>
               </div>
-              <Button size="sm" onClick={() => void persist()} disabled={saving}>
+              <Button
+                size="sm"
+                onClick={() => void persist()}
+                disabled={saving}
+                className={saving ? "dashboard-saving-indicator" : undefined}
+              >
                 {saving ? "Saving" : "Save"}
               </Button>
             </CardHeader>
@@ -522,8 +527,9 @@ export default function LeadFormBuilder({
                   <div
                     key={field.id}
                     className={cn(
-                      "flex items-start gap-3 rounded-xl border border-border/60 bg-background/80 p-3",
-                      selectedFieldId === field.id && "ring-2 ring-primary/20"
+                      "dashboard-drag-item flex items-start gap-3 rounded-xl border border-border/60 bg-background/80 p-3",
+                      selectedFieldId === field.id && "ring-2 ring-primary/20",
+                      draggingFieldId === field.id && "is-dragging"
                     )}
                     draggable
                     onDragStart={() => setDraggingFieldId(field.id)}
