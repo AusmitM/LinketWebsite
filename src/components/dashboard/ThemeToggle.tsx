@@ -59,7 +59,6 @@ export default function ThemeToggle({ showLabel = false }: { showLabel?: boolean
   const { theme, setTheme } = useThemeOptional();
   const user = useDashboardUser();
   const abortRef = useRef<AbortController | null>(null);
-  const buttonRef = useRef<HTMLButtonElement | null>(null);
   const [index, setIndex] = useState(Math.max(0, ORDER.indexOf(theme)));
 
   useEffect(() => {
@@ -131,18 +130,6 @@ export default function ThemeToggle({ showLabel = false }: { showLabel?: boolean
   function next() {
     const nextIndex = (index + 1) % ORDER.length;
     const value = ORDER[nextIndex];
-    if (typeof document !== "undefined") {
-      const scope = document.querySelector("#dashboard-theme-scope") as HTMLElement | null;
-      const button = buttonRef.current;
-      if (scope && button) {
-        const scopeRect = scope.getBoundingClientRect();
-        const buttonRect = button.getBoundingClientRect();
-        const originX = ((buttonRect.left + buttonRect.width / 2 - scopeRect.left) / scopeRect.width) * 100;
-        const originY = ((buttonRect.top + buttonRect.height / 2 - scopeRect.top) / scopeRect.height) * 100;
-        scope.style.setProperty("--theme-pulse-x", `${originX.toFixed(2)}%`);
-        scope.style.setProperty("--theme-pulse-y", `${originY.toFixed(2)}%`);
-      }
-    }
     setIndex(nextIndex);
     writePendingTheme(value);
     setTheme(value);
@@ -161,7 +148,6 @@ export default function ThemeToggle({ showLabel = false }: { showLabel?: boolean
       onClick={next}
       title={`Theme: ${label}`}
       className={showLabel ? "gap-2 px-2" : undefined}
-      ref={buttonRef}
     >
       <Icon className="h-5 w-5" />
       {showLabel ? <span className="text-xs font-medium text-muted-foreground">{label}</span> : null}

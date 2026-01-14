@@ -75,13 +75,6 @@ export function ThemeProvider({
       if (persist && typeof localStorage !== "undefined") localStorage.setItem(storage, t);
       const scope = scopeSelector ? (typeof document !== "undefined" ? document.querySelector(scopeSelector) : null) : undefined;
       applyThemeClass(t, scope ?? undefined);
-      const target = scope ?? (typeof document !== "undefined" ? document.body : null);
-      if (target) {
-        target.classList.remove("theme-transition");
-        void target.getBoundingClientRect();
-        target.classList.add("theme-transition");
-        window.setTimeout(() => target.classList.remove("theme-transition"), 1600);
-      }
     },
     [scopeSelector, storage, persist]
   );
