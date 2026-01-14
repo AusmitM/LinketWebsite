@@ -97,5 +97,3 @@ export function useThemeOptional(): { theme: ThemeName; setTheme: (t: ThemeName)
 }
 
 export default ThemeProvider;
-
-

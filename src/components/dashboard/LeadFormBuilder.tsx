@@ -368,24 +368,24 @@ export default function LeadFormBuilder({
     <div className="space-y-6">
       <div className="space-y-6" data-layout={layout}>
           <Card className="w-full max-w-none self-start rounded-2xl border border-border/60 bg-card/80 shadow-sm">
-            <CardHeader className="gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="space-y-1">
+            <CardHeader className="gap-2">
+              <div className="flex items-center justify-between gap-4">
                 <CardTitle className="text-sm font-semibold whitespace-nowrap">
                   Form details
                 </CardTitle>
-                <div className="text-xs text-muted-foreground">
-                  {form.status === "published" ? "Published" : "Draft"}
-                  {lastSavedAt ? ` - Updated ${formatShortDate(lastSavedAt)}` : ""}
-                </div>
+                <Button
+                  size="sm"
+                  onClick={() => void persist()}
+                  disabled={saving}
+                  className={saving ? "dashboard-saving-indicator" : undefined}
+                >
+                  {saving ? "Saving" : "Save"}
+                </Button>
               </div>
-              <Button
-                size="sm"
-                onClick={() => void persist()}
-                disabled={saving}
-                className={saving ? "dashboard-saving-indicator" : undefined}
-              >
-                {saving ? "Saving" : "Save"}
-              </Button>
+              <div className="text-xs text-muted-foreground">
+                {form.status === "published" ? "Published" : "Draft"}
+                {lastSavedAt ? ` - Updated ${formatShortDate(lastSavedAt)}` : ""}
+              </div>
             </CardHeader>
             <CardContent className="space-y-3">
             <div className="space-y-2">

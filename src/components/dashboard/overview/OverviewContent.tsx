@@ -1,29 +1,19 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   BarChart3,
   Calendar,
-  Link as LinkIcon,
-  MapPin,
   MessageSquare,
   Sparkles,
   Users,
 } from "lucide-react";
-import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useDashboardUser } from "@/components/dashboard/DashboardSessionContext";
+import { useThemeOptional } from "@/components/theme/theme-provider";
 import { supabase } from "@/lib/supabase";
 import PublicProfilePreview from "@/components/public/PublicProfilePreview";
 import type { UserAnalytics } from "@/lib/analytics-service";
@@ -33,10 +23,6 @@ const numberFormatter = new Intl.NumberFormat("en-US");
 const percentFormatter = new Intl.NumberFormat("en-US", {
   style: "percent",
   maximumFractionDigits: 1,
-});
-const shortDate = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "numeric",
 });
 const timestampFormatter = new Intl.DateTimeFormat("en-US", {
   month: "short",
@@ -58,8 +44,6 @@ type ViewState = {
   analytics: UserAnalytics | null;
 };
 
-type TimeRange = "week" | "month" | "quarter" | "year";
-
 type LeadRow = {
   id: string;
   name: string | null;
@@ -77,19 +61,9 @@ export default function OverviewContent() {
     error: null,
     analytics: null,
   });
-  const [now, setNow] = useState(() => new Date());
   const [recentLeads, setRecentLeads] = useState<LeadRow[]>([]);
   const [recentLeadsLoading, setRecentLeadsLoading] = useState(true);
   const [recentLeadsError, setRecentLeadsError] = useState<string | null>(null);
-  const [tapRange, setTapRange] = useState<TimeRange>("month");
-  const [conversionRange, setConversionRange] = useState<TimeRange>("month");
-
-  useEffect(() => {
-    const id = window.setInterval(() => {
-      setNow(new Date());
-    }, 60_000);
-    return () => window.clearInterval(id);
-  }, []);
 
   useEffect(() => {
     if (userId === null) {
@@ -151,7 +125,6 @@ export default function OverviewContent() {
   }, [userId]);
 
   const totals = analytics?.totals;
-  const timeline = analytics?.timeline ?? [];
   const leads = analytics?.recentLeads ?? [];
 
   const overviewItems = [
@@ -225,46 +198,6 @@ export default function OverviewContent() {
     setDateLabel(dateTimeFormatter.format(new Date()));
   }, []);
 
-  const rangeDays: Record<TimeRange, number> = {
-    week: 7,
-    month: 30,
-    quarter: 90,
-    year: 365,
-  };
-
-  const tapData = useMemo(() => {
-    const days = rangeDays[tapRange];
-    const sliced = timeline.slice(-Math.min(days, timeline.length));
-    return sliced.map((point) => ({
-      ...point,
-      label: shortDate.format(new Date(point.date)),
-    }));
-  }, [timeline, tapRange]);
-
-  const conversionData = useMemo(() => {
-    const days = rangeDays[conversionRange];
-    const sliced = timeline.slice(-Math.min(days, timeline.length));
-    return sliced.map((point) => ({
-      ...point,
-      label: shortDate.format(new Date(point.date)),
-      conversion: point.scans > 0 ? point.leads / point.scans : 0,
-    }));
-  }, [timeline, conversionRange]);
-
-  const leads7d = sumRange(timeline, 7, (point) => point.leads);
-  const prevLeads7d = sumRange(
-    timeline.slice(0, Math.max(timeline.length - 7, 0)),
-    7,
-    (point) => point.leads
-  );
-  const leadDelta =
-    prevLeads7d > 0 ? (leads7d - prevLeads7d) / prevLeads7d : null;
-
-  const tapsByProfile = analytics?.topProfiles ?? [];
-  const maxTap = Math.max(
-    1,
-    ...tapsByProfile.map((profile) => profile.scans)
-  );
 
   return (
     <div className="dashboard-overview-page space-y-6">
@@ -397,98 +330,6 @@ export default function OverviewContent() {
           </Card>
         </div>
 
-        <Card className="rounded-3xl border border-border/70 bg-card/90 shadow-[0_18px_45px_rgba(15,23,42,0.08)] lg:col-span-12">
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-lg font-semibold text-foreground">
-              Analytics
-            </CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Monitor engagement, conversions, and lead capture impact.
-            </p>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid gap-4 lg:grid-cols-2">
-              <AnalyticsTile
-                title="Tap trend"
-                icon={Sparkles}
-                range={tapRange}
-                onRangeChange={setTapRange}
-                loading={loading && !analytics}
-              >
-                <ChartPanel data={tapData} dataKey="scans" />
-              </AnalyticsTile>
-              <AnalyticsTile
-                title="Conversion rate trend"
-                icon={BarChart3}
-                range={conversionRange}
-                onRangeChange={setConversionRange}
-                loading={loading && !analytics}
-              >
-                <ChartPanel data={conversionData} dataKey="conversion" />
-              </AnalyticsTile>
-              <AnalyticsTile title="Taps per link" icon={LinkIcon}>
-                <div className="space-y-3">
-                  {tapsByProfile.length === 0 ? (
-                    <EmptyState message="No taps recorded yet." />
-                  ) : (
-                    tapsByProfile.slice(0, 5).map((profile) => (
-                      <div key={profile.handle ?? profile.profileId ?? "tap"}>
-                        <div className="flex items-center justify-between text-xs text-muted-foreground">
-                          <span className="truncate">
-                            {profile.displayName || "Linket"}
-                          </span>
-                          <span className="text-foreground">
-                            {numberFormatter.format(profile.scans)}
-                          </span>
-                        </div>
-                        <div className="mt-2 h-2 rounded-full bg-muted">
-                          <div
-                            className="h-2 rounded-full bg-primary"
-                            style={{
-                              width: `${Math.max(
-                                8,
-                                (profile.scans / maxTap) * 100
-                              )}%`,
-                            }}
-                          />
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </AnalyticsTile>
-              <AnalyticsTile title="Leads captured" icon={Users}>
-                <div className="space-y-2">
-                  <div className="text-4xl font-semibold text-foreground">
-                    {totals
-                      ? numberFormatter.format(totals.leads7d)
-                      : "--"}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    Last 7 days
-                  </div>
-                  <div className="text-xs font-medium text-foreground">
-                    {leadDelta === null
-                      ? "Delta unavailable"
-                      : `${leadDelta > 0 ? "+" : ""}${percentFormatter.format(
-                          leadDelta
-                        )} vs previous period`}
-                  </div>
-                </div>
-              </AnalyticsTile>
-            </div>
-
-            <div className="rounded-3xl border border-dashed border-border/70 bg-gradient-to-br from-muted/40 via-background to-muted/40 p-6">
-              <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground">
-                <MapPin className="h-4 w-4 text-primary" aria-hidden />
-                Location map of taps
-              </div>
-              <div className="flex h-56 items-center justify-center rounded-2xl border border-border/60 bg-background/60 text-sm text-muted-foreground">
-                Map placeholder
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
@@ -520,66 +361,8 @@ function MetricRow({
   );
 }
 
-function AnalyticsTile({
-  title,
-  icon: Icon,
-  children,
-  range,
-  onRangeChange,
-  loading,
-}: {
-  title: string;
-  icon: typeof Sparkles;
-  children: React.ReactNode;
-  range?: TimeRange;
-  onRangeChange?: (range: TimeRange) => void;
-  loading?: boolean;
-}) {
-  return (
-    <div className="dashboard-analytics-tile rounded-3xl border border-border/60 bg-background/70 p-4 shadow-sm">
-      <div className="dashboard-analytics-tile-header flex items-start justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10 text-primary">
-            <Icon className="h-4 w-4" aria-hidden />
-          </span>
-          <div>
-            <div className="text-sm font-semibold text-foreground">{title}</div>
-          </div>
-        </div>
-        {range && onRangeChange ? (
-          <div className="dashboard-analytics-range flex items-center gap-1 rounded-full border border-border/60 bg-background px-2 py-1 text-xs">
-            {(["week", "month", "quarter", "year"] as TimeRange[]).map(
-              (option) => (
-                <button
-                  key={option}
-                  type="button"
-                  onClick={() => onRangeChange(option)}
-                  className={`dashboard-analytics-range-button rounded-full px-2 py-0.5 text-xs font-medium transition ${
-                    range === option
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                  aria-pressed={range === option}
-                >
-                  {labelForRange(option)}
-                </button>
-              )
-            )}
-          </div>
-        ) : null}
-      </div>
-      <div className="mt-3">
-        {loading ? (
-          <div className="dashboard-skeleton h-40 animate-pulse rounded-2xl bg-muted" data-skeleton />
-        ) : (
-          children
-        )}
-      </div>
-    </div>
-  );
-}
-
 function PublicProfilePreviewPanel({ userId }: { userId: string | null }) {
+  const { theme } = useThemeOptional();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [profile, setProfile] = useState<ProfileWithLinks | null>(null);
@@ -686,86 +469,9 @@ function PublicProfilePreviewPanel({ userId }: { userId: string | null }) {
             handle={account.handle || profile.handle}
             layout="stacked"
             forceMobile
+            themeOverride={theme}
           />
         </div>
-      </div>
-    </div>
-  );
-}
-
-function ChartPanel({
-  data,
-  dataKey,
-}: {
-  data: Array<{ label: string; [key: string]: number | string }>;
-  dataKey: string;
-}) {
-  if (!data.length) {
-    return (
-      <div className="flex h-40 items-center justify-center rounded-2xl border border-dashed border-border/70 text-xs text-muted-foreground">
-        No data yet
-      </div>
-    );
-  }
-  return (
-    <div className="dashboard-analytics-chart-panel h-40 w-full">
-      <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={data}>
-          <CartesianGrid
-            stroke="rgba(148, 163, 184, 0.2)"
-            strokeDasharray="6 4"
-          />
-          <XAxis
-            dataKey="label"
-            tickLine={false}
-            axisLine={false}
-            tickMargin={8}
-            tick={{ fontSize: 10, fill: "currentColor" }}
-          />
-          <YAxis
-            tickLine={false}
-            axisLine={false}
-            tickMargin={8}
-            tick={{ fontSize: 10, fill: "currentColor" }}
-            tickFormatter={(value) =>
-              dataKey === "conversion"
-                ? percentFormatter.format(value)
-                : numberFormatter.format(value)
-            }
-          />
-          <Tooltip content={<ChartTooltip />} />
-          <Area
-            type="monotone"
-            dataKey={dataKey}
-            stroke="var(--primary)"
-            fill="var(--primary)"
-            strokeWidth={2}
-            fillOpacity={0.18}
-          />
-        </AreaChart>
-      </ResponsiveContainer>
-    </div>
-  );
-}
-
-function ChartTooltip({
-  active,
-  payload,
-  label,
-}: {
-  active?: boolean;
-  payload?: Array<{ name: string; value: number }>;
-  label?: string;
-}) {
-  if (!active || !payload || payload.length === 0) return null;
-  const value = payload[0]?.value ?? 0;
-  return (
-    <div className="rounded-md border border-border/70 bg-background/95 px-3 py-2 text-xs shadow">
-      <div className="font-medium text-foreground">{label}</div>
-      <div className="mt-1 text-muted-foreground">
-        {typeof value === "number"
-          ? numberFormatter.format(value)
-          : String(value)}
       </div>
     </div>
   );
@@ -777,28 +483,4 @@ function EmptyState({ message }: { message: string }) {
       {message}
     </p>
   );
-}
-
-function labelForRange(range: TimeRange) {
-  switch (range) {
-    case "week":
-      return "Week";
-    case "month":
-      return "Month";
-    case "quarter":
-      return "3 Months";
-    case "year":
-      return "Year";
-    default:
-      return "Range";
-  }
-}
-
-function sumRange(
-  points: Array<{ date: string; scans: number; leads: number }>,
-  days: number,
-  selector: (point: { date: string; scans: number; leads: number }) => number
-) {
-  const subset = points.slice(-Math.min(days, points.length));
-  return subset.reduce((total, point) => total + selector(point), 0);
 }

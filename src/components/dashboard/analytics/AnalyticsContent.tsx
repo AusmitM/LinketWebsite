@@ -303,41 +303,6 @@ export default function AnalyticsContent() {
           </CardContent>
         </Card>
 
-        <Card className="dashboard-analytics-card rounded-3xl border bg-card/80 shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold">Recent leads</CardTitle>
-            <p className="text-sm text-muted-foreground">Last submissions across all Linkets.</p>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="dashboard-skeleton h-64 animate-pulse rounded-2xl bg-muted" data-skeleton />
-            ) : analytics?.recentLeads?.length ? (
-              <div className="space-y-3">
-                {analytics.recentLeads.map((lead) => (
-                  <div key={lead.id} className="rounded-2xl border px-3 py-2 text-sm">
-                    <div className="flex items-center justify-between">
-                      <div className="font-medium text-foreground">{lead.name}</div>
-                      <span className="text-xs text-muted-foreground">{longDate.format(new Date(lead.created_at))}</span>
-                    </div>
-                    <div className="mt-1 text-xs text-muted-foreground">
-                      <div>{lead.email}</div>
-                      {lead.phone && <div>{lead.phone}</div>}
-                      {lead.company && <div>{lead.company}</div>}
-                      {lead.handle && <div>@{lead.handle}</div>}
-                      {lead.source_url && (
-                        <div className="truncate">
-                          Source: <a className="text-foreground" href={lead.source_url} target="_blank" rel="noreferrer">{lead.source_url}</a>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <EmptyState message="No leads captured in this range." />
-            )}
-          </CardContent>
-        </Card>
       </section>
     </div>
   );

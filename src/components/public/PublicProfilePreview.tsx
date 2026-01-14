@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { getSignedAvatarUrl } from "@/lib/avatar-client";
 import { getSignedProfileHeaderUrl } from "@/lib/profile-header-client";
 import { isDarkTheme } from "@/lib/themes";
+import type { ThemeName } from "@/lib/themes";
 import type { ProfileWithLinks } from "@/lib/profile-service";
 import type { LeadFormConfig } from "@/types/lead-form";
 import PublicProfileLinksList from "@/components/public/PublicProfileLinksList";
@@ -23,6 +24,7 @@ type Props = {
   handle: string;
   layout?: "split" | "stacked";
   forceMobile?: boolean;
+  themeOverride?: ThemeName;
 };
 
 function sortLinks(links: ProfileWithLinks["links"]) {
@@ -42,13 +44,15 @@ export default function PublicProfilePreview({
   handle,
   layout = "split",
   forceMobile = false,
+  themeOverride,
 }: Props) {
   const [avatar, setAvatar] = useState<string | null>(null);
   const [headerImage, setHeaderImage] = useState<string | null>(null);
   const publicHandle = account.handle || profile.handle || handle;
   const displayName = profile.name || account.displayName || publicHandle;
-  const isDark = isDarkTheme(profile.theme);
-  const themeClass = `theme-${profile.theme} ${isDark ? "dark" : ""}`;
+  const resolvedTheme = themeOverride ?? profile.theme;
+  const isDark = isDarkTheme(resolvedTheme);
+  const themeClass = `theme-${resolvedTheme} ${isDark ? "dark" : ""}`;
   const headline = profile.headline?.trim() ?? "";
   const links = sortLinks(profile.links);
   const hasLinks = links.length > 0;
