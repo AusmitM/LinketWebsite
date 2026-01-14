@@ -65,13 +65,6 @@ const THEME_OPTIONS: Array<{
     textTone: "light",
   },
   {
-    id: "silver",
-    label: "Silver",
-    description: "Polished graphite with soft steel highlights",
-    preview: "linear-gradient(135deg, #f5f7f8 0%, #d9dee7 100%)",
-    textTone: "dark",
-  },
-  {
     id: "autumn",
     label: "Autumn",
     description: "Warm amber and spice for fall launches",

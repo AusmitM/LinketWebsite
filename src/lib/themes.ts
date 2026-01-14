@@ -4,7 +4,6 @@ export type ThemeName =
   | "midnight"
   | "forest"
   | "gilded"
-  | "silver"
   | "autumn"
   | "honey";
 
@@ -85,21 +84,6 @@ const themes: Record<ThemeName, Vars> = {
     "--input": "#3b3130",
     "--ring": "#d3ac2c",
     "--avatar-border": "#010203",
-  },
-  silver: {
-    "--background": "#f5f7f8",
-    "--foreground": "#1a1f2c",
-    "--card": "#ffffff",
-    "--card-foreground": "#1a1f2c",
-    "--muted": "#e8ecf2",
-    "--muted-foreground": "#4b5563",
-    "--accent": "#cbd5f5",
-    "--accent-foreground": "#111827",
-    "--destructive": "#ef4444",
-    "--border": "#cbd2dd",
-    "--input": "#cbd2dd",
-    "--ring": "#94a3b8",
-    "--avatar-border": "#f5f7f8",
   },
   autumn: {
     "--background": "#fff6ed",

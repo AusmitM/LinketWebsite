@@ -141,7 +141,6 @@ function normaliseTheme(
     "midnight",
     "forest",
     "gilded",
-    "silver",
     "autumn",
     "honey",
   ];

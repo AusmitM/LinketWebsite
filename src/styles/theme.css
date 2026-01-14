@@ -215,35 +215,6 @@
   --sidebar-ring: #d3ac2c;
 }
 
-.theme-silver {
-  --background: #f6f8f9;
-  --foreground: #1a1f2c;
-  --card: rgba(255, 255, 255, 0.96);
-  --card-foreground: #1a1f2c;
-  --popover: rgba(255, 255, 255, 0.98);
-  --popover-foreground: #1a1f2c;
-  --primary: #94a3b8;
-  --primary-foreground: #0b0f19;
-  --secondary: #dce1ea;
-  --secondary-foreground: #132034;
-  --muted: #e9edf3;
-  --muted-foreground: #273246;
-  --accent: #dde5fb;
-  --accent-foreground: #101826;
-  --destructive: #ef4444;
-  --border: #ccd3df;
-  --input: #ccd3df;
-  --ring: #94a3b8;
-  --sidebar: #ffffff;
-  --sidebar-foreground: #1a1f2c;
-  --sidebar-primary: #94a3b8;
-  --sidebar-primary-foreground: #0b0f19;
-  --sidebar-accent: #e1e6ef;
-  --sidebar-accent-foreground: #1f2937;
-  --sidebar-border: #ccd3df;
-  --sidebar-ring: #94a3b8;
-}
-
 .theme-autumn {
   --background: #fff5eb;
   --foreground: #3c2012;

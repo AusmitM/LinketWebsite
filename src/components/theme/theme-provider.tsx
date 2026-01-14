@@ -9,7 +9,6 @@ export type ThemeName =
   | "midnight"
   | "forest"
   | "gilded"
-  | "silver"
   | "autumn"
   | "honey";
 

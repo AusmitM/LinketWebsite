@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Hexagon, Sun, Moon, MoonStar, Trees, Sparkles, Gem, Leaf } from "lucide-react";
+import { Hexagon, Sun, Moon, MoonStar, Trees, Sparkles, Leaf } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useThemeOptional } from "@/components/theme/theme-provider";
 import { useDashboardUser } from "@/components/dashboard/DashboardSessionContext";
@@ -14,7 +14,6 @@ const ORDER: ThemeName[] = [
   "midnight",
   "forest",
   "gilded",
-  "silver",
   "autumn",
   "honey",
 ];
@@ -24,7 +23,6 @@ const ICONS: Record<ThemeName, React.ComponentType<{ className?: string }>> = {
   midnight: MoonStar,
   forest: Trees,
   gilded: Sparkles,
-  silver: Gem,
   autumn: Leaf,
   honey: Hexagon,
 };
@@ -35,7 +33,6 @@ const LABELS: Record<ThemeName, string> = {
   midnight: "Midnight",
   forest: "Forest",
   gilded: "Gilded",
-  silver: "Silver",
   autumn: "Autumn",
   honey: "Honey",
 };
