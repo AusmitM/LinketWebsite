@@ -805,7 +805,9 @@ export async function getAccountHandleForUser(
     .limit(1)
     .maybeSingle();
   if (error && error.code !== "PGRST116") throw new Error(error.message);
-  const handle = normaliseHandle((data?.handle as string | null) ?? null);
+  const handle = data?.handle
+    ? normaliseHandle(data.handle as string)
+    : "";
   return handle || `user-${userId.slice(0, 8)}`;
 }
 
