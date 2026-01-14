@@ -10,6 +10,8 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { uploadAvatar } from "@/lib/supabase-storage";
 import { supabase } from "@/lib/supabase";
@@ -372,6 +374,171 @@ export default function AvatarUploader({
     "flex items-center justify-center rounded-2xl border-2 border-dashed border-border text-muted-foreground",
     isCompact ? "h-14 w-14 text-xs" : "h-20 w-20 text-sm"
   );
+
+  if (variant === "compact") {
+    const displayUrl = sourceUrl || latestAvatarUrl;
+    const inputTargetId = inputId ?? "profile-avatar-upload";
+    return (
+      <section className="flex flex-col gap-4 rounded-2xl border border-dashed border-muted/70 p-4">
+        <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center">
+          <div className="h-16 w-16 overflow-hidden rounded-full border bg-muted sm:h-20 sm:w-20">
+            {displayUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={displayUrl} alt="Profile photo" className="h-full w-full object-cover" />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
+                150A-150
+              </div>
+            )}
+          </div>
+          <div className="flex-1 space-y-2">
+            <Label htmlFor={inputTargetId}>Profile photo</Label>
+            <Input
+              id={inputTargetId}
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              onChange={(event) => handleFile(event.target.files?.[0] ?? null)}
+              disabled={loading}
+            />
+            <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+              {sourceFile?.name ? (
+                <span className="truncate">Selected: {sourceFile.name}</span>
+              ) : latestAvatarUrl ? (
+                <span>Current photo</span>
+              ) : (
+                <span>Crop to fit the circle. JPG/PNG/WebP.</span>
+              )}
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="rounded-full"
+                onClick={handleReCrop}
+                disabled={!latestAvatarUrl || loading}
+              >
+                Re-crop
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="rounded-full"
+                onClick={handleRemove}
+                disabled={!(latestAvatarUrl || sourceUrl) || loading}
+              >
+                Remove
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {sourceUrl && (
+          <div className="space-y-3">
+            <div
+              className="relative flex items-center justify-center overflow-hidden rounded-2xl border bg-muted/40 cursor-grab touch-none active:cursor-grabbing"
+              style={{ width: "100%", maxWidth: `${previewSize}px`, height: `${previewSize}px` }}
+              onPointerDown={handlePointerDown}
+              onPointerMove={handlePointerMove}
+              onPointerUp={handlePointerUp}
+              onPointerLeave={handlePointerUp}
+              role="application"
+              aria-label="Avatar crop preview"
+            >
+              {!previewReady && (
+                <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-muted/60 text-sm text-muted-foreground">
+                  Loading preview...
+                </div>
+              )}
+              <div
+                className="pointer-events-none absolute inset-0"
+                style={{
+                  transform: `translate(${offset.x}px, ${offset.y}px)`,
+                }}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={sourceUrl}
+                  alt="Crop preview"
+                  className="absolute left-1/2 top-1/2 block select-none opacity-90"
+                  style={{
+                    width: imageMeta?.width ?? "auto",
+                    height: imageMeta?.height ?? "auto",
+                    maxWidth: "none",
+                    maxHeight: "none",
+                    transform: `translate(-50%, -50%) scale(${previewScale})`,
+                    transformOrigin: "center",
+                    zIndex: 1,
+                  }}
+                  draggable={false}
+                />
+              </div>
+              <div className="pointer-events-none absolute inset-0" aria-hidden>
+                <svg className="h-full w-full" viewBox={`0 0 ${previewSize} ${previewSize}`}>
+                  <rect width={previewSize} height={previewSize} fill="transparent" />
+                  <rect
+                    x={(previewSize - cropSize) / 2}
+                    y={(previewSize - cropSize) / 2}
+                    width={cropSize}
+                    height={cropSize}
+                    rx={cropCorner}
+                    ry={cropCorner}
+                    fill="none"
+                    stroke="rgba(255,255,255,0.85)"
+                    strokeWidth="2"
+                  />
+                </svg>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label
+                htmlFor="avatar-zoom"
+                className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-muted-foreground"
+              >
+                Zoom
+                <span className="text-[11px] font-semibold text-foreground">
+                  {Math.round(zoom * 100)}%
+                </span>
+              </label>
+              <input
+                id="avatar-zoom"
+                type="range"
+                min={MIN_ZOOM}
+                max={MAX_ZOOM}
+                step={ZOOM_STEP}
+                value={zoom}
+                onChange={(event) => setZoom(Number(event.target.value))}
+                className="w-full accent-primary"
+              />
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3">
+              <Button
+                type="button"
+                size="sm"
+                className="rounded-full"
+                disabled={!previewReady || loading}
+                onClick={handleUpload}
+              >
+                {loading ? "Saving..." : "Save"}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="rounded-full"
+                onClick={handleReset}
+                disabled={!(sourceUrl || latestAvatarUrl) || loading}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        )}
+        {error && <p className="text-sm text-destructive">{error}</p>}
+      </section>
+    );
+  }
 
   return (
     <Card className={cardClassName}>

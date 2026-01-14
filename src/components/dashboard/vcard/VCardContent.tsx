@@ -8,6 +8,7 @@ import {
   useState,
   type ChangeEvent,
   type FocusEvent,
+  type PointerEvent as ReactPointerEvent,
 } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -15,6 +16,11 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
+
+const OUTPUT_SIZE = 256;
+const MIN_ZOOM = 1;
+const MAX_ZOOM = 3;
+const ZOOM_STEP = 0.01;
 
 type VCardFields = {
   fullName: string;
@@ -69,6 +75,18 @@ export default function VCardContent({
   const initialisedRef = useRef(false);
   const latestFieldsRef = useRef(fields);
   const contentRef = useRef<HTMLDivElement | null>(null);
+  const pointerPosition = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [photoSourceUrl, setPhotoSourceUrl] = useState<string | null>(null);
+  const [photoSourceName, setPhotoSourceName] = useState<string | null>(null);
+  const [imageMeta, setImageMeta] = useState<{ width: number; height: number } | null>(null);
+  const [previewReady, setPreviewReady] = useState(false);
+  const [zoom, setZoom] = useState(1);
+  const [offset, setOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+
+  const previewSize = 240;
+  const cropSize = 200;
+  const cropHalf = cropSize / 2;
 
   useEffect(() => {
     latestFieldsRef.current = fields;
@@ -78,24 +96,100 @@ export default function VCardContent({
     setFields((prev) => ({ ...prev, [key]: value }));
   }
 
-  function handlePhotoChange(file: File | null) {
-    if (!file) {
-      setFields((prev) => ({ ...prev, photoData: null, photoName: null }));
-      setPhotoPreview(null);
-      return;
+  const baseScale = useMemo(() => {
+    if (!imageMeta) return 1;
+    return Math.max(cropSize / imageMeta.width, cropSize / imageMeta.height);
+  }, [imageMeta, cropSize]);
+
+  const previewScale = baseScale * zoom;
+
+  const clampOffset = useCallback(
+    (next: { x: number; y: number }, nextZoom = zoom, meta = imageMeta): { x: number; y: number } => {
+      if (!meta) return next;
+      const scale = baseScale * nextZoom;
+      const halfWidth = (meta.width * scale) / 2;
+      const halfHeight = (meta.height * scale) / 2;
+      const limitX = Math.max(0, halfWidth - cropHalf);
+      const limitY = Math.max(0, halfHeight - cropHalf);
+      return {
+        x: Math.max(-limitX, Math.min(limitX, next.x)),
+        y: Math.max(-limitY, Math.min(limitY, next.y)),
+      };
+    },
+    [baseScale, zoom, imageMeta, cropHalf]
+  );
+
+  const resetPhotoEditor = useCallback(() => {
+    if (photoSourceUrl?.startsWith("blob:")) {
+      URL.revokeObjectURL(photoSourceUrl);
     }
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = typeof reader.result === "string" ? reader.result : null;
-      setFields((prev) => ({ ...prev, photoData: result, photoName: file.name }));
-      setPhotoPreview(result);
-    };
-    reader.onerror = () => {
-      setFields((prev) => ({ ...prev, photoData: null, photoName: null }));
-      setPhotoPreview(null);
-    };
-    reader.readAsDataURL(file);
+    setPhotoSourceUrl(null);
+    setPhotoSourceName(null);
+    setImageMeta(null);
+    setPreviewReady(false);
+    setZoom(1);
+    setOffset({ x: 0, y: 0 });
+    setIsDragging(false);
+  }, [photoSourceUrl]);
+
+  function handlePhotoChange(file: File | null) {
+    resetPhotoEditor();
+    if (!file) return;
+    setPhotoSourceUrl(URL.createObjectURL(file));
+    setPhotoSourceName(file.name);
   }
+
+  const handlePointerDown = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
+    if (!previewReady || event.button !== 0) return;
+    setIsDragging(true);
+    pointerPosition.current = { x: event.clientX, y: event.clientY };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }, [previewReady]);
+
+  const handlePointerMove = useCallback(
+    (event: ReactPointerEvent<HTMLDivElement>) => {
+      if (!isDragging) return;
+      event.preventDefault();
+      const deltaX = event.clientX - pointerPosition.current.x;
+      const deltaY = event.clientY - pointerPosition.current.y;
+      pointerPosition.current = { x: event.clientX, y: event.clientY };
+      setOffset((prev) => clampOffset({ x: prev.x + deltaX, y: prev.y + deltaY }));
+    },
+    [isDragging, clampOffset]
+  );
+
+  const handlePointerUp = useCallback((event?: ReactPointerEvent<HTMLDivElement>) => {
+    if (event && event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    setIsDragging(false);
+  }, []);
+
+  useEffect(() => {
+    if (!photoSourceUrl) return;
+    setPreviewReady(false);
+    let cancelled = false;
+    const img = new Image();
+    img.onload = () => {
+      if (cancelled) return;
+      setImageMeta({ width: img.naturalWidth, height: img.naturalHeight });
+      setPreviewReady(true);
+      setOffset({ x: 0, y: 0 });
+      setZoom(1);
+    };
+    img.onerror = () => {
+      if (cancelled) return;
+      resetPhotoEditor();
+    };
+    img.src = photoSourceUrl;
+    return () => {
+      cancelled = true;
+    };
+  }, [photoSourceUrl, resetPhotoEditor]);
+
+  useEffect(() => {
+    setOffset((current) => clampOffset(current));
+  }, [zoom, clampOffset]);
 
   useEffect(() => {
     let active = true;
@@ -195,6 +289,59 @@ export default function VCardContent({
     },
     [userId]
   );
+
+  const handlePhotoRemove = useCallback(() => {
+    resetPhotoEditor();
+    const nextFields = { ...latestFieldsRef.current, photoData: null, photoName: null };
+    setFields(nextFields);
+    setPhotoPreview(null);
+    if (userId && initialisedRef.current && !loading && status !== "saving") {
+      void persist(nextFields);
+    }
+  }, [resetPhotoEditor, userId, loading, status, persist]);
+
+  const handlePhotoReCrop = useCallback(() => {
+    if (!fields.photoData) return;
+    resetPhotoEditor();
+    setPhotoSourceUrl(fields.photoData);
+    setPhotoSourceName(fields.photoName ?? "profile-photo.jpg");
+  }, [fields.photoData, fields.photoName, resetPhotoEditor]);
+
+  const handlePhotoApply = useCallback(async () => {
+    if (!photoSourceUrl || !imageMeta || !previewReady) return;
+    const cropped = await cropToDataUrl({
+      srcUrl: photoSourceUrl,
+      outputSize: OUTPUT_SIZE,
+      cropSize,
+      baseScale,
+      zoom,
+      offset,
+    });
+    if (!cropped) return;
+    const name = photoSourceName ?? fields.photoName ?? "profile-photo.jpg";
+    const nextFields = { ...latestFieldsRef.current, photoData: cropped, photoName: name };
+    setFields(nextFields);
+    setPhotoPreview(cropped);
+    resetPhotoEditor();
+    if (userId && initialisedRef.current && !loading && status !== "saving") {
+      void persist(nextFields);
+    }
+  }, [
+    photoSourceUrl,
+    imageMeta,
+    previewReady,
+    cropSize,
+    baseScale,
+    zoom,
+    offset,
+    photoSourceName,
+    fields.photoName,
+    userId,
+    loading,
+    status,
+    persist,
+    resetPhotoEditor,
+  ]);
 
 
   const isDirty = useMemo(() => {
@@ -308,7 +455,7 @@ export default function VCardContent({
         onBlurCapture={handleContainerBlur}
       >
         <section className="flex flex-col gap-4 rounded-2xl border border-dashed border-muted/70 p-4 sm:flex-row sm:items-center">
-          <div className="flex items-center gap-4">
+          <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center">
             <div className="h-16 w-16 overflow-hidden rounded-full border bg-muted sm:h-20 sm:w-20">
               {photoPreview ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -317,31 +464,135 @@ export default function VCardContent({
                 <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">150×150</div>
               )}
             </div>
-            <div className="space-y-2">
+            <div className="flex-1 space-y-2">
               <Label htmlFor="profile-photo">Profile photo</Label>
               <Input
                 id="profile-photo"
                 type="file"
-                accept="image/*"
+                accept="image/png,image/jpeg,image/webp"
                 onChange={(event) => handlePhotoChange(event.target.files?.[0] ?? null)}
                 onBlur={handleFieldBlur}
                 disabled={inputsDisabled}
               />
-              <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                {fields.photoName ? <span className="truncate">Selected: {fields.photoName}</span> : <span>Square image, max 1MB.</span>}
+              <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                {fields.photoName ? <span className="truncate">Selected: {fields.photoName}</span> : <span>Crop to fit the circle. JPG/PNG/WebP.</span>}
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
                   className="rounded-full"
-                  onClick={() => handlePhotoChange(null)}
+                  onClick={handlePhotoReCrop}
                   disabled={!fields.photoData}
+                >
+                  Re-crop
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="rounded-full"
+                  onClick={handlePhotoRemove}
+                  disabled={!fields.photoData && !photoSourceUrl}
                 >
                   Remove
                 </Button>
               </div>
             </div>
           </div>
+          {photoSourceUrl && (
+            <div className="w-full space-y-3">
+              <div
+                className="relative flex touch-none items-center justify-center overflow-hidden rounded-2xl border bg-muted/40 cursor-grab active:cursor-grabbing"
+                style={{ width: "100%", maxWidth: `${previewSize}px`, height: `${previewSize}px` }}
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                onPointerLeave={handlePointerUp}
+                role="application"
+                aria-label="Profile photo crop preview"
+              >
+                {!previewReady && (
+                  <div className="absolute inset-0 flex items-center justify-center text-sm text-muted-foreground">
+                    Loading preview...
+                  </div>
+                )}
+                <div
+                  className="pointer-events-none absolute inset-0"
+                  style={{
+                    transform: `translate(${offset.x}px, ${offset.y}px)`,
+                  }}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={photoSourceUrl}
+                    alt="Crop preview"
+                    className="absolute left-1/2 top-1/2 block select-none opacity-90"
+                    style={{
+                      width: imageMeta?.width ?? "auto",
+                      height: imageMeta?.height ?? "auto",
+                      maxWidth: "none",
+                      maxHeight: "none",
+                      transform: `translate(-50%, -50%) scale(${previewScale})`,
+                      transformOrigin: "center",
+                      zIndex: 1,
+                    }}
+                    draggable={false}
+                  />
+                </div>
+                <div className="pointer-events-none absolute inset-0" aria-hidden>
+                  <svg className="h-full w-full" viewBox={`0 0 ${previewSize} ${previewSize}`}>
+                    <rect width={previewSize} height={previewSize} fill="transparent" />
+                    <circle
+                      cx={previewSize / 2}
+                      cy={previewSize / 2}
+                      r={cropSize / 2}
+                      fill="none"
+                      stroke="rgba(255,255,255,0.9)"
+                      strokeWidth="2"
+                    />
+                  </svg>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="vcard-photo-zoom" className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                  Zoom
+                  <span className="text-[11px] font-semibold text-foreground">
+                    {Math.round(zoom * 100)}%
+                  </span>
+                </label>
+                <input
+                  id="vcard-photo-zoom"
+                  type="range"
+                  min={MIN_ZOOM}
+                  max={MAX_ZOOM}
+                  step={ZOOM_STEP}
+                  value={zoom}
+                  onChange={(event) => setZoom(Number(event.target.value))}
+                  className="w-full accent-primary"
+                />
+              </div>
+              <div className="flex flex-wrap items-center gap-3">
+                <Button
+                  type="button"
+                  size="sm"
+                  className="rounded-full"
+                  onClick={handlePhotoApply}
+                  disabled={!previewReady || inputsDisabled}
+                >
+                  Apply crop
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="rounded-full"
+                  onClick={resetPhotoEditor}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
         </section>
         <p className="text-xs text-muted-foreground">
           Include a friendly headshot or company logo. It will be embedded when you export your vCard.
@@ -465,6 +716,79 @@ function formatPhoneNumber(value: string) {
     return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
   }
   return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)} - ${digits.slice(6)}`;
+}
+
+async function cropToDataUrl(options: {
+  srcUrl: string;
+  outputSize: number;
+  cropSize: number;
+  baseScale: number;
+  zoom: number;
+  offset: { x: number; y: number };
+}): Promise<string | null> {
+  const { srcUrl, outputSize, cropSize, baseScale, zoom, offset } = options;
+  try {
+    const img = await loadImage(srcUrl);
+    let size = outputSize;
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const canvas = document.createElement("canvas");
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return null;
+
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+      ctx.clearRect(0, 0, size, size);
+
+      const ratio = size / cropSize;
+      const combinedScale = baseScale * zoom * ratio;
+      ctx.translate(size / 2 + offset.x * ratio, size / 2 + offset.y * ratio);
+      ctx.scale(combinedScale, combinedScale);
+      ctx.translate(-img.naturalWidth / 2, -img.naturalHeight / 2);
+      ctx.drawImage(img, 0, 0);
+
+      const blob = await toJpegBlobWithLimit(canvas, 150 * 1024);
+      if (blob) return await blobToDataUrl(blob);
+      size = Math.max(160, Math.round(size * 0.8));
+    }
+    return null;
+  } catch (error) {
+    console.error("cropToDataUrl failed", error);
+    return null;
+  }
+}
+
+async function toJpegBlobWithLimit(canvas: HTMLCanvasElement, maxBytes: number): Promise<Blob | null> {
+  const qualities = [0.88, 0.8, 0.72, 0.6];
+  for (const quality of qualities) {
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob((result) => resolve(result), "image/jpeg", quality)
+    );
+    if (blob && blob.size <= maxBytes) return blob;
+  }
+  return null;
+}
+
+function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") resolve(reader.result);
+      else reject(new Error("Failed to read image"));
+    };
+    reader.onerror = () => reject(new Error("Failed to read image"));
+    reader.readAsDataURL(blob);
+  });
+}
+
+function loadImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
 }
 
 
