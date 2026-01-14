@@ -47,10 +47,8 @@ export async function GET(request: Request) {
         }
 
         const handle =
-          data?.username
-            ? normalizeHandle(data.username as string)
-            : (await fetchActiveProfileHandle(supabaseAdmin, userId)) ??
-              (await getAccountHandleForUser(userId));
+          (await fetchActiveProfileHandle(supabaseAdmin, userId)) ??
+          (await getAccountHandleForUser(userId));
 
         return NextResponse.json({
           handle,
@@ -81,10 +79,8 @@ export async function GET(request: Request) {
       throw new Error(error.message);
     }
     const handle =
-      data?.username
-        ? normalizeHandle(data.username as string)
-        : (await fetchActiveProfileHandle(supabase as typeof supabaseAdmin, userId)) ??
-          (await getAccountHandleForUser(userId));
+      (await fetchActiveProfileHandle(supabase as typeof supabaseAdmin, userId)) ??
+      (await getAccountHandleForUser(userId));
     return NextResponse.json({
       handle,
       avatarPath: data?.avatar_url ?? null,

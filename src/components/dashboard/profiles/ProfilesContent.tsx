@@ -969,6 +969,7 @@ export default function ProfilesContent() {
                 ) : userId ? (
                   <AvatarUploader
                     userId={userId}
+                    userEmail={dashboardUser?.email ?? null}
                     avatarUrl={avatarUrl}
                     onUploaded={({ publicUrl }) => {
                       setAvatarUrl(publicUrl);

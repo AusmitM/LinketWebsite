@@ -42,17 +42,6 @@ async function resolveAssignmentHandle(assignment: {
     if (handle) return handle;
   }
 
-  if (assignment.user_id) {
-    const { data: account } = await supabaseAdmin
-      .from("profiles")
-      .select("username")
-      .eq("user_id", assignment.user_id)
-      .limit(1)
-      .maybeSingle();
-    const handle = normalizeHandle(account?.username);
-    if (handle) return handle;
-  }
-
   return null;
 }
 

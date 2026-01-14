@@ -87,7 +87,7 @@ export async function GET(
 
     const { account, profile } = payload;
     const fallbackName =
-      profile.name || account.display_name || account.username || handle;
+      profile.name || account.display_name || profile.handle || handle;
 
     const supabase = createPublicClient();
     const { data, error } = await supabase

@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 
 type Props = {
   userId: string;
+  userEmail?: string | null;
   avatarUrl: string | null;
   onUploaded: (payload: { path: string; version: string; publicUrl: string }) => void;
   variant?: "default" | "compact";
@@ -31,6 +32,7 @@ const ZOOM_STEP = 0.01;
 
 export default function AvatarUploader({
   userId,
+  userEmail = null,
   avatarUrl,
   onUploaded,
   variant = "default",
@@ -216,6 +218,14 @@ export default function AvatarUploader({
     [handleFile]
   );
 
+  const resolveUsername = useCallback(async () => {
+    const direct = userEmail?.trim();
+    if (direct) return direct.toLowerCase();
+    const { data } = await supabase.auth.getUser();
+    const email = data.user?.email?.trim();
+    return email ? email.toLowerCase() : null;
+  }, [userEmail]);
+
   const handleUpload = useCallback(async () => {
     if (!sourceFile || !sourceUrl || !imageMeta) {
       setError("Choose and position a photo before saving.");
@@ -235,9 +245,16 @@ export default function AvatarUploader({
         srcUrl: sourceUrl,
       });
       const { path, publicUrl } = await uploadAvatar(cropped || sourceFile, userId);
+      const username = await resolveUsername();
+      if (!username) {
+        throw new Error("Unable to confirm account email");
+      }
       const { error: updErr } = await supabase
         .from("profiles")
-        .upsert({ user_id: userId, avatar_url: path, updated_at: version }, { onConflict: "user_id" });
+        .upsert(
+          { user_id: userId, username, avatar_url: path, updated_at: version },
+          { onConflict: "user_id" }
+        );
       if (updErr) throw new Error(updErr.message ?? "Failed to save avatar");
       const versionedUrl = appendVersion(publicUrl ?? null, version) ?? path;
       setLatestAvatarUrl(versionedUrl);
@@ -254,7 +271,20 @@ export default function AvatarUploader({
     } finally {
       setLoading(false);
     }
-  }, [sourceFile, sourceUrl, imageMeta, cropSize, cropCorner, baseScale, zoom, offset, userId, onUploaded, resetEditor]);
+  }, [
+    sourceFile,
+    sourceUrl,
+    imageMeta,
+    cropSize,
+    cropCorner,
+    baseScale,
+    zoom,
+    offset,
+    userId,
+    onUploaded,
+    resetEditor,
+    resolveUsername,
+  ]);
 
   const handleReset = useCallback(() => {
     if (sourceUrl) {
@@ -275,9 +305,16 @@ export default function AvatarUploader({
     setLoading(true);
     try {
       const version = new Date().toISOString();
+      const username = await resolveUsername();
+      if (!username) {
+        throw new Error("Unable to confirm account email");
+      }
       const { error: updErr } = await supabase
         .from("profiles")
-        .upsert({ user_id: userId, avatar_url: null, updated_at: version }, { onConflict: "user_id" });
+        .upsert(
+          { user_id: userId, username, avatar_url: null, updated_at: version },
+          { onConflict: "user_id" }
+        );
       if (updErr) throw new Error(updErr.message ?? "Failed to remove avatar");
       setLatestAvatarUrl(null);
       resetEditor();
@@ -291,7 +328,15 @@ export default function AvatarUploader({
     } finally {
       setLoading(false);
     }
-  }, [loading, latestAvatarUrl, sourceUrl, userId, onUploaded, resetEditor]);
+  }, [
+    loading,
+    latestAvatarUrl,
+    sourceUrl,
+    userId,
+    onUploaded,
+    resetEditor,
+    resolveUsername,
+  ]);
 
   const helperText = sourceFile
     ? "Drag to reposition the image inside the crop."

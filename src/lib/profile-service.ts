@@ -797,25 +797,16 @@ export async function getAccountHandleForUser(
     return ensureMemoryAccountRecord(userId).username;
   }
   const { data, error } = await supabaseAdmin
-    .from("profiles")
-    .select("user_id, username, display_name, avatar_url, updated_at")
+    .from(PROFILE_TABLE)
+    .select("handle")
     .eq("user_id", userId)
+    .order("is_active", { ascending: false })
+    .order("updated_at", { ascending: false })
+    .limit(1)
     .maybeSingle();
   if (error && error.code !== "PGRST116") throw new Error(error.message);
-  if (!data) {
-    return ensureMemoryAccountRecord(userId).username;
-  }
-  const usernameRaw = (data.username as string | null) ?? null;
-  const username = normaliseHandle(usernameRaw || `user-${userId.slice(0, 8)}`);
-  const record: AccountRecord = {
-    user_id: data.user_id as string,
-    username,
-    display_name: (data.display_name as string | null) ?? null,
-    avatar_url: (data.avatar_url as string | null) ?? null,
-    avatar_updated_at: (data.updated_at as string | null) ?? null,
-  };
-  memoryRememberAccount(record);
-  return record.username;
+  const handle = normaliseHandle((data?.handle as string | null) ?? null);
+  return handle || `user-${userId.slice(0, 8)}`;
 }
 
 export async function getAccountByHandle(
@@ -851,24 +842,39 @@ export async function getActiveProfileForPublicHandle(
   handle: string
 ): Promise<{ account: AccountRecord; profile: ProfileWithLinks } | null> {
   const normalised = normaliseHandle(handle);
-  try {
-    const account = await getAccountByHandle(normalised);
-    if (account) {
-      const profile = await getActiveProfileForUser(account.user_id);
-      if (profile) return { account, profile };
-    }
-  } catch (error) {
-    console.error("Public handle lookup failed:", error);
-  }
-
   const profile = await getProfileByHandle(normalised);
   if (!profile) return null;
-  const fallbackAccount: AccountRecord = {
+  let account: AccountRecord = {
     user_id: profile.user_id,
     username: normalised,
     display_name: profile.name ?? null,
     avatar_url: null,
     avatar_updated_at: null,
   };
-  return { account: fallbackAccount, profile };
+
+  if (SUPABASE_ENABLED) {
+    try {
+      const { data, error } = await supabaseAdmin
+        .from("profiles")
+        .select("user_id, username, display_name, avatar_url, updated_at")
+        .eq("user_id", profile.user_id)
+        .maybeSingle();
+      if (error && error.code !== "PGRST116") throw new Error(error.message);
+      if (data) {
+        account = {
+          user_id: data.user_id as string,
+          username: (data.username as string | null) ?? normalised,
+          display_name:
+            (data.display_name as string | null) ?? profile.name ?? null,
+          avatar_url: (data.avatar_url as string | null) ?? null,
+          avatar_updated_at: (data.updated_at as string | null) ?? null,
+        };
+        memoryRememberAccount(account);
+      }
+    } catch (error) {
+      console.error("Public account lookup failed:", error);
+    }
+  }
+
+  return { account, profile };
 }

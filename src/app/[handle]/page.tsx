@@ -45,7 +45,7 @@ export default async function PublicProfilePage({ params }: Props) {
     profile.header_image_url,
     profile.header_image_updated_at
   );
-  const publicHandle = account.username || profile.handle || handle;
+  const publicHandle = profile.handle || handle;
   const supabase = await createServerSupabaseReadonly();
   const { data: leadFormRow } = await supabase
     .from("lead_forms")

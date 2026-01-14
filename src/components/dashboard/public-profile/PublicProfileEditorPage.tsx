@@ -1075,6 +1075,7 @@ function EditorPanel({
           {userId ? (
             <AvatarUploader
               userId={userId}
+              userEmail={dashboardUser?.email ?? null}
               avatarUrl={avatarUrl}
               onUploaded={({ publicUrl }) => onAvatarUpdate(publicUrl)}
               variant="compact"
