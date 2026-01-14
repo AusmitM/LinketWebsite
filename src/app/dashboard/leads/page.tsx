@@ -57,7 +57,13 @@ export default function LeadsPage() {
   return (
     <div className="space-y-6">
       <LeadsList userId={userId} />
-      <LeadFormBuilder userId={userId} handle={handle} />
+      <LeadFormBuilder
+        userId={userId}
+        handle={handle}
+        showPreview
+        layout="side"
+        columns={3}
+      />
     </div>
   );
 }

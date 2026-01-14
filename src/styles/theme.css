@@ -179,6 +179,11 @@
   --sidebar-ring: #9aa35c;
 }
 
+#dashboard-theme-scope.theme-forest .border {
+  border-color: rgba(38, 57, 35, 0.45);
+  box-shadow: 0 0 0 1px rgba(23, 35, 21, 0.45);
+}
+
 .theme-gilded {
   --background: #010203;
   --foreground: #f7f0e2;

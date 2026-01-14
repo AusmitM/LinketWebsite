@@ -66,9 +66,9 @@ const themes: Record<ThemeName, Vars> = {
     "--accent": "#8e6a54",
     "--accent-foreground": "#1b120c",
     "--destructive": "#f87171",
-    "--border": "#2d3832",
-    "--input": "#2d3832",
-    "--ring": "#c1cc7a",
+    "--border": "#48554b",
+    "--input": "#48554b",
+    "--ring": "#d7e58a",
     "--avatar-border": "#1f262b",
   },
   gilded: {
