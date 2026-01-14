@@ -20,7 +20,7 @@ export function createDefaultLeadFormConfig(id: string): LeadFormConfig {
     id,
     title: DEFAULT_FORM_TITLE,
     description: "",
-    status: "draft",
+    status: "published",
     settings: {
       collectEmail: "user_input",
       allowEditAfterSubmit: false,
@@ -69,6 +69,7 @@ export function normalizeLeadFormConfig(
       version: raw.meta?.version ?? base.meta.version,
     },
   };
+  merged.status = "published";
   return merged;
 }
 

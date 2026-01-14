@@ -115,6 +115,7 @@ type Props = {
   onPreviewChange?: (form: LeadFormConfig) => void;
   showPreview?: boolean;
   layout?: "side" | "stacked";
+  columns?: 2 | 3;
   onRegisterReorder?: (reorder: (sourceId: string, targetId: string) => void) => void;
 };
 
@@ -130,6 +131,7 @@ export default function LeadFormBuilder({
   onPreviewChange,
   showPreview = true,
   layout = "side",
+  columns = 2,
   onRegisterReorder,
 }: Props) {
   const [form, setForm] = useState<LeadFormConfig | null>(null);
@@ -488,7 +490,8 @@ export default function LeadFormBuilder({
         <div
           className={cn(
             "grid gap-6",
-            layout === "side" && "lg:grid-cols-3"
+            layout === "side" &&
+              (columns === 3 ? "md:grid-cols-2 lg:grid-cols-3" : "grid-cols-2")
           )}
         >
           <Card className="rounded-2xl border border-border/60 bg-card/80 shadow-sm">

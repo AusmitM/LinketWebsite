@@ -125,8 +125,14 @@ export default function Sidebar({
     return Boolean(state?.hasUnsavedChanges || state?.saveFailed);
   }, []);
 
+  const requestAutosave = useCallback(() => {
+    if (typeof window === "undefined") return;
+    window.dispatchEvent(new CustomEvent("linket:save-request"));
+  }, []);
+
   const requestNavigation = useCallback(
     (href: string) => {
+      requestAutosave();
       if (isProfileEditor && shouldConfirmLeave()) {
         setPendingHref(href);
         setConfirmOpen(true);
@@ -135,7 +141,7 @@ export default function Sidebar({
       onNavigate?.();
       router.push(href);
     },
-    [isProfileEditor, onNavigate, router, shouldConfirmLeave]
+    [isProfileEditor, onNavigate, requestAutosave, router, shouldConfirmLeave]
   );
 
   const confirmLeave = useCallback(() => {
@@ -200,6 +206,7 @@ export default function Sidebar({
                     : "text-muted-foreground hover:bg-accent"
                 )}
                 onClick={(event) => {
+                  requestAutosave();
                   if (!isProfileEditor) {
                     onNavigate?.();
                     return;
@@ -223,9 +230,10 @@ export default function Sidebar({
         </nav>
         <div className="mt-auto space-y-2 p-2">
           <button
-            onClick={() =>
-              window.dispatchEvent(new CustomEvent("open-support"))
-            }
+            onClick={() => {
+              requestAutosave();
+              window.dispatchEvent(new CustomEvent("open-support"));
+            }}
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[var(--primary)]/20 to-[var(--accent)]/20 px-4 py-2.5 text-sm font-medium text-foreground ring-1 ring-[var(--ring)]/40 hover:opacity-95"
             aria-label="Open support"
           >

@@ -1,6 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type FocusEvent,
+} from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -60,6 +68,7 @@ export default function VCardContent({
   const lastSavedRef = useRef<VCardFields | null>(null);
   const initialisedRef = useRef(false);
   const latestFieldsRef = useRef(fields);
+  const contentRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     latestFieldsRef.current = fields;
@@ -193,7 +202,7 @@ export default function VCardContent({
       return Boolean(fields.fullName || fields.title || fields.email || fields.phone || fields.company || fields.website || fields.address || fields.note);
     }
     return !areVCardFieldsEqual(lastSavedRef.current, fields);
-  }, [fields]);
+  }, [fields, lastSavedAt]);
 
   const handleFieldBlur = useCallback(() => {
     if (!userId) return;
@@ -202,6 +211,30 @@ export default function VCardContent({
     if (status === "saving") return;
     void persist(fields);
   }, [fields, isDirty, loading, persist, status, userId]);
+
+  const handleContainerBlur = useCallback(
+    (event: FocusEvent<HTMLDivElement>) => {
+      const container = contentRef.current;
+      if (!container) return;
+      const nextTarget = event.relatedTarget as Node | null;
+      if (nextTarget && container.contains(nextTarget)) return;
+      if (!userId || loading || status === "saving" || !initialisedRef.current) return;
+      if (!isDirty) return;
+      void persist(latestFieldsRef.current);
+    },
+    [isDirty, loading, persist, status, userId]
+  );
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handleSaveRequest = () => {
+      if (!userId || loading || status === "saving" || !initialisedRef.current) return;
+      if (!isDirty) return;
+      void persist(latestFieldsRef.current);
+    };
+    window.addEventListener("linket:save-request", handleSaveRequest);
+    return () => window.removeEventListener("linket:save-request", handleSaveRequest);
+  }, [isDirty, loading, persist, status, userId]);
 
   useEffect(() => {
     onFieldsChange?.(fields);
@@ -221,6 +254,40 @@ export default function VCardContent({
 
   const inputsDisabled = loading || !userId;
 
+  if (loading) {
+    return (
+      <Card
+        className={
+          variant === "embedded"
+            ? "rounded-2xl border border-border/60 bg-background/70 shadow-sm"
+            : "rounded-3xl border bg-card/80 shadow-sm"
+        }
+      >
+        <CardHeader>
+          <CardTitle className="text-lg font-semibold">Contact Details</CardTitle>
+          <p className="text-sm text-muted-foreground">Loading contact details...</p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-3">
+            <div className="h-10 w-3/4 animate-pulse rounded-xl bg-muted/60" />
+            <div className="h-10 w-2/3 animate-pulse rounded-xl bg-muted/60" />
+            <div className="h-10 w-5/6 animate-pulse rounded-xl bg-muted/60" />
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="h-10 animate-pulse rounded-xl bg-muted/60" />
+            <div className="h-10 animate-pulse rounded-xl bg-muted/60" />
+            <div className="h-10 animate-pulse rounded-xl bg-muted/60" />
+            <div className="h-10 animate-pulse rounded-xl bg-muted/60" />
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="h-20 animate-pulse rounded-xl bg-muted/60" />
+            <div className="h-20 animate-pulse rounded-xl bg-muted/60" />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card
       className={
@@ -235,7 +302,11 @@ export default function VCardContent({
           Fill in the contact fields that appear when someone taps your NFC tag.
         </p>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent
+        className="space-y-4"
+        ref={contentRef}
+        onBlurCapture={handleContainerBlur}
+      >
         <section className="flex flex-col gap-4 rounded-2xl border border-dashed border-muted/70 p-4 sm:flex-row sm:items-center">
           <div className="flex items-center gap-4">
             <div className="h-16 w-16 overflow-hidden rounded-full border bg-muted sm:h-20 sm:w-20">
@@ -253,6 +324,7 @@ export default function VCardContent({
                 type="file"
                 accept="image/*"
                 onChange={(event) => handlePhotoChange(event.target.files?.[0] ?? null)}
+                onBlur={handleFieldBlur}
                 disabled={inputsDisabled}
               />
               <div className="flex items-center gap-3 text-xs text-muted-foreground">

@@ -51,7 +51,7 @@ function buildLegacyConfig(
   const config = createDefaultLeadFormConfig(`legacy-${handle}`);
   config.title = "Lead capture";
   config.description = "";
-  config.status = settings?.published ? "published" : "draft";
+  config.status = "published";
   config.settings.confirmationMessage =
     (settings?.successMessage as string | undefined) ||
     config.settings.confirmationMessage;
@@ -283,6 +283,7 @@ export async function PUT(request: NextRequest) {
 
     const now = new Date().toISOString();
     const normalized = normalizeLeadFormConfig(config, config.id || handle);
+    normalized.status = "published";
     const nextVersion = (normalized.meta.version || 1) + 1;
     normalized.meta = {
       ...normalized.meta,
@@ -294,7 +295,7 @@ export async function PUT(request: NextRequest) {
       user_id: userId,
       handle,
       profile_id: profileId ?? null,
-      status: normalized.status,
+      status: "published",
       title: normalized.title,
       description: normalized.description,
       config: normalized,

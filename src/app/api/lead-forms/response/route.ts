@@ -39,7 +39,7 @@ export async function PUT(request: NextRequest) {
       .eq("id", formId)
       .maybeSingle();
     if (formError) throw new Error(formError.message);
-    if (!formRow || (formRow as LeadFormRow).status !== "published") {
+    if (!formRow) {
       return NextResponse.json(
         { error: "Form not available" },
         { status: 404 }

@@ -77,7 +77,6 @@ export async function POST(request: NextRequest) {
       .from("lead_forms")
       .select("id,user_id,handle,status,config")
       .eq("id", formId)
-      .eq("status", "published")
       .maybeSingle();
     if (formError) throw new Error(formError.message);
     if (!formRow) {

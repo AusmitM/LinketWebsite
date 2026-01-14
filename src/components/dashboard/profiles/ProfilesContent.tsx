@@ -1129,15 +1129,28 @@ export default function ProfilesContent() {
                           onChange={(event) =>
                             updateLink(link.id, { label: event.target.value })
                           }
+                          onDragStart={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                          }}
                         />
-                        <Input
-                          value={link.url}
-                          placeholder="https://www."
-                          className="text-left"
-                          onChange={(event) =>
-                            updateLink(link.id, { url: event.target.value })
-                          }
-                        />
+                        <div className="relative">
+                          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                            https://
+                          </span>
+                          <Input
+                            value={stripLinkScheme(link.url)}
+                            placeholder="www.website.com"
+                            className="pl-20 text-left"
+                            onChange={(event) =>
+                              updateLink(link.id, { url: normalizeLinkUrl(event.target.value) })
+                            }
+                            onDragStart={(event) => {
+                              event.preventDefault();
+                              event.stopPropagation();
+                            }}
+                          />
+                        </div>
                       </div>
                       <div className="mt-2 text-xs text-muted-foreground">
                         {Number(link.clicks ?? 0).toLocaleString()} clicks
@@ -1281,6 +1294,20 @@ function cryptoRandom() {
     );
   }
   return Math.random().toString(36).slice(2, 10);
+}
+
+function normalizeLinkUrl(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return "https://";
+  if (trimmed.startsWith("https://")) return trimmed;
+  if (trimmed.startsWith("http://")) {
+    return `https://${trimmed.slice("http://".length)}`;
+  }
+  return `https://${trimmed.replace(/^\/+/, "")}`;
+}
+
+function stripLinkScheme(value: string) {
+  return value.replace(/^https?:\/\//i, "");
 }
 
 function structuredCloneProfile<T>(value: T): T {

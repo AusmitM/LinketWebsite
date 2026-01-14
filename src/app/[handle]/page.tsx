@@ -51,7 +51,6 @@ export default async function PublicProfilePage({ params }: Props) {
     .from("lead_forms")
     .select("id, config")
     .eq("handle", publicHandle)
-    .eq("status", "published")
     .maybeSingle();
   const normalizedLeadForm = leadFormRow?.config
     ? normalizeLeadFormConfig(

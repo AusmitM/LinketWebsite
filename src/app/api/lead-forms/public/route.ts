@@ -27,7 +27,6 @@ export async function GET(request: NextRequest) {
       .from("lead_forms")
       .select("id, handle, status, config")
       .eq("handle", handle)
-      .eq("status", "published")
       .maybeSingle();
     if (error && error.code !== "PGRST116") throw new Error(error.message);
     if (!data) {

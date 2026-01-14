@@ -237,8 +237,7 @@ export default function AvatarUploader({
       const { path, publicUrl } = await uploadAvatar(cropped || sourceFile, userId);
       const { error: updErr } = await supabase
         .from("profiles")
-        .update({ avatar_url: path, updated_at: version })
-        .eq("user_id", userId);
+        .upsert({ user_id: userId, avatar_url: path, updated_at: version }, { onConflict: "user_id" });
       if (updErr) throw new Error(updErr.message ?? "Failed to save avatar");
       const versionedUrl = appendVersion(publicUrl ?? null, version) ?? path;
       setLatestAvatarUrl(versionedUrl);
@@ -278,8 +277,7 @@ export default function AvatarUploader({
       const version = new Date().toISOString();
       const { error: updErr } = await supabase
         .from("profiles")
-        .update({ avatar_url: null, updated_at: version })
-        .eq("user_id", userId);
+        .upsert({ user_id: userId, avatar_url: null, updated_at: version }, { onConflict: "user_id" });
       if (updErr) throw new Error(updErr.message ?? "Failed to remove avatar");
       setLatestAvatarUrl(null);
       resetEditor();

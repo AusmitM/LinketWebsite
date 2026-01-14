@@ -141,6 +141,7 @@ export default function PublicProfileEditorPage() {
   const [editingLinkId, setEditingLinkId] = useState<string | null>(null);
   const [linkForm, setLinkForm] = useState<LinkItem | null>(null);
   const [draggingLinkId, setDraggingLinkId] = useState<string | null>(null);
+  const [sidebarSavePulse, setSidebarSavePulse] = useState(false);
   const [leadFormPreview, setLeadFormPreview] = useState<LeadFormConfig | null>(
     null
   );
@@ -504,6 +505,18 @@ export default function PublicProfileEditorPage() {
     }
   }, [saving, draft, isDirty, userId, handleSave]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handleSaveRequest = () => {
+      setSidebarSavePulse(true);
+      window.setTimeout(() => setSidebarSavePulse(false), 1200);
+      if (!draft || !userId || saving || !isDirty) return;
+      void handleSave();
+    };
+    window.addEventListener("linket:save-request", handleSaveRequest);
+    return () => window.removeEventListener("linket:save-request", handleSaveRequest);
+  }, [draft, handleSave, isDirty, saving, userId]);
+
   const scheduleReorderSave = useCallback(() => {
     if (!userId) return;
     if (reorderSaveTimer.current) {
@@ -765,6 +778,9 @@ export default function PublicProfileEditorPage() {
         <span>
           Last saved: {lastSavedAt ? formatShortDate(lastSavedAt) : "Just now"}
         </span>
+        {(saveState === "saving" || sidebarSavePulse) && (
+          <span className="text-foreground">Saving...</span>
+        )}
         {isDirty && <span className="text-amber-600">Unsaved changes</span>}
         {saveState === "failed" ? (
           <Button variant="outline" size="sm" onClick={() => void handleSave()}>
@@ -1186,16 +1202,29 @@ function EditorPanel({
                       onChange={(event) =>
                         onUpdateLink(link.id, { label: event.target.value })
                       }
+                      onDragStart={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                      }}
                       className="h-9 text-left text-sm"
                     />
-                    <Input
-                      value={link.url}
-                      placeholder="https://www."
-                      className="h-9 text-left text-sm"
-                      onChange={(event) =>
-                        onUpdateLink(link.id, { url: event.target.value })
-                      }
-                    />
+                    <div className="relative">
+                      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                        https://
+                      </span>
+                      <Input
+                        value={stripLinkScheme(link.url)}
+                        placeholder="www.website.com"
+                        className="h-9 pl-20 text-left text-sm"
+                        onChange={(event) =>
+                          onUpdateLink(link.id, { url: normalizeLinkUrl(event.target.value) })
+                        }
+                        onDragStart={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                        }}
+                      />
+                    </div>
                 </div>
                 <div className="flex flex-col gap-2">
                   <Button
@@ -1251,7 +1280,8 @@ function EditorPanel({
           profileId={draft?.id ?? null}
           onPreviewChange={onLeadFormPreview}
           showPreview={false}
-          layout="stacked"
+          layout="side"
+          columns={2}
           onRegisterReorder={(reorder) => {
             onRegisterLeadFormReorder(reorder);
           }}
@@ -1635,66 +1665,21 @@ function LinkModal({
             </div>
             <div className="space-y-2">
               <Label htmlFor="link-url">URL</Label>
-              <Input
-                id="link-url"
-                value={link.url}
-                placeholder="https://www."
-                className="text-left"
-                onChange={(event) =>
-                  onChange({ ...link, url: event.target.value })
-                }
-              />
+              <div className="relative">
+                <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                  https://
+                </span>
+                <Input
+                  id="link-url"
+                  value={stripLinkScheme(link.url)}
+                  placeholder="www.website.com"
+                  className="pl-20 text-left"
+                  onChange={(event) =>
+                    onChange({ ...link, url: normalizeLinkUrl(event.target.value) })
+                  }
+                />
+              </div>
             </div>
-            {mode !== "add" ? (
-              <>
-                <div className="space-y-2">
-                  <Label htmlFor="link-icon">Icon</Label>
-                  <select
-                    id="link-icon"
-                    value={link.icon}
-                    onChange={(event) =>
-                      onChange({
-                        ...link,
-                        icon: event.target.value as LinkIconKey,
-                      })
-                    }
-                    className="w-full rounded-md border border-border/60 bg-background px-3 py-2 text-sm"
-                  >
-                    {ICON_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="link-color">Color</Label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      id="link-color"
-                      type="color"
-                      value={link.color}
-                      onChange={(event) =>
-                        onChange({ ...link, color: event.target.value })
-                      }
-                      className="h-10 w-10 rounded-md border border-border/60 bg-background"
-                    />
-                    <div className="flex flex-wrap gap-2">
-                      {LINK_COLORS.map((color) => (
-                        <button
-                          key={color}
-                          type="button"
-                          onClick={() => onChange({ ...link, color })}
-                          className="h-6 w-6 rounded-full border border-border/60"
-                          style={{ backgroundColor: color }}
-                          aria-label={`Set color ${color}`}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </>
-            ) : null}
             <div className="flex items-center gap-2">
               <input
                 id="link-visible"
@@ -1847,6 +1832,20 @@ function cryptoRandom() {
     );
   }
   return Math.random().toString(36).slice(2, 10);
+}
+
+function normalizeLinkUrl(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return "https://";
+  if (trimmed.startsWith("https://")) return trimmed;
+  if (trimmed.startsWith("http://")) {
+    return `https://${trimmed.slice("http://".length)}`;
+  }
+  return `https://${trimmed.replace(/^\/+/, "")}`;
+}
+
+function stripLinkScheme(value: string) {
+  return value.replace(/^https?:\/\//i, "");
 }
 
 function insertAt<T>(items: T[], item: T, index: number) {
