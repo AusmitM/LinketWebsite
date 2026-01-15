@@ -18,24 +18,23 @@ import {
   Pencil,
   UserRound,
   Search,
-  ShieldCheck,
   Sparkles,
   Star,
   Twitter,
-  Waves,
   Youtube,
 } from "lucide-react";
 import { CreativePricing } from "@/components/ui/creative-pricing";
 import type { PricingTier } from "@/components/ui/creative-pricing";
 import {
   FeatureSteps,
-  LiveDemoWorkspaceCard,
   TestimonialSlider,
 } from "@/components/landing/LandingLazySections";
 import ConsultForm from "@/components/landing/ConsultForm";
+import PublicProfilePreview from "@/components/public/PublicProfilePreview";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { brand } from "@/config/brand";
+import type { ProfileWithLinks } from "@/lib/profile-service";
 
 export const metadata: Metadata = {
   title: "Linket Connect",
@@ -120,6 +119,82 @@ const RECENT_SALES = [
   { name: "William Kim", email: "will.kim@email.com", amount: "Followed up" },
   { name: "Sofia Davis", email: "sofia.davis@email.com", amount: "1 week ago" },
 ] as const;
+
+const PUBLIC_SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+
+const PUBLIC_PROFILE_PREVIEW_LINKS = [
+  {
+    id: "link-photo",
+    profile_id: "mock-profile",
+    user_id: "mock-user",
+    title: "Photography Website",
+    url: "https://www.peridotkonda.com",
+    order_index: 0,
+    is_active: true,
+    click_count: 2,
+    created_at: "2026-01-01T00:00:00.000Z",
+    updated_at: null,
+  },
+  {
+    id: "link-linkedin",
+    profile_id: "mock-profile",
+    user_id: "mock-user",
+    title: "LinkedIn",
+    url: "https://www.linkedin.com/in/punit-kothakonda",
+    order_index: 1,
+    is_active: true,
+    click_count: 0,
+    created_at: "2026-01-01T00:00:00.000Z",
+    updated_at: null,
+  },
+  {
+    id: "link-instagram",
+    profile_id: "mock-profile",
+    user_id: "mock-user",
+    title: "Instagram",
+    url: "https://www.instagram.com/peridotkonda",
+    order_index: 2,
+    is_active: true,
+    click_count: 0,
+    created_at: "2026-01-01T00:00:00.000Z",
+    updated_at: null,
+  },
+  {
+    id: "link-linket",
+    profile_id: "mock-profile",
+    user_id: "mock-user",
+    title: "Linket Connect",
+    url: "https://www.linketconnect.com",
+    order_index: 3,
+    is_active: true,
+    click_count: 0,
+    created_at: "2026-01-01T00:00:00.000Z",
+    updated_at: null,
+  },
+] as const;
+
+const MOCK_PUBLIC_PROFILE: ProfileWithLinks = {
+  id: "mock-profile",
+  user_id: "mock-user",
+  name: "Punit Kothakonda",
+  handle: "punit",
+  headline: "Engineer | Founder | Digital Media",
+  header_image_url: `${PUBLIC_SITE_URL}/mockups/profile-header.jpg`,
+  header_image_updated_at: "2026-01-01T00:00:00.000Z",
+  theme: "dark",
+  is_active: true,
+  created_at: "2026-01-01T00:00:00.000Z",
+  updated_at: "2026-01-01T00:00:00.000Z",
+  links: [...PUBLIC_PROFILE_PREVIEW_LINKS],
+};
+
+const MOCK_PUBLIC_ACCOUNT = {
+  handle: "punit",
+  displayName: "Punit Kothakonda",
+  avatarPath: `${PUBLIC_SITE_URL}/mockups/profile-avatar.jpg`,
+  avatarUpdatedAt: "2026-01-01T00:00:00.000Z",
+};
 
 const FOOTER_LINK_GROUPS = [
   {
@@ -385,19 +460,57 @@ export default function Home() {
   return (
     <div className="relative overflow-hidden bg-[#fff7ed] text-foreground">
       <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute inset-0 bg-gradient-to-b from-[#fff5e1] via-[#ffe4d6] to-[#cfe8ff]" />
-        <div className="absolute left-1/2 -top-32 h-[640px] w-[640px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,_rgba(255,161,135,0.35),_rgba(255,245,225,0))] blur-3xl" />
-        <div className="absolute right-0 top-32 h-[520px] w-[520px] rounded-full bg-[radial-gradient(circle,_rgba(255,221,173,0.3),_rgba(255,247,236,0))] blur-3xl" />
-        <div className="absolute inset-x-0 bottom-[-30%] h-[600px] bg-[radial-gradient(circle_at_bottom,_rgba(94,211,243,0.35),_rgba(207,232,255,0))]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#fff8ef] via-[#fff6f0] to-[#eef6ff] opacity-70" />
+        <div className="absolute left-1/2 -top-40 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,_rgba(255,170,140,0.2),_rgba(255,245,225,0))] blur-3xl" />
+        <div className="absolute right-0 top-24 h-[480px] w-[480px] rounded-full bg-[radial-gradient(circle,_rgba(255,210,180,0.18),_rgba(255,247,236,0))] blur-3xl" />
+        <div className="absolute inset-x-0 bottom-[-30%] h-[520px] bg-[radial-gradient(circle_at_bottom,_rgba(94,211,243,0.22),_rgba(207,232,255,0))]" />
       </div>
-      <HeroSection />
-      <TrustedBy />
-      <JourneySection />
+      <div className="relative z-0 overflow-hidden">
+        <div className="pointer-events-none absolute inset-0 z-0">
+          <div className="absolute inset-0 bg-gradient-to-b from-[#fff6ef] via-[#fff9f4] to-[#f3f7ff]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_22%_16%,_rgba(255,190,155,0.22),_transparent_55%),radial-gradient(circle_at_72%_22%,_rgba(140,195,255,0.22),_transparent_56%),radial-gradient(circle_at_50%_62%,_rgba(255,215,195,0.18),_transparent_60%)] opacity-70" />
+          <div className="absolute left-[22%] -top-24 h-[380px] w-[380px] rounded-full bg-[radial-gradient(circle,_rgba(255,185,150,0.25),_transparent_72%)] blur-3xl" />
+          <div className="absolute right-[22%] top-[50px] h-[380px] w-[380px] rounded-full bg-[radial-gradient(circle,_rgba(130,190,255,0.25),_transparent_72%)] blur-3xl" />
+          <div className="absolute left-[10%] bottom-[-200px] h-[420px] w-[420px] rounded-full bg-[radial-gradient(circle,_rgba(255,205,180,0.2),_transparent_72%)] blur-3xl" />
+          <div className="absolute right-[10%] bottom-[-200px] h-[420px] w-[420px] rounded-full bg-[radial-gradient(circle,_rgba(160,205,255,0.2),_transparent_72%)] blur-3xl" />
+          <div className="absolute left-[26%] top-[14%] h-[170px] w-[170px] rounded-full bg-[radial-gradient(circle,_rgba(255,155,110,0.45),_transparent_72%)] opacity-60 blur-2xl motion-safe:animate-[pulse_20s_ease-in-out_infinite]" />
+          <div className="absolute right-[28%] top-[18%] h-[170px] w-[170px] rounded-full bg-[radial-gradient(circle,_rgba(90,200,190,0.45),_transparent_72%)] opacity-60 blur-2xl motion-safe:animate-[pulse_22s_ease-in-out_infinite]" />
+          <div className="absolute left-[34%] bottom-[22%] h-[180px] w-[180px] rounded-full bg-[radial-gradient(circle,_rgba(255,170,130,0.4),_transparent_72%)] opacity-50 blur-2xl motion-safe:animate-[pulse_24s_ease-in-out_infinite]" />
+          <div className="absolute right-[36%] bottom-[24%] h-[180px] w-[180px] rounded-full bg-[radial-gradient(circle,_rgba(95,205,195,0.4),_transparent_72%)] opacity-50 blur-2xl motion-safe:animate-[pulse_26s_ease-in-out_infinite]" />
+          <div className="absolute left-[46%] top-[38%] h-[160px] w-[160px] rounded-full bg-[radial-gradient(circle,_rgba(255,160,120,0.38),_transparent_72%)] opacity-45 blur-2xl motion-safe:animate-[pulse_28s_ease-in-out_infinite]" />
+          <div className="absolute inset-0 opacity-[0.08] [background-image:linear-gradient(90deg,rgba(15,23,42,0.04)_1px,transparent_1px),linear-gradient(180deg,rgba(15,23,42,0.04)_1px,transparent_1px)] [background-size:96px_96px]" />
+        </div>
+        <div className="relative z-10">
+          <HeroSection />
+          <TrustedBy />
+          <JourneySection />
+        </div>
+      </div>
       <ExperienceSection />
-      <LiveDemoSection />
-      <TestimonialsSection />
-      <PricingSection />
-      <FAQSection />
+      <div className="relative overflow-hidden">
+        <div className="pointer-events-none absolute inset-0 -z-10">
+          <div className="absolute inset-0 bg-gradient-to-b from-[#f6fbff] via-[#fff4ea] to-[#f2f7ff]" />
+          <div className="absolute -top-44 left-[8%] h-[520px] w-[520px] rounded-full bg-[radial-gradient(circle,_rgba(255,204,161,0.5),_transparent_68%)] blur-3xl" />
+          <div className="absolute -top-24 right-[6%] h-[460px] w-[460px] rounded-full bg-[radial-gradient(circle,_rgba(164,213,255,0.55),_transparent_70%)] blur-3xl" />
+          <div className="absolute bottom-[-220px] right-[18%] h-[520px] w-[520px] rounded-full bg-[radial-gradient(circle,_rgba(255,176,139,0.45),_transparent_70%)] blur-3xl" />
+          <div className="absolute bottom-[-260px] left-[-6%] h-[520px] w-[520px] rounded-full bg-[radial-gradient(circle,_rgba(140,198,255,0.5),_transparent_70%)] blur-3xl" />
+          <div className="absolute left-[8%] top-[6%] h-[220px] w-[220px] rounded-full bg-[radial-gradient(circle,_rgba(86,182,255,0.5),_transparent_70%)] opacity-75 blur-2xl motion-safe:animate-[pulse_12s_ease-in-out_infinite]" />
+          <div className="absolute left-[22%] top-[18%] h-[160px] w-[160px] rounded-full bg-[radial-gradient(circle,_rgba(255,160,122,0.45),_transparent_72%)] opacity-60 blur-2xl motion-safe:animate-[pulse_15s_ease-in-out_infinite]" />
+          <div className="absolute right-[14%] top-[26%] h-[240px] w-[240px] rounded-full bg-[radial-gradient(circle,_rgba(255,160,122,0.55),_transparent_72%)] opacity-70 blur-2xl motion-safe:animate-[pulse_14s_ease-in-out_infinite]" />
+          <div className="absolute right-[28%] top-[10%] h-[140px] w-[140px] rounded-full bg-[radial-gradient(circle,_rgba(86,182,255,0.4),_transparent_72%)] opacity-40 blur-2xl motion-safe:animate-[pulse_17s_ease-in-out_infinite]" />
+          <div className="absolute right-[26%] bottom-[18%] h-[180px] w-[180px] rounded-full bg-[radial-gradient(circle,_rgba(86,182,255,0.45),_transparent_72%)] opacity-60 blur-2xl motion-safe:animate-[pulse_16s_ease-in-out_infinite]" />
+          <div className="absolute left-[28%] bottom-[12%] h-[200px] w-[200px] rounded-full bg-[radial-gradient(circle,_rgba(255,169,132,0.5),_transparent_72%)] opacity-50 blur-2xl motion-safe:animate-[pulse_18s_ease-in-out_infinite]" />
+          <div className="absolute left-[6%] bottom-[22%] h-[150px] w-[150px] rounded-full bg-[radial-gradient(circle,_rgba(255,180,145,0.45),_transparent_72%)] opacity-30 blur-2xl motion-safe:animate-[pulse_20s_ease-in-out_infinite]" />
+          <div className="absolute right-[8%] bottom-[8%] h-[200px] w-[200px] rounded-full bg-[radial-gradient(circle,_rgba(93,188,255,0.45),_transparent_72%)] opacity-50 blur-2xl motion-safe:animate-[pulse_22s_ease-in-out_infinite]" />
+          <div className="absolute left-[40%] top-[40%] h-[120px] w-[120px] rounded-full bg-[radial-gradient(circle,_rgba(255,170,136,0.4),_transparent_72%)] opacity-40 blur-2xl motion-safe:animate-[pulse_19s_ease-in-out_infinite]" />
+          <div className="absolute right-[40%] bottom-[32%] h-[130px] w-[130px] rounded-full bg-[radial-gradient(circle,_rgba(88,180,255,0.4),_transparent_72%)] opacity-50 blur-2xl motion-safe:animate-[pulse_21s_ease-in-out_infinite]" />
+        </div>
+        <LiveDemoSection />
+        <PublicProfilePreviewSection />
+        <TestimonialsSection />
+        <PricingSection />
+        <FAQSection />
+      </div>
       <LandingFooter />
       <Script id="linket-faq-schema" type="application/ld+json">
         {JSON.stringify(faqSchema)}
@@ -412,12 +525,8 @@ function HeroSection() {
   return (
     <section
       id="hero"
-      className="relative isolate overflow-hidden text-slate-900"
+      className="relative isolate text-slate-900"
     >
-      <div className="pointer-events-none absolute inset-0" aria-hidden>
-        <div className="absolute left-1/3 -top-16 h-[360px] w-[360px] rounded-full bg-[radial-gradient(circle,_rgba(255,176,139,0.35),_rgba(255,247,234,0))] blur-3xl" />
-        <div className="absolute right-16 top-20 h-[420px] w-[420px] rounded-full bg-[radial-gradient(circle,_rgba(125,211,252,0.25),_rgba(255,255,255,0))] blur-3xl" />
-      </div>
       <div className="relative z-10 flex min-h-screen flex-col items-center px-4 pb-24 pt-8 text-center sm:px-6 lg:px-8">
         <div className="mx-auto max-w-4xl py-12">
           <h1 className="mt-10 text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl lg:text-[4.5rem] lg:leading-[1.1]">
@@ -751,17 +860,17 @@ function ExperienceSection() {
               </span>
             </p>
             <p className="mt-4 text-base text-white/70">
-              Work directly with our hardware strategists to choose finishes,
-              engraving, and fulfillment flows that match your brand. We handle
-              proofs, sourcing, and rollout so you can stay focused on demos.
+              Work directly with our hardware team to design custom models that
+              match your brand. We handle prototyping, sourcing, and rollout so
+              you can stay focused on demos.
             </p>
           </div>
           <div className="grid gap-4 text-sm text-white/80 sm:grid-cols-2">
             {[
-              "Premium metals, wood, and eco-resin options",
-              "Custom engravings + Pantone-matched finishes",
-              "Bulk activation + profile templates",
-              "Lead routing, CRM exports, and analytics",
+              "UV-resistant plastic that holds up to daily wear",
+              "Custom models shaped around your logo or brand mark",
+              "Customizable public pages that stay on brand",
+              "Lead capture tools with analytics for follow-ups",
             ].map((item) => (
               <div
                 key={item}
@@ -774,9 +883,8 @@ function ExperienceSection() {
         </div>
         <div className="w-full max-w-md rounded-3xl border border-white/10 bg-white/5 p-8 shadow-[0_30px_80px_rgba(5,5,20,0.45)] backdrop-blur">
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#ff9776] via-[#ffb866] to-[#5dd6f7] text-slate-900">
-              <Sparkles className="h-6 w-6" aria-hidden />
-            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={brand.logomark} alt="Linket mark" className="h-14 w-14" />
             <div>
               <p className="text-lg font-semibold text-white">Get in touch</p>
               <p className="text-xs text-white/60">
@@ -793,59 +901,134 @@ function ExperienceSection() {
 
 function LiveDemoSection() {
   return (
-    <section id="demo" className="relative overflow-hidden py-24">
-      <div
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.4),_transparent_70%)]"
-        aria-hidden
-      />
-      <div className="relative mx-auto flex max-w-6xl flex-col gap-12 px-4 sm:px-6 lg:flex-row lg:items-center">
-        <div className="max-w-lg space-y-5">
-          <span className="inline-flex items-center gap-2 rounded-full border border-foreground/10 bg-white/60 px-3 py-1 text-xs font-semibold uppercase tracking-[0.35em] text-muted-foreground">
-            See it live
+    <section id="demo" className="relative py-24">
+      <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
+        <div className="mx-auto max-w-3xl text-center">
+          <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-4 py-1 text-xs font-semibold uppercase tracking-[0.35em] text-slate-500 shadow-sm">
+            <span className="h-2 w-2 rounded-full bg-[#ffb48a]" />
+            Product demo
           </span>
-          <h2 className="font-display text-3xl tracking-tight sm:text-4xl">
-            Tap-through demo
+          <h2 className="mt-6 font-display text-3xl tracking-tight text-slate-900 sm:text-4xl">
+            See Linket in action
           </h2>
-          <p className="text-base text-muted-foreground">
-            Scan the QR or click play to explore a Linket profile. You&apos;ll
-            see NFC handoff, hero blocks, lead capture, and real-time analytics
-            come together in under 20 seconds.
+          <p className="mx-auto mt-4 max-w-2xl text-base text-slate-600">
+            Watch how a tap turns into a clean public profile, a saved contact,
+            and a new lead in under 30 seconds.
           </p>
-          <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/60 px-3 py-1">
-              <Waves className="h-4 w-4 text-primary" aria-hidden />
-              NFC tap demo
-            </div>
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/60 px-3 py-1">
-              <ShieldCheck className="h-4 w-4 text-primary" aria-hidden />
-              Privacy-first analytics
-            </div>
-          </div>
         </div>
-        <div className="relative mx-auto w-full max-w-xl">
+
+        <div className="relative mx-auto mt-12 max-w-5xl">
           <div
-            className="absolute inset-0 rounded-[40px] bg-gradient-to-br from-primary/20 via-transparent to-transparent blur-3xl"
+            className="absolute -inset-8 rounded-[48px] bg-gradient-to-br from-[#ffe0c4]/70 via-white/0 to-[#c1ddff]/70 blur-3xl"
             aria-hidden
           />
-          <div className="relative overflow-hidden rounded-[32px] border border-white/60 bg-white/85 p-6 shadow-2xl backdrop-blur">
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span>linket.co/demo</span>
-              <span>0:20 walkthrough</span>
-            </div>
-            <LiveDemoWorkspaceCard />
+          <div className="relative overflow-hidden rounded-[32px] border border-slate-200 bg-[#111317] shadow-[0_45px_120px_rgba(15,23,42,0.25)]">
+            <video
+              className="aspect-video w-full"
+              controls
+              playsInline
+              preload="metadata"
+              poster="/mockups/video-poster.jpg"
+            >
+              <source src="/mockups/demo.mp4" type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+          </div>
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-3 text-xs text-slate-500">
+            <span className="rounded-full border border-slate-200 bg-white/80 px-3 py-1">
+              0:30 walkthrough
+            </span>
+            <span className="rounded-full border border-slate-200 bg-white/80 px-3 py-1">
+              Public profile + lead capture
+            </span>
+            <span className="rounded-full border border-slate-200 bg-white/80 px-3 py-1">
+              Real-time analytics
+            </span>
           </div>
         </div>
       </div>
     </section>
   );
 }
+
+function PublicProfilePreviewSection() {
+  return (
+    <section id="public-preview" className="relative py-20">
+      <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
+        <div className="grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr]">
+          <div className="space-y-6 text-slate-900">
+            <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.35em] text-slate-500">
+              Public profile preview
+            </span>
+            <h2 className="font-display text-3xl tracking-tight sm:text-4xl">
+              See exactly how clients experience you
+            </h2>
+            <p className="text-base text-slate-600">
+              Every tap opens a clean public page with your photo, headline, and
+              links. Visitors can save your contact or share theirs in seconds.
+            </p>
+            <div className="grid gap-3 text-sm text-slate-600 sm:grid-cols-2">
+              <div className="rounded-2xl border border-slate-200 bg-white/80 px-4 py-3">
+                <p className="text-sm font-semibold text-slate-900">
+                  Instant contact save
+                </p>
+                <p className="mt-1 text-xs text-slate-500">
+                  vCard with photo and details.
+                </p>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-white/80 px-4 py-3">
+                <p className="text-sm font-semibold text-slate-900">
+                  Branded link hub
+                </p>
+                <p className="mt-1 text-xs text-slate-500">
+                  Showcase your most important links.
+                </p>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-white/80 px-4 py-3">
+                <p className="text-sm font-semibold text-slate-900">
+                  Lead capture ready
+                </p>
+                <p className="mt-1 text-xs text-slate-500">
+                  Prospects share their info fast.
+                </p>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-white/80 px-4 py-3">
+                <p className="text-sm font-semibold text-slate-900">
+                  Theme customization
+                </p>
+                <p className="mt-1 text-xs text-slate-500">
+                  Match your logo and brand vibe.
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="relative mx-auto w-full max-w-sm">
+            <div
+              className="absolute -inset-6 rounded-[48px] bg-gradient-to-br from-[#2b3c5c]/45 via-[#0b1220]/0 to-[#1a2237]/45 blur-3xl"
+              aria-hidden
+            />
+            <div className="relative overflow-hidden rounded-[36px] border border-border/60 bg-background shadow-[0_30px_70px_rgba(15,23,42,0.3)]">
+              <div className="h-[620px] w-full overflow-y-auto">
+                <PublicProfilePreview
+                  profile={MOCK_PUBLIC_PROFILE}
+                  account={MOCK_PUBLIC_ACCOUNT}
+                  handle={MOCK_PUBLIC_ACCOUNT.handle}
+                  layout="stacked"
+                  forceMobile
+                  themeOverride="dark"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function TestimonialsSection() {
   return (
-    <section className="relative -mt-12 overflow-hidden pb-24 pt-32 text-[#0f172a]">
-      <div
-        className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.4),_transparent_70%)]"
-        aria-hidden
-      />
+    <section className="relative pb-24 pt-20 text-[#0f172a]">
       <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
         <TestimonialSlider
           testimonials={SLIDER_TESTIMONIALS}
