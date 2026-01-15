@@ -13,7 +13,7 @@ import PublicLeadForm from "@/components/public/PublicLeadForm";
 import VCardDownload from "@/components/VCardDownload";
 import ShareContactButton from "@/components/ShareContactButton";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 type Props = {
   params: Promise<{ handle: string }>;

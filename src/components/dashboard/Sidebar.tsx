@@ -21,7 +21,6 @@ import {
   MessageSquare,
   CreditCard,
   Settings,
-  HelpCircle,
   ChevronLeft,
   ChevronRight,
   Package,
@@ -222,17 +221,6 @@ export default function Sidebar({
           })}
         </nav>
         <div className="mt-auto space-y-2 p-2">
-          <button
-            onClick={() => {
-              requestAutosave();
-              window.dispatchEvent(new CustomEvent("open-support"));
-            }}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[var(--primary)]/20 to-[var(--accent)]/20 px-4 py-2.5 text-sm font-medium text-foreground ring-1 ring-[var(--ring)]/40 hover:opacity-95"
-            aria-label="Open support"
-          >
-            <HelpCircle className="h-4 w-4" />{" "}
-            {!isCollapsed && <span>Need help?</span>}
-          </button>
           <div className="px-2 pb-2 text-[10px] text-muted-foreground">
             v0.1.0
           </div>

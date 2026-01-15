@@ -826,8 +826,11 @@ function ExperienceSection() {
                 placeholder="Share timelines or hardware goals..."
               />
             </div>
-            <Button className="w-full rounded-2xl bg-gradient-to-r from-[#ff9776] via-[#ffb866] to-[#5dd6f7] text-base font-semibold text-slate-900 shadow-[0_15px_45px_rgba(255,151,118,0.35)]">
-              Book your consult
+            <Button
+              asChild
+              className="w-full rounded-2xl bg-gradient-to-r from-[#ff9776] via-[#ffb866] to-[#5dd6f7] text-base font-semibold text-slate-900 shadow-[0_15px_45px_rgba(255,151,118,0.35)]"
+            >
+              <Link href="mailto:linketconnect@gmail.com">Book your consult</Link>
             </Button>
             <p className="text-center text-xs text-white/50">
               We reply within one business day.
@@ -970,7 +973,8 @@ function LandingFooter() {
           <div>
             <div className="flex items-center gap-3 text-lg font-semibold">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10">
-                <span className="text-2xl">🔗</span>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={brand.logomark} alt={`${brand.name} mark`} className="h-8 w-8" />
               </div>
               <div>
                 <p className="text-sm uppercase tracking-[0.4em] text-white/70">
@@ -1053,3 +1057,5 @@ function LandingFooter() {
     </footer>
   );
 }
+
+

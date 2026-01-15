@@ -70,29 +70,20 @@ export default function ShareContactButton({
 }) {
   const [sharing, setSharing] = React.useState(false);
   const [supported, setSupported] = React.useState(false);
+  const [isIOS, setIsIOS] = React.useState(false);
 
   React.useEffect(() => {
     const picker = (navigator as Navigator & { contacts?: ContactPicker })
       .contacts;
+    const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
+    setIsIOS(/iP(hone|od|ad)/.test(ua));
     setSupported(Boolean(picker?.select));
   }, []);
 
   async function shareContact() {
     const picker = (navigator as Navigator & { contacts?: ContactPicker })
       .contacts;
-    if (!picker?.select) {
-      if (typeof document !== "undefined") {
-        document.getElementById("public-lead-form")?.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
-      }
-      toast({
-        title: "Share contact",
-        description: "Fill out the form below to share your contact.",
-      });
-      return;
-    }
+    if (!picker?.select) return;
     try {
       setSharing(true);
       const response = await fetch(
@@ -158,6 +149,8 @@ export default function ShareContactButton({
       setSharing(false);
     }
   }
+
+  if (!supported || isIOS) return null;
 
   return (
     <Button
