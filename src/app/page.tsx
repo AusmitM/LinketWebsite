@@ -32,6 +32,7 @@ import {
   LiveDemoWorkspaceCard,
   TestimonialSlider,
 } from "@/components/landing/LandingLazySections";
+import ConsultForm from "@/components/landing/ConsultForm";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { brand } from "@/config/brand";
@@ -783,59 +784,7 @@ function ExperienceSection() {
               </p>
             </div>
           </div>
-          <form className="mt-6 space-y-5">
-            <div>
-              <label
-                htmlFor="custom-email"
-                className="text-xs font-semibold uppercase tracking-[0.3em] text-white/50"
-              >
-                Work email
-              </label>
-              <input
-                id="custom-email"
-                type="email"
-                className="mt-2 w-full rounded-2xl border border-white/15 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:border-[#ff9776] focus:outline-none focus:ring-2 focus:ring-[#ff9776]/40"
-                placeholder="name@company.com"
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="custom-team"
-                className="text-xs font-semibold uppercase tracking-[0.3em] text-white/50"
-              >
-                Team size
-              </label>
-              <input
-                id="custom-team"
-                type="text"
-                className="mt-2 w-full rounded-2xl border border-white/15 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:border-[#5dd6f7] focus:outline-none focus:ring-2 focus:ring-[#5dd6f7]/40"
-                placeholder="e.g. 25 reps"
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="custom-notes"
-                className="text-xs font-semibold uppercase tracking-[0.3em] text-white/50"
-              >
-                Notes
-              </label>
-              <textarea
-                id="custom-notes"
-                rows={3}
-                className="mt-2 w-full rounded-2xl border border-white/15 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:border-[#ff9776] focus:outline-none focus:ring-2 focus:ring-[#ff9776]/40"
-                placeholder="Share timelines or hardware goals..."
-              />
-            </div>
-            <Button
-              asChild
-              className="w-full rounded-2xl bg-gradient-to-r from-[#ff9776] via-[#ffb866] to-[#5dd6f7] text-base font-semibold text-slate-900 shadow-[0_15px_45px_rgba(255,151,118,0.35)]"
-            >
-              <Link href="mailto:linketconnect@gmail.com">Book your consult</Link>
-            </Button>
-            <p className="text-center text-xs text-white/50">
-              We reply within one business day.
-            </p>
-          </form>
+          <ConsultForm />
         </div>
       </div>
     </section>
@@ -991,7 +940,7 @@ function LandingFooter() {
               creators, and field teams who want intros that stick.
             </p>
             <div className="mt-6 space-y-2 text-sm text-white/70">
-              <p className="text-white/80">punit@peridotkonda.com</p>
+              <p className="text-white/80">Contact@LinketConnect.com</p>
               <p className="text-white/60">
                  400 Bizzell St, College Station, TX
               </p>
