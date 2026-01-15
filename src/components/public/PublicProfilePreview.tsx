@@ -10,6 +10,7 @@ import type { LeadFormConfig } from "@/types/lead-form";
 import PublicProfileLinksList from "@/components/public/PublicProfileLinksList";
 import PublicLeadForm from "@/components/public/PublicLeadForm";
 import VCardDownload from "@/components/VCardDownload";
+import VCardShare from "@/components/VCardShare";
 
 type AccountPreview = {
   handle: string;
@@ -231,6 +232,12 @@ export default function PublicProfilePreview({
                     label="Download contact information"
                     className="w-full rounded-full bg-foreground text-background shadow-[0_16px_32px_-24px_rgba(15,23,42,0.6)] hover:bg-foreground/90 sm:w-auto"
                   />
+                  <VCardShare
+                    handle={publicHandle}
+                    label="Share contact"
+                    variant="outline"
+                    className="w-full rounded-full sm:w-auto"
+                  />
                 </div>
               </div>
 
@@ -351,6 +358,12 @@ export default function PublicProfilePreview({
                     handle={publicHandle}
                     label="Download contact information"
                     className="w-full rounded-full bg-foreground text-background shadow-[0_16px_32px_-24px_rgba(15,23,42,0.6)] hover:bg-foreground/90 sm:w-auto"
+                  />
+                  <VCardShare
+                    handle={publicHandle}
+                    label="Share contact"
+                    variant="outline"
+                    className="w-full rounded-full sm:w-auto"
                   />
                 </div>
                 )}
