@@ -28,8 +28,12 @@ type VCardFields = {
   email: string;
   phone: string;
   company: string;
-  website: string;
-  address: string;
+  addressLine1: string;
+  addressLine2: string;
+  addressCity: string;
+  addressRegion: string;
+  addressPostal: string;
+  addressCountry: string;
   note: string;
   photoData: string | null;
   photoName: string | null;
@@ -59,8 +63,12 @@ export default function VCardContent({
     email: "",
     phone: "",
     company: "",
-    website: "",
-    address: "",
+    addressLine1: "",
+    addressLine2: "",
+    addressCity: "",
+    addressRegion: "",
+    addressPostal: "",
+    addressCountry: "",
     note: "",
     photoData: null,
     photoName: null,
@@ -346,7 +354,20 @@ export default function VCardContent({
 
   const isDirty = useMemo(() => {
     if (!lastSavedRef.current) {
-      return Boolean(fields.fullName || fields.title || fields.email || fields.phone || fields.company || fields.website || fields.address || fields.note);
+      return Boolean(
+        fields.fullName ||
+        fields.title ||
+        fields.email ||
+        fields.phone ||
+        fields.company ||
+        fields.addressLine1 ||
+        fields.addressLine2 ||
+        fields.addressCity ||
+        fields.addressRegion ||
+        fields.addressPostal ||
+        fields.addressCountry ||
+        fields.note
+      );
     }
     return !areVCardFieldsEqual(lastSavedRef.current, fields);
   }, [fields, lastSavedAt]);
@@ -604,10 +625,16 @@ export default function VCardContent({
           <Field label="Email" id="email" type="email" value={fields.email} onChange={updateField} onBlur={handleFieldBlur} disabled={inputsDisabled} idPrefix={idPrefix} />
           <Field label="Phone" id="phone" type="tel" value={fields.phone} onChange={updateField} onBlur={handleFieldBlur} disabled={inputsDisabled} idPrefix={idPrefix} />
           <Field label="Company" id="company" value={fields.company} onChange={updateField} onBlur={handleFieldBlur} disabled={inputsDisabled} idPrefix={idPrefix} />
-          <Field label="Website" id="website" type="url" value={fields.website} onChange={updateField} onBlur={handleFieldBlur} disabled={inputsDisabled} idPrefix={idPrefix} />
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Address" id="address" component="textarea" value={fields.address} onChange={updateField} onBlur={handleFieldBlur} disabled={inputsDisabled} idPrefix={idPrefix} />
+          <Field label="Address line 1" id="addressLine1" value={fields.addressLine1} onChange={updateField} onBlur={handleFieldBlur} disabled={inputsDisabled} idPrefix={idPrefix} />
+          <Field label="Address line 2" id="addressLine2" value={fields.addressLine2} onChange={updateField} onBlur={handleFieldBlur} disabled={inputsDisabled} idPrefix={idPrefix} />
+          <Field label="City" id="addressCity" value={fields.addressCity} onChange={updateField} onBlur={handleFieldBlur} disabled={inputsDisabled} idPrefix={idPrefix} />
+          <Field label="State / Region" id="addressRegion" value={fields.addressRegion} onChange={updateField} onBlur={handleFieldBlur} disabled={inputsDisabled} idPrefix={idPrefix} />
+          <Field label="Postal code" id="addressPostal" value={fields.addressPostal} onChange={updateField} onBlur={handleFieldBlur} disabled={inputsDisabled} idPrefix={idPrefix} />
+          <Field label="Country" id="addressCountry" value={fields.addressCountry} onChange={updateField} onBlur={handleFieldBlur} disabled={inputsDisabled} idPrefix={idPrefix} />
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Notes" id="note" component="textarea" value={fields.note} onChange={updateField} onBlur={handleFieldBlur} disabled={inputsDisabled} idPrefix={idPrefix} />
         </div>
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -698,8 +725,12 @@ function areVCardFieldsEqual(a: VCardFields, b: VCardFields) {
     a.email === b.email &&
     a.phone === b.phone &&
     a.company === b.company &&
-    a.website === b.website &&
-    a.address === b.address &&
+    a.addressLine1 === b.addressLine1 &&
+    a.addressLine2 === b.addressLine2 &&
+    a.addressCity === b.addressCity &&
+    a.addressRegion === b.addressRegion &&
+    a.addressPostal === b.addressPostal &&
+    a.addressCountry === b.addressCountry &&
     a.note === b.note &&
     a.photoData === b.photoData &&
     a.photoName === b.photoName

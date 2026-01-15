@@ -19,7 +19,7 @@ import { SignOutButton } from "@/components/auth/SignOutButton";
 import { useDashboardUser } from "@/components/dashboard/DashboardSessionContext";
 import { supabase } from "@/lib/supabase";
 import { getSignedAvatarUrl } from "@/lib/avatar-client";
-import { Phone, User } from "lucide-react";
+import { Phone } from "lucide-react";
 
 type VCardFields = {
   fullName: string;
@@ -27,8 +27,12 @@ type VCardFields = {
   email: string;
   phone: string;
   company: string;
-  website: string;
-  address: string;
+  addressLine1: string;
+  addressLine2: string;
+  addressCity: string;
+  addressRegion: string;
+  addressPostal: string;
+  addressCountry: string;
   note: string;
   photoData: string | null;
   photoName: string | null;
@@ -40,8 +44,12 @@ const EMPTY_FIELDS: VCardFields = {
   email: "",
   phone: "",
   company: "",
-  website: "",
-  address: "",
+  addressLine1: "",
+  addressLine2: "",
+  addressCity: "",
+  addressRegion: "",
+  addressPostal: "",
+  addressCountry: "",
   note: "",
   photoData: null,
   photoName: null,
@@ -189,7 +197,7 @@ export default function SettingsContent() {
           </div>
           <SignOutButton />
         </CardHeader>
-        <CardContent className="grid gap-6 lg:grid-cols-[minmax(0,0.7fr)_minmax(0,1.3fr)]">
+        <CardContent className="grid gap-6 lg:grid-cols-[minmax(0,0.55fr)_minmax(0,1.45fr)]">
           <div className="flex items-center gap-4 rounded-2xl border border-border/60 bg-background/60 p-4">
             <div className="relative h-16 w-16 overflow-hidden rounded-full border border-border/60 bg-muted">
               {avatarLoading ? (
@@ -204,24 +212,17 @@ export default function SettingsContent() {
               )}
             </div>
             <div className="space-y-1">
+              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                Account
+              </div>
               <div className="text-sm font-semibold text-foreground">
-                {email || "Account"}
+                {email || "Email unavailable"}
               </div>
-              <div className="text-xs text-muted-foreground">
-                {email ? "Signed in" : "Email unavailable"}
-              </div>
+              <div className="text-xs text-muted-foreground">Signed in</div>
             </div>
           </div>
 
           <div className="space-y-4">
-            <div className="rounded-2xl border border-border/60 bg-background/60 p-4">
-              <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                <User className="h-4 w-4 text-muted-foreground" />
-                Account email
-              </div>
-              <p className="mt-2 text-sm text-muted-foreground">{email || "No email on file"}</p>
-            </div>
-
             <div className="rounded-2xl border border-border/60 bg-background/60 p-4">
               <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
                 <Phone className="h-4 w-4 text-muted-foreground" />

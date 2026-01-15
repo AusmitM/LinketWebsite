@@ -112,6 +112,19 @@ const supabasePublic = createClient(
 const PROFILE_TABLE = "user_profiles";
 const PROFILE_LINKS_TABLE = "profile_links";
 
+export class HandleConflictError extends Error {
+  suggestions: string[];
+  constructor(suggestions: string[]) {
+    super("Handle already taken");
+    this.name = "HandleConflictError";
+    this.suggestions = suggestions;
+  }
+}
+
+export function isHandleConflictError(error: unknown): error is HandleConflictError {
+  return Boolean(error && typeof error === "object" && "name" in error && (error as { name?: string }).name === "HandleConflictError");
+}
+
 export type ProfileWithLinks = UserProfileRecord & {
   links: ProfileLinkRecord[];
 };
@@ -255,6 +268,58 @@ function isUuid(value: string | null | undefined): value is string {
   );
 }
 
+function buildHandleSuggestions(base: string, existing: Set<string>): string[] {
+  const suggestions: string[] = [];
+  const seed = base || "user";
+  for (let i = 1; i <= 50 && suggestions.length < 3; i += 1) {
+    const candidate = `${seed}-${i}`;
+    if (!existing.has(candidate)) {
+      suggestions.push(candidate);
+    }
+  }
+  return suggestions;
+}
+
+async function assertHandleAvailable(
+  userId: string,
+  handle: string,
+  profileId?: string | null
+) {
+  if (!SUPABASE_ENABLED) {
+    const existing = memoryGetProfileByHandle(handle);
+    if (existing && existing.id !== profileId) {
+      const taken = new Set(
+        Array.from(memoryProfiles.values()).flatMap((profiles) =>
+          profiles.map((profile) => profile.handle)
+        )
+      );
+      throw new HandleConflictError(buildHandleSuggestions(handle, taken));
+    }
+    return;
+  }
+
+  const { data, error } = await supabaseAdmin
+    .from(PROFILE_TABLE)
+    .select("id")
+    .eq("handle", handle)
+    .maybeSingle();
+  if (error && error.code !== "PGRST116") throw new Error(error.message);
+  if (data && (data as { id?: string }).id !== profileId) {
+    const { data: similar } = await supabaseAdmin
+      .from(PROFILE_TABLE)
+      .select("handle")
+      .like("handle", `${handle}%`)
+      .limit(25);
+    const taken = new Set(
+      (similar ?? [])
+        .map((row) => (row as { handle?: string | null }).handle)
+        .filter((value): value is string => Boolean(value))
+    );
+    taken.add(handle);
+    throw new HandleConflictError(buildHandleSuggestions(handle, taken));
+  }
+}
+
 function ensureMemoryProfiles(userId: string): ProfileWithLinks[] {
   let profiles = memoryProfiles.get(userId);
   if (!profiles) {
@@ -321,6 +386,15 @@ function memorySaveProfileForUser(
   const name = payload.name?.trim();
   if (!name) throw new Error("Profile name is required");
   if (!handle) throw new Error("Handle is required");
+  const existing = memoryGetProfileByHandle(handle);
+  if (existing && existing.id !== payload.id) {
+    const taken = new Set(
+      Array.from(memoryProfiles.values()).flatMap((profiles) =>
+        profiles.map((profile) => profile.handle)
+      )
+    );
+    throw new HandleConflictError(buildHandleSuggestions(handle, taken));
+  }
 
   const profiles = ensureMemoryProfiles(userId);
   const now = new Date().toISOString();
@@ -559,6 +633,8 @@ export async function saveProfileForUser(
   if (!handle) throw new Error("Handle is required");
 
   let profileId = payload.id ?? null;
+
+  await assertHandleAvailable(userId, handle, profileId);
 
   if (!profileId) {
     const { data, error } = await supabaseAdmin

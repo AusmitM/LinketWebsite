@@ -10,6 +10,7 @@ export type Address = {
   country?: string;
 };
 export type Photo = { dataUrl?: string; url?: string; mime?: string } | null;
+export type ProfileLink = { title?: string; url: string };
 
 export type ContactProfile = {
   handle: string;
@@ -25,6 +26,7 @@ export type ContactProfile = {
   phones?: Phone[];
   address?: Address;
   website?: string;
+  links?: ProfileLink[];
   note?: string;
   photo?: Photo;
   uid?: string; // stable id
@@ -51,6 +53,7 @@ store.set("punit", {
     country: "USA",
   },
   website: "https://www.linketconnect.com",
+  links: [{ title: "Website", url: "https://www.linketconnect.com" }],
   note: "Photography + product design.",
   uid: "urn:uuid:punit-0001",
   updatedAt: new Date().toISOString(),

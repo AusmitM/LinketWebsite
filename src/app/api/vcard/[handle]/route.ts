@@ -10,7 +10,6 @@ type VCardRecord = {
   email: string | null;
   phone: string | null;
   company: string | null;
-  website: string | null;
   address: string | null;
   note: string | null;
   photo_data: string | null;
@@ -30,10 +29,16 @@ function splitName(fullName: string) {
 function buildContactProfile(
   handle: string,
   record: VCardRecord | null,
-  fallbackName: string
+  fallbackName: string,
+  links: Array<{
+    title?: string | null;
+    url?: string | null;
+    is_active?: boolean | null;
+  }>
 ): ContactProfile {
   const name = record?.full_name?.trim() || fallbackName;
   const { firstName, lastName } = splitName(name);
+  const parsedAddress = parseAddress(record?.address ?? null);
   return {
     handle,
     firstName,
@@ -46,15 +51,53 @@ function buildContactProfile(
     phones: record?.phone
       ? [{ value: record.phone, type: "cell", pref: true }]
       : undefined,
-    website: record?.website ?? undefined,
     note: record?.note ?? undefined,
-    address: record?.address ? { street: record.address } : undefined,
+    address: parsedAddress ?? undefined,
     photo: record?.photo_data
       ? { dataUrl: record.photo_data }
       : undefined,
+    links: links
+      .filter((link) => link.is_active ?? true)
+      .map((link) => ({
+        title: link.title ?? undefined,
+        url: link.url ?? "",
+      }))
+      .filter((link) => Boolean(link.url.trim())),
     uid: `urn:uuid:${handle}`,
     updatedAt: new Date().toISOString(),
   };
+}
+
+function parseAddress(value: string | null) {
+  if (!value) return null;
+  const trimmed = value.trim();
+  if (trimmed.startsWith("{")) {
+    try {
+      const parsed = JSON.parse(trimmed) as Partial<{
+        line1: string;
+        line2: string;
+        city: string;
+        region: string;
+        postalCode: string;
+        country: string;
+      }>;
+      const streetParts = [parsed.line1, parsed.line2].filter(Boolean);
+      const street = streetParts.join(" ").trim();
+      if (!street && !parsed.city && !parsed.region && !parsed.postalCode && !parsed.country) {
+        return null;
+      }
+      return {
+        street: street || undefined,
+        city: parsed.city || undefined,
+        region: parsed.region || undefined,
+        postcode: parsed.postalCode || undefined,
+        country: parsed.country || undefined,
+      };
+    } catch {
+      return { street: trimmed };
+    }
+  }
+  return { street: trimmed };
 }
 
 function createPublicClient() {
@@ -92,9 +135,7 @@ export async function GET(
     const supabase = createPublicClient();
     const { data, error } = await supabase
       .from("vcard_profiles")
-      .select(
-        "full_name,title,email,phone,company,website,address,note,photo_data,photo_name"
-      )
+      .select("full_name,title,email,phone,company,address,note,photo_data,photo_name")
       .eq("user_id", account.user_id)
       .maybeSingle();
     if (error && error.code !== "PGRST116") throw error;
@@ -102,7 +143,8 @@ export async function GET(
     const contactProfile = buildContactProfile(
       handle,
       (data as VCardRecord | null) ?? null,
-      fallbackName
+      fallbackName,
+      profile.links ?? []
     );
     const vcard = buildVCard(contactProfile);
 

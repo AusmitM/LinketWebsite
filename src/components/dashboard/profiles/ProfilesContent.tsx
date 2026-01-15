@@ -118,6 +118,7 @@ export default function ProfilesContent() {
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [autoSaveError, setAutoSaveError] = useState<string | null>(null);
+  const [handleError, setHandleError] = useState<string | null>(null);
   const [accountLoading, setAccountLoading] = useState(true);
   const [accountError, setAccountError] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -424,13 +425,27 @@ export default function ProfilesContent() {
       });
       if (!res.ok) {
         const info = await res.json().catch(() => ({}));
-        throw new Error((info?.error as string) || "Unable to create profile");
+        const suggestions = Array.isArray(info?.suggestions) ? info.suggestions : [];
+        const hint = suggestions.length ? `Try: ${suggestions.join(", ")}` : "";
+        const message = (info?.error as string) || "Unable to create profile";
+        if (res.status === 409 && info?.error) {
+          setHandleError(hint ? `${info.error} ${hint}` : info.error);
+        }
+        throw new Error(hint ? `${message} ${hint}` : message);
       }
       const saved = mapProfile((await res.json()) as ProfileWithLinks);
+      setHandleError(null);
       toast({
         title: "Profile created",
         description: `${saved.name} ready to edit.`,
       });
+      if (saved.active && typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("linket:handle-updated", {
+            detail: { handle: saved.handle },
+          })
+        );
+      }
       await loadProfiles(saved.id);
     } catch (error) {
       const message =
@@ -478,41 +493,57 @@ export default function ProfilesContent() {
           })),
           active: draft.active,
         };
-        const res = await fetch("/api/linket-profiles", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId, profile: payload }),
-        });
-        if (!res.ok) {
-          const info = await res.json().catch(() => ({}));
-          throw new Error((info?.error as string) || "Unable to save profile");
+      const res = await fetch("/api/linket-profiles", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, profile: payload }),
+      });
+      if (!res.ok) {
+        const info = await res.json().catch(() => ({}));
+        const suggestions = Array.isArray(info?.suggestions) ? info.suggestions : [];
+        const hint = suggestions.length ? `Try: ${suggestions.join(", ")}` : "";
+        const message = (info?.error as string) || "Unable to save profile";
+        if (res.status === 409 && info?.error) {
+          setHandleError(hint ? `${info.error} ${hint}` : info.error);
         }
-        const saved = mapProfile((await res.json()) as ProfileWithLinks);
-        setAutoSaveError(null);
-        if (!options?.quiet) {
-          toast({
-            title: "Profile saved",
-            description: `${saved.name} updated.`,
-          });
-        }
-        await loadProfiles(saved.id);
-      } catch (error) {
-        const message =
-          error instanceof Error ? error.message : "Unable to save profile";
-        setAutoSaveError(`Save failed: ${message}`);
-        if (!options?.quiet) {
-          toast({
-            title: "Save failed",
-            description: message,
-            variant: "destructive",
-          });
-        }
-      } finally {
-        setSaving(false);
+        throw new Error(hint ? `${message} ${hint}` : message);
       }
-    },
-    [draft, userId, saving, loadProfiles]
-  );
+      const saved = mapProfile((await res.json()) as ProfileWithLinks);
+      setHandleError(null);
+      setAutoSaveError(null);
+      if (saved.active && typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("linket:handle-updated", {
+            detail: { handle: saved.handle },
+          })
+        );
+      }
+      if (!options?.quiet) {
+        toast({
+          title: "Profile saved",
+          description: `${saved.name} updated.`,
+        });
+      }
+      await loadProfiles(saved.id);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to save profile";
+      setAutoSaveError(`Save failed: ${message}`);
+      const shouldToast =
+        !options?.quiet && !message.toLowerCase().includes("handle already taken");
+      if (shouldToast) {
+        toast({
+          title: "Save failed",
+          description: message,
+          variant: "destructive",
+        });
+      }
+    } finally {
+      setSaving(false);
+    }
+  },
+  [draft, userId, saving, loadProfiles]
+);
 
   async function handleDelete() {
     if (!draft) return;
@@ -920,13 +951,17 @@ export default function ProfilesContent() {
                       <Input
                         id="profile-handle"
                         value={draft.handle}
-                        onChange={(event) =>
-                          updateDraft({ handle: event.target.value })
-                        }
-                        className="pl-40"
+                        onChange={(event) => {
+                          setHandleError(null);
+                          updateDraft({ handle: event.target.value });
+                        }}
+                        className={`pl-40${handleError ? " border-destructive focus-visible:ring-destructive" : ""}`}
                         disabled={inputsDisabled}
                       />
                     </div>
+                    {handleError ? (
+                      <p className="text-xs text-destructive">{handleError}</p>
+                    ) : null}
                   </div>
                 </div>
                 <div className="space-y-2">

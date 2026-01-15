@@ -15,7 +15,7 @@ export function ProfileHeader({ name, tagline, avatar, textColor = "#0f172a", ha
   const prefersReducedMotion = useReducedMotion();
   return (
     <div className="flex items-center gap-4" style={{ color: textColor }}>
-      <span className="relative inline-flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border bg-white">
+      <span className="relative inline-flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border-4 border-[var(--avatar-border)] bg-background">
         <span
           className="absolute inset-0 -z-10 rounded-full"
           aria-hidden

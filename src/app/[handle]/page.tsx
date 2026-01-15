@@ -153,26 +153,24 @@ export default async function PublicProfilePage({ params }: Props) {
                     )}
                     <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background/40" />
                   </div>
-                  <div className="-mt-16 flex flex-col items-center px-4 pb-4 text-center">
-                    <div
-                      className={`h-28 w-28 overflow-hidden rounded-3xl border-4 border-[var(--avatar-border)] shadow-sm relative z-10 ${
-                        avatar ? "bg-muted/40" : "bg-background"
-                      }`}
-                    >
-                      {avatar ? (
-                        // eslint-disable-next-line @next/next/no-img-element
+                  <div
+                    className={
+                      avatar
+                        ? "-mt-16 flex flex-col items-center px-4 pb-4 text-center"
+                        : "mt-4 flex flex-col items-center px-4 pb-6 text-center"
+                    }
+                  >
+                    {avatar ? (
+                      <div className="h-28 w-28 overflow-hidden rounded-3xl border-4 border-[var(--avatar-border)] shadow-sm relative z-10 bg-muted/40">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={avatar}
                           alt={`${displayName} avatar`}
                           className="h-full w-full object-cover"
                         />
-                      ) : (
-                        <span className="flex h-full w-full items-center justify-center text-2xl font-semibold text-foreground">
-                          {displayName?.[0]?.toUpperCase() ?? "L"}
-                        </span>
-                      )}
-                    </div>
-                    <div className="mt-3 space-y-1">
+                      </div>
+                    ) : null}
+                    <div className={avatar ? "mt-3 space-y-1" : "mt-2 space-y-1"}>
                       <h1 className="break-words font-display text-2xl tracking-tight">
                         {displayName}
                       </h1>
@@ -189,20 +187,16 @@ export default async function PublicProfilePage({ params }: Props) {
                 </div>
               </div>
               <div className="hidden flex-wrap items-center gap-4 sm:flex">
-                <div className="h-20 w-20 overflow-hidden rounded-3xl border border-border/60 bg-muted/40">
-                  {avatar ? (
-                    // eslint-disable-next-line @next/next/no-img-element
+                {avatar ? (
+                  <div className="h-20 w-20 overflow-hidden rounded-3xl border-4 border-[var(--avatar-border)] bg-muted/40">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={avatar}
                       alt={`${displayName} avatar`}
                       className="h-full w-full object-cover"
                     />
-                  ) : (
-                    <span className="flex h-full w-full items-center justify-center text-2xl font-semibold text-foreground">
-                      {displayName?.[0]?.toUpperCase() ?? "L"}
-                    </span>
-                    )}
                   </div>
+                ) : null}
                 <div className="min-w-0 space-y-1">
                   <h1 className="break-words font-display text-3xl tracking-tight sm:text-4xl">
                     {displayName}

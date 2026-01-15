@@ -179,6 +179,20 @@ export function Navbar() {
     };
   }, [isDashboard, user?.id]);
 
+  useEffect(() => {
+    if (!isDashboard) return;
+    const handleUpdated = (event: Event) => {
+      const detail = (event as CustomEvent<{ handle?: string | null }>).detail;
+      if (detail?.handle) {
+        setAccountHandle(detail.handle);
+      }
+    };
+    window.addEventListener("linket:handle-updated", handleUpdated);
+    return () => {
+      window.removeEventListener("linket:handle-updated", handleUpdated);
+    };
+  }, [isDashboard]);
+
   const profileUrl = accountHandle ? buildPublicProfileUrl(accountHandle) : null;
 
   const handleViewProfile = () => {

@@ -55,6 +55,13 @@ function toPhoto(p: ContactProfile): string | null {
   return null;
 }
 
+function normalizeUrl(raw: string): string | null {
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `https://${trimmed.replace(/^\/+/, "")}`;
+}
+
 export function buildVCard(profile: ContactProfile): string {
   const lines: string[] = [];
   lines.push("BEGIN:VCARD");
@@ -69,7 +76,10 @@ export function buildVCard(profile: ContactProfile): string {
   (profile.emails || []).forEach((e) => lines.push(toEmail(e)));
   const adr = toAdr(profile.address);
   if (adr) lines.push(`ADR;TYPE=work:${adr}`);
-  if (profile.website) lines.push(`URL:${escapeText(profile.website)}`);
+  (profile.links || [])
+    .map((link) => normalizeUrl(link.url))
+    .filter((url): url is string => Boolean(url))
+    .forEach((url) => lines.push(`URL:${escapeText(url)}`));
   if (profile.note) lines.push(`NOTE:${escapeText(profile.note)}`);
   const photo = toPhoto(profile);
   if (photo) lines.push(photo);

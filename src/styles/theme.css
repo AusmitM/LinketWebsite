@@ -53,7 +53,7 @@
   --border: #d7deed;
   --input: #d7deed;
   --ring: var(--brand-blue);
-  --avatar-border: var(--background);
+  --avatar-border: var(--ring);
 
   --sidebar: #ffffff;
   --sidebar-foreground: #101828;
@@ -84,6 +84,7 @@
   --border: #d7deed;
   --input: #d7deed;
   --ring: #2563eb;
+  --avatar-border: var(--ring);
   --sidebar: #ffffff;
   --sidebar-foreground: #101828;
   --sidebar-primary: #2563eb;
@@ -113,6 +114,7 @@
   --border: #212f4a;
   --input: #212f4a;
   --ring: #63a8ff;
+  --avatar-border: var(--ring);
   --sidebar: #111a2b;
   --sidebar-foreground: #f6f8ff;
   --sidebar-primary: #63a8ff;
@@ -142,6 +144,7 @@
   --border: #261f56;
   --input: #261f56;
   --ring: #8d5fff;
+  --avatar-border: var(--ring);
   --sidebar: #0c0923;
   --sidebar-foreground: #f7f5ff;
   --sidebar-primary: #8d5fff;
@@ -171,6 +174,7 @@
   --border: #3f5045;
   --input: #3f5045;
   --ring: #9aa35c;
+  --avatar-border: var(--ring);
   --sidebar: #252d33;
   --sidebar-foreground: #f2efe3;
   --sidebar-primary: #7c5c48;
@@ -205,6 +209,7 @@
   --border: #3b3130;
   --input: #3b3130;
   --ring: #d3ac2c;
+  --avatar-border: var(--ring);
   --sidebar: #1d1d1f;
   --sidebar-foreground: #f7f0e2;
   --sidebar-primary: #b16c04;
@@ -234,6 +239,7 @@
   --border: #efcaa6;
   --input: #efcaa6;
   --ring: #d97706;
+  --avatar-border: var(--ring);
   --sidebar: #ffe5c5;
   --sidebar-foreground: #3c2012;
   --sidebar-primary: #d97706;
@@ -271,7 +277,7 @@
   --sidebar-accent-foreground: #4b240f;
   --sidebar-border: #f4c25a;
   --sidebar-ring: #df6206;
-  --avatar-border: #df6206;
+  --avatar-border: var(--ring);
 }
 
 .theme-honey .dashboard-topbar,

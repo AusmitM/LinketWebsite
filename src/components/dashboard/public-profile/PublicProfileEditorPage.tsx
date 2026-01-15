@@ -133,6 +133,7 @@ export default function PublicProfileEditorPage() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
+  const [handleError, setHandleError] = useState<string | null>(null);
   const [accountHandle, setAccountHandle] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [headerImageUrl, setHeaderImageUrl] = useState<string | null>(null);
@@ -454,12 +455,27 @@ export default function PublicProfileEditorPage() {
       });
       if (!res.ok) {
         const info = await res.json().catch(() => ({}));
-        throw new Error(info?.error || "Unable to save profile");
+        const suggestions = Array.isArray(info?.suggestions) ? info.suggestions : [];
+        const hint = suggestions.length ? `Try: ${suggestions.join(", ")}` : "";
+        const message = info?.error || "Unable to save profile";
+        if (res.status === 409 && info?.error) {
+          setHandleError(hint ? `${info.error} ${hint}` : info.error);
+        }
+        throw new Error(hint ? `${message} ${hint}` : message);
       }
       const saved = mergeProfileUi(
         mapProfile((await res.json()) as ProfileWithLinks),
         draftSnapshot
       );
+      setAccountHandle(saved.handle);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("linket:handle-updated", {
+            detail: { handle: saved.handle },
+          })
+        );
+      }
+      setHandleError(null);
       setSavedProfile(saved);
       setLastSavedAt(new Date().toISOString());
       const currentDraft = draftRef.current;
@@ -470,11 +486,13 @@ export default function PublicProfileEditorPage() {
       const message =
         err instanceof Error ? err.message : "Unable to save profile";
       setSaveError(message);
-      toast({
-        title: "Save failed",
-        description: message,
-        variant: "destructive",
-      });
+      if (!message.toLowerCase().includes("handle already taken")) {
+        toast({
+          title: "Save failed",
+          description: message,
+          variant: "destructive",
+        });
+      }
     } finally {
       setSaving(false);
     }
@@ -841,8 +859,8 @@ export default function PublicProfileEditorPage() {
               onRegisterLeadFormReorder={(reorder) => {
                 leadFormReorderRef.current = reorder;
               }}
-            onAvatarUpdate={setAvatarUrl}
-            onHeaderImageUpdate={(payload) => {
+              onAvatarUpdate={setAvatarUrl}
+              onHeaderImageUpdate={(payload) => {
               const nextPath = payload.path || null;
               const nextUpdatedAt = payload.path ? payload.version : null;
               setHeaderImageUrl(payload.publicUrl || null);
@@ -867,22 +885,24 @@ export default function PublicProfileEditorPage() {
                     }
                   : prev
               );
-            }}
-            onProfileChange={handleProfileChange}
-            onAddLink={addLink}
-            onUpdateLink={updateLink}
-            onEditLink={openEditLink}
-            onRemoveLink={removeLink}
-            onToggleLink={(linkId) =>
-              updateLink(linkId, {
-                visible: !draft?.links.find((link) => link.id === linkId)?.visible,
-              })
-            }
+              }}
+              onProfileChange={handleProfileChange}
+              onAddLink={addLink}
+              onUpdateLink={updateLink}
+              onEditLink={openEditLink}
+              onRemoveLink={removeLink}
+              onToggleLink={(linkId) =>
+                updateLink(linkId, {
+                  visible: !draft?.links.find((link) => link.id === linkId)?.visible,
+                })
+              }
               onReorderLink={reorderLinks}
               draggingLinkId={draggingLinkId}
               setDraggingLinkId={setDraggingLinkId}
               onVCardFields={handleVCardFieldsChange}
               onVCardStatus={handleVCardStatusChange}
+              handleError={handleError}
+              setHandleError={setHandleError}
             />
           </div>
           {activeSection !== "preview" ? (
@@ -1009,6 +1029,8 @@ function EditorPanel({
   setDraggingLinkId,
   onVCardFields,
   onVCardStatus,
+  handleError,
+  setHandleError,
 }: {
   activeSection: SectionId;
   draft: ProfileDraft | null;
@@ -1044,6 +1066,8 @@ function EditorPanel({
     isDirty: boolean;
     error: string | null;
   }) => void;
+  handleError: string | null;
+  setHandleError: (value: string | null) => void;
 }) {
   if (activeSection === "preview") {
     return <div className="flex justify-center">{previewNode}</div>;
@@ -1139,15 +1163,19 @@ function EditorPanel({
               <Input
                 id="profile-handle"
                 value={draft?.handle ?? accountHandle ?? ""}
-                onChange={(event) =>
+                onChange={(event) => {
+                  setHandleError(null);
                   onProfileChange({
                     handle: event.target.value.replace(/\s+/g, "").toLowerCase(),
-                  })
-                }
-                className="h-9 pl-40 text-sm"
+                  });
+                }}
+                className={`h-9 pl-40 text-sm${handleError ? " border-destructive focus-visible:ring-destructive" : ""}`}
                 disabled={loading || !userId}
               />
             </div>
+            {handleError ? (
+              <p className="text-xs text-destructive">{handleError}</p>
+            ) : null}
           </div>
         </CardContent>
       </Card>
@@ -1373,21 +1401,17 @@ function PhonePreviewCard({
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background/20" />
       </div>
       <div className="flex flex-col items-center px-6 pb-6">
-        <div className="-mt-16 h-28 w-28 overflow-hidden rounded-3xl border-4 border-[var(--avatar-border)] bg-background shadow-sm relative z-10">
-          {avatarUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
+        {avatarUrl ? (
+          <div className="-mt-16 h-28 w-28 overflow-hidden rounded-3xl border-4 border-[var(--avatar-border)] bg-background shadow-sm relative z-10">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={avatarUrl}
               alt=""
               className="h-full w-full object-cover"
             />
-          ) : (
-            <span className="flex h-full w-full items-center justify-center text-2xl font-semibold text-foreground">
-              {profile.name?.[0]?.toUpperCase() ?? "L"}
-            </span>
-          )}
-        </div>
-        <div className="mt-3 text-center">
+          </div>
+        ) : null}
+        <div className={avatarUrl ? "mt-3 text-center" : "mt-2 text-center"}>
           <div className="mx-auto max-w-[240px] truncate text-base font-semibold text-foreground">
             {profile.name}
           </div>

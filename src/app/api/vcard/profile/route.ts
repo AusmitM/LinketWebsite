@@ -7,8 +7,12 @@ type VCardFields = {
   email: string;
   phone: string;
   company: string;
-  website: string;
-  address: string;
+  addressLine1: string;
+  addressLine2: string;
+  addressCity: string;
+  addressRegion: string;
+  addressPostal: string;
+  addressCountry: string;
   note: string;
   photoData: string | null;
   photoName: string | null;
@@ -20,12 +24,73 @@ const EMPTY_FIELDS: VCardFields = {
   email: "",
   phone: "",
   company: "",
-  website: "",
-  address: "",
+  addressLine1: "",
+  addressLine2: "",
+  addressCity: "",
+  addressRegion: "",
+  addressPostal: "",
+  addressCountry: "",
   note: "",
   photoData: null,
   photoName: null,
 };
+
+function serializeAddress(fields: VCardFields) {
+  const payload = {
+    line1: fields.addressLine1?.trim() || "",
+    line2: fields.addressLine2?.trim() || "",
+    city: fields.addressCity?.trim() || "",
+    region: fields.addressRegion?.trim() || "",
+    postalCode: fields.addressPostal?.trim() || "",
+    country: fields.addressCountry?.trim() || "",
+  };
+  const hasValue = Object.values(payload).some((value) => value);
+  return hasValue ? JSON.stringify(payload) : null;
+}
+
+function parseAddress(value: string | null) {
+  if (!value) {
+    return {
+      addressLine1: "",
+      addressLine2: "",
+      addressCity: "",
+      addressRegion: "",
+      addressPostal: "",
+      addressCountry: "",
+    };
+  }
+  const trimmed = value.trim();
+  if (trimmed.startsWith("{")) {
+    try {
+      const parsed = JSON.parse(trimmed) as Partial<{
+        line1: string;
+        line2: string;
+        city: string;
+        region: string;
+        postalCode: string;
+        country: string;
+      }>;
+      return {
+        addressLine1: parsed.line1 ?? "",
+        addressLine2: parsed.line2 ?? "",
+        addressCity: parsed.city ?? "",
+        addressRegion: parsed.region ?? "",
+        addressPostal: parsed.postalCode ?? "",
+        addressCountry: parsed.country ?? "",
+      };
+    } catch {
+      // fall through to legacy handling
+    }
+  }
+  return {
+    addressLine1: trimmed,
+    addressLine2: "",
+    addressCity: "",
+    addressRegion: "",
+    addressPostal: "",
+    addressCountry: "",
+  };
+}
 
 async function requireUser(supabase: Awaited<ReturnType<typeof createServerSupabase>>) {
   const { data, error } = await supabase.auth.getUser();
@@ -52,9 +117,7 @@ export async function GET(request: NextRequest) {
 
     const { data, error } = await supabase
       .from("vcard_profiles")
-      .select(
-        "full_name,title,email,phone,company,website,address,note,photo_data,photo_name"
-      )
+      .select("full_name,title,email,phone,company,address,note,photo_data,photo_name")
       .eq("user_id", userId)
       .maybeSingle();
     if (error && error.code !== "PGRST116") throw error;
@@ -69,8 +132,7 @@ export async function GET(request: NextRequest) {
       email: data.email ?? "",
       phone: data.phone ?? "",
       company: data.company ?? "",
-      website: data.website ?? "",
-      address: data.address ?? "",
+      ...parseAddress(data.address ?? null),
       note: data.note ?? "",
       photoData: data.photo_data ?? null,
       photoName: data.photo_name ?? null,
@@ -114,8 +176,7 @@ export async function POST(request: NextRequest) {
       email: fields.email?.trim() || null,
       phone: fields.phone?.trim() || null,
       company: fields.company?.trim() || null,
-      website: fields.website?.trim() || null,
-      address: fields.address?.trim() || null,
+      address: serializeAddress(fields),
       note: fields.note?.trim() || null,
       photo_data: fields.photoData ?? null,
       photo_name: fields.photoName ?? null,

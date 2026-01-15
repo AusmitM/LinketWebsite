@@ -23,7 +23,7 @@ const themes: Record<ThemeName, Vars> = {
     "--border": "#d7deed",
     "--input": "#d7deed",
     "--ring": "#2563eb",
-    "--avatar-border": "#f5f7fb",
+    "--avatar-border": "#2563eb",
   },
   dark: {
     "--background": "#121826",
@@ -38,7 +38,7 @@ const themes: Record<ThemeName, Vars> = {
     "--border": "#1f2b45",
     "--input": "#1f2b45",
     "--ring": "#60a5fa",
-    "--avatar-border": "#121826",
+    "--avatar-border": "#60a5fa",
   },
   midnight: {
     "--background": "#050414",
@@ -53,7 +53,7 @@ const themes: Record<ThemeName, Vars> = {
     "--border": "#1f1a3d",
     "--input": "#1f1a3d",
     "--ring": "#8b5cf6",
-    "--avatar-border": "#050414",
+    "--avatar-border": "#8b5cf6",
   },
   forest: {
     "--background": "#1f262b",
@@ -68,7 +68,7 @@ const themes: Record<ThemeName, Vars> = {
     "--border": "#48554b",
     "--input": "#48554b",
     "--ring": "#d7e58a",
-    "--avatar-border": "#1f262b",
+    "--avatar-border": "#d7e58a",
   },
   gilded: {
     "--background": "#010203",
@@ -83,7 +83,7 @@ const themes: Record<ThemeName, Vars> = {
     "--border": "#3b3130",
     "--input": "#3b3130",
     "--ring": "#d3ac2c",
-    "--avatar-border": "#010203",
+    "--avatar-border": "#d3ac2c",
   },
   autumn: {
     "--background": "#fff6ed",
@@ -98,7 +98,7 @@ const themes: Record<ThemeName, Vars> = {
     "--border": "#f1cfb0",
     "--input": "#f1cfb0",
     "--ring": "#d97706",
-    "--avatar-border": "#fff6ed",
+    "--avatar-border": "#d97706",
   },
   honey: {
     "--background": "#f7dcab",

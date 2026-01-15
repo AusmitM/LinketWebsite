@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   getProfilesForUser,
   saveProfileForUser,
+  isHandleConflictError,
   type ProfilePayload,
 } from "@/lib/profile-service";
 import { isSupabaseAdminAvailable } from "@/lib/supabase-admin";
@@ -61,6 +62,31 @@ async function ensureHasActiveProfile(
     .update({ is_active: true, updated_at: new Date().toISOString() })
     .eq("id", fallbackId)
     .eq("user_id", userId);
+}
+
+async function suggestHandles(
+  supabase: Awaited<ReturnType<typeof createServerSupabase>>,
+  handle: string
+): Promise<string[]> {
+  const { data } = await supabase
+    .from("user_profiles")
+    .select("handle")
+    .like("handle", `${handle}%`)
+    .limit(25);
+  const taken = new Set(
+    (data ?? [])
+      .map((row) => (row as { handle?: string | null }).handle)
+      .filter((value): value is string => Boolean(value))
+  );
+  taken.add(handle);
+  const suggestions: string[] = [];
+  for (let i = 1; i <= 50 && suggestions.length < 3; i += 1) {
+    const candidate = `${handle}-${i}`;
+    if (!taken.has(candidate)) {
+      suggestions.push(candidate);
+    }
+  }
+  return suggestions;
 }
 
 export async function GET(request: NextRequest) {
@@ -155,7 +181,22 @@ export async function POST(request: NextRequest) {
           },
         });
       } catch (adminError) {
+        if (isHandleConflictError(adminError)) {
+          return NextResponse.json(
+            { error: adminError.message, suggestions: adminError.suggestions },
+            { status: 409 }
+          );
+        }
         console.error("Linket profiles admin save error:", adminError);
+        return NextResponse.json(
+          {
+            error:
+              adminError instanceof Error
+                ? adminError.message
+                : "Failed to save profile",
+          },
+          { status: 500 }
+        );
       }
     }
 
@@ -177,6 +218,38 @@ export async function POST(request: NextRequest) {
         { error: "Handle is required" },
         { status: 400 }
       );
+    }
+
+    if (profile.id) {
+      const { data } = await supabase
+        .from("user_profiles")
+        .select("id")
+        .eq("handle", handle)
+        .maybeSingle();
+      if (data && (data as { id?: string }).id !== profile.id) {
+        return NextResponse.json(
+          {
+            error: "Handle already taken",
+            suggestions: await suggestHandles(supabase, handle),
+          },
+          { status: 409 }
+        );
+      }
+    } else {
+      const { data } = await supabase
+        .from("user_profiles")
+        .select("id")
+        .eq("handle", handle)
+        .maybeSingle();
+      if (data) {
+        return NextResponse.json(
+          {
+            error: "Handle already taken",
+            suggestions: await suggestHandles(supabase, handle),
+          },
+          { status: 409 }
+        );
+      }
     }
 
     let profileId = profile.id ?? null;
