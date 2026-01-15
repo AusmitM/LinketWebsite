@@ -238,7 +238,10 @@ export default async function PublicProfilePage({ params }: Props) {
             </div>
 
             {hasLeadForm ? (
-              <div className="rounded-[28px] border border-border/60 bg-card/80 p-6 shadow-[0_24px_60px_-40px_rgba(15,23,42,0.7)]">
+              <div
+                id="public-lead-form"
+                className="rounded-[28px] border border-border/60 bg-card/80 p-6 shadow-[0_24px_60px_-40px_rgba(15,23,42,0.7)]"
+              >
                 <div className="space-y-2">
                   <h2 className="text-lg font-semibold text-foreground">
                     {leadFormTitle}

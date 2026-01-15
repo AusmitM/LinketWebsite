@@ -80,7 +80,19 @@ export default function ShareContactButton({
   async function shareContact() {
     const picker = (navigator as Navigator & { contacts?: ContactPicker })
       .contacts;
-    if (!picker?.select) return;
+    if (!picker?.select) {
+      if (typeof document !== "undefined") {
+        document.getElementById("public-lead-form")?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }
+      toast({
+        title: "Share contact",
+        description: "Fill out the form below to share your contact.",
+      });
+      return;
+    }
     try {
       setSharing(true);
       const response = await fetch(
@@ -146,8 +158,6 @@ export default function ShareContactButton({
       setSharing(false);
     }
   }
-
-  if (!supported) return null;
 
   return (
     <Button
