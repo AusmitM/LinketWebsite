@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { toast } from "@/components/system/toaster";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL;
-const DEFAULT_NEXT = "/dashboard/linkets";
+const DEFAULT_NEXT = "/dashboard/overview";
 
 export default function AuthPage() {
   const router = useRouter();
@@ -27,6 +27,32 @@ export default function AuthPage() {
   const siteUrl =
     SITE_URL ?? (typeof window !== "undefined" ? window.location.origin : "");
 
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const resolveRedirect = useCallback(
+    async (session: unknown) => {
+      try {
+        const response = await fetch("/auth/callback", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ event: "SIGNED_IN", session }),
+        });
+        if (!response.ok) return next || DEFAULT_NEXT;
+        const payload = await response.json().catch(() => null);
+        if (payload && typeof payload.redirectTo === "string") {
+          return payload.redirectTo;
+        }
+      } catch {
+        return next || DEFAULT_NEXT;
+      }
+      return next || DEFAULT_NEXT;
+    },
+    [next]
+  );
+
   useEffect(() => {
     let active = true;
 
@@ -34,7 +60,7 @@ export default function AuthPage() {
       const { data } = await supabase.auth.getSession();
       if (!active) return;
       if (data.session) {
-        const destination = next || DEFAULT_NEXT;
+        const destination = await resolveRedirect(data.session);
         router.replace(destination);
         router.refresh();
       }
@@ -42,9 +68,9 @@ export default function AuthPage() {
 
     syncSession();
 
-    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (!session) return;
-      const destination = next || DEFAULT_NEXT;
+      const destination = await resolveRedirect(session);
       router.replace(destination);
       router.refresh();
     });
@@ -53,12 +79,7 @@ export default function AuthPage() {
       active = false;
       data.subscription.unsubscribe();
     };
-  }, [supabase, router, next]);
-
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  }, [supabase, router, resolveRedirect]);
 
   const handlePasswordSignUp = useCallback(
     async (event: FormEvent<HTMLFormElement>) => {
@@ -93,14 +114,7 @@ export default function AuthPage() {
 
         if (data.session) {
           // User is immediately signed in
-          const response = await fetch("/auth/callback", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ event: "SIGNED_IN", session: data.session }),
-          });
-          if (!response.ok) {
-            throw new Error("Could not finalize session. Please try again.");
-          }
+          const destination = await resolveRedirect(data.session);
 
           toast({
             title: "Account created!",
@@ -108,7 +122,6 @@ export default function AuthPage() {
             variant: "success",
           });
 
-          const destination = next || DEFAULT_NEXT;
           router.replace(destination);
           router.refresh();
         } else {
@@ -132,7 +145,7 @@ export default function AuthPage() {
         setPending(false);
       }
     },
-    [email, password, supabase, router, next]
+    [email, password, supabase, router, next, resolveRedirect]
   );
 
   const handlePasswordSignIn = useCallback(
@@ -155,16 +168,9 @@ export default function AuthPage() {
           throw error;
         }
 
-        if (data.session) {
-          const response = await fetch("/auth/callback", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ event: "SIGNED_IN", session: data.session }),
-          });
-          if (!response.ok) {
-            throw new Error("Could not finalize session. Please try again.");
-          }
-        }
+        const destination = data.session
+          ? await resolveRedirect(data.session)
+          : next || DEFAULT_NEXT;
 
         toast({
           title: "Welcome back!",
@@ -172,7 +178,6 @@ export default function AuthPage() {
           variant: "success",
         });
 
-        const destination = next || DEFAULT_NEXT;
         router.replace(destination);
         router.refresh();
       } catch (err) {
@@ -185,7 +190,7 @@ export default function AuthPage() {
         setPending(false);
       }
     },
-    [email, password, supabase, router, next]
+    [email, password, supabase, router, next, resolveRedirect]
   );
 
   const handleOAuth = useCallback(

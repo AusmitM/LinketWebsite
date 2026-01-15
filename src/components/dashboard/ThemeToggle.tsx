@@ -1,7 +1,17 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Hexagon, Sun, Moon, MoonStar, Trees, Sparkles, Leaf } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Hexagon,
+  Sun,
+  Moon,
+  MoonStar,
+  Trees,
+  Sparkles,
+  Leaf,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useThemeOptional } from "@/components/theme/theme-provider";
 import { useDashboardUser } from "@/components/dashboard/DashboardSessionContext";
@@ -136,21 +146,63 @@ export default function ThemeToggle({ showLabel = false }: { showLabel?: boolean
     void syncPublicTheme(value);
   }
 
+  function previous() {
+    const nextIndex = (index - 1 + ORDER.length) % ORDER.length;
+    const value = ORDER[nextIndex];
+    setIndex(nextIndex);
+    writePendingTheme(value);
+    setTheme(value);
+    void syncPublicTheme(value);
+  }
+
   const current = ORDER[index] || ORDER[0];
   const Icon = ICONS[current];
   const label = LABELS[current];
 
+  if (!showLabel) {
+    return (
+      <Button
+        variant="ghost"
+        size="icon"
+        aria-label={`Theme: ${label}`}
+        onClick={next}
+        title={`Theme: ${label}`}
+      >
+        <Icon className="h-5 w-5" />
+      </Button>
+    );
+  }
+
   return (
-    <Button
-      variant="ghost"
-      size={showLabel ? "sm" : "icon"}
-      aria-label={`Theme: ${label}`}
-      onClick={next}
-      title={`Theme: ${label}`}
-      className={showLabel ? "gap-2 px-2" : undefined}
-    >
-      <Icon className="h-5 w-5" />
-      {showLabel ? <span className="text-xs font-medium text-muted-foreground">{label}</span> : null}
-    </Button>
+    <div className="flex w-full items-center gap-2 rounded-xl border border-border/60 bg-card/80 px-2 py-1.5 shadow-sm backdrop-blur">
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        onClick={previous}
+        aria-label="Previous theme"
+        className="h-8 w-8 rounded-lg"
+      >
+        <ChevronLeft className="h-4 w-4" />
+      </Button>
+      <div
+        aria-label={`Theme: ${label}`}
+        title={`Theme: ${label}`}
+        className="flex flex-1 items-center gap-2 rounded-lg px-2 text-xs"
+      >
+        <Icon className="h-5 w-5" />
+        <span className="font-medium text-muted-foreground">{label}</span>
+      </div>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        onClick={next}
+        aria-label="Next theme"
+        className="h-8 w-8 rounded-lg"
+      >
+        <ChevronRight className="h-4 w-4" />
+      </Button>
+    </div>
   );
 }

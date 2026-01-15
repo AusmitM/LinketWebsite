@@ -178,15 +178,8 @@ export default function Sidebar({
             </button>
           )}
         </div>
-        <div className="px-3 pb-2">
-          <div
-            className={cn(
-              "flex items-center gap-2 rounded-xl border border-border/60 bg-card/80 px-2 py-1.5 shadow-sm backdrop-blur",
-              isCollapsed && "justify-center"
-            )}
-          >
-            <ThemeToggle showLabel={!isCollapsed || isMobile} />
-          </div>
+        <div className={cn("px-3 pb-2", isCollapsed && "flex justify-center")}>
+          <ThemeToggle showLabel={!isCollapsed || isMobile} />
         </div>
         <nav className="flex-1 space-y-1 px-2">
           {navItems.map((item) => {
