@@ -684,7 +684,8 @@ export default function PublicLeadForm({
                 isPhoneField(field) ? formatPhoneNumber(nextValue) : nextValue
               );
             }}
-            type={isEmailField(field) ? "email" : "text"}
+            type={isPhoneField(field) ? "tel" : isEmailField(field) ? "email" : "text"}
+            inputMode={isPhoneField(field) ? "tel" : undefined}
             placeholder={field.helpText || undefined}
             className={inputClassName}
             aria-invalid={hasError || undefined}

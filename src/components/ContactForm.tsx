@@ -176,7 +176,7 @@ export default function ContactForm({ initial, onSave }: { initial: ContactProfi
           <legend className="text-sm font-medium">Phones</legend>
           {phones.fields.map((f, idx) => (
             <div className="grid grid-cols-[1fr_7rem_5rem_2rem] items-center gap-2" key={f.id}>
-              <Input {...register(`phones.${idx}.value` as const)} placeholder="+15551234567" />
+              <Input {...register(`phones.${idx}.value` as const)} type="tel" inputMode="tel" placeholder="+15551234567" />
               <select className="rounded-md border px-2 py-2" {...register(`phones.${idx}.type` as const)}>
                 <option value="cell">cell</option>
                 <option value="work">work</option>

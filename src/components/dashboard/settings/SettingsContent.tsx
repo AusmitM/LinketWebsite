@@ -234,6 +234,8 @@ export default function SettingsContent() {
                 </Label>
                 <Input
                   id="settings-phone"
+                  type="tel"
+                  inputMode="tel"
                   value={phone}
                   onChange={(event) => setPhone(formatPhoneNumber(event.target.value))}
                   onBlur={(event) => setPhone(formatPhoneNumber(event.target.value))}
