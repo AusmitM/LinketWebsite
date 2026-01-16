@@ -1389,7 +1389,13 @@ function PhonePreviewCard({
 
   return (
     <div className="h-fit w-full max-w-[340px] overflow-hidden rounded-[36px] border border-border/60 bg-background shadow-[0_20px_40px_-30px_rgba(15,23,42,0.3)]">
-      <div className="relative h-28 rounded-t-[36px] bg-gradient-to-r from-[#e6a639] via-[#6cdadd] to-[#53bede]">
+      <div
+        className="relative h-28 rounded-t-[36px]"
+        style={{
+          backgroundImage:
+            "linear-gradient(90deg, var(--primary), var(--accent), var(--ring))",
+        }}
+      >
         {headerImageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img

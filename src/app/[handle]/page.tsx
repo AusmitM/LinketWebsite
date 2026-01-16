@@ -143,7 +143,13 @@ export default async function PublicProfilePage({ params }: Props) {
             <div className="space-y-6">
               <div className="sm:hidden">
                 <div className="public-profile-card overflow-hidden rounded-3xl border border-border/60 bg-card/70">
-                  <div className="relative h-32 bg-gradient-to-r from-[#e6a639] via-[#6cdadd] to-[#53bede]">
+                  <div
+                    className="relative h-32"
+                    style={{
+                      backgroundImage:
+                        "linear-gradient(90deg, var(--primary), var(--accent), var(--ring))",
+                    }}
+                  >
                     {headerImage ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img

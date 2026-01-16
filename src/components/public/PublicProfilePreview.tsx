@@ -146,7 +146,13 @@ export default function PublicProfilePreview({
               <div className="space-y-6">
               <div className={forceMobile ? "" : "sm:hidden"}>
                 <div className="overflow-hidden rounded-3xl border border-border/60 bg-card/70">
-                  <div className="relative h-32">
+                  <div
+                    className="relative h-32"
+                    style={{
+                      backgroundImage:
+                        "linear-gradient(90deg, var(--primary), var(--accent), var(--ring))",
+                    }}
+                  >
                     {headerImage ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
@@ -154,9 +160,7 @@ export default function PublicProfilePreview({
                         alt=""
                         className="h-full w-full object-cover"
                       />
-                    ) : (
-                      <div className="h-full w-full bg-gradient-to-r from-[#7C4DA0] via-[#B26A85] to-[#E1A37B]" />
-                    )}
+                    ) : null}
                     <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background/40" />
                   </div>
                   <div
@@ -281,7 +285,13 @@ export default function PublicProfilePreview({
               <div className="space-y-6">
               <div className={forceMobile ? "" : "sm:hidden"}>
                 <div className="overflow-hidden rounded-3xl border border-border/60 bg-card/70">
-                  <div className="relative h-32">
+                  <div
+                    className="relative h-32"
+                    style={{
+                      backgroundImage:
+                        "linear-gradient(90deg, var(--primary), var(--accent), var(--ring))",
+                    }}
+                  >
                     {headerImage ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
@@ -289,9 +299,7 @@ export default function PublicProfilePreview({
                         alt=""
                         className="h-full w-full object-cover"
                       />
-                    ) : (
-                      <div className="h-full w-full bg-gradient-to-r from-[#e6a639] via-[#6cdadd] to-[#53bede]" />
-                    )}
+                    ) : null}
                     <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background/40" />
                   </div>
                   <div
