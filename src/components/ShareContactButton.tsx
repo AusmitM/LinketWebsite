@@ -12,26 +12,45 @@ type ContactPickerContact = {
   email?: string[];
   tel?: string[];
   organization?: string[];
+  icon?: Array<Blob | string>;
 };
 
 type ContactPicker = {
   select: (
-    properties: Array<"name" | "email" | "tel" | "organization">,
+    properties: ContactProperty[],
     options?: { multiple?: boolean }
   ) => Promise<ContactPickerContact[]>;
+  getProperties?: () => Promise<ContactProperty[]>;
 };
+
+const CONTACT_PROPERTIES = [
+  "name",
+  "email",
+  "tel",
+  "organization",
+  "icon",
+] as const;
+type ContactProperty = (typeof CONTACT_PROPERTIES)[number];
+const DEFAULT_PROPERTIES: ContactProperty[] = ["name", "email", "tel"];
+const PHOTO_LABELS = ["photo", "avatar", "headshot", "picture", "image"];
+const COMPANY_LABELS = ["company", "organization", "org"];
+const MAX_PHOTO_BYTES = 220 * 1024;
 
 function getFirst(value?: string[] | null) {
   if (!value || !value.length) return "";
   return value[0] ?? "";
 }
 
+function matchesLabel(label: string, needles: string[]) {
+  return needles.some((needle) => label.includes(needle));
+}
+
 function buildAnswers(form: LeadFormConfig, contact: ContactPickerContact) {
   const name = getFirst(contact.name);
   const email = getFirst(contact.email);
   const phone = getFirst(contact.tel);
-  const company = getFirst(contact.organization);
   const answers: LeadFormSubmission["answers"] = {};
+  const company = getFirst(contact.organization);
 
   for (const field of form.fields) {
     if (field.type === "section") continue;
@@ -48,13 +67,69 @@ function buildAnswers(form: LeadFormConfig, contact: ContactPickerContact) {
       answers[field.id] = { value: phone };
       continue;
     }
-    if (company && !answers[field.id] && label.includes("company")) {
+    if (company && !answers[field.id] && matchesLabel(label, COMPANY_LABELS)) {
       answers[field.id] = { value: company };
       continue;
     }
   }
 
   return { answers, responderEmail: email || null };
+}
+
+async function resolvePickerProperties(picker: ContactPicker) {
+  if (typeof picker.getProperties !== "function") {
+    return DEFAULT_PROPERTIES;
+  }
+  try {
+    const supported = await picker.getProperties();
+    if (!Array.isArray(supported) || !supported.length) {
+      return DEFAULT_PROPERTIES;
+    }
+    const properties = CONTACT_PROPERTIES.filter((prop) =>
+      supported.includes(prop)
+    );
+    return properties.length ? properties : DEFAULT_PROPERTIES;
+  } catch {
+    return DEFAULT_PROPERTIES;
+  }
+}
+
+function getPhotoFieldId(form: LeadFormConfig) {
+  for (const field of form.fields) {
+    if (field.type === "section") continue;
+    if (field.type !== "short_text" && field.type !== "long_text") continue;
+    const label = field.label.toLowerCase();
+    if (matchesLabel(label, PHOTO_LABELS)) return field.id;
+  }
+  return null;
+}
+
+function readBlobAsDataUrl(blob: Blob) {
+  return new Promise<string | null>((resolve) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      resolve(typeof reader.result === "string" ? reader.result : null);
+    };
+    reader.onerror = () => resolve(null);
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function buildPhotoAnswer(
+  form: LeadFormConfig,
+  contact: ContactPickerContact
+) {
+  const fieldId = getPhotoFieldId(form);
+  if (!fieldId) return null;
+  const icon = contact.icon?.[0];
+  if (!icon) return null;
+  if (typeof icon === "string") {
+    return icon ? { fieldId, value: icon } : null;
+  }
+  if (icon.size > MAX_PHOTO_BYTES) return null;
+  const dataUrl = await readBlobAsDataUrl(icon);
+  if (!dataUrl) return null;
+  return { fieldId, value: dataUrl };
 }
 
 export default function ShareContactButton({
@@ -102,13 +177,18 @@ export default function ShareContactButton({
         throw new Error("Lead form unavailable");
       }
 
-      const contacts = await picker.select(["name", "email", "tel", "organization"], {
+      const properties = await resolvePickerProperties(picker);
+      const contacts = await picker.select(properties, {
         multiple: false,
       });
       const contact = contacts[0];
       if (!contact) return;
 
       const { answers, responderEmail } = buildAnswers(payload.form, contact);
+      const photoAnswer = await buildPhotoAnswer(payload.form, contact);
+      if (photoAnswer) {
+        answers[photoAnswer.fieldId] = { value: photoAnswer.value };
+      }
       if (!Object.keys(answers).length) {
         toast({
           title: "Contact not shared",
