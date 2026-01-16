@@ -32,17 +32,4 @@ const TestimonialSlider = dynamic(
   }
 );
 
-const LiveDemoWorkspaceCard = dynamic(
-  () =>
-    import("@/components/landing/live-demo-workspace-card").then(
-      (mod) => mod.LiveDemoWorkspaceCard
-    ),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="mt-6 h-[320px] w-full rounded-3xl border border-white/60 bg-white/80" />
-    ),
-  }
-);
-
-export { FeatureSteps, LiveDemoWorkspaceCard, TestimonialSlider };
+export { FeatureSteps, TestimonialSlider };
