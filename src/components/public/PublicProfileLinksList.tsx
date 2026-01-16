@@ -49,7 +49,7 @@ export default function PublicProfileLinksList({
           target="_blank"
           rel="noreferrer"
           onClick={() => trackClick(link.id)}
-          className="group flex min-w-0 items-center justify-between gap-4 overflow-hidden rounded-2xl border border-border/60 bg-card/80 px-4 py-3 transition hover:border-[color:var(--ring)] hover:shadow-[0_18px_45px_-35px_var(--ring)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]"
+          className="public-profile-link group flex min-w-0 items-center justify-between gap-4 overflow-hidden rounded-2xl border border-border/60 bg-card/80 px-4 py-3 transition hover:border-[color:var(--ring)] hover:shadow-[0_18px_45px_-35px_var(--ring)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]"
         >
           <div className="flex min-w-0 flex-1 items-center gap-3">
             {faviconForUrl(link.url) ? (
@@ -57,7 +57,9 @@ export default function PublicProfileLinksList({
               <img
                 src={faviconForUrl(link.url) ?? ""}
                 alt=""
-                className="h-6 w-6 rounded"
+                loading="lazy"
+                decoding="async"
+                className="public-profile-link-icon h-6 w-6 rounded"
                 aria-hidden
               />
             ) : null}

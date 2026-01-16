@@ -137,6 +137,28 @@ html {
   scroll-behavior: smooth;
 }
 
+:root[data-lite="true"] .public-profile-heavy {
+  display: none !important;
+}
+
+:root[data-lite="true"] .public-profile-card {
+  box-shadow: none !important;
+  background-color: var(--card);
+}
+
+:root[data-lite="true"] .public-profile-link {
+  box-shadow: none !important;
+  transition: none !important;
+}
+
+:root[data-lite="true"] .public-profile-link-icon {
+  display: none !important;
+}
+
+:root[data-lite="true"] .public-profile-header-image {
+  display: none !important;
+}
+
 
 
 

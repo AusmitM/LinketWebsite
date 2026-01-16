@@ -9,6 +9,7 @@ import { isDarkTheme } from "@/lib/themes";
 import type { ProfileLinkRecord } from "@/types/db";
 import type { LeadFormConfig } from "@/types/lead-form";
 import PublicProfileLinksList from "@/components/public/PublicProfileLinksList";
+import PublicProfileLiteMode from "@/components/public/PublicProfileLiteMode";
 import PublicLeadForm from "@/components/public/PublicLeadForm";
 import VCardDownload from "@/components/VCardDownload";
 import ShareContactButton from "@/components/ShareContactButton";
@@ -116,8 +117,9 @@ export default async function PublicProfilePage({ params }: Props) {
 
   return (
     <div className={`min-h-screen bg-background text-foreground ${themeClass}`}>
+      <PublicProfileLiteMode />
       <div className="relative overflow-hidden">
-        <div className="pointer-events-none absolute inset-0 -z-10">
+        <div className="pointer-events-none absolute inset-0 -z-10 public-profile-heavy">
           <div
             className="absolute -left-32 top-[-140px] h-[360px] w-[360px] rounded-full blur-[120px] opacity-20"
             style={{ backgroundColor: "var(--ring)" }}
@@ -140,19 +142,20 @@ export default async function PublicProfilePage({ params }: Props) {
           <section className="grid gap-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
             <div className="space-y-6">
               <div className="sm:hidden">
-                <div className="overflow-hidden rounded-3xl border border-border/60 bg-card/70">
-                  <div className="relative h-32">
+                <div className="public-profile-card overflow-hidden rounded-3xl border border-border/60 bg-card/70">
+                  <div className="relative h-32 bg-gradient-to-r from-[#e6a639] via-[#6cdadd] to-[#53bede]">
                     {headerImage ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={headerImage}
                         alt=""
-                        className="h-full w-full object-cover"
+                        loading="lazy"
+                        decoding="async"
+                        fetchPriority="low"
+                        className="public-profile-header-image h-full w-full object-cover"
                       />
-                    ) : (
-                      <div className="h-full w-full bg-gradient-to-r from-[#e6a639] via-[#6cdadd] to-[#53bede]" />
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background/40" />
+                    ) : null}
+                    <div className="public-profile-heavy absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background/40" />
                   </div>
                   <div
                     className={
@@ -167,6 +170,7 @@ export default async function PublicProfilePage({ params }: Props) {
                         <img
                           src={avatar}
                           alt={`${displayName} avatar`}
+                          decoding="async"
                           className="h-full w-full object-cover"
                         />
                       </div>
@@ -194,6 +198,7 @@ export default async function PublicProfilePage({ params }: Props) {
                     <img
                       src={avatar}
                       alt={`${displayName} avatar`}
+                      decoding="async"
                       className="h-full w-full object-cover"
                     />
                   </div>
@@ -240,7 +245,7 @@ export default async function PublicProfilePage({ params }: Props) {
             {hasLeadForm ? (
               <div
                 id="public-lead-form"
-                className="rounded-[28px] border border-border/60 bg-card/80 p-6 shadow-[0_24px_60px_-40px_rgba(15,23,42,0.7)]"
+                className="public-profile-card rounded-[28px] border border-border/60 bg-card/80 p-6 shadow-[0_24px_60px_-40px_rgba(15,23,42,0.7)]"
               >
                 <div className="space-y-2">
                   <h2 className="text-lg font-semibold text-foreground">

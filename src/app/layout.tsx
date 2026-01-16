@@ -6,6 +6,7 @@ import PrefetchRoutes from "@/components/site/PrefetchRoutes";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import Footer from "@/components/site/footer";
 import { Toaster } from "@/components/system/toaster";
+import ServiceWorkerRegister from "@/components/system/ServiceWorkerRegister";
 import "@/styles/theme.css";
 import Script from "next/script";
 import { CustomizationProvider } from "@/components/providers/customization-provider";
@@ -124,6 +125,7 @@ export default function RootLayout({
             >
               {JSON.stringify(productJsonLd)}
             </Script>
+            <ServiceWorkerRegister />
             <Toaster />
           </CustomizationProvider>
         </ThemeProvider>
