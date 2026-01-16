@@ -31,9 +31,9 @@ function normalizeTel(v: string): string {
 
 function toTel(t: Phone): string {
   const pref = t.pref ? ";PREF=1" : "";
-  const type = `;TYPE=${t.type}`;
+  const type = `;TYPE=${t.type.toUpperCase()}`;
   const value = normalizeTel(t.value);
-  return `TEL${type}${pref};VALUE=uri:tel:${value}`;
+  return `TEL${type}${pref}:${escapeText(value)}`;
 }
 
 function toEmail(e: Email): string {
