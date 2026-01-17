@@ -11,26 +11,17 @@ import {
   Trees,
   Sparkles,
   Leaf,
+  Star,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useThemeOptional } from "@/components/theme/theme-provider";
 import { useDashboardUser } from "@/components/dashboard/DashboardSessionContext";
-
-type ThemeName = import("@/components/theme/theme-provider").ThemeName;
-
-const ORDER: ThemeName[] = [
-  "light",
-  "dark",
-  "midnight",
-  "forest",
-  "gilded",
-  "autumn",
-  "honey",
-];
+import { THEME_ORDER, type ThemeName } from "@/lib/themes";
 const ICONS: Record<ThemeName, React.ComponentType<{ className?: string }>> = {
   light: Sun,
   dark: Moon,
   midnight: MoonStar,
+  nebula: Star,
   forest: Trees,
   gilded: Sparkles,
   autumn: Leaf,
@@ -41,6 +32,7 @@ const LABELS: Record<ThemeName, string> = {
   light: "Light",
   dark: "Dark",
   midnight: "Midnight",
+  nebula: "Nebula",
   forest: "Forest",
   gilded: "Gilded",
   autumn: "Autumn",
@@ -69,10 +61,10 @@ export default function ThemeToggle({ showLabel = false }: { showLabel?: boolean
   const { theme, setTheme } = useThemeOptional();
   const user = useDashboardUser();
   const abortRef = useRef<AbortController | null>(null);
-  const [index, setIndex] = useState(Math.max(0, ORDER.indexOf(theme)));
+  const [index, setIndex] = useState(Math.max(0, THEME_ORDER.indexOf(theme)));
 
   useEffect(() => {
-    setIndex(Math.max(0, ORDER.indexOf(theme)));
+    setIndex(Math.max(0, THEME_ORDER.indexOf(theme)));
   }, [theme]);
 
   async function syncPublicTheme(nextTheme: ThemeName) {
@@ -138,8 +130,8 @@ export default function ThemeToggle({ showLabel = false }: { showLabel?: boolean
   }
 
   function next() {
-    const nextIndex = (index + 1) % ORDER.length;
-    const value = ORDER[nextIndex];
+    const nextIndex = (index + 1) % THEME_ORDER.length;
+    const value = THEME_ORDER[nextIndex];
     setIndex(nextIndex);
     writePendingTheme(value);
     setTheme(value);
@@ -147,15 +139,15 @@ export default function ThemeToggle({ showLabel = false }: { showLabel?: boolean
   }
 
   function previous() {
-    const nextIndex = (index - 1 + ORDER.length) % ORDER.length;
-    const value = ORDER[nextIndex];
+    const nextIndex = (index - 1 + THEME_ORDER.length) % THEME_ORDER.length;
+    const value = THEME_ORDER[nextIndex];
     setIndex(nextIndex);
     writePendingTheme(value);
     setTheme(value);
     void syncPublicTheme(value);
   }
 
-  const current = ORDER[index] || ORDER[0];
+  const current = THEME_ORDER[index] || THEME_ORDER[0];
   const Icon = ICONS[current];
   const label = LABELS[current];
 

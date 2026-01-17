@@ -2,19 +2,9 @@
 
 import { useCallback, useEffect, useRef } from "react";
 
-import type { ThemeName } from "@/components/theme/theme-provider";
 import { useThemeOptional } from "@/components/theme/theme-provider";
 import { useDashboardUser } from "@/components/dashboard/DashboardSessionContext";
-
-const THEMES: ThemeName[] = [
-  "light",
-  "dark",
-  "midnight",
-  "forest",
-  "gilded",
-  "autumn",
-  "honey",
-];
+import { THEME_ORDER, type ThemeName } from "@/lib/themes";
 
 const PENDING_THEME_KEY = "linket:dashboard-theme:pending";
 const PENDING_TTL_MS = 8000;
@@ -53,8 +43,10 @@ function clearPendingTheme() {
 
 function coerceTheme(value: unknown): ThemeName | null {
   if (typeof value !== "string") return null;
-  const lowered = value.toLowerCase();
-  return (THEMES as string[]).includes(lowered) ? (lowered as ThemeName) : null;
+  const lowered = value.trim().toLowerCase();
+  return (THEME_ORDER as readonly string[]).includes(lowered)
+    ? (lowered as ThemeName)
+    : null;
 }
 
 async function fetchActiveProfileTheme(userId: string, signal: AbortSignal) {

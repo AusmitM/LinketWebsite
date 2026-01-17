@@ -86,7 +86,7 @@ grant select on table public.profile_links to anon;
 
 import { supabaseAdmin, isSupabaseAdminAvailable } from "@/lib/supabase-admin";
 import { createClient } from "@supabase/supabase-js";
-import type { ThemeName } from "@/lib/themes";
+import { coerceTheme, type ThemeName } from "@/lib/themes";
 import type { ProfileLinkRecord, UserProfileRecord } from "@/types/db";
 
 const SUPABASE_ENABLED = isSupabaseAdminAvailable;
@@ -148,17 +148,8 @@ function normaliseHandle(handle: string) {
 function normaliseTheme(
   theme: string | ThemeName | null | undefined
 ): ThemeName {
-  const allowed: ThemeName[] = [
-    "light",
-    "dark",
-    "midnight",
-    "forest",
-    "gilded",
-    "autumn",
-    "honey",
-  ];
-  const value = (theme ?? "autumn").toLowerCase();
-  return allowed.includes(value as ThemeName) ? (value as ThemeName) : "light";
+  if (!theme) return "autumn";
+  return coerceTheme(theme, "light");
 }
 
 const memoryProfiles = new Map<string, ProfileWithLinks[]>();

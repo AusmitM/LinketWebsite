@@ -5,7 +5,7 @@ import { createDefaultLeadFormConfig, normalizeLeadFormConfig } from "@/lib/lead
 import { getActiveProfileForPublicHandle } from "@/lib/profile-service";
 import { createServerSupabaseReadonly } from "@/lib/supabase/server";
 import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
-import { isDarkTheme } from "@/lib/themes";
+import { coerceTheme, isDarkTheme } from "@/lib/themes";
 import type { ProfileLinkRecord } from "@/types/db";
 import type { LeadFormConfig } from "@/types/lead-form";
 import PublicProfileLinksList from "@/components/public/PublicProfileLinksList";
@@ -108,8 +108,9 @@ export default async function PublicProfilePage({ params }: Props) {
   const leadFormTitle = normalizedLeadForm?.title ?? "Contact";
   const hasLeadForm = Boolean(normalizedLeadForm?.fields?.length);
   const displayName = profile.name || account.display_name || publicHandle;
-  const isDark = isDarkTheme(profile.theme);
-  const themeClass = `theme-${profile.theme} ${isDark ? "dark" : ""}`;
+  const resolvedTheme = coerceTheme(profile.theme, "light");
+  const isDark = isDarkTheme(resolvedTheme);
+  const themeClass = `theme-${resolvedTheme} ${isDark ? "dark" : ""}`;
   const headline = profile.headline?.trim() ?? "";
   const links = sortLinks(profile.links);
   const hasLinks = links.length > 0;

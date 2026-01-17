@@ -2,15 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
-
-export type ThemeName =
-  | "light"
-  | "dark"
-  | "midnight"
-  | "forest"
-  | "gilded"
-  | "autumn"
-  | "honey";
+import { coerceTheme, type ThemeName } from "@/lib/themes";
 
 type ThemeContextValue = {
   theme: ThemeName;
@@ -63,20 +55,24 @@ export function ThemeProvider({
   const persist = storageKey !== null;
 
   useEffect(() => {
-    const saved = persist ? ((localStorage.getItem(storage) as ThemeName | null) || initial || "light") : (initial || "light");
-    setThemeState(saved);
+    const fallback = initial || "light";
+    const saved = persist ? localStorage.getItem(storage) : null;
+    const resolved = coerceTheme(saved ?? fallback, fallback);
+    setThemeState(resolved);
     const scope = scopeSelector ? document.querySelector(scopeSelector) : undefined;
-    applyThemeClass(saved, scope ?? undefined);
+    applyThemeClass(resolved, scope ?? undefined);
   }, [initial, scopeSelector, storage, persist]);
 
   const setTheme = useCallback(
     (t: ThemeName) => {
-      setThemeState(t);
-      if (persist && typeof localStorage !== "undefined") localStorage.setItem(storage, t);
+      const fallback = initial || "light";
+      const next = coerceTheme(t, fallback);
+      setThemeState(next);
+      if (persist && typeof localStorage !== "undefined") localStorage.setItem(storage, next);
       const scope = scopeSelector ? (typeof document !== "undefined" ? document.querySelector(scopeSelector) : null) : undefined;
-      applyThemeClass(t, scope ?? undefined);
+      applyThemeClass(next, scope ?? undefined);
     },
-    [scopeSelector, storage, persist]
+    [scopeSelector, storage, persist, initial]
   );
 
   const value = useMemo(() => ({ theme, setTheme }), [theme, setTheme]);

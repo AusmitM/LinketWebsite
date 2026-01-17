@@ -1,11 +1,26 @@
-export type ThemeName =
-  | "light"
-  | "dark"
-  | "midnight"
-  | "forest"
-  | "gilded"
-  | "autumn"
-  | "honey";
+export const THEME_ORDER = [
+  "light",
+  "dark",
+  "midnight",
+  "nebula",
+  "forest",
+  "gilded",
+  "autumn",
+  "honey",
+] as const;
+
+export type ThemeName = (typeof THEME_ORDER)[number];
+
+export function coerceTheme(
+  value: string | ThemeName | null | undefined,
+  fallback: ThemeName = "light"
+): ThemeName {
+  if (!value) return fallback;
+  const lowered = value.trim().toLowerCase();
+  return (THEME_ORDER as readonly string[]).includes(lowered)
+    ? (lowered as ThemeName)
+    : fallback;
+}
 
 type Vars = Record<string, string>;
 
@@ -54,6 +69,21 @@ const themes: Record<ThemeName, Vars> = {
     "--input": "#1f1a3d",
     "--ring": "#8b5cf6",
     "--avatar-border": "#8b5cf6",
+  },
+  nebula: {
+    "--background": "#f3dee9",
+    "--foreground": "#2b2a49",
+    "--card": "#fff2f9",
+    "--card-foreground": "#2b2a49",
+    "--muted": "#e7b7d4",
+    "--muted-foreground": "#a5678e",
+    "--accent": "#7fabd7",
+    "--accent-foreground": "#2b2a49",
+    "--destructive": "#ef4444",
+    "--border": "#c0b8da",
+    "--input": "#c0b8da",
+    "--ring": "#33539f",
+    "--avatar-border": "#33539f",
   },
   forest: {
     "--background": "#1f262b",
@@ -124,7 +154,7 @@ export function isDarkTheme(name: ThemeName) {
 }
 
 export function inlineCssForTheme(name: ThemeName | string | null | undefined) {
-  const key = (name as ThemeName) && themes[(name as ThemeName)] ? (name as ThemeName) : "dark";
+  const key = coerceTheme(name ?? "dark", "dark");
   const vars = themes[key];
   const bodyDark = DARK_SET.has(key) ? " dark" : "";
   return `:root{${Object.entries(vars).map(([k, v]) => `${k}:${v}`).join(";")}}` + (bodyDark ? `.dark{color-scheme:dark}` : ``);
