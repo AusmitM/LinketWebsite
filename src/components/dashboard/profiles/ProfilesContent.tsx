@@ -18,74 +18,67 @@ import { toast } from "@/components/system/toaster";
 import { supabase } from "@/lib/supabase";
 import AvatarUploader from "@/components/dashboard/AvatarUploader";
 import { getSignedAvatarUrl } from "@/lib/avatar-client";
-import { THEME_ORDER, coerceTheme, type ThemeName } from "@/lib/themes";
+import type { ThemeName } from "@/lib/themes";
 import type { ProfileWithLinks } from "@/lib/profile-service";
 import { useDashboardUser } from "@/components/dashboard/DashboardSessionContext";
 
-const THEME_META = {
-  light: {
+const THEME_OPTIONS: Array<{
+  id: ThemeName;
+  label: string;
+  description: string;
+  preview: string;
+  textTone: "light" | "dark";
+}> = [
+  {
+    id: "light",
     label: "Light",
     description: "Bright + crisp with modern blue accents",
     preview: "linear-gradient(135deg, #f5f7fb 0%, #ffffff 100%)",
     textTone: "dark",
   },
-  dark: {
+  {
+    id: "dark",
     label: "Dark",
     description: "Cool twilight navy with electric blues",
     preview: "linear-gradient(135deg, #121826 0%, #1a2237 100%)",
     textTone: "light",
   },
-  midnight: {
+  {
+    id: "midnight",
     label: "Midnight",
     description: "Deep violet night with neon glow",
     preview: "linear-gradient(135deg, #050414 0%, #1b1542 100%)",
     textTone: "light",
   },
-  nebula: {
-    label: "Nebula",
-    description: "Dusty rose haze with starlit blues",
-    preview:
-      "linear-gradient(135deg, #e7b7d4 0%, #a5678e 35%, #c0b8da 60%, #7fabd7 80%, #33539f 100%)",
-    textTone: "dark",
-  },
-  forest: {
+  {
+    id: "forest",
     label: "Forest",
     description: "Verdant greens inspired by lush canopies",
     preview: "linear-gradient(135deg, #252d33 0%, #7e9585 100%)",
     textTone: "light",
   },
-  gilded: {
+  {
+    id: "gilded",
     label: "Gilded",
     description: "Velvet black with molten gold accents",
     preview: "linear-gradient(135deg, #010203 0%, #1d1d1f 50%, #b16c04 100%)",
     textTone: "light",
   },
-  autumn: {
+  {
+    id: "autumn",
     label: "Autumn",
     description: "Warm amber and spice for fall launches",
     preview: "linear-gradient(135deg, #fff0e0 0%, #f6b97a 100%)",
     textTone: "dark",
   },
-  honey: {
+  {
+    id: "honey",
     label: "Honey",
     description: "Burnt orange to honey glow with cozy warmth",
     preview: "linear-gradient(135deg, #c32701 0%, #fddb9c 100%)",
     textTone: "dark",
   },
-} satisfies Record<
-  ThemeName,
-  {
-    label: string;
-    description: string;
-    preview: string;
-    textTone: "light" | "dark";
-  }
->;
-
-const THEME_OPTIONS = THEME_ORDER.map((id) => ({
-  id,
-  ...THEME_META[id],
-}));
+];
 
 const DEFAULT_THEME: ThemeName = "autumn";
 
@@ -334,7 +327,7 @@ export default function ProfilesContent() {
     return JSON.stringify(selected) !== JSON.stringify(draft);
   }, [draft, selected]);
 
-  const draftTheme = coerceTheme(draft?.theme ?? DEFAULT_THEME, DEFAULT_THEME);
+  const draftTheme = draft?.theme ?? DEFAULT_THEME;
   const currentThemeOption = useMemo(() => {
     return (
       THEME_OPTIONS.find((option) => option.id === draftTheme) ??
@@ -1365,7 +1358,7 @@ function mapProfile(record: ProfileWithLinks): LinketProfile {
     handle: record.handle,
     headline: record.headline ?? "",
     links,
-    theme: coerceTheme(record.theme ?? DEFAULT_THEME, DEFAULT_THEME),
+    theme: (record.theme as ThemeName) ?? DEFAULT_THEME,
     active: record.is_active,
     updatedAt: record.updated_at,
   };

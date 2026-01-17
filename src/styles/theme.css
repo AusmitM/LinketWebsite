@@ -155,42 +155,6 @@
   --sidebar-ring: #8d5fff;
 }
 
-.theme-nebula {
-  --background: #f3dee9;
-  --foreground: #2b2a49;
-  --card: rgba(255, 242, 249, 0.96);
-  --card-foreground: #2b2a49;
-  --popover: rgba(255, 242, 249, 0.98);
-  --popover-foreground: #2b2a49;
-  --primary: #a5678e;
-  --primary-foreground: #fff7fb;
-  --secondary: #c0b8da;
-  --secondary-foreground: #2b2a49;
-  --muted: #e7b7d4;
-  --muted-foreground: #a5678e;
-  --accent: #7fabd7;
-  --accent-foreground: #2b2a49;
-  --destructive: #ef4444;
-  --border: #c0b8da;
-  --input: #c0b8da;
-  --ring: #33539f;
-  --avatar-border: var(--ring);
-  --sidebar: #f0d4e6;
-  --sidebar-foreground: #2b2a49;
-  --sidebar-primary: #a5678e;
-  --sidebar-primary-foreground: #fff7fb;
-  --sidebar-accent: #e7b7d4;
-  --sidebar-accent-foreground: #2b2a49;
-  --sidebar-border: #c0b8da;
-  --sidebar-ring: #33539f;
-}
-
-.theme-nebula .dashboard-topbar,
-.theme-nebula .dashboard-navbar {
-  background: linear-gradient(95deg, #f3dee9 0%, #e7b7d4 35%, #c0b8da 70%, #7fabd7 100%);
-  border-color: rgba(51, 83, 159, 0.25);
-}
-
 .theme-forest {
   --background: #252d33;
   --foreground: #f2efe3;
@@ -525,22 +489,6 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
     radial-gradient(100% 80% at 80% 0%, rgba(59, 130, 246, 0.18) 0%, transparent 70%),
     linear-gradient(180deg, rgba(12, 80, 45, 0.5) 0%, transparent 55%);
 }
-
-#dashboard-theme-scope.theme-nebula::before {
-  opacity: 0.4;
-  background: radial-gradient(120% 120% at 15% 0%, rgba(231, 183, 212, 0.45) 0%, transparent 65%),
-    radial-gradient(120% 100% at 85% 15%, rgba(127, 171, 215, 0.3) 0%, transparent 60%),
-    linear-gradient(160deg, rgba(192, 184, 218, 0.35) 0%, transparent 70%);
-}
-
-#dashboard-theme-scope.theme-nebula::after {
-  opacity: 0.6;
-  transform: translateY(0);
-  background: radial-gradient(100% 70% at 40% -10%, rgba(127, 171, 215, 0.35) 0%, transparent 70%),
-    radial-gradient(90% 80% at 80% 10%, rgba(165, 103, 142, 0.25) 0%, transparent 70%),
-    linear-gradient(180deg, rgba(51, 83, 159, 0.18) 0%, transparent 60%);
-}
-
 body.theme-forest .dashboard-forest-pin {
   opacity: 1;
   transform: translateY(-2px) rotate(-4deg);

@@ -26,7 +26,7 @@ export default function DashboardAppShell({
   return (
     <div
       id="dashboard-theme-scope"
-      className="relative isolate flex min-h-[100svh] bg-[var(--background)]"
+      className="flex min-h-[100svh] bg-[var(--background)]"
       style={{ "--dashboard-nav-height": "64px" } as CSSProperties}
     >
       <div className="hidden h-[calc(100vh-var(--dashboard-nav-height))] lg:sticky lg:top-[var(--dashboard-nav-height)] lg:block">
