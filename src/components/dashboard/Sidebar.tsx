@@ -6,15 +6,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import ThemeToggle from "@/components/dashboard/ThemeToggle";
 import { createClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import {
   LayoutDashboard,
   BarChart3,
@@ -55,8 +46,6 @@ export default function Sidebar({
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [pendingHref, setPendingHref] = useState<string | null>(null);
   const supabase = useMemo(() => createClient(), []);
   const isMobile = variant === "mobile";
   const isProfileEditor = pathname?.startsWith("/dashboard/profiles") ?? false;
@@ -113,17 +102,6 @@ export default function Sidebar({
   }, [isAdmin]);
 
 
-  const shouldConfirmLeave = useCallback(() => {
-    if (typeof window === "undefined") return false;
-    const state = (window as Window & {
-      __linketProfileEditorState?: {
-        hasUnsavedChanges?: boolean;
-        saveFailed?: boolean;
-      };
-    }).__linketProfileEditorState;
-    return Boolean(state?.hasUnsavedChanges || state?.saveFailed);
-  }, []);
-
   const requestAutosave = useCallback(() => {
     if (typeof window === "undefined") return;
     window.dispatchEvent(new CustomEvent("linket:save-request"));
@@ -132,25 +110,11 @@ export default function Sidebar({
   const requestNavigation = useCallback(
     (href: string) => {
       requestAutosave();
-      if (isProfileEditor && shouldConfirmLeave()) {
-        setPendingHref(href);
-        setConfirmOpen(true);
-        return;
-      }
       onNavigate?.();
       router.push(href);
     },
-    [isProfileEditor, onNavigate, requestAutosave, router, shouldConfirmLeave]
+    [onNavigate, requestAutosave, router]
   );
-
-  const confirmLeave = useCallback(() => {
-    setConfirmOpen(false);
-    if (pendingHref) {
-      onNavigate?.();
-      router.push(pendingHref);
-      setPendingHref(null);
-    }
-  }, [onNavigate, pendingHref, router]);
 
   return (
     <aside
@@ -226,26 +190,6 @@ export default function Sidebar({
           </div>
         </div>
       </div>
-      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Leave this page?</DialogTitle>
-            <DialogDescription>You have unsaved changes.</DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setConfirmOpen(false)}
-            >
-              Stay
-            </Button>
-            <Button type="button" onClick={confirmLeave}>
-              Leave
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </aside>
   );
 }
