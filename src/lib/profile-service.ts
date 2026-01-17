@@ -790,6 +790,7 @@ export async function getProfileByHandle(
       .from(PROFILE_TABLE)
       .select(`*, links:${PROFILE_LINKS_TABLE}(*)`)
       .eq("handle", normalised)
+      .eq("is_active", true)
       .limit(1)
       .maybeSingle();
     if (error && error.code !== "PGRST116") throw new Error(error.message);
@@ -815,6 +816,7 @@ async function getProfileByHandlePublic(
     .from(PROFILE_TABLE)
     .select(`*, links:${PROFILE_LINKS_TABLE}(*)`)
     .eq("handle", normalised)
+    .eq("is_active", true)
     .limit(1)
     .maybeSingle();
   if (error && error.code !== "PGRST116") throw new Error(error.message);

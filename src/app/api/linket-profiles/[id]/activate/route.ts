@@ -39,6 +39,15 @@ export async function POST(
       );
     }
 
+    const supabase = await createServerSupabase();
+    const { data, error } = await supabase.auth.getUser();
+    if (error || !data.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (data.user.id !== userId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     if (isSupabaseAdminAvailable) {
       try {
         const profile = await setActiveProfileForUser(userId, id);
@@ -50,15 +59,6 @@ export async function POST(
       } catch (adminError) {
         console.error("Linket profiles admin activate error:", adminError);
       }
-    }
-
-    const supabase = await createServerSupabase();
-    const { data, error } = await supabase.auth.getUser();
-    if (error || !data.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    if (data.user.id !== userId) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 401 });
     }
 
     const { error: deactivateError } = await supabase

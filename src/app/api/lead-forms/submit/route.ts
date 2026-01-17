@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
 import { validateSubmission } from "@/lib/lead-form";
+import { limitRequest } from "@/lib/rate-limit";
 import type { LeadFormConfig, LeadFormSubmission } from "@/types/lead-form";
 
 type LeadFormRow = {
@@ -52,6 +53,13 @@ function inferLeadFields(
 
 export async function POST(request: NextRequest) {
   try {
+    if (await limitRequest(request, "lead-form-submit", 20, 60_000)) {
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        { status: 429 }
+      );
+    }
+
     const body = await request.json();
     const {
       formId,
@@ -86,7 +94,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const config = (formRow as LeadFormRow).config;
+    const formPayload = formRow as LeadFormRow;
+    if (formPayload.status !== "published") {
+      return NextResponse.json(
+        { error: "Form not available" },
+        { status: 403 }
+      );
+    }
+    const config = formPayload.config;
     const validationErrors = validateSubmission(config, answers);
     if (validationErrors.length) {
       return NextResponse.json(
@@ -99,9 +114,15 @@ export async function POST(request: NextRequest) {
       responseId || crypto.randomUUID?.() || `resp_${Date.now()}`;
     const now = new Date().toISOString();
 
+    const responseToken =
+      (typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? (crypto as Crypto).randomUUID?.()
+        : null) || `tok_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
     const payload = {
       form_id: formId,
       response_id: resolvedResponseId,
+      response_token: responseToken,
       submitted_at: now,
       answers,
       responder_email: responderEmail ?? null,
@@ -142,6 +163,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       responseId: resolvedResponseId,
+      responseToken,
       submittedAt: now,
     });
   } catch (error) {

@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerSupabase } from "@/lib/supabase/server";
-import { createDefaultLeadFormConfig, normalizeLeadFormConfig } from "@/lib/lead-form";
-import { getActiveProfileForPublicHandle } from "@/lib/profile-service";
-import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
+import { createServerSupabaseReadonly } from "@/lib/supabase/server";
+import { normalizeLeadFormConfig } from "@/lib/lead-form";
 import type { LeadFormConfig } from "@/types/lead-form";
 
 type LeadFormRow = {
@@ -24,60 +22,21 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const supabase = isSupabaseAdminAvailable
-      ? supabaseAdmin
-      : await createServerSupabase();
-    let { data, error } = await supabase
+    const supabase = await createServerSupabaseReadonly();
+    const { data, error } = await supabase
       .from("lead_forms")
       .select("id, handle, status, config")
       .eq("handle", handle)
+      .eq("status", "published")
       .maybeSingle();
     if (error && error.code !== "PGRST116") throw new Error(error.message);
-
-    if (!data && isSupabaseAdminAvailable) {
-      const payload = await getActiveProfileForPublicHandle(handle);
-      if (payload) {
-        const now = new Date().toISOString();
-        const config = createDefaultLeadFormConfig(`form-${handle}`);
-        const { data: created, error: createError } = await supabaseAdmin
-          .from("lead_forms")
-          .insert({
-            user_id: payload.profile.user_id,
-            profile_id: payload.profile.id,
-            handle,
-            status: "published",
-            title: config.title,
-            description: config.description,
-            config,
-            created_at: now,
-            updated_at: now,
-          })
-          .select("id, handle, status, config")
-          .single();
-        if (createError) throw new Error(createError.message);
-        data = created;
-      }
-    }
 
     if (!data) {
       return NextResponse.json({ form: null }, { status: 200 });
     }
 
-    let resolvedConfig = (data as LeadFormRow).config;
-    if (isSupabaseAdminAvailable && (data as LeadFormRow).status !== "published") {
-      resolvedConfig = normalizeLeadFormConfig(
-        (data as LeadFormRow).config,
-        (data as LeadFormRow).id
-      );
-      const now = new Date().toISOString();
-      await supabaseAdmin
-        .from("lead_forms")
-        .update({ status: "published", config: resolvedConfig, updated_at: now })
-        .eq("id", (data as LeadFormRow).id);
-    }
-
     const form = normalizeLeadFormConfig(
-      resolvedConfig,
+      (data as LeadFormRow).config,
       (data as LeadFormRow).id
     );
 

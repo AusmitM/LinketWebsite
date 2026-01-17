@@ -101,6 +101,14 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    const { supabase, ok, error } = await ensureAuthedUser(userId);
+    if (!ok) {
+      return NextResponse.json(
+        { error },
+        { status: error === "Forbidden" ? 403 : 401 }
+      );
+    }
+
     if (isSupabaseAdminAvailable) {
       try {
         const profiles = await getProfilesForUser(userId);
@@ -112,11 +120,6 @@ export async function GET(request: NextRequest) {
       } catch (adminError) {
         console.error("Linket profiles admin fetch error:", adminError);
       }
-    }
-
-    const { supabase, ok, error } = await ensureAuthedUser(userId);
-    if (!ok) {
-      return NextResponse.json({ error }, { status: 401 });
     }
 
     const { data, error: fetchError } = await supabase
@@ -172,6 +175,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const { supabase, ok, error } = await ensureAuthedUser(userId);
+    if (!ok) {
+      return NextResponse.json(
+        { error },
+        { status: error === "Forbidden" ? 403 : 401 }
+      );
+    }
+
     if (isSupabaseAdminAvailable) {
       try {
         const saved = await saveProfileForUser(userId, profile);
@@ -198,11 +209,6 @@ export async function POST(request: NextRequest) {
           { status: 500 }
         );
       }
-    }
-
-    const { supabase, ok, error } = await ensureAuthedUser(userId);
-    if (!ok) {
-      return NextResponse.json({ error }, { status: 401 });
     }
 
     const name = profile.name?.trim();

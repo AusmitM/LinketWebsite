@@ -26,6 +26,15 @@ export async function DELETE(
       );
     }
 
+    const supabase = await createServerSupabase();
+    const { data, error } = await supabase.auth.getUser();
+    if (error || !data.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (data.user.id !== userId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     let adminSucceeded = false;
     if (isSupabaseAdminAvailable) {
       try {
@@ -37,14 +46,6 @@ export async function DELETE(
     }
 
     if (!adminSucceeded) {
-      const supabase = await createServerSupabase();
-      const { data, error } = await supabase.auth.getUser();
-      if (error || !data.user) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-      }
-      if (data.user.id !== userId) {
-        return NextResponse.json({ error: "Forbidden" }, { status: 401 });
-      }
       const { error: deleteError } = await supabase
         .from("user_profiles")
         .delete()

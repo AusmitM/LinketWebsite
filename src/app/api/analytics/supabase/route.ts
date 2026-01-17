@@ -31,6 +31,15 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    const supabase = await createServerSupabase();
+    const { data: auth, error: authError } = await supabase.auth.getUser();
+    if (authError || !auth.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (auth.user.id !== userId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     if (isSupabaseAdminAvailable) {
       const analytics = await getUserAnalyticsData(userId, days);
       return NextResponse.json(analytics, {
@@ -38,15 +47,6 @@ export async function GET(request: NextRequest) {
           "Cache-Control": "no-store, max-age=0",
         },
       });
-    }
-
-    const supabase = await createServerSupabase();
-    const { data: auth, error: authError } = await supabase.auth.getUser();
-    if (authError || !auth.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    if (auth.user.id !== userId) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 401 });
     }
 
     const { data: leads, error: leadsError } = await supabase

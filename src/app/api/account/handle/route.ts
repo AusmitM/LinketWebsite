@@ -34,6 +34,15 @@ export async function GET(request: Request) {
   }
 
   try {
+    const supabase = await createServerSupabase();
+    const { data: auth, error: authError } = await supabase.auth.getUser();
+    if (authError || !auth.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (auth.user.id !== userId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     if (isSupabaseAdminAvailable) {
       try {
         const { data, error } = await supabaseAdmin
@@ -59,15 +68,6 @@ export async function GET(request: Request) {
       } catch (adminError) {
         console.error("Account handle admin lookup error:", adminError);
       }
-    }
-
-    const supabase = await createServerSupabase();
-    const { data: auth, error: authError } = await supabase.auth.getUser();
-    if (authError || !auth.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    if (auth.user.id !== userId) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 401 });
     }
 
     const { data, error } = await supabase
