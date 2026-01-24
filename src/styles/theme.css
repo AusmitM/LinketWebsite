@@ -415,62 +415,6 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
   to { opacity: 0; }
 }
 
-/* Premium micro-animations */
-@keyframes dashboard-frame-glow {
-  0%, 100% { box-shadow: var(--premium-shadow); }
-  50% { box-shadow: 0 30px 70px -36px rgba(15, 23, 42, 0.65); }
-}
-
-@keyframes dashboard-pill-rise {
-  0% { opacity: 0; transform: translateY(10px); }
-  100% { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes dashboard-nav-sheen {
-  0% { background-position: 0% 50%; }
-  100% { background-position: 100% 50%; }
-}
-
-@keyframes dashboard-card-float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
-}
-
-@keyframes dashboard-icon-pop {
-  0% { transform: scale(0.88); opacity: 0.6; }
-  100% { transform: scale(1.08); opacity: 1; }
-}
-
-@keyframes dashboard-link-reorder {
-  0% { opacity: 0; transform: translateY(20px) scale(0.98); }
-  60% { opacity: 1; transform: translateY(-2px) scale(1.01); }
-  100% { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes dashboard-grab-pulse {
-  0% { transform: scale(1); box-shadow: var(--premium-shadow); }
-  50% { transform: scale(1.02); box-shadow: 0 22px 50px -30px rgba(15, 23, 42, 0.55); }
-  100% { transform: scale(1); box-shadow: var(--premium-shadow); }
-}
-
-@keyframes dashboard-drag-glide {
-  0% { transform: translateY(0) scale(1); }
-  50% { transform: translateY(-3px) scale(1.01); }
-  100% { transform: translateY(0) scale(1); }
-}
-
-@keyframes dashboard-jiggle {
-  0% { transform: rotate(-1.2deg); }
-  50% { transform: rotate(1.2deg); }
-  100% { transform: rotate(-1.2deg); }
-}
-
-@keyframes dashboard-reorder-snap {
-  0% { transform: translateY(12px) scale(0.98); opacity: 0.85; }
-  60% { transform: translateY(-4px) scale(1.02); opacity: 1; }
-  100% { transform: translateY(0) scale(1); opacity: 1; }
-}
-
 /* Premium dashboard surface treatment */
 #dashboard-theme-scope {
   background: var(--premium-gradient);
@@ -482,7 +426,6 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
   border-bottom: 1px solid var(--premium-border);
   box-shadow: var(--premium-shadow);
   backdrop-filter: blur(12px);
-  animation: dashboard-frame-glow 8s ease-in-out infinite;
 }
 
 #dashboard-theme-scope .dashboard-sidebar {
@@ -495,7 +438,6 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
   background: var(--premium-card-gradient);
   border: 1px solid var(--premium-border);
   box-shadow: var(--premium-shadow);
-  animation: dashboard-card-float 6s ease-in-out infinite;
 }
 
 #dashboard-theme-scope .dashboard-metric-row,
@@ -503,71 +445,11 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
   border: 1px solid var(--premium-border);
   box-shadow: var(--premium-shadow);
   background: var(--premium-card-gradient);
-  animation: dashboard-pill-rise 480ms var(--ease-smooth);
 }
 
 #dashboard-theme-scope [data-slot=input],
 #dashboard-theme-scope [data-slot=button] {
   box-shadow: var(--premium-glow);
-}
-
-/* Reorder animation for sidebar links */
-#dashboard-theme-scope .dashboard-sidebar nav[data-reorder] a {
-  animation: dashboard-link-reorder 620ms var(--ease-smooth) both;
-  animation-delay: calc(var(--reorder-index, 0) * 45ms);
-  will-change: transform;
-}
-
-/* Grab + move feedback for draggable links */
-#dashboard-theme-scope .dashboard-nav-link {
-  cursor: grab;
-}
-
-#dashboard-theme-scope .dashboard-nav-link:active {
-  cursor: grabbing;
-  animation: dashboard-grab-pulse 320ms var(--ease-smooth);
-}
-
-#dashboard-theme-scope .dashboard-nav-link.is-dragging {
-  cursor: grabbing;
-  animation: dashboard-drag-glide 520ms var(--ease-smooth) infinite;
-}
-
-/* iOS-style jiggle while reordering link cards */
-#dashboard-theme-scope [data-dragging="true"] .dashboard-drag-item {
-  animation: dashboard-jiggle 180ms ease-in-out infinite;
-  transform-origin: 16px 12px;
-}
-
-#dashboard-theme-scope [data-dragging="true"] .dashboard-drag-item.is-dragging {
-  animation: dashboard-drag-glide 520ms var(--ease-smooth) infinite;
-  transform-origin: center;
-}
-
-/* Springy settle after reordering */
-#dashboard-theme-scope [data-reorder][data-dragging="false"] .dashboard-drag-item {
-  animation: dashboard-reorder-snap 420ms var(--ease-smooth) both;
-  animation-delay: calc(var(--reorder-index, 0) * 30ms);
-}
-
-/* Animated active nav highlight */
-#dashboard-theme-scope .dashboard-sidebar a[aria-current="page"],
-#dashboard-theme-scope .dashboard-sidebar a[data-active="true"],
-#dashboard-theme-scope .dashboard-sidebar .active {
-  background-image: linear-gradient(
-    120deg,
-    rgba(255, 255, 255, 0.08),
-    rgba(255, 255, 255, 0.22),
-    rgba(255, 255, 255, 0.08)
-  );
-  background-size: 200% 200%;
-  animation: dashboard-nav-sheen 2.6s ease-in-out infinite;
-}
-
-/* Icon emphasis on hover */
-#dashboard-theme-scope .dashboard-sidebar a:hover svg,
-#dashboard-theme-scope .dashboard-menu-button:hover svg {
-  animation: dashboard-icon-pop 200ms var(--ease-smooth);
 }
 
 /* Theme transition staging */
@@ -689,17 +571,6 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
   #dashboard-theme-scope .dashboard-saving-indicator,
   #dashboard-theme-scope [data-slot=dialog-overlay],
   #dashboard-theme-scope [data-slot=dialog-content] {
-    animation: none;
-  }
-
-  #dashboard-theme-scope .dashboard-topbar,
-  #dashboard-theme-scope .dashboard-navbar,
-  #dashboard-theme-scope .dashboard-metric-row,
-  #dashboard-theme-scope .dashboard-analytics-tile,
-  #dashboard-theme-scope .dashboard-drag-item,
-  #dashboard-theme-scope .dashboard-sidebar a,
-  #dashboard-theme-scope .dashboard-menu-button svg,
-  #dashboard-theme-scope .dashboard-nav-link {
     animation: none;
   }
 

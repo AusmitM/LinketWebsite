@@ -1,7 +1,6 @@
 "use client";
 
-import type { CSSProperties } from "react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -47,15 +46,12 @@ export default function Sidebar({
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [reorderTick, setReorderTick] = useState(0);
   const supabase = useMemo(() => createClient(), []);
-  const hasMounted = useRef(false);
   const isMobile = variant === "mobile";
   const isProfileEditor = pathname?.startsWith("/dashboard/profiles") ?? false;
   const canCollapse = !isMobile;
   const isCollapsed = canCollapse && collapsed;
 
-  // Trigger reorder animation when the nav list changes after mount.
   useEffect(() => {
     if (isMobile) return;
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -105,13 +101,6 @@ export default function Sidebar({
     ];
   }, [isAdmin]);
 
-  useEffect(() => {
-    if (!hasMounted.current) {
-      hasMounted.current = true;
-      return;
-    }
-    setReorderTick((value) => value + 1);
-  }, [navItems]);
 
   const requestAutosave = useCallback(() => {
     if (typeof window === "undefined") return;
@@ -155,8 +144,8 @@ export default function Sidebar({
         <div className={cn("px-3 pb-2", isCollapsed && "flex justify-center")}>
           <ThemeToggle showLabel={!isCollapsed || isMobile} />
         </div>
-        <nav className="flex-1 space-y-1 px-2" data-reorder={reorderTick}>
-          {navItems.map((item, index) => {
+        <nav className="flex-1 space-y-1 px-2">
+          {navItems.map((item) => {
             const Icon = item.icon;
             const active =
               pathname === item.href ||
@@ -166,9 +155,8 @@ export default function Sidebar({
                 key={item.href}
                 href={item.href}
                 title={item.label}
-                style={{ "--reorder-index": index } as CSSProperties}
                 className={cn(
-                  "dashboard-nav-link group relative flex items-center gap-3 rounded-xl px-2.5 py-2 text-sm outline-none transition",
+                  "group relative flex items-center gap-3 rounded-xl px-2.5 py-2 text-sm outline-none transition",
                   active
                     ? "bg-gradient-to-r from-[var(--primary)]/20 to-[var(--accent)]/20 text-foreground ring-1 ring-[var(--ring)]/40 shadow-[var(--shadow-ambient)]"
                     : "text-muted-foreground hover:bg-accent"
