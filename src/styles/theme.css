@@ -1,13 +1,14 @@
 /* Linket theme system ---------------------------------------------------- */
 
 :root {
-  /* Core scales */
+  /* Core brand palette */
   --brand-blue: #2563eb;
   --brand-amber: #f59e0b;
   --brand-emerald: #10b981;
   --brand-lilac: #8b5cf6;
   --brand-slate: #1f2937;
 
+  /* Neutral scale for surfaces */
   --neutral-25: #f8fafc;
   --neutral-50: #f5f7fb;
   --neutral-100: #e4e8f2;
@@ -18,14 +19,14 @@
   --neutral-700: #3f475d;
   --neutral-900: #101828;
 
-  /* Motion + shadows */
+  /* Motion + shadows for depth */
   --shadow-ambient: 0 1px 2px rgba(15, 23, 42, 0.08), 0 16px 40px -24px rgba(15, 23, 42, 0.35);
   --duration-fast: 160ms;
   --duration-base: 220ms;
   --duration-slow: 360ms;
   --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
 
-  /* Fluid type scale */
+  /* Fluid type scale for responsive headings */
   --step--2: clamp(0.72rem, 0.70rem + 0.10vw, 0.78rem);
   --step--1: clamp(0.83rem, 0.80rem + 0.12vw, 0.90rem);
   --step-0: clamp(1.00rem, 0.96rem + 0.20vw, 1.13rem);
@@ -63,8 +64,19 @@
   --sidebar-accent-foreground: #1f2937;
   --sidebar-border: #d7deed;
   --sidebar-ring: var(--ring);
+
+  /* Premium dashboard surfaces */
+  --premium-gradient: radial-gradient(120% 120% at 20% 0%, rgba(37, 99, 235, 0.12) 0%, transparent 60%),
+    radial-gradient(120% 120% at 80% 0%, rgba(16, 185, 129, 0.08) 0%, transparent 55%),
+    linear-gradient(180deg, #f9fbff 0%, #f3f6ff 100%);
+  --premium-card-gradient: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(246, 248, 255, 0.96) 100%);
+  --premium-topbar-gradient: linear-gradient(90deg, rgba(255, 255, 255, 0.96) 0%, rgba(246, 248, 255, 0.94) 100%);
+  --premium-border: rgba(15, 23, 42, 0.08);
+  --premium-shadow: 0 18px 45px -30px rgba(15, 23, 42, 0.45);
+  --premium-glow: 0 0 0 1px rgba(255, 255, 255, 0.75);
 }
 
+/* Light theme token mapping */
 .theme-light {
   --background: #f5f7fb;
   --foreground: #101828;
@@ -93,8 +105,17 @@
   --sidebar-accent-foreground: #1f2937;
   --sidebar-border: #d7deed;
   --sidebar-ring: #2563eb;
+  --premium-gradient: radial-gradient(120% 120% at 15% 0%, rgba(37, 99, 235, 0.12) 0%, transparent 60%),
+    radial-gradient(120% 120% at 85% 0%, rgba(59, 130, 246, 0.08) 0%, transparent 55%),
+    linear-gradient(180deg, #f9fbff 0%, #f2f6ff 100%);
+  --premium-card-gradient: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(245, 248, 255, 0.96) 100%);
+  --premium-topbar-gradient: linear-gradient(90deg, rgba(255, 255, 255, 0.96) 0%, rgba(243, 246, 255, 0.94) 100%);
+  --premium-border: rgba(15, 23, 42, 0.08);
+  --premium-shadow: 0 18px 45px -30px rgba(15, 23, 42, 0.45);
+  --premium-glow: 0 0 0 1px rgba(255, 255, 255, 0.75);
 }
 
+/* Dark theme token mapping */
 .theme-dark {
   --background: #121826;
   --foreground: #f6f8ff;
@@ -123,8 +144,17 @@
   --sidebar-accent-foreground: #dce7ff;
   --sidebar-border: #212f4a;
   --sidebar-ring: #63a8ff;
+  --premium-gradient: radial-gradient(120% 120% at 20% 0%, rgba(99, 168, 255, 0.22) 0%, transparent 60%),
+    radial-gradient(120% 120% at 80% 0%, rgba(99, 168, 255, 0.12) 0%, transparent 55%),
+    linear-gradient(180deg, #0b1220 0%, #101827 100%);
+  --premium-card-gradient: linear-gradient(180deg, rgba(28, 38, 61, 0.96) 0%, rgba(21, 30, 50, 0.92) 100%);
+  --premium-topbar-gradient: linear-gradient(90deg, rgba(16, 24, 39, 0.96) 0%, rgba(12, 18, 33, 0.92) 100%);
+  --premium-border: rgba(255, 255, 255, 0.08);
+  --premium-shadow: 0 18px 45px -30px rgba(4, 8, 20, 0.75);
+  --premium-glow: 0 0 0 1px rgba(15, 23, 42, 0.6);
 }
 
+/* Midnight theme token mapping */
 .theme-midnight {
   --background: #050414;
   --foreground: #f7f5ff;
@@ -153,8 +183,17 @@
   --sidebar-accent-foreground: #ebe4ff;
   --sidebar-border: #261f56;
   --sidebar-ring: #8d5fff;
+  --premium-gradient: radial-gradient(120% 120% at 15% 0%, rgba(141, 95, 255, 0.28) 0%, transparent 60%),
+    radial-gradient(120% 120% at 85% 0%, rgba(63, 48, 148, 0.22) 0%, transparent 55%),
+    linear-gradient(180deg, #050414 0%, #0a0922 100%);
+  --premium-card-gradient: linear-gradient(180deg, rgba(28, 22, 68, 0.96) 0%, rgba(18, 14, 52, 0.92) 100%);
+  --premium-topbar-gradient: linear-gradient(90deg, rgba(14, 11, 38, 0.96) 0%, rgba(12, 9, 34, 0.92) 100%);
+  --premium-border: rgba(255, 255, 255, 0.08);
+  --premium-shadow: 0 18px 45px -30px rgba(6, 4, 18, 0.75);
+  --premium-glow: 0 0 0 1px rgba(18, 15, 46, 0.65);
 }
 
+/* Forest theme token mapping */
 .theme-forest {
   --background: #252d33;
   --foreground: #f2efe3;
@@ -183,8 +222,17 @@
   --sidebar-accent-foreground: #27312b;
   --sidebar-border: #3f5045;
   --sidebar-ring: #9aa35c;
+  --premium-gradient: radial-gradient(120% 120% at 20% 0%, rgba(154, 163, 92, 0.25) 0%, transparent 60%),
+    radial-gradient(120% 120% at 80% 0%, rgba(124, 92, 72, 0.18) 0%, transparent 55%),
+    linear-gradient(180deg, #222b30 0%, #1c2429 100%);
+  --premium-card-gradient: linear-gradient(180deg, rgba(58, 74, 64, 0.96) 0%, rgba(48, 62, 54, 0.92) 100%);
+  --premium-topbar-gradient: linear-gradient(90deg, rgba(40, 50, 44, 0.96) 0%, rgba(32, 40, 36, 0.92) 100%);
+  --premium-border: rgba(242, 239, 227, 0.1);
+  --premium-shadow: 0 18px 45px -30px rgba(17, 24, 20, 0.75);
+  --premium-glow: 0 0 0 1px rgba(36, 46, 40, 0.6);
 }
 
+/* Forest theme border emphasis */
 #dashboard-theme-scope.theme-forest .border {
   border-color: rgba(38, 57, 35, 0.45);
   box-shadow: 0 0 0 1px rgba(23, 35, 21, 0.45);
@@ -218,8 +266,17 @@
   --sidebar-accent-foreground: #f4e6c3;
   --sidebar-border: #3b3130;
   --sidebar-ring: #d3ac2c;
+  --premium-gradient: radial-gradient(120% 120% at 20% 0%, rgba(209, 172, 44, 0.22) 0%, transparent 60%),
+    radial-gradient(120% 120% at 80% 0%, rgba(177, 108, 4, 0.18) 0%, transparent 55%),
+    linear-gradient(180deg, #0c0b0a 0%, #12100f 100%);
+  --premium-card-gradient: linear-gradient(180deg, rgba(33, 30, 28, 0.96) 0%, rgba(24, 22, 20, 0.92) 100%);
+  --premium-topbar-gradient: linear-gradient(90deg, rgba(30, 27, 25, 0.96) 0%, rgba(22, 20, 18, 0.92) 100%);
+  --premium-border: rgba(247, 240, 226, 0.12);
+  --premium-shadow: 0 18px 45px -30px rgba(4, 3, 2, 0.85);
+  --premium-glow: 0 0 0 1px rgba(28, 22, 18, 0.7);
 }
 
+/* Autumn theme token mapping */
 .theme-autumn {
   --background: #fff5eb;
   --foreground: #3c2012;
@@ -248,8 +305,17 @@
   --sidebar-accent-foreground: #47240f;
   --sidebar-border: #efcaa6;
   --sidebar-ring: #d97706;
+  --premium-gradient: radial-gradient(120% 120% at 20% 0%, rgba(217, 119, 6, 0.18) 0%, transparent 60%),
+    radial-gradient(120% 120% at 80% 0%, rgba(242, 177, 115, 0.2) 0%, transparent 55%),
+    linear-gradient(180deg, #fff7ef 0%, #fff0e4 100%);
+  --premium-card-gradient: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 246, 236, 0.96) 100%);
+  --premium-topbar-gradient: linear-gradient(90deg, rgba(255, 255, 255, 0.96) 0%, rgba(255, 245, 236, 0.94) 100%);
+  --premium-border: rgba(60, 32, 18, 0.12);
+  --premium-shadow: 0 18px 45px -30px rgba(100, 52, 20, 0.35);
+  --premium-glow: 0 0 0 1px rgba(255, 255, 255, 0.75);
 }
 
+/* Honey theme token mapping */
 .theme-honey {
   --background: #f7dcab;
   --foreground: #3f1f0c;
@@ -278,8 +344,17 @@
   --sidebar-border: #f4c25a;
   --sidebar-ring: #df6206;
   --avatar-border: var(--ring);
+  --premium-gradient: radial-gradient(120% 120% at 20% 0%, rgba(223, 98, 6, 0.2) 0%, transparent 60%),
+    radial-gradient(120% 120% at 80% 0%, rgba(244, 194, 90, 0.22) 0%, transparent 55%),
+    linear-gradient(180deg, #fff2db 0%, #f6dcab 100%);
+  --premium-card-gradient: linear-gradient(180deg, rgba(255, 242, 217, 0.98) 0%, rgba(250, 232, 192, 0.96) 100%);
+  --premium-topbar-gradient: linear-gradient(90deg, rgba(255, 242, 217, 0.96) 0%, rgba(251, 227, 186, 0.94) 100%);
+  --premium-border: rgba(63, 31, 12, 0.12);
+  --premium-shadow: 0 18px 45px -30px rgba(111, 58, 28, 0.35);
+  --premium-glow: 0 0 0 1px rgba(255, 242, 217, 0.85);
 }
 
+/* Theme-specific honey highlight for top bars */
 .theme-honey .dashboard-topbar,
 .theme-honey .dashboard-navbar {
   background: linear-gradient(90deg, #f17b26 0%, #f3c25b 55%, #fddb9c 100%);
@@ -299,6 +374,7 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
 [data-slot=button] { transition: all var(--duration-base) var(--ease-smooth); }
 [data-slot=input] { transition: color var(--duration-base) var(--ease-smooth), box-shadow var(--duration-base) var(--ease-smooth); }
 
+/* Dashboard motion primitives */
 @keyframes dashboard-page-enter {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
@@ -339,6 +415,44 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
   to { opacity: 0; }
 }
 
+/* Premium dashboard surface treatment */
+#dashboard-theme-scope {
+  background: var(--premium-gradient);
+}
+
+#dashboard-theme-scope .dashboard-topbar,
+#dashboard-theme-scope .dashboard-navbar {
+  background: var(--premium-topbar-gradient);
+  border-bottom: 1px solid var(--premium-border);
+  box-shadow: var(--premium-shadow);
+  backdrop-filter: blur(12px);
+}
+
+#dashboard-theme-scope .dashboard-sidebar {
+  background: var(--premium-card-gradient);
+  border-right: 1px solid var(--premium-border);
+  box-shadow: var(--premium-shadow);
+}
+
+#dashboard-theme-scope [data-slot=card] {
+  background: var(--premium-card-gradient);
+  border: 1px solid var(--premium-border);
+  box-shadow: var(--premium-shadow);
+}
+
+#dashboard-theme-scope .dashboard-metric-row,
+#dashboard-theme-scope .dashboard-analytics-tile {
+  border: 1px solid var(--premium-border);
+  box-shadow: var(--premium-shadow);
+  background: var(--premium-card-gradient);
+}
+
+#dashboard-theme-scope [data-slot=input],
+#dashboard-theme-scope [data-slot=button] {
+  box-shadow: var(--premium-glow);
+}
+
+/* Theme transition staging */
 #dashboard-theme-scope,
 #dashboard-theme-scope .dashboard-topbar,
 #dashboard-theme-scope .dashboard-navbar,
@@ -353,16 +467,19 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
   transition-timing-function: var(--ease-smooth);
 }
 
+/* Staggered content reveal */
 #dashboard-theme-scope .dashboard-content > * {
   animation: dashboard-page-enter var(--duration-slow) var(--ease-smooth);
   animation-fill-mode: both;
 }
 
+/* Card lift-in effect */
 #dashboard-theme-scope [data-slot=card] {
   animation: dashboard-card-enter var(--duration-slow) var(--ease-smooth);
   animation-fill-mode: both;
 }
 
+/* Skeleton shimmer */
 #dashboard-theme-scope .dashboard-skeleton [data-skeleton],
 #dashboard-theme-scope .dashboard-skeleton[data-skeleton] {
   position: relative;
@@ -384,10 +501,12 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
   animation: dashboard-skeleton-shimmer 1.4s linear infinite;
 }
 
+/* Sync indicator pulse */
 #dashboard-theme-scope .dashboard-saving-indicator {
   animation: dashboard-saving-pulse 1.2s ease-in-out infinite;
 }
 
+/* Drag feedback elevation */
 #dashboard-theme-scope .dashboard-drag-item {
   transition: transform var(--duration-base) var(--ease-smooth), box-shadow var(--duration-base) var(--ease-smooth);
   will-change: transform, box-shadow;
@@ -398,6 +517,7 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
   box-shadow: 0 18px 30px -20px rgba(15, 23, 42, 0.35);
 }
 
+/* Modal in/out for dashboard dialogs */
 #dashboard-theme-scope [data-slot=dialog-overlay][data-state="open"] {
   animation: dashboard-fade-in var(--duration-base) var(--ease-smooth);
 }
@@ -414,6 +534,7 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
   animation: dashboard-modal-out var(--duration-fast) var(--ease-smooth);
 }
 
+/* Button hover physics */
 #dashboard-theme-scope [data-slot=button] {
   will-change: transform, box-shadow;
 }
@@ -427,6 +548,7 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
   transform: translateY(0) scale(0.98);
 }
 
+/* Sidebar slide and overlay easing */
 #dashboard-theme-scope .dashboard-sidebar {
   transition: width var(--duration-slow) var(--ease-smooth), background-color var(--duration-base) var(--ease-smooth), border-color var(--duration-base) var(--ease-smooth);
 }
@@ -435,11 +557,13 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
   transition: opacity var(--duration-base) var(--ease-smooth);
 }
 
+/* Sidebar panel slide-in */
 #dashboard-theme-scope .dashboard-sidebar-panel {
   transition: transform var(--duration-slow) var(--ease-smooth);
   will-change: transform;
 }
 
+/* Accessibility: remove motion for reduced motion settings */
 @media (prefers-reduced-motion: reduce) {
   #dashboard-theme-scope .dashboard-content > *,
   #dashboard-theme-scope [data-slot=card],
@@ -458,6 +582,7 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
 }
 
 
+/* Subtle atmospheric overlays */
 #dashboard-theme-scope::before,
 #dashboard-theme-scope::after {
   content: "";
@@ -475,6 +600,7 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
     linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, transparent 45%);
 }
 
+/* Forest atmosphere overlay */
 #dashboard-theme-scope.theme-forest::before {
   opacity: 0.42;
   background-image: url("/illustrations/forest-canopy.svg"), radial-gradient(120% 120% at 50% 0%, rgba(56, 216, 160, 0.25) 0%, transparent 70%);
@@ -489,11 +615,13 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
     radial-gradient(100% 80% at 80% 0%, rgba(59, 130, 246, 0.18) 0%, transparent 70%),
     linear-gradient(180deg, rgba(12, 80, 45, 0.5) 0%, transparent 55%);
 }
+/* Forest pin micro-motion */
 body.theme-forest .dashboard-forest-pin {
   opacity: 1;
   transform: translateY(-2px) rotate(-4deg);
 }
 
+/* Tablet layout alignment */
 @media (max-width: 1024px) {
   #dashboard-theme-scope .dashboard-content {
     text-align: center;
@@ -560,6 +688,7 @@ body.theme-forest .dashboard-forest-pin {
   }
 }
 
+/* Tablet nav width guard */
 @media (max-width: 1024px) {
   #dashboard-theme-scope .dashboard-navbar,
   #dashboard-theme-scope .dashboard-topbar {
@@ -568,6 +697,7 @@ body.theme-forest .dashboard-forest-pin {
   }
 }
 
+/* Phone baseline layout */
 @media (max-width: 425px) {
   #dashboard-theme-scope {
     width: 100vw;
@@ -769,6 +899,7 @@ body.theme-forest .dashboard-forest-pin {
   }
 }
 
+/* Phone compact layout */
 @media (max-width: 375px) {
   #dashboard-theme-scope .dashboard-navbar nav {
     padding-left: 0.5rem;
@@ -890,6 +1021,7 @@ body.theme-forest .dashboard-forest-pin {
   }
 }
 
+/* Micro-phone layout */
 @media (max-width: 320px) {
   #dashboard-theme-scope .dashboard-nav-actions {
     gap: 0.4rem;
@@ -1014,6 +1146,7 @@ dding-right: 0.5rem;
   }
 }
 
+/* Small-screen card rhythm */
 @media (max-width: 490px) {
   #dashboard-theme-scope {
     width: 100%;
@@ -1134,6 +1267,7 @@ dding-right: 0.5rem;
   }
 }
 
+/* Extra-small layout tweaks */
 @media (max-width: 375px) {
   #dashboard-theme-scope .dashboard-overview-page {
     gap: 0.8rem;
@@ -1186,6 +1320,7 @@ dding-right: 0.5rem;
   }
 }
 
+/* Ultra-small layout tweaks */
 @media (max-width: 320px) {
   #dashboard-theme-scope .dashboard-overview-page {
     gap: 0.7rem;
