@@ -26,28 +26,28 @@ export default function DashboardAppShell({
   return (
     <div
       id="dashboard-theme-scope"
-      className="flex min-h-[100svh] bg-[var(--background)]"
+      className="grid min-h-[calc(100svh-var(--dashboard-nav-height))] grid-cols-[auto_1fr] grid-rows-[auto_1fr] bg-[var(--background)]"
       style={{ "--dashboard-nav-height": "64px" } as CSSProperties}
     >
-      <div className="hidden h-[calc(100vh-var(--dashboard-nav-height))] lg:sticky lg:top-[var(--dashboard-nav-height)] lg:block">
+      <div className="dashboard-topbar sticky top-0 z-30 col-span-2 flex items-center justify-between border-b border-border/60 bg-background/90 px-4 py-3 backdrop-blur lg:hidden">
+        <button
+          type="button"
+          onClick={() => setSidebarOpen(true)}
+          className="dashboard-menu-button inline-flex items-center gap-2 rounded-full border border-border/60 bg-card/80 px-3 py-1.5 text-sm text-foreground shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]"
+          aria-label="Open navigation"
+        >
+          <Menu className="h-4 w-4" aria-hidden />
+          <span className="dashboard-menu-label">Menu</span>
+        </button>
+        <span className="dashboard-topbar-title text-sm font-semibold text-foreground">
+          Dashboard
+        </span>
+        <div className="dashboard-topbar-spacer h-8 w-8" aria-hidden />
+      </div>
+      <div className="hidden h-full lg:sticky lg:top-0 lg:block">
         <Sidebar />
       </div>
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <div className="dashboard-topbar sticky top-0 z-30 flex items-center justify-between border-b border-border/60 bg-background/90 px-4 py-3 backdrop-blur lg:hidden">
-          <button
-            type="button"
-            onClick={() => setSidebarOpen(true)}
-            className="dashboard-menu-button inline-flex items-center gap-2 rounded-full border border-border/60 bg-card/80 px-3 py-1.5 text-sm text-foreground shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]"
-            aria-label="Open navigation"
-          >
-            <Menu className="h-4 w-4" aria-hidden />
-            <span className="dashboard-menu-label">Menu</span>
-          </button>
-          <span className="dashboard-topbar-title text-sm font-semibold text-foreground">
-            Dashboard
-          </span>
-          <div className="dashboard-topbar-spacer h-8 w-8" aria-hidden />
-        </div>
+      <div className="col-start-2 row-start-2 flex min-w-0 flex-col overflow-hidden">
         <div className="dashboard-scroll-area flex-1 overflow-auto px-3 pb-6 pt-3 sm:px-4 sm:pb-8 sm:pt-4 lg:px-8 lg:pb-10">
           <div className="dashboard-content mx-auto w-full max-w-none lg:max-w-7xl">
             {children}

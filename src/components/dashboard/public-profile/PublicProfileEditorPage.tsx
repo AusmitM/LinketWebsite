@@ -6,6 +6,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type CSSProperties,
   type FocusEvent,
 } from "react";
 import {
@@ -142,6 +143,8 @@ export default function PublicProfileEditorPage() {
   const [editingLinkId, setEditingLinkId] = useState<string | null>(null);
   const [linkForm, setLinkForm] = useState<LinkItem | null>(null);
   const [draggingLinkId, setDraggingLinkId] = useState<string | null>(null);
+  const [linkReorderTick, setLinkReorderTick] = useState(0);
+  const lastLinkOverId = useRef<string | null>(null);
   const [sidebarSavePulse, setSidebarSavePulse] = useState(false);
   const [leadFormPreview, setLeadFormPreview] = useState<LeadFormConfig | null>(
     null
@@ -686,8 +689,52 @@ export default function PublicProfileEditorPage() {
       links.splice(targetIndex, 0, moved);
       return { ...prev, links, updatedAt: new Date().toISOString() };
     });
+    setLinkReorderTick((value) => value + 1);
     scheduleReorderSave();
   }, [scheduleReorderSave]);
+
+  const handleLinkDragStart = useCallback(
+    (event: React.DragEvent<HTMLDivElement>, linkId: string) => {
+      setDraggingLinkId(linkId);
+      lastLinkOverId.current = null;
+      event.dataTransfer.effectAllowed = "move";
+      const target = event.currentTarget as HTMLElement;
+      const rect = target.getBoundingClientRect();
+      const offsetX = event.clientX - rect.left;
+      const offsetY = event.clientY - rect.top;
+      const ghost = target.cloneNode(true) as HTMLElement;
+      ghost.style.position = "absolute";
+      ghost.style.top = "-9999px";
+      ghost.style.left = "-9999px";
+      ghost.style.width = `${rect.width}px`;
+      ghost.style.height = `${rect.height}px`;
+      ghost.style.pointerEvents = "none";
+      ghost.style.opacity = "0.95";
+      ghost.style.transform = "translateZ(0)";
+      document.body.appendChild(ghost);
+      event.dataTransfer.setDragImage(ghost, offsetX, offsetY);
+      requestAnimationFrame(() => {
+        ghost.remove();
+      });
+    },
+    []
+  );
+
+  const handleLinkDragOver = useCallback(
+    (event: React.DragEvent<HTMLDivElement>, targetId: string) => {
+      event.preventDefault();
+      if (!draggingLinkId || draggingLinkId === targetId) return;
+      if (lastLinkOverId.current === targetId) return;
+      lastLinkOverId.current = targetId;
+      reorderLinks(draggingLinkId, targetId);
+    },
+    [draggingLinkId, reorderLinks]
+  );
+
+  const handleLinkDragEnd = useCallback(() => {
+    setDraggingLinkId(null);
+    lastLinkOverId.current = null;
+  }, []);
 
   const reorderLeadFormFields = useCallback(
     (sourceId: string, targetId: string) => {
@@ -853,6 +900,10 @@ export default function PublicProfileEditorPage() {
                   onReorderLink={reorderLinks}
                   draggingLinkId={draggingLinkId}
                   setDraggingLinkId={setDraggingLinkId}
+                  linkReorderTick={linkReorderTick}
+                  onLinkDragStart={handleLinkDragStart}
+                  onLinkDragOver={handleLinkDragOver}
+                  onLinkDragEnd={handleLinkDragEnd}
                 />
               }
               onLeadFormPreview={setLeadFormPreview}
@@ -899,6 +950,10 @@ export default function PublicProfileEditorPage() {
               onReorderLink={reorderLinks}
               draggingLinkId={draggingLinkId}
               setDraggingLinkId={setDraggingLinkId}
+              linkReorderTick={linkReorderTick}
+              onLinkDragStart={handleLinkDragStart}
+              onLinkDragOver={handleLinkDragOver}
+              onLinkDragEnd={handleLinkDragEnd}
               onVCardFields={handleVCardFieldsChange}
               onVCardStatus={handleVCardStatusChange}
               handleError={handleError}
@@ -929,6 +984,10 @@ export default function PublicProfileEditorPage() {
                 onReorderLink={reorderLinks}
                 draggingLinkId={draggingLinkId}
                 setDraggingLinkId={setDraggingLinkId}
+                linkReorderTick={linkReorderTick}
+                onLinkDragStart={handleLinkDragStart}
+                onLinkDragOver={handleLinkDragOver}
+                onLinkDragEnd={handleLinkDragEnd}
               />
             </div>
           </div>
@@ -1027,6 +1086,10 @@ function EditorPanel({
   onReorderLink,
   draggingLinkId,
   setDraggingLinkId,
+  linkReorderTick,
+  onLinkDragStart,
+  onLinkDragOver,
+  onLinkDragEnd,
   onVCardFields,
   onVCardStatus,
   handleError,
@@ -1056,6 +1119,10 @@ function EditorPanel({
   onReorderLink: (sourceId: string, targetId: string) => void;
   draggingLinkId: string | null;
   setDraggingLinkId: (id: string | null) => void;
+  linkReorderTick: number;
+  onLinkDragStart: (event: React.DragEvent<HTMLDivElement>, linkId: string) => void;
+  onLinkDragOver: (event: React.DragEvent<HTMLDivElement>, linkId: string) => void;
+  onLinkDragEnd: () => void;
   onVCardFields: (fields: {
     email: string;
     phone: string;
@@ -1209,23 +1276,24 @@ function EditorPanel({
               </Button>
             </div>
           </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent
+          className="space-y-3"
+          data-reorder={linkReorderTick}
+          data-dragging={draggingLinkId ? "true" : "false"}
+        >
           {draft?.links.map((link, index) => (
             <div
               key={link.id}
               className={cn(
-                "dashboard-drag-item group rounded-xl border border-border/60 bg-background/70 p-3",
+                "dashboard-drag-item group rounded-xl border border-border/60 bg-background/70 p-3 text-left",
                 draggingLinkId === link.id && "is-dragging opacity-70"
               )}
+              style={{ "--reorder-index": index } as CSSProperties}
               draggable
-              onDragStart={() => setDraggingLinkId(link.id)}
-              onDragOver={(event) => event.preventDefault()}
-              onDrop={() => {
-                if (draggingLinkId) {
-                  onReorderLink(draggingLinkId, link.id);
-                }
-              }}
-              onDragEnd={() => setDraggingLinkId(null)}
+              onDragStart={(event) => handleLinkDragStart(event, link.id)}
+              onDragOver={(event) => handleLinkDragOver(event, link.id)}
+              onDrop={handleLinkDragEnd}
+              onDragEnd={handleLinkDragEnd}
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="flex-1 space-y-2">
@@ -1260,7 +1328,7 @@ function EditorPanel({
                       />
                     </div>
                 </div>
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col items-start gap-2">
                   <Button
                     variant="ghost"
                     size="icon"
@@ -1358,6 +1426,10 @@ function PhonePreviewCard({
   onReorderLink,
   draggingLinkId,
   setDraggingLinkId,
+  linkReorderTick,
+  onLinkDragStart,
+  onLinkDragOver,
+  onLinkDragEnd,
 }: {
   profile: { name: string; tagline: string };
   avatarUrl: string | null;
@@ -1375,6 +1447,10 @@ function PhonePreviewCard({
   onReorderLink: (sourceId: string, targetId: string) => void;
   draggingLinkId: string | null;
   setDraggingLinkId: (id: string | null) => void;
+  linkReorderTick: number;
+  onLinkDragStart: (event: React.DragEvent<HTMLDivElement>, linkId: string) => void;
+  onLinkDragOver: (event: React.DragEvent<HTMLDivElement>, linkId: string) => void;
+  onLinkDragEnd: () => void;
 }) {
   const visibleLinks = links.filter((link) => link.visible);
   const previewFields = leadFormPreview
@@ -1444,8 +1520,12 @@ function PhonePreviewCard({
           <div className="text-xs font-semibold text-muted-foreground">
             Links
           </div>
-          <div className="mt-3 space-y-3">
-            {visibleLinks.map((link) => (
+            <div
+              className="mt-3 space-y-3"
+              data-reorder={linkReorderTick}
+              data-dragging={draggingLinkId ? "true" : "false"}
+            >
+            {visibleLinks.map((link, index) => (
               <LinkListItem
                 key={link.id}
                 link={link}
@@ -1453,15 +1533,12 @@ function PhonePreviewCard({
                 onToggle={() => onToggleLink(link.id)}
                 onRemove={() => onRemoveLink(link.id)}
                 isDragging={draggingLinkId === link.id}
+                style={{ "--reorder-index": index } as CSSProperties}
                 draggable
-                onDragStart={() => setDraggingLinkId(link.id)}
-                onDragOver={(event) => event.preventDefault()}
-                onDrop={() => {
-                  if (draggingLinkId) {
-                    onReorderLink(draggingLinkId, link.id);
-                  }
-                }}
-                onDragEnd={() => setDraggingLinkId(null)}
+                onDragStart={(event) => onLinkDragStart(event, link.id)}
+                onDragOver={(event) => onLinkDragOver(event, link.id)}
+                onDrop={onLinkDragEnd}
+                onDragEnd={onLinkDragEnd}
               />
             ))}
           </div>
@@ -1597,6 +1674,7 @@ function LinkListItem({
   onToggle,
   onRemove,
   isDragging,
+  style,
   draggable,
   onDragStart,
   onDragOver,
@@ -1608,8 +1686,9 @@ function LinkListItem({
   onToggle: () => void;
   onRemove: () => void;
   isDragging?: boolean;
+  style?: CSSProperties;
   draggable?: boolean;
-  onDragStart?: () => void;
+  onDragStart?: (event: React.DragEvent<HTMLDivElement>) => void;
   onDragOver?: (event: React.DragEvent<HTMLDivElement>) => void;
   onDrop?: () => void;
   onDragEnd?: () => void;
@@ -1620,9 +1699,10 @@ function LinkListItem({
   return (
     <div
       className={cn(
-        "dashboard-drag-item group relative flex items-center justify-between gap-3 rounded-2xl border border-border/60 bg-card/80 px-4 py-3 text-xs font-medium shadow-[0_12px_24px_-18px_rgba(15,23,42,0.2)] cursor-grab active:cursor-grabbing",
+        "dashboard-drag-item group relative flex items-center justify-between gap-3 rounded-2xl border border-border/60 bg-card/80 px-4 py-3 text-left text-xs font-medium shadow-[0_12px_24px_-18px_rgba(15,23,42,0.2)] cursor-grab active:cursor-grabbing",
         isDragging && "is-dragging"
       )}
+      style={style}
       draggable={draggable}
       onDragStart={onDragStart}
       onDragOver={onDragOver}
