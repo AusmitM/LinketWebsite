@@ -13,6 +13,7 @@ create table if not exists public.user_profiles (
   header_image_url text,
   header_image_updated_at timestamptz,
   logo_url text,
+  logo_updated_at timestamptz,
   logo_shape text,
   theme text not null default 'autumn',
   is_active boolean not null default false,
@@ -139,6 +140,7 @@ export type ProfilePayload = {
   headerImageUrl?: string | null;
   headerImageUpdatedAt?: string | null;
   logoUrl?: string | null;
+  logoUpdatedAt?: string | null;
   logoShape?: "circle" | "rect" | null;
   theme: ThemeName;
   links: Array<{ id?: string; title: string; url: string }>;
@@ -387,6 +389,7 @@ function memorySaveProfileForUser(
   const headerImageUrl = payload.headerImageUrl ?? null;
   const headerImageUpdatedAt = payload.headerImageUpdatedAt ?? null;
   const logoUrl = payload.logoUrl ?? null;
+  const logoUpdatedAt = payload.logoUpdatedAt ?? null;
   const logoShape = payload.logoShape ?? "circle";
   const links = payload.links ?? [];
   const name = payload.name?.trim();
@@ -419,6 +422,7 @@ function memorySaveProfileForUser(
       header_image_url: payload.headerImageUrl ?? null,
       header_image_updated_at: payload.headerImageUpdatedAt ?? null,
       logo_url: logoUrl,
+      logo_updated_at: logoUpdatedAt,
       logo_shape: logoShape,
       theme,
       is_active: false,
@@ -440,6 +444,9 @@ function memorySaveProfileForUser(
     }
     if (payload.logoUrl !== undefined) {
       profile.logo_url = payload.logoUrl ?? null;
+    }
+    if (payload.logoUpdatedAt !== undefined) {
+      profile.logo_updated_at = payload.logoUpdatedAt ?? null;
     }
     if (payload.logoShape !== undefined) {
       profile.logo_shape = payload.logoShape ?? "circle";
@@ -642,6 +649,7 @@ export async function saveProfileForUser(
   const headerImageUrl = payload.headerImageUrl ?? null;
   const headerImageUpdatedAt = payload.headerImageUpdatedAt ?? null;
   const logoUrl = payload.logoUrl ?? null;
+  const logoUpdatedAt = payload.logoUpdatedAt ?? null;
   const logoShape = payload.logoShape ?? "circle";
   const links = payload.links ?? [];
   const name = payload.name?.trim();
@@ -663,6 +671,7 @@ export async function saveProfileForUser(
         header_image_url: headerImageUrl,
         header_image_updated_at: headerImageUpdatedAt,
         logo_url: logoUrl,
+        logo_updated_at: logoUpdatedAt,
         logo_shape: logoShape,
         theme,
         is_active: false,
@@ -687,6 +696,9 @@ export async function saveProfileForUser(
     }
     if (payload.logoUrl !== undefined) {
       updatePayload.logo_url = payload.logoUrl;
+    }
+    if (payload.logoUpdatedAt !== undefined) {
+      updatePayload.logo_updated_at = payload.logoUpdatedAt;
     }
     if (payload.logoShape !== undefined) {
       updatePayload.logo_shape = payload.logoShape;

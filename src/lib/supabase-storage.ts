@@ -6,6 +6,7 @@ import { appendVersion } from "@/lib/avatar-utils";
 
 export type UploadResult = { publicUrl: string; thumbUrl: string; path: string; thumbPath: string };
 export type HeaderUploadResult = { publicUrl: string; path: string };
+export type LogoUploadResult = { publicUrl: string; path: string };
 
 /**
  * Upload an avatar to the `avatars` bucket.
@@ -109,6 +110,49 @@ export async function uploadProfileHeaderImage(
 
   const publicUrl = appendVersion(data.signedUrl, Date.now());
   if (!publicUrl) throw new Error("Failed to sign header image URL");
+
+  return { publicUrl, path };
+}
+
+/**
+ * Upload a profile logo image to the `profile-logos` bucket.
+ * - Max 4MB
+ * - Accepts png/jpg/jpeg/webp
+ */
+export async function uploadProfileLogoImage(
+  file: File,
+  userId: string,
+  profileId: string
+): Promise<LogoUploadResult> {
+  if (!file) throw new Error("No file selected");
+  if (file.size > 4 * 1024 * 1024) throw new Error("File too large (max 4MB)");
+
+  const type = (file.type || "").toLowerCase();
+  const ok = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
+  if (!ok.includes(type)) {
+    throw new Error("Only PNG, JPG or WEBP images allowed");
+  }
+
+  const webpFile = await toWebP(file, 600).catch(() => file);
+  const path = `${userId}/profile-logos/${profileId}.webp`;
+
+  const { error: upErr } = await supabase.storage.from("profile-logos").upload(path, webpFile, {
+    cacheControl: "3600",
+    upsert: true,
+    contentType: "image/webp",
+  });
+  if (upErr) throw new Error(upErr.message ?? "Failed to upload logo image");
+
+  const { data, error: signErr } = await supabase
+    .storage
+    .from("profile-logos")
+    .createSignedUrl(path, 3600);
+  if (signErr || !data?.signedUrl) {
+    throw new Error(signErr?.message ?? "Failed to sign logo image URL");
+  }
+
+  const publicUrl = appendVersion(data.signedUrl, Date.now());
+  if (!publicUrl) throw new Error("Failed to sign logo image URL");
 
   return { publicUrl, path };
 }

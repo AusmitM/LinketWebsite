@@ -10,6 +10,7 @@ export type UserProfileRecord = {
   header_image_url: string | null;
   header_image_updated_at: string | null;
   logo_url: string | null;
+  logo_updated_at: string | null;
   logo_shape: "circle" | "rect" | null;
   theme: ThemeName;
   is_active: boolean;

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { getSignedAvatarUrl } from "@/lib/avatar-client";
 import { getSignedProfileHeaderUrl } from "@/lib/profile-header-client";
+import { getSignedProfileLogoUrl } from "@/lib/profile-logo-client";
 import { isDarkTheme } from "@/lib/themes";
 import type { ThemeName } from "@/lib/themes";
 import type { ProfileWithLinks } from "@/lib/profile-service";
@@ -49,13 +50,14 @@ export default function PublicProfilePreview({
 }: Props) {
   const [avatar, setAvatar] = useState<string | null>(null);
   const [headerImage, setHeaderImage] = useState<string | null>(null);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const publicHandle = account.handle || profile.handle || handle;
   const displayName = profile.name || account.displayName || publicHandle;
   const resolvedTheme = themeOverride ?? profile.theme;
   const isDark = isDarkTheme(resolvedTheme);
   const themeClass = `theme-${resolvedTheme} ${isDark ? "dark" : ""}`;
   const headline = profile.headline?.trim() ?? "";
-  const logoUrl = profile.logo_url ?? null;
+  const logoPath = profile.logo_url ?? null;
   const logoShape = profile.logo_shape === "rect" ? "rect" : "circle";
   const links = sortLinks(profile.links);
   const hasLinks = links.length > 0;
@@ -92,6 +94,25 @@ export default function PublicProfilePreview({
       active = false;
     };
   }, [profile.header_image_url, profile.header_image_updated_at]);
+
+  useEffect(() => {
+    if (!logoPath) {
+      setLogoUrl(null);
+      return;
+    }
+    let active = true;
+    (async () => {
+      const signed = await getSignedProfileLogoUrl(
+        logoPath,
+        profile.logo_updated_at
+      );
+      if (!active) return;
+      setLogoUrl(signed);
+    })();
+    return () => {
+      active = false;
+    };
+  }, [logoPath, profile.logo_updated_at]);
 
   useEffect(() => {
     let active = true;

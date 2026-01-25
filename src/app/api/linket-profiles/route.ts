@@ -270,6 +270,7 @@ export async function POST(request: NextRequest) {
           header_image_url: profile.headerImageUrl ?? null,
           header_image_updated_at: profile.headerImageUpdatedAt ?? null,
           logo_url: profile.logoUrl ?? null,
+          logo_updated_at: profile.logoUpdatedAt ?? null,
           logo_shape: profile.logoShape ?? "circle",
           theme: profile.theme,
           is_active: false,
@@ -294,6 +295,9 @@ export async function POST(request: NextRequest) {
       }
       if (profile.logoUrl !== undefined) {
         updatePayload.logo_url = profile.logoUrl;
+      }
+      if (profile.logoUpdatedAt !== undefined) {
+        updatePayload.logo_updated_at = profile.logoUpdatedAt;
       }
       if (profile.logoShape !== undefined) {
         updatePayload.logo_shape = profile.logoShape;

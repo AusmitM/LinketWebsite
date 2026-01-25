@@ -26,12 +26,14 @@ import {
 
 import AvatarUploader from "@/components/dashboard/AvatarUploader";
 import ProfileHeaderUploader from "@/components/dashboard/ProfileHeaderUploader";
+import ProfileLogoUploader from "@/components/dashboard/ProfileLogoUploader";
 import LeadFormBuilder from "@/components/dashboard/LeadFormBuilder";
 import VCardContent from "@/components/dashboard/vcard/VCardContent";
 import { useDashboardUser } from "@/components/dashboard/DashboardSessionContext";
 import { useThemeOptional } from "@/components/theme/theme-provider";
 import { getSignedAvatarUrl } from "@/lib/avatar-client";
 import { getSignedProfileHeaderUrl } from "@/lib/profile-header-client";
+import { getSignedProfileLogoUrl } from "@/lib/profile-logo-client";
 import { cn } from "@/lib/utils";
 import { shuffleFields } from "@/lib/lead-form";
 import { toast } from "@/components/system/toaster";
@@ -75,6 +77,7 @@ type ProfileDraft = {
   headerImageUrl: string | null;
   headerImageUpdatedAt: string | null;
   logoUrl: string | null;
+  logoUpdatedAt: string | null;
   logoShape: "circle" | "rect";
   links: LinkItem[];
   theme: ThemeName;
@@ -139,6 +142,7 @@ export default function PublicProfileEditorPage() {
   const [accountHandle, setAccountHandle] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [headerImageUrl, setHeaderImageUrl] = useState<string | null>(null);
+  const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null);
   const [linkModalOpen, setLinkModalOpen] = useState(false);
   const [linkModalMode, setLinkModalMode] = useState<"add" | "edit">("add");
   const [editingLinkId, setEditingLinkId] = useState<string | null>(null);
@@ -334,6 +338,25 @@ export default function PublicProfileEditorPage() {
     };
   }, [draft?.headerImageUrl, draft?.headerImageUpdatedAt]);
 
+  useEffect(() => {
+    if (!draft?.logoUrl) {
+      setLogoPreviewUrl(null);
+      return;
+    }
+    let active = true;
+    (async () => {
+      const signed = await getSignedProfileLogoUrl(
+        draft.logoUrl,
+        draft.logoUpdatedAt
+      );
+      if (!active) return;
+      setLogoPreviewUrl(signed);
+    })();
+    return () => {
+      active = false;
+    };
+  }, [draft?.logoUrl, draft?.logoUpdatedAt]);
+
   const loadProfile = useCallback(async () => {
     if (!userId) return;
     setLoading(true);
@@ -443,6 +466,7 @@ export default function PublicProfileEditorPage() {
         headerImageUrl: draftSnapshot.headerImageUrl,
         headerImageUpdatedAt: draftSnapshot.headerImageUpdatedAt,
         logoUrl: draftSnapshot.logoUrl,
+        logoUpdatedAt: draftSnapshot.logoUpdatedAt,
         logoShape: draftSnapshot.logoShape,
         theme: draftSnapshot.theme,
         links: draftSnapshot.links.map((link) => ({
@@ -840,7 +864,7 @@ export default function PublicProfileEditorPage() {
                   profile={{ name: profileDisplayName, tagline: profileTagline }}
                   avatarUrl={avatarUrl}
                   headerImageUrl={headerImageUrl}
-                  logoUrl={draft?.logoUrl ?? null}
+                  logoUrl={logoPreviewUrl}
                   logoShape={draft?.logoShape ?? "circle"}
                   contactEnabled={hasContactDetails}
                   contactDisabledText="Add email or phone to enable Save contact"
@@ -892,11 +916,38 @@ export default function PublicProfileEditorPage() {
                   : prev
               );
               }}
+              onLogoUpdate={(payload) => {
+              const nextPath = payload.path || null;
+              const nextUpdatedAt = payload.path ? payload.version : null;
+              setLogoPreviewUrl(payload.publicUrl || null);
+              setLastSavedAt(payload.version);
+              setDraft((prev) =>
+                prev
+                  ? {
+                      ...prev,
+                      logoUrl: nextPath,
+                      logoUpdatedAt: nextUpdatedAt,
+                      updatedAt: payload.version,
+                    }
+                  : prev
+              );
+              setSavedProfile((prev) =>
+                prev
+                  ? {
+                      ...prev,
+                      logoUrl: nextPath,
+                      logoUpdatedAt: nextUpdatedAt,
+                      updatedAt: payload.version,
+                    }
+                  : prev
+              );
+              }}
               onProfileChange={handleProfileChange}
               onAddLink={addLink}
               onUpdateLink={updateLink}
               onEditLink={openEditLink}
               onRemoveLink={removeLink}
+              logoPreviewUrl={logoPreviewUrl}
               onToggleLink={(linkId) =>
                 updateLink(linkId, {
                   visible: !draft?.links.find((link) => link.id === linkId)?.visible,
@@ -918,7 +969,7 @@ export default function PublicProfileEditorPage() {
                 profile={{ name: profileDisplayName, tagline: profileTagline }}
                 avatarUrl={avatarUrl}
                 headerImageUrl={headerImageUrl}
-                logoUrl={draft?.logoUrl ?? null}
+                logoUrl={logoPreviewUrl}
                 logoShape={draft?.logoShape ?? "circle"}
                 contactEnabled={hasContactDetails}
                 contactDisabledText="Add email or phone to enable Save contact"
@@ -1024,6 +1075,7 @@ function EditorPanel({
   previewNode,
   onAvatarUpdate,
   onHeaderImageUpdate,
+  onLogoUpdate,
   onLeadFormPreview,
   onRegisterLeadFormReorder,
   onProfileChange,
@@ -1031,6 +1083,7 @@ function EditorPanel({
   onUpdateLink,
   onEditLink,
   onRemoveLink,
+  logoPreviewUrl,
   onToggleLink,
   onReorderLink,
   draggingLinkId,
@@ -1050,7 +1103,8 @@ function EditorPanel({
     headerImageUrl: string | null;
     previewNode: React.ReactNode;
     onAvatarUpdate: (url: string) => void;
-    onHeaderImageUpdate: (payload: { path: string; version: string; publicUrl: string }) => void;
+  onHeaderImageUpdate: (payload: { path: string; version: string; publicUrl: string }) => void;
+  onLogoUpdate: (payload: { path: string; version: string; publicUrl: string }) => void;
   onLeadFormPreview: (preview: LeadFormConfig | null) => void;
   onRegisterLeadFormReorder: (
     reorder: ((sourceId: string, targetId: string) => void) | null
@@ -1060,6 +1114,7 @@ function EditorPanel({
   onUpdateLink: (linkId: string, patch: Partial<LinkItem>) => void;
   onEditLink: (linkId: string) => void;
   onRemoveLink: (linkId: string) => void;
+  logoPreviewUrl: string | null;
   onToggleLink: (linkId: string) => void;
   onReorderLink: (sourceId: string, targetId: string) => void;
   draggingLinkId: string | null;
@@ -1131,6 +1186,43 @@ function EditorPanel({
           ) : (
             <div className="h-24 rounded-2xl border border-dashed border-border/60 bg-muted/30" />
           )}
+          {userId && draft?.id ? (
+            <ProfileLogoUploader
+              userId={userId}
+              profileId={draft.id}
+              logoUrl={logoPreviewUrl}
+              onUploaded={onLogoUpdate}
+              variant="compact"
+              inputId="profile-logo-upload"
+            />
+          ) : (
+            <div className="h-24 rounded-2xl border border-dashed border-border/60 bg-muted/30" />
+          )}
+          <div className="flex flex-col gap-2">
+            <Label className="text-xs text-muted-foreground">Logo shape</Label>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant={draft?.logoShape === "rect" ? "outline" : "default"}
+                onClick={() => onProfileChange({ logoShape: "circle" })}
+                disabled={loading || !userId}
+                className="h-8 px-3"
+              >
+                Circle
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant={draft?.logoShape === "rect" ? "default" : "outline"}
+                onClick={() => onProfileChange({ logoShape: "rect" })}
+                disabled={loading || !userId}
+                className="h-8 px-3"
+              >
+                Rectangle
+              </Button>
+            </div>
+          </div>
 
           <div className="space-y-2">
             <Label htmlFor="profile-name" className="text-xs text-muted-foreground">
@@ -1184,45 +1276,6 @@ function EditorPanel({
             {handleError ? (
               <p className="text-xs text-destructive">{handleError}</p>
             ) : null}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="profile-logo-url" className="text-xs text-muted-foreground">
-              Logo badge
-            </Label>
-            <Input
-              id="profile-logo-url"
-              value={draft?.logoUrl ?? ""}
-              onChange={(event) =>
-                onProfileChange({
-                  logoUrl: event.target.value.trim() ? event.target.value : null,
-                })
-              }
-              disabled={loading || !userId}
-              placeholder="https://your-logo.png"
-              className="h-9 text-sm"
-            />
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                size="sm"
-                variant={draft?.logoShape === "rect" ? "outline" : "default"}
-                onClick={() => onProfileChange({ logoShape: "circle" })}
-                disabled={loading || !userId}
-                className="h-8 px-3"
-              >
-                Circle
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant={draft?.logoShape === "rect" ? "default" : "outline"}
-                onClick={() => onProfileChange({ logoShape: "rect" })}
-                disabled={loading || !userId}
-                className="h-8 px-3"
-              >
-                Rectangle
-              </Button>
-            </div>
           </div>
         </CardContent>
       </Card>
@@ -1840,6 +1893,7 @@ function buildFallbackDraft(
     headerImageUrl: null,
     headerImageUpdatedAt: null,
     logoUrl: null,
+    logoUpdatedAt: null,
     logoShape: "circle",
     links: [createLink()],
     theme,
@@ -1893,6 +1947,7 @@ function mapProfile(record: ProfileWithLinks): ProfileDraft {
     headerImageUrl: record.header_image_url ?? null,
     headerImageUpdatedAt: record.header_image_updated_at ?? null,
     logoUrl: record.logo_url ?? null,
+    logoUpdatedAt: record.logo_updated_at ?? null,
     logoShape: record.logo_shape === "rect" ? "rect" : "circle",
     links,
     theme: record.theme as ThemeName,
@@ -1927,6 +1982,7 @@ function normalizeDraftForCompare(draft: ProfileDraft) {
     headerImageUrl: draft.headerImageUrl,
     headerImageUpdatedAt: draft.headerImageUpdatedAt,
     logoUrl: draft.logoUrl,
+    logoUpdatedAt: draft.logoUpdatedAt,
     logoShape: draft.logoShape,
     theme: draft.theme,
     active: draft.active,
