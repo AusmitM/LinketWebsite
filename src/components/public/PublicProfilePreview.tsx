@@ -196,20 +196,22 @@ export default function PublicProfilePreview({
                     {avatar ? (
                       <div className="flex flex-col items-center">
                         <div className="relative flex flex-col items-center">
-                          <div className="relative h-28 w-28 overflow-hidden rounded-3xl border-4 border-[var(--avatar-border)] shadow-sm z-10 bg-muted/40">
+                        <div className="relative h-28 w-28 rounded-3xl border-4 border-[var(--avatar-border)] shadow-sm z-10 bg-muted/40 overflow-visible">
+                          <div className="h-full w-full overflow-hidden rounded-3xl">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                               src={avatar}
                               alt={`${displayName} avatar`}
                               className="h-full w-full object-cover"
                             />
-                            {logoUrl && logoShape === "circle" ? (
-                              <span className="absolute -bottom-2 -right-2 h-12 w-12 overflow-hidden rounded-full border-2 border-[var(--avatar-border)] bg-white shadow-md">
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img src={logoUrl} alt="" className="h-full w-full object-cover" />
-                              </span>
-                            ) : null}
                           </div>
+                          {logoUrl && logoShape === "circle" ? (
+                            <span className="absolute -bottom-2 -right-2 h-12 w-12 overflow-hidden rounded-full border-2 border-[var(--avatar-border)] bg-white shadow-md">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={logoUrl} alt="" className="h-full w-full object-cover" />
+                            </span>
+                          ) : null}
+                        </div>
                           {logoUrl && logoShape === "rect" ? (
                             <span className="mt-2 h-8 w-20 overflow-hidden rounded-md border border-[var(--avatar-border)] bg-white shadow-sm">
                               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -240,13 +242,15 @@ export default function PublicProfilePreview({
                 {avatar ? (
                   <div className="flex flex-col items-center">
                     <div className="relative flex flex-col items-center">
-                      <div className="relative h-20 w-20 overflow-hidden rounded-3xl border-4 border-[var(--avatar-border)] bg-muted/40">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={avatar}
-                          alt={`${displayName} avatar`}
-                          className="h-full w-full object-cover"
-                        />
+                      <div className="relative h-20 w-20 rounded-3xl border-4 border-[var(--avatar-border)] bg-muted/40 overflow-visible">
+                        <div className="h-full w-full overflow-hidden rounded-3xl">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={avatar}
+                            alt={`${displayName} avatar`}
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
                         {logoUrl && logoShape === "circle" ? (
                           <span className="absolute -bottom-1.5 -right-1.5 h-8 w-8 overflow-hidden rounded-full border-2 border-[var(--avatar-border)] bg-white shadow-md">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -367,20 +371,22 @@ export default function PublicProfilePreview({
                     {avatar ? (
                       <div className="flex flex-col items-center">
                         <div className="relative flex flex-col items-center">
-                          <div className="relative h-28 w-28 overflow-hidden rounded-3xl border-4 border-[var(--avatar-border)] shadow-sm z-10 bg-muted/40">
+                        <div className="relative h-28 w-28 rounded-3xl border-4 border-[var(--avatar-border)] shadow-sm z-10 bg-muted/40 overflow-visible">
+                          <div className="h-full w-full overflow-hidden rounded-3xl">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                               src={avatar}
                               alt={`${displayName} avatar`}
                               className="h-full w-full object-cover"
                             />
-                            {logoUrl && logoShape === "circle" ? (
-                              <span className="absolute -bottom-2 -right-2 h-12 w-12 overflow-hidden rounded-full border-2 border-[var(--avatar-border)] bg-white shadow-md">
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img src={logoUrl} alt="" className="h-full w-full object-cover" />
-                              </span>
-                            ) : null}
                           </div>
+                          {logoUrl && logoShape === "circle" ? (
+                            <span className="absolute -bottom-2 -right-2 h-12 w-12 overflow-hidden rounded-full border-2 border-[var(--avatar-border)] bg-white shadow-md">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={logoUrl} alt="" className="h-full w-full object-cover" />
+                            </span>
+                          ) : null}
+                        </div>
                           {logoUrl && logoShape === "rect" ? (
                             <span className="mt-2 h-8 w-20 overflow-hidden rounded-md border border-[var(--avatar-border)] bg-white shadow-sm">
                               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -411,13 +417,15 @@ export default function PublicProfilePreview({
                 {avatar ? (
                   <div className="flex flex-col items-center">
                     <div className="relative flex flex-col items-center">
-                      <div className="relative h-20 w-20 overflow-hidden rounded-3xl border-4 border-[var(--avatar-border)] bg-muted/40">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={avatar}
-                          alt={`${displayName} avatar`}
-                          className="h-full w-full object-cover"
-                        />
+                      <div className="relative h-20 w-20 rounded-3xl border-4 border-[var(--avatar-border)] bg-muted/40 overflow-visible">
+                        <div className="h-full w-full overflow-hidden rounded-3xl">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={avatar}
+                            alt={`${displayName} avatar`}
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
                         {logoUrl && logoShape === "circle" ? (
                           <span className="absolute -bottom-1.5 -right-1.5 h-8 w-8 overflow-hidden rounded-full border-2 border-[var(--avatar-border)] bg-white shadow-md">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
