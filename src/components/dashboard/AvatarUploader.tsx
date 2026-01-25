@@ -72,7 +72,6 @@ export default function AvatarUploader({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isDraggingOver, setDraggingOver] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const baseScale = useMemo(() => {
     if (!imageMeta) return 1;
