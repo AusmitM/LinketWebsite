@@ -182,6 +182,8 @@ const MOCK_PUBLIC_PROFILE: ProfileWithLinks = {
   headline: "Engineer | Founder | Digital Media",
   header_image_url: `${PUBLIC_SITE_URL}/mockups/profile-header.jpg`,
   header_image_updated_at: "2026-01-01T00:00:00.000Z",
+  logo_url: `${PUBLIC_SITE_URL}/mockups/profile-logo.png`,
+  logo_shape: "circle",
   theme: "dark",
   is_active: true,
   created_at: "2026-01-01T00:00:00.000Z",
