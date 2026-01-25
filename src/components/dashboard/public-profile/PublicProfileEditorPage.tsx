@@ -42,6 +42,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
@@ -79,6 +80,7 @@ type ProfileDraft = {
   logoUrl: string | null;
   logoUpdatedAt: string | null;
   logoShape: "circle" | "rect";
+  logoBackgroundWhite: boolean;
   links: LinkItem[];
   theme: ThemeName;
   active: boolean;
@@ -216,6 +218,8 @@ export default function PublicProfileEditorPage() {
   const lastThemeRef = useRef<ThemeName | null>(null);
   const logoShapeSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastLogoShapeRef = useRef<ProfileDraft["logoShape"] | null>(null);
+  const logoBackgroundSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastLogoBackgroundRef = useRef<ProfileDraft["logoBackgroundWhite"] | null>(null);
   const dragScrollFrame = useRef<number | null>(null);
   const leadFormReorderRef = useRef<
     ((sourceId: string, targetId: string) => void) | null
@@ -436,6 +440,9 @@ export default function PublicProfileEditorPage() {
       if (logoShapeSaveTimer.current) {
         clearTimeout(logoShapeSaveTimer.current);
       }
+      if (logoBackgroundSaveTimer.current) {
+        clearTimeout(logoBackgroundSaveTimer.current);
+      }
     };
   }, []);
 
@@ -473,6 +480,7 @@ export default function PublicProfileEditorPage() {
         logoUrl: draftSnapshot.logoUrl,
         logoUpdatedAt: draftSnapshot.logoUpdatedAt,
         logoShape: draftSnapshot.logoShape,
+        logoBackgroundWhite: draftSnapshot.logoBackgroundWhite,
         theme: draftSnapshot.theme,
         links: draftSnapshot.links.map((link) => ({
           id: link.id,
@@ -562,6 +570,24 @@ export default function PublicProfileEditorPage() {
     }
     logoShapeSaveTimer.current = setTimeout(() => {
       logoShapeSaveTimer.current = null;
+      if (!isDirty) return;
+      void handleSave();
+    }, 400);
+  }, [draft, handleSave, isDirty, userId]);
+
+  useEffect(() => {
+    if (!draft || !userId) return;
+    if (lastLogoBackgroundRef.current === null) {
+      lastLogoBackgroundRef.current = draft.logoBackgroundWhite;
+      return;
+    }
+    if (draft.logoBackgroundWhite === lastLogoBackgroundRef.current) return;
+    lastLogoBackgroundRef.current = draft.logoBackgroundWhite;
+    if (logoBackgroundSaveTimer.current) {
+      clearTimeout(logoBackgroundSaveTimer.current);
+    }
+    logoBackgroundSaveTimer.current = setTimeout(() => {
+      logoBackgroundSaveTimer.current = null;
       if (!isDirty) return;
       void handleSave();
     }, 400);
@@ -889,6 +915,7 @@ export default function PublicProfileEditorPage() {
                   headerImageUrl={headerImageUrl}
                   logoUrl={logoPreviewUrl}
                   logoShape={draft?.logoShape ?? "circle"}
+                  logoBackgroundWhite={draft?.logoBackgroundWhite ?? false}
                   contactEnabled={hasContactDetails}
                   contactDisabledText="Add email or phone to enable Save contact"
                   onContactClick={handleContactCta}
@@ -994,6 +1021,7 @@ export default function PublicProfileEditorPage() {
                 headerImageUrl={headerImageUrl}
                 logoUrl={logoPreviewUrl}
                 logoShape={draft?.logoShape ?? "circle"}
+                logoBackgroundWhite={draft?.logoBackgroundWhite ?? false}
                 contactEnabled={hasContactDetails}
                 contactDisabledText="Add email or phone to enable Save contact"
                 onContactClick={handleContactCta}
@@ -1215,6 +1243,7 @@ function EditorPanel({
               profileId={draft.id}
               logoUrl={logoPreviewUrl}
               logoShape={draft?.logoShape ?? "circle"}
+              logoBackgroundWhite={draft?.logoBackgroundWhite ?? false}
               onUploaded={onLogoUpdate}
               variant="compact"
               inputId="profile-logo-upload"
@@ -1246,6 +1275,16 @@ function EditorPanel({
                 Rectangle
               </Button>
             </div>
+            <label className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+              <Switch
+                checked={draft?.logoBackgroundWhite ?? false}
+                onCheckedChange={(value) =>
+                  onProfileChange({ logoBackgroundWhite: Boolean(value) })
+                }
+                disabled={loading || !userId}
+              />
+              White logo background
+            </label>
           </div>
 
           <div className="space-y-2">
@@ -1471,6 +1510,7 @@ function PhonePreviewCard({
   headerImageUrl,
   logoUrl,
   logoShape,
+  logoBackgroundWhite,
   contactEnabled,
   contactDisabledText,
   onContactClick,
@@ -1490,6 +1530,7 @@ function PhonePreviewCard({
   headerImageUrl: string | null;
   logoUrl: string | null;
   logoShape: "circle" | "rect";
+  logoBackgroundWhite: boolean;
   contactEnabled: boolean;
   contactDisabledText: string;
   onContactClick: () => void;
@@ -1505,6 +1546,7 @@ function PhonePreviewCard({
   setDraggingLinkId: (id: string | null) => void;
 }) {
   const visibleLinks = links.filter((link) => link.visible);
+  const logoBadgeClass = logoBackgroundWhite ? "bg-white" : "bg-background";
   const previewFields = leadFormPreview
     ? leadFormPreview.settings.shuffleQuestionOrder
       ? shuffleFields(leadFormPreview.fields)
@@ -1548,14 +1590,14 @@ function PhonePreviewCard({
                   />
                 </div>
                 {logoUrl && logoShape === "circle" ? (
-                  <span className="absolute -bottom-2 -right-2 h-12 w-12 overflow-hidden rounded-full border-2 border-[var(--avatar-border)] bg-background shadow-md">
+                  <span className={cn("absolute -bottom-2 -right-2 h-12 w-12 overflow-hidden rounded-full border-2 border-[var(--avatar-border)] shadow-md", logoBadgeClass)}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={logoUrl} alt="" className="h-full w-full object-cover" />
                   </span>
                 ) : null}
               </div>
               {logoUrl && logoShape === "rect" ? (
-                <span className="mt-2 h-8 w-20 overflow-hidden rounded-md border border-[var(--avatar-border)] bg-background shadow-sm">
+                <span className={cn("mt-2 h-8 w-20 overflow-hidden rounded-md border border-[var(--avatar-border)] shadow-sm", logoBadgeClass)}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={logoUrl} alt="" className="h-full w-full object-cover" />
                 </span>
@@ -1921,6 +1963,7 @@ function buildFallbackDraft(
     logoUrl: null,
     logoUpdatedAt: null,
     logoShape: "circle",
+    logoBackgroundWhite: false,
     links: [createLink()],
     theme,
     active: true,
@@ -1975,6 +2018,7 @@ function mapProfile(record: ProfileWithLinks): ProfileDraft {
     logoUrl: record.logo_url ?? null,
     logoUpdatedAt: record.logo_updated_at ?? null,
     logoShape: record.logo_shape === "rect" ? "rect" : "circle",
+    logoBackgroundWhite: record.logo_bg_white ?? false,
     links,
     theme: record.theme as ThemeName,
     active: record.is_active,
@@ -2010,6 +2054,7 @@ function normalizeDraftForCompare(draft: ProfileDraft) {
     logoUrl: draft.logoUrl,
     logoUpdatedAt: draft.logoUpdatedAt,
     logoShape: draft.logoShape,
+    logoBackgroundWhite: draft.logoBackgroundWhite,
     theme: draft.theme,
     active: draft.active,
     links: draft.links.map((link) => ({

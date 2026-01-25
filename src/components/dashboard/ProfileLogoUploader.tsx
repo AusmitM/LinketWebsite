@@ -21,6 +21,7 @@ type Props = {
   profileId: string;
   logoUrl: string | null;
   logoShape: "circle" | "rect";
+  logoBackgroundWhite?: boolean;
   onUploaded: (payload: { path: string; version: string; publicUrl: string }) => void;
   variant?: "default" | "compact";
   inputId?: string;
@@ -37,6 +38,7 @@ export default function ProfileLogoUploader({
   profileId,
   logoUrl,
   logoShape,
+  logoBackgroundWhite = false,
   onUploaded,
   variant = "compact",
   inputId,
@@ -310,6 +312,7 @@ export default function ProfileLogoUploader({
     !sourceUrl && "border-dashed"
   );
   const logoFrameClassName = logoShape === "circle" ? "rounded-full" : "rounded-xl";
+  const logoFrameBgClassName = logoBackgroundWhite ? "bg-white" : "bg-background/80";
 
   const displayUrl = sourceUrl || latestLogoUrl;
   const inputTargetId = inputId ?? "profile-logo-upload";
@@ -323,8 +326,9 @@ export default function ProfileLogoUploader({
         <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center">
           <div
             className={cn(
-              "h-16 w-16 overflow-hidden border bg-background/80 sm:h-20 sm:w-20",
-              logoFrameClassName
+              "h-16 w-16 overflow-hidden border sm:h-20 sm:w-20",
+              logoFrameClassName,
+              logoFrameBgClassName
             )}
           >
             {displayUrl ? (

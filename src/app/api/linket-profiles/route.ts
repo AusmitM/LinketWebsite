@@ -272,6 +272,7 @@ export async function POST(request: NextRequest) {
           logo_url: profile.logoUrl ?? null,
           logo_updated_at: profile.logoUpdatedAt ?? null,
           logo_shape: profile.logoShape ?? "circle",
+          logo_bg_white: profile.logoBackgroundWhite ?? false,
           theme: profile.theme,
           is_active: false,
         })
@@ -301,6 +302,9 @@ export async function POST(request: NextRequest) {
       }
       if (profile.logoShape !== undefined) {
         updatePayload.logo_shape = profile.logoShape;
+      }
+      if (profile.logoBackgroundWhite !== undefined) {
+        updatePayload.logo_bg_white = profile.logoBackgroundWhite;
       }
       const { error: updateError } = await supabase
         .from("user_profiles")

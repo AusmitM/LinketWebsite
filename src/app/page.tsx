@@ -185,6 +185,7 @@ const MOCK_PUBLIC_PROFILE: ProfileWithLinks = {
   logo_url: `${PUBLIC_SITE_URL}/mockups/profile-logo.png`,
   logo_updated_at: "2026-01-01T00:00:00.000Z",
   logo_shape: "circle",
+  logo_bg_white: false,
   theme: "dark",
   is_active: true,
   created_at: "2026-01-01T00:00:00.000Z",

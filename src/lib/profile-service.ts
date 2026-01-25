@@ -15,6 +15,7 @@ create table if not exists public.user_profiles (
   logo_url text,
   logo_updated_at timestamptz,
   logo_shape text,
+  logo_bg_white boolean default false,
   theme text not null default 'autumn',
   is_active boolean not null default false,
   created_at timestamptz not null default now(),
@@ -142,6 +143,7 @@ export type ProfilePayload = {
   logoUrl?: string | null;
   logoUpdatedAt?: string | null;
   logoShape?: "circle" | "rect" | null;
+  logoBackgroundWhite?: boolean | null;
   theme: ThemeName;
   links: Array<{ id?: string; title: string; url: string }>;
   active?: boolean;
@@ -391,6 +393,7 @@ function memorySaveProfileForUser(
   const logoUrl = payload.logoUrl ?? null;
   const logoUpdatedAt = payload.logoUpdatedAt ?? null;
   const logoShape = payload.logoShape ?? "circle";
+  const logoBackgroundWhite = payload.logoBackgroundWhite ?? false;
   const links = payload.links ?? [];
   const name = payload.name?.trim();
   if (!name) throw new Error("Profile name is required");
@@ -424,6 +427,7 @@ function memorySaveProfileForUser(
       logo_url: logoUrl,
       logo_updated_at: logoUpdatedAt,
       logo_shape: logoShape,
+      logo_bg_white: logoBackgroundWhite,
       theme,
       is_active: false,
       created_at: now,
@@ -450,6 +454,9 @@ function memorySaveProfileForUser(
     }
     if (payload.logoShape !== undefined) {
       profile.logo_shape = payload.logoShape ?? "circle";
+    }
+    if (payload.logoBackgroundWhite !== undefined) {
+      profile.logo_bg_white = payload.logoBackgroundWhite ?? false;
     }
     profile.updated_at = now;
   }
@@ -651,6 +658,7 @@ export async function saveProfileForUser(
   const logoUrl = payload.logoUrl ?? null;
   const logoUpdatedAt = payload.logoUpdatedAt ?? null;
   const logoShape = payload.logoShape ?? "circle";
+  const logoBackgroundWhite = payload.logoBackgroundWhite ?? false;
   const links = payload.links ?? [];
   const name = payload.name?.trim();
   if (!name) throw new Error("Profile name is required");
@@ -673,6 +681,7 @@ export async function saveProfileForUser(
         logo_url: logoUrl,
         logo_updated_at: logoUpdatedAt,
         logo_shape: logoShape,
+        logo_bg_white: logoBackgroundWhite,
         theme,
         is_active: false,
       })
@@ -702,6 +711,9 @@ export async function saveProfileForUser(
     }
     if (payload.logoShape !== undefined) {
       updatePayload.logo_shape = payload.logoShape;
+    }
+    if (payload.logoBackgroundWhite !== undefined) {
+      updatePayload.logo_bg_white = payload.logoBackgroundWhite;
     }
     const { error } = await supabaseAdmin
       .from(PROFILE_TABLE)
