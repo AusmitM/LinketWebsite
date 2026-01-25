@@ -501,7 +501,7 @@ export default function VCardContent({
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="rounded-full"
+                    className="rounded-full bg-primary text-foreground hover:bg-primary/90 hover:text-primary-foreground disabled:bg-primary/70 disabled:text-foreground/90 disabled:opacity-100"
                   onClick={handlePhotoReCrop}
                   disabled={!fields.photoData}
                 >
@@ -511,7 +511,7 @@ export default function VCardContent({
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="rounded-full"
+                    className="rounded-full bg-primary text-foreground hover:bg-primary/90 hover:text-primary-foreground disabled:bg-primary/70 disabled:text-foreground/90 disabled:opacity-100"
                   onClick={handlePhotoRemove}
                   disabled={!fields.photoData && !photoSourceUrl}
                 >

@@ -393,7 +393,7 @@ export default function ProfileHeaderUploader({
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="rounded-full"
+                className="rounded-full bg-primary text-foreground hover:bg-primary/90 hover:text-primary-foreground disabled:bg-primary/70 disabled:text-foreground/90 disabled:opacity-100"
                 onClick={handleReCrop}
                 disabled={!latestHeaderUrl || loading}
               >
@@ -403,7 +403,7 @@ export default function ProfileHeaderUploader({
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="rounded-full"
+                className="rounded-full bg-primary text-foreground hover:bg-primary/90 hover:text-primary-foreground disabled:bg-primary/70 disabled:text-foreground/90 disabled:opacity-100"
                 onClick={handleRemove}
                 disabled={!(latestHeaderUrl || sourceUrl) || loading}
               >

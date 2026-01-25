@@ -1254,26 +1254,36 @@ function EditorPanel({
           <div className="flex flex-col gap-2">
             <Label className="text-xs text-muted-foreground">Logo shape</Label>
             <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                size="sm"
-                variant={draft?.logoShape === "rect" ? "outline" : "default"}
-                onClick={() => onProfileChange({ logoShape: "circle" })}
-                disabled={loading || !userId}
-                className="h-8 px-3"
-              >
-                Circle
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant={draft?.logoShape === "rect" ? "default" : "outline"}
-                onClick={() => onProfileChange({ logoShape: "rect" })}
-                disabled={loading || !userId}
-                className="h-8 px-3"
-              >
-                Rectangle
-              </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={draft?.logoShape === "rect" ? "outline" : "default"}
+                  onClick={() => onProfileChange({ logoShape: "circle" })}
+                  disabled={loading || !userId}
+                  className={cn(
+                    "h-8 px-3",
+                    draft?.logoShape !== "rect"
+                      ? "bg-[#cfe4ff] text-[#cfe4ff] border-2 border-[#5aa0ff] shadow-[0_6px_16px_-10px_rgba(90,160,255,0.6)]"
+                      : "text-muted-foreground border border-border/60 hover:bg-muted/40"
+                  )}
+                >
+                  Circle
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={draft?.logoShape === "rect" ? "default" : "outline"}
+                  onClick={() => onProfileChange({ logoShape: "rect" })}
+                  disabled={loading || !userId}
+                  className={cn(
+                    "h-8 px-3",
+                    draft?.logoShape === "rect"
+                      ? "bg-[#cfe4ff] text-[#cfe4ff] border-2 border-[#5aa0ff] shadow-[0_6px_16px_-10px_rgba(90,160,255,0.6)]"
+                      : "text-muted-foreground border border-border/60 hover:bg-muted/40"
+                  )}
+                >
+                  Rectangle
+                </Button>
             </div>
             <label className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
               <Switch

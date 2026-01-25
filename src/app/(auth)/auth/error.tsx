@@ -16,7 +16,7 @@ export default function Error({
   }, [error])
 
   return (
-    <main className="mx-auto max-w-sm px-4 py-10">
+    <section className="mx-auto max-w-sm px-4 py-10">
       <Card className="rounded-2xl">
         <CardContent className="p-6">
           <h1 className="text-xl font-semibold text-[#0f172a]">Something went wrong</h1>
@@ -28,6 +28,6 @@ export default function Error({
           </div>
         </CardContent>
       </Card>
-    </main>
+    </section>
   )
 }

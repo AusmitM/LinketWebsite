@@ -7,7 +7,7 @@ export default function Loading() {
   const prefersReducedMotion = useReducedMotion()
 
   return (
-    <main className="mx-auto max-w-sm px-4 py-10">
+    <section className="mx-auto max-w-sm px-4 py-10">
       <motion.div initial={prefersReducedMotion ? false : { opacity: 0 }} animate={{ opacity: 1 }}>
         <Card className="rounded-2xl">
           <CardContent className="p-6">
@@ -20,6 +20,6 @@ export default function Loading() {
           </CardContent>
         </Card>
       </motion.div>
-    </main>
+    </section>
   )
 }

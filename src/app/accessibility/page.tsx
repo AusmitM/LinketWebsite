@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function AccessibilityPage() {
   return (
-    <main className="mx-auto w-full max-w-4xl px-4 py-12 sm:px-8">
+    <section className="mx-auto w-full max-w-4xl px-4 py-12 sm:px-8">
       <div className="space-y-10">
         <header className="space-y-3">
           <h1 className="text-3xl font-semibold text-foreground">
@@ -63,6 +63,6 @@ export default function AccessibilityPage() {
           <p className="text-sm text-muted-foreground">January 2026</p>
         </section>
       </div>
-    </main>
+    </section>
   );
 }

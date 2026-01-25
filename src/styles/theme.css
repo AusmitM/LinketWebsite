@@ -213,40 +213,40 @@
 
 /* Dream theme token mapping */
 .theme-dream {
-  --background: #dec1db;
-  --foreground: #2d2b45;
-  --card: rgba(248, 242, 249, 0.92);
-  --card-foreground: #2d2b45;
-  --popover: rgba(255, 255, 255, 0.9);
-  --popover-foreground: #2d2b45;
-  --primary: #5b61b2;
+  --background: #f4e9ff;
+  --foreground: #1d1f3d;
+  --card: rgba(255, 255, 255, 0.96);
+  --card-foreground: #1f2342;
+  --popover: rgba(255, 255, 255, 0.94);
+  --popover-foreground: #1f2342;
+  --primary: #3a2ad6;
   --primary-foreground: #f7f4ff;
-  --secondary: #6da0e1;
-  --secondary-foreground: #1f2a55;
-  --muted: #e7d7e6;
-  --muted-foreground: #6f6a8c;
-  --accent: #2f80e4;
-  --accent-foreground: #f1f7ff;
-  --destructive: #ef778f;
-  --border: #d7c4db;
-  --input: #d7c4db;
-  --ring: #5b61b2;
-  --avatar-border: var(--ring);
-  --sidebar: #e8d2e6;
-  --sidebar-foreground: #2d2b45;
-  --sidebar-primary: #5b61b2;
+  --secondary: #f2a3db;
+  --secondary-foreground: #3a1f4b;
+  --muted: #ece0fb;
+  --muted-foreground: #5d5f87;
+  --accent: #b8a6ff;
+  --accent-foreground: #1f2342;
+  --destructive: #e95784;
+  --border: #d8cbed;
+  --input: #d8cbed;
+  --ring: #3a2ad6;
+  --avatar-border: #b8a6ff;
+  --sidebar: #efe1ff;
+  --sidebar-foreground: #1d1f3d;
+  --sidebar-primary: #3a2ad6;
   --sidebar-primary-foreground: #f7f4ff;
-  --sidebar-accent: #e1e6f8;
-  --sidebar-accent-foreground: #2b3a6b;
-  --sidebar-border: #d7c4db;
-  --sidebar-ring: #5b61b2;
-  --premium-gradient: radial-gradient(120% 120% at 18% 0%, rgba(91, 97, 178, 0.18) 0%, transparent 60%),
-    radial-gradient(120% 120% at 82% 0%, rgba(47, 128, 228, 0.16) 0%, transparent 55%),
-    linear-gradient(180deg, #f9f4fb 0%, #e9d7e8 100%);
-  --premium-card-gradient: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 242, 249, 0.9) 100%);
+  --sidebar-accent: #efe7ff;
+  --sidebar-accent-foreground: #2e2a6a;
+  --sidebar-border: #d8cbed;
+  --sidebar-ring: #3a2ad6;
+  --premium-gradient: radial-gradient(120% 120% at 16% 0%, rgba(58, 42, 214, 0.22) 0%, transparent 60%),
+    radial-gradient(120% 120% at 84% 0%, rgba(184, 166, 255, 0.24) 0%, transparent 55%),
+    linear-gradient(180deg, #fbf6ff 0%, #eae2ff 100%);
+  --premium-card-gradient: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(247, 242, 255, 0.92) 100%);
   --premium-topbar-gradient: linear-gradient(90deg, rgba(255, 255, 255, 0.94) 0%, rgba(244, 239, 250, 0.9) 100%);
-  --premium-border: rgba(91, 97, 178, 0.12);
-  --premium-shadow: 0 18px 45px -30px rgba(91, 97, 178, 0.35);
+  --premium-border: rgba(63, 74, 223, 0.14);
+  --premium-shadow: 0 18px 45px -30px rgba(32, 40, 120, 0.26);
   --premium-glow: 0 0 0 1px rgba(255, 255, 255, 0.7);
   --premium-hairline: rgba(255, 255, 255, 0.6);
   --premium-inset: 0 1px 0 rgba(255, 255, 255, 0.45) inset;

@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 
 export default function NotFound() {
   return (
-    <main className="mx-auto max-w-xl px-4 py-16 text-center">
+    <section className="mx-auto max-w-xl px-4 py-16 text-center">
       <Card className="rounded-2xl">
         <CardContent className="p-8">
           <h1 className="text-3xl font-semibold text-[#0f172a]">Page not found</h1>
@@ -16,7 +16,7 @@ export default function NotFound() {
           </div>
         </CardContent>
       </Card>
-    </main>
+    </section>
   );
 }
 

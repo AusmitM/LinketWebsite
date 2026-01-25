@@ -226,7 +226,7 @@ export default function AuthPage() {
           <div className="auth-grid" />
         </div>
 
-        <main className="relative mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 py-12 lg:flex-row lg:items-center lg:gap-16">
+        <section className="relative mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 py-12 lg:flex-row lg:items-center lg:gap-16">
           <section className="auth-panel w-full max-w-md space-y-6 rounded-3xl border border-border/60 bg-card/70 p-6 shadow-[0_24px_70px_-52px_rgba(15,23,42,0.7)] backdrop-blur sm:p-8">
             <div className="flex items-center justify-between text-xs uppercase tracking-[0.3em] text-muted-foreground">
               <span className="font-display text-sm font-semibold text-foreground">
@@ -418,7 +418,7 @@ export default function AuthPage() {
               </div>
             </div>
           </aside>
-        </main>
+        </section>
       </div>
     </div>
   );

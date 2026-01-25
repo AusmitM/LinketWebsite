@@ -100,7 +100,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body
         suppressHydrationWarning
-        className={`${geistSans.variable} ${geistMono.variable} ${display.variable} antialiased bg-background text-foreground`}
+        className={`${geistSans.variable} ${geistMono.variable} ${display.variable} flex min-h-dvh flex-col antialiased bg-background text-foreground`}
       >
         <ThemeProvider initial="light" storageKey={null}>
           <PrefetchRoutes />
@@ -111,13 +111,11 @@ export default function RootLayout({
             >
               Skip to content
             </a>
-            <div className="flex min-h-dvh flex-col">
-              <Navbar />
-              <main id="main" className="flex-1 min-h-0">
-                {children}
-              </main>
-              <Footer />
-            </div>
+            <Navbar />
+            <main id="main" className="flex-1 min-h-0">
+              {children}
+            </main>
+            <Footer />
             <Script
               id="product-jsonld"
               type="application/ld+json"
