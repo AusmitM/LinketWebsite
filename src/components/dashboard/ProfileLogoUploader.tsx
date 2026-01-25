@@ -92,10 +92,6 @@ export default function ProfileLogoUploader({
   }, []);
 
   const resetEditor = useCallback(() => {
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-    setSourceFile(null);
     setSourceUrl(null);
     setImageMeta(null);
     setPreviewReady(false);
@@ -299,6 +295,10 @@ export default function ProfileLogoUploader({
       if (updErr) throw new Error(updErr.message ?? "Failed to remove logo");
       setLatestLogoUrl(null);
       resetEditor();
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+      setSourceFile(null);
       onUploaded({ path: "", version, publicUrl: "" });
     } catch (err) {
       const message =

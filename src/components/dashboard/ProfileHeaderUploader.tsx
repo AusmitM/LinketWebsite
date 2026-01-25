@@ -115,10 +115,6 @@ export default function ProfileHeaderUploader({
     if (sourceUrl) {
       URL.revokeObjectURL(sourceUrl);
     }
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-    setSourceFile(null);
     setSourceUrl(null);
     setImageMeta(null);
     setPreviewReady(false);
@@ -333,6 +329,10 @@ export default function ProfileHeaderUploader({
       if (updErr) throw new Error(updErr.message ?? "Failed to remove header image");
       setLatestHeaderUrl(null);
       resetEditor();
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+      setSourceFile(null);
       onUploaded({ path: "", version, publicUrl: "" });
     } catch (err) {
       const message =
