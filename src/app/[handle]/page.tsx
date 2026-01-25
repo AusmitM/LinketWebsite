@@ -227,7 +227,7 @@ export default async function PublicProfilePage({ params }: Props) {
                 <VCardDownload
                   handle={publicHandle}
                   label="Save Contact Information"
-                  className="w-full rounded-full bg-foreground text-background shadow-[0_16px_32px_-24px_rgba(15,23,42,0.6)] hover:bg-foreground/90 sm:w-auto"
+                  className="w-full rounded-full bg-background text-foreground hover:bg-muted/60 dark:bg-background dark:text-foreground dark:hover:text-foreground dark:hover:bg-muted/30 shadow-[0_16px_32px_-24px_rgba(15,23,42,0.6)] sm:w-auto"
                 />
                 <ShareContactButton
                   handle={publicHandle}

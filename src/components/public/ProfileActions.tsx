@@ -29,7 +29,12 @@ export function ProfileActions({ username, profileUrl, className }: Props) {
         <Share2 className="mr-2 h-4 w-4" aria-hidden />
         Share profile
       </Button>
-      <Button variant="outline" asChild className="w-full rounded-2xl sm:w-auto" aria-label="Save vCard">
+      <Button
+        variant="outline"
+        asChild
+        className="w-full rounded-2xl text-foreground hover:text-foreground dark:text-background dark:hover:text-background sm:w-auto"
+        aria-label="Save vCard"
+      >
         <a href={`/api/vcard/${encodeURIComponent(username)}`}>Save vCard</a>
       </Button>
       <details className="group relative w-full sm:w-auto">
