@@ -12,6 +12,8 @@ create table if not exists public.user_profiles (
   headline text,
   header_image_url text,
   header_image_updated_at timestamptz,
+  logo_url text,
+  logo_shape text,
   theme text not null default 'autumn',
   is_active boolean not null default false,
   created_at timestamptz not null default now(),
@@ -136,6 +138,8 @@ export type ProfilePayload = {
   headline?: string | null;
   headerImageUrl?: string | null;
   headerImageUpdatedAt?: string | null;
+  logoUrl?: string | null;
+  logoShape?: "circle" | "rect" | null;
   theme: ThemeName;
   links: Array<{ id?: string; title: string; url: string }>;
   active?: boolean;
@@ -382,6 +386,8 @@ function memorySaveProfileForUser(
   const headline = payload.headline?.trim() || null;
   const headerImageUrl = payload.headerImageUrl ?? null;
   const headerImageUpdatedAt = payload.headerImageUpdatedAt ?? null;
+  const logoUrl = payload.logoUrl ?? null;
+  const logoShape = payload.logoShape ?? "circle";
   const links = payload.links ?? [];
   const name = payload.name?.trim();
   if (!name) throw new Error("Profile name is required");
@@ -412,6 +418,8 @@ function memorySaveProfileForUser(
       headline,
       header_image_url: payload.headerImageUrl ?? null,
       header_image_updated_at: payload.headerImageUpdatedAt ?? null,
+      logo_url: logoUrl,
+      logo_shape: logoShape,
       theme,
       is_active: false,
       created_at: now,
@@ -429,6 +437,12 @@ function memorySaveProfileForUser(
     }
     if (payload.headerImageUpdatedAt !== undefined) {
       profile.header_image_updated_at = payload.headerImageUpdatedAt;
+    }
+    if (payload.logoUrl !== undefined) {
+      profile.logo_url = payload.logoUrl ?? null;
+    }
+    if (payload.logoShape !== undefined) {
+      profile.logo_shape = payload.logoShape ?? "circle";
     }
     profile.updated_at = now;
   }
@@ -627,6 +641,8 @@ export async function saveProfileForUser(
   const headline = payload.headline?.trim() || null;
   const headerImageUrl = payload.headerImageUrl ?? null;
   const headerImageUpdatedAt = payload.headerImageUpdatedAt ?? null;
+  const logoUrl = payload.logoUrl ?? null;
+  const logoShape = payload.logoShape ?? "circle";
   const links = payload.links ?? [];
   const name = payload.name?.trim();
   if (!name) throw new Error("Profile name is required");
@@ -646,6 +662,8 @@ export async function saveProfileForUser(
         headline,
         header_image_url: headerImageUrl,
         header_image_updated_at: headerImageUpdatedAt,
+        logo_url: logoUrl,
+        logo_shape: logoShape,
         theme,
         is_active: false,
       })
@@ -666,6 +684,12 @@ export async function saveProfileForUser(
     }
     if (payload.headerImageUpdatedAt !== undefined) {
       updatePayload.header_image_updated_at = payload.headerImageUpdatedAt;
+    }
+    if (payload.logoUrl !== undefined) {
+      updatePayload.logo_url = payload.logoUrl;
+    }
+    if (payload.logoShape !== undefined) {
+      updatePayload.logo_shape = payload.logoShape;
     }
     const { error } = await supabaseAdmin
       .from(PROFILE_TABLE)

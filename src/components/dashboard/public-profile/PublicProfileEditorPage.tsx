@@ -74,6 +74,8 @@ type ProfileDraft = {
   headline: string;
   headerImageUrl: string | null;
   headerImageUpdatedAt: string | null;
+  logoUrl: string | null;
+  logoShape: "circle" | "rect";
   links: LinkItem[];
   theme: ThemeName;
   active: boolean;
@@ -440,6 +442,8 @@ export default function PublicProfileEditorPage() {
         headline: draftSnapshot.headline,
         headerImageUrl: draftSnapshot.headerImageUrl,
         headerImageUpdatedAt: draftSnapshot.headerImageUpdatedAt,
+        logoUrl: draftSnapshot.logoUrl,
+        logoShape: draftSnapshot.logoShape,
         theme: draftSnapshot.theme,
         links: draftSnapshot.links.map((link) => ({
           id: link.id,
@@ -836,6 +840,8 @@ export default function PublicProfileEditorPage() {
                   profile={{ name: profileDisplayName, tagline: profileTagline }}
                   avatarUrl={avatarUrl}
                   headerImageUrl={headerImageUrl}
+                  logoUrl={draft?.logoUrl ?? null}
+                  logoShape={draft?.logoShape ?? "circle"}
                   contactEnabled={hasContactDetails}
                   contactDisabledText="Add email or phone to enable Save contact"
                   onContactClick={handleContactCta}
@@ -912,6 +918,8 @@ export default function PublicProfileEditorPage() {
                 profile={{ name: profileDisplayName, tagline: profileTagline }}
                 avatarUrl={avatarUrl}
                 headerImageUrl={headerImageUrl}
+                logoUrl={draft?.logoUrl ?? null}
+                logoShape={draft?.logoShape ?? "circle"}
                 contactEnabled={hasContactDetails}
                 contactDisabledText="Add email or phone to enable Save contact"
                 onContactClick={handleContactCta}
@@ -1177,6 +1185,45 @@ function EditorPanel({
               <p className="text-xs text-destructive">{handleError}</p>
             ) : null}
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="profile-logo-url" className="text-xs text-muted-foreground">
+              Logo badge
+            </Label>
+            <Input
+              id="profile-logo-url"
+              value={draft?.logoUrl ?? ""}
+              onChange={(event) =>
+                onProfileChange({
+                  logoUrl: event.target.value.trim() ? event.target.value : null,
+                })
+              }
+              disabled={loading || !userId}
+              placeholder="https://your-logo.png"
+              className="h-9 text-sm"
+            />
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant={draft?.logoShape === "rect" ? "outline" : "default"}
+                onClick={() => onProfileChange({ logoShape: "circle" })}
+                disabled={loading || !userId}
+                className="h-8 px-3"
+              >
+                Circle
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant={draft?.logoShape === "rect" ? "default" : "outline"}
+                onClick={() => onProfileChange({ logoShape: "rect" })}
+                disabled={loading || !userId}
+                className="h-8 px-3"
+              >
+                Rectangle
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
     );
@@ -1345,6 +1392,8 @@ function PhonePreviewCard({
   profile,
   avatarUrl,
   headerImageUrl,
+  logoUrl,
+  logoShape,
   contactEnabled,
   contactDisabledText,
   onContactClick,
@@ -1362,6 +1411,8 @@ function PhonePreviewCard({
   profile: { name: string; tagline: string };
   avatarUrl: string | null;
   headerImageUrl: string | null;
+  logoUrl: string | null;
+  logoShape: "circle" | "rect";
   contactEnabled: boolean;
   contactDisabledText: string;
   onContactClick: () => void;
@@ -1408,13 +1459,29 @@ function PhonePreviewCard({
       </div>
       <div className="flex flex-col items-center px-6 pb-6">
         {avatarUrl ? (
-          <div className="-mt-16 h-28 w-28 overflow-hidden rounded-3xl border-4 border-[var(--avatar-border)] bg-background shadow-sm relative z-10">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={avatarUrl}
-              alt=""
-              className="h-full w-full object-cover"
-            />
+          <div className="-mt-16 flex flex-col items-center">
+            <div className="relative h-28 w-28 overflow-hidden rounded-3xl border-4 border-[var(--avatar-border)] bg-background shadow-sm z-10">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={avatarUrl}
+                alt=""
+                className="h-full w-full object-cover"
+              />
+              {logoUrl && logoShape === "circle" ? (
+                <span className="absolute -bottom-2 -right-2 h-8 w-8 overflow-hidden rounded-full border-2 border-[var(--avatar-border)] bg-background shadow-md">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={logoUrl} alt="" className="h-full w-full object-cover" />
+                </span>
+              ) : null}
+            </div>
+            {logoUrl && logoShape === "rect" ? (
+              <div className="mt-2 flex w-full justify-end">
+                <span className="h-6 w-16 overflow-hidden rounded-md border border-[var(--avatar-border)] bg-background shadow-sm">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={logoUrl} alt="" className="h-full w-full object-cover" />
+                </span>
+              </div>
+            ) : null}
           </div>
         ) : null}
         <div className={avatarUrl ? "mt-3 text-center" : "mt-2 text-center"}>
@@ -1772,6 +1839,8 @@ function buildFallbackDraft(
     headline: "",
     headerImageUrl: null,
     headerImageUpdatedAt: null,
+    logoUrl: null,
+    logoShape: "circle",
     links: [createLink()],
     theme,
     active: true,
@@ -1823,6 +1892,8 @@ function mapProfile(record: ProfileWithLinks): ProfileDraft {
     headline: record.headline ?? "",
     headerImageUrl: record.header_image_url ?? null,
     headerImageUpdatedAt: record.header_image_updated_at ?? null,
+    logoUrl: record.logo_url ?? null,
+    logoShape: record.logo_shape === "rect" ? "rect" : "circle",
     links,
     theme: record.theme as ThemeName,
     active: record.is_active,
@@ -1855,6 +1926,8 @@ function normalizeDraftForCompare(draft: ProfileDraft) {
     headline: draft.headline,
     headerImageUrl: draft.headerImageUrl,
     headerImageUpdatedAt: draft.headerImageUpdatedAt,
+    logoUrl: draft.logoUrl,
+    logoShape: draft.logoShape,
     theme: draft.theme,
     active: draft.active,
     links: draft.links.map((link) => ({

@@ -269,6 +269,8 @@ export async function POST(request: NextRequest) {
           headline: profile.headline?.trim() || null,
           header_image_url: profile.headerImageUrl ?? null,
           header_image_updated_at: profile.headerImageUpdatedAt ?? null,
+          logo_url: profile.logoUrl ?? null,
+          logo_shape: profile.logoShape ?? "circle",
           theme: profile.theme,
           is_active: false,
         })
@@ -289,6 +291,12 @@ export async function POST(request: NextRequest) {
       }
       if (profile.headerImageUpdatedAt !== undefined) {
         updatePayload.header_image_updated_at = profile.headerImageUpdatedAt;
+      }
+      if (profile.logoUrl !== undefined) {
+        updatePayload.logo_url = profile.logoUrl;
+      }
+      if (profile.logoShape !== undefined) {
+        updatePayload.logo_shape = profile.logoShape;
       }
       const { error: updateError } = await supabase
         .from("user_profiles")
