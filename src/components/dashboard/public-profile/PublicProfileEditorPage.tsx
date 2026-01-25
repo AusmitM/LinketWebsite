@@ -1525,14 +1525,14 @@ function PhonePreviewCard({
                   />
                 </div>
                 {logoUrl && logoShape === "circle" ? (
-                  <span className="absolute -bottom-2 -right-2 h-12 w-12 overflow-hidden rounded-full border-2 border-[var(--avatar-border)] bg-white shadow-md">
+                  <span className="absolute -bottom-2 -right-2 h-12 w-12 overflow-hidden rounded-full border-2 border-[var(--avatar-border)] shadow-md">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={logoUrl} alt="" className="h-full w-full object-cover" />
                   </span>
                 ) : null}
               </div>
               {logoUrl && logoShape === "rect" ? (
-                <span className="mt-2 h-8 w-20 overflow-hidden rounded-md border border-[var(--avatar-border)] bg-white shadow-sm">
+                <span className="mt-2 h-8 w-20 overflow-hidden rounded-md border border-[var(--avatar-border)] shadow-sm">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={logoUrl} alt="" className="h-full w-full object-cover" />
                 </span>
