@@ -7,6 +7,7 @@ export type ThemeName =
   | "light"
   | "dark"
   | "midnight"
+  | "dream"
   | "forest"
   | "gilded"
   | "ember"

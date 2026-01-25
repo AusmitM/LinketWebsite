@@ -160,6 +160,7 @@ function normaliseTheme(
     "light",
     "dark",
     "midnight",
+    "dream",
     "forest",
     "gilded",
     "ember",

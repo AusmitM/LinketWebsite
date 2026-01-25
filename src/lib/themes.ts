@@ -2,6 +2,7 @@ export type ThemeName =
   | "light"
   | "dark"
   | "midnight"
+  | "dream"
   | "forest"
   | "gilded"
   | "ember"
@@ -55,6 +56,21 @@ const themes: Record<ThemeName, Vars> = {
     "--input": "#1f1a3d",
     "--ring": "#8b5cf6",
     "--avatar-border": "#8b5cf6",
+  },
+  dream: {
+    "--background": "#dec1db",
+    "--foreground": "#2d2b45",
+    "--card": "#f8f2f9",
+    "--card-foreground": "#2d2b45",
+    "--muted": "#e7d7e6",
+    "--muted-foreground": "#6f6a8c",
+    "--accent": "#2f80e4",
+    "--accent-foreground": "#f1f7ff",
+    "--destructive": "#ef778f",
+    "--border": "#d7c4db",
+    "--input": "#d7c4db",
+    "--ring": "#5b61b2",
+    "--avatar-border": "#5b61b2",
   },
   forest: {
     "--background": "#1f262b",

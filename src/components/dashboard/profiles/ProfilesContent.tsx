@@ -51,6 +51,13 @@ const THEME_OPTIONS: Array<{
     textTone: "light",
   },
   {
+    id: "dream",
+    label: "Dream",
+    description: "Soft pastel haze with airy blue glow",
+    preview: "linear-gradient(135deg, #f8f2f9 0%, #dec1db 55%, #6da0e1 100%)",
+    textTone: "dark",
+  },
+  {
     id: "forest",
     label: "Forest",
     description: "Verdant greens inspired by lush canopies",
