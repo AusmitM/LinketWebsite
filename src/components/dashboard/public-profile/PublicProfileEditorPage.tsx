@@ -1183,6 +1183,7 @@ function EditorPanel({
   handleError: string | null;
   setHandleError: (value: string | null) => void;
 }) {
+  const { theme } = useThemeOptional();
   if (activeSection === "preview") {
     return <div className="flex justify-center">{previewNode}</div>;
   }
@@ -1263,7 +1264,7 @@ function EditorPanel({
                   className={cn(
                     "h-8 px-3",
                     draft?.logoShape !== "rect"
-                      ? "bg-[#cfe4ff] text-[#cfe4ff] border-2 border-[#5aa0ff] shadow-[0_6px_16px_-10px_rgba(90,160,255,0.6)]"
+                      ? `bg-[#cfe4ff] ${theme === "honey" ? "text-[#8a3f0a]" : "text-foreground"} border-2 border-[#5aa0ff] shadow-[0_6px_16px_-10px_rgba(90,160,255,0.6)]`
                       : "text-muted-foreground border border-border/60 hover:bg-muted/40"
                   )}
                 >
@@ -1278,7 +1279,7 @@ function EditorPanel({
                   className={cn(
                     "h-8 px-3",
                     draft?.logoShape === "rect"
-                      ? "bg-[#cfe4ff] text-[#cfe4ff] border-2 border-[#5aa0ff] shadow-[0_6px_16px_-10px_rgba(90,160,255,0.6)]"
+                      ? `bg-[#cfe4ff] ${theme === "honey" ? "text-[#8a3f0a]" : "text-foreground"} border-2 border-[#5aa0ff] shadow-[0_6px_16px_-10px_rgba(90,160,255,0.6)]`
                       : "text-muted-foreground border border-border/60 hover:bg-muted/40"
                   )}
                 >

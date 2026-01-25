@@ -365,7 +365,7 @@ export default function ProfileLogoUploader({
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="rounded-full bg-primary text-foreground hover:bg-primary/90 hover:text-primary-foreground disabled:bg-primary/70 disabled:text-foreground/90 disabled:opacity-100"
+                className="rounded-full bg-primary text-foreground hover:bg-primary/90 disabled:bg-primary/70 disabled:text-foreground/90 disabled:opacity-100"
                 onClick={handleReCrop}
                 disabled={!latestLogoUrl || loading}
               >
@@ -375,7 +375,7 @@ export default function ProfileLogoUploader({
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="rounded-full bg-primary text-foreground hover:bg-primary/90 hover:text-primary-foreground disabled:bg-primary/70 disabled:text-foreground/90 disabled:opacity-100"
+                className="rounded-full bg-primary text-foreground hover:bg-primary/90 disabled:bg-primary/70 disabled:text-foreground/90 disabled:opacity-100"
                 onClick={handleRemove}
                 disabled={!(latestLogoUrl || sourceUrl) || loading}
               >
