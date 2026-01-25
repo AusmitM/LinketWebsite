@@ -1373,14 +1373,14 @@ function EditorPanel({
           <CardHeader className="flex flex-col items-start gap-2 text-left sm:flex-row sm:items-center sm:justify-between">
             <CardTitle className="text-sm font-semibold">Links</CardTitle>
             <div className="flex w-full justify-center sm:w-auto sm:justify-end">
-              <Button
-                variant="default"
-                size="sm"
-                className="justify-center rounded-full px-6"
-                onClick={onAddLink}
-              >
-                Add link
-              </Button>
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="justify-center rounded-full px-6 text-foreground hover:text-foreground dark:text-foreground dark:hover:text-foreground"
+                  onClick={onAddLink}
+                >
+                  Add link
+                </Button>
             </div>
           </CardHeader>
         <CardContent className="space-y-3">
@@ -1941,7 +1941,7 @@ function LinkModal({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={onSave}>
+          <Button className="text-foreground hover:text-foreground dark:text-foreground dark:hover:text-foreground" onClick={onSave}>
             {mode === "add" ? "Add link" : "Save changes"}
           </Button>
         </DialogFooter>

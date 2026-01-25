@@ -9,7 +9,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Copy, GripVertical, Plus, Trash2 } from "lucide-react";
+import { GripVertical, Plus, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -377,7 +377,10 @@ export default function LeadFormBuilder({
                   size="sm"
                   onClick={() => void persist()}
                   disabled={saving}
-                  className={saving ? "dashboard-saving-indicator" : undefined}
+                  className={cn(
+                    saving ? "dashboard-saving-indicator" : undefined,
+                    "text-foreground hover:text-foreground dark:text-foreground dark:hover:text-foreground"
+                  )}
                 >
                   {saving ? "Saving" : "Save"}
                 </Button>
@@ -508,7 +511,7 @@ export default function LeadFormBuilder({
                 size="sm"
                 variant="secondary"
                 onClick={() => setFieldPickerOpen(true)}
-                className="hidden sm:inline-flex"
+                className="hidden sm:inline-flex lead-form-add-field"
               >
                 <Plus className="mr-2 h-4 w-4" /> Add field
               </Button>
@@ -518,7 +521,7 @@ export default function LeadFormBuilder({
                 size="sm"
                 variant="secondary"
                 onClick={() => setFieldPickerOpen(true)}
-                className="w-full justify-center sm:hidden"
+                className="w-full justify-center sm:hidden lead-form-add-field"
               >
                 <Plus className="mr-2 h-4 w-4" /> Add field
               </Button>
@@ -550,18 +553,6 @@ export default function LeadFormBuilder({
                       </div>
                     </div>
                     <div className="flex items-center gap-1">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          duplicateField(field);
-                        }}
-                        aria-label="Duplicate field"
-                      >
-                        <Copy className="h-4 w-4" />
-                      </Button>
                       <Button
                         type="button"
                         variant="ghost"
