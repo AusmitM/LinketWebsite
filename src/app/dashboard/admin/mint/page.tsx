@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { getCurrentUserWithAdmin } from "@/lib/admin";
 import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
 import MintControls from "@/components/dashboard/admin/MintControls";
@@ -163,7 +164,9 @@ export default async function AdminMintPage() {
             </p>
           </div>
           <Button asChild variant="outline" className="rounded-full">
-            <a href="/api/admin/mint/master-log">Download master CSV</a>
+            <Link href="/api/admin/mint/master-log" prefetch={false}>
+              Download master CSV
+            </Link>
           </Button>
         </div>
         <div className="mt-4 grid gap-3">

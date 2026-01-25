@@ -11,20 +11,12 @@ export default function LeadsPage() {
   const dashboardUser = useDashboardUser();
   const userId = dashboardUser?.id ?? null;
   const [handle, setHandle] = useState<string | null>(null);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     let active = true;
-    if (!userId) {
-      setHandle(null);
-      return () => {
-        active = false;
-      };
-    }
+    if (!userId) return () => {
+      active = false;
+    };
 
     (async () => {
       try {
@@ -48,18 +40,6 @@ export default function LeadsPage() {
       active = false;
     };
   }, [userId]);
-
-  if (!mounted) {
-    return (
-      <div className="space-y-6">
-        <Card className="rounded-3xl border bg-card/80 shadow-sm">
-          <CardContent className="py-10 text-center text-sm text-muted-foreground">
-            Loading leads...
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   if (!userId) {
     return (

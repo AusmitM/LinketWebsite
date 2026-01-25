@@ -370,7 +370,7 @@ export default function VCardContent({
       );
     }
     return !areVCardFieldsEqual(lastSavedRef.current, fields);
-  }, [fields, lastSavedAt]);
+  }, [fields]);
 
   const handleFieldBlur = useCallback(() => {
     if (!userId) return;

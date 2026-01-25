@@ -353,10 +353,6 @@ export default function AvatarUploader({
   );
   const headerClassName = cn(isCompact && "px-4");
   const titleClassName = cn(isCompact && "text-sm");
-  const descriptionClassName = cn(
-    "text-sm text-muted-foreground",
-    isCompact && "text-xs"
-  );
   const contentClassName = cn(
     "flex flex-col gap-6 lg:flex-row lg:items-start",
     isCompact && "gap-4 px-4"

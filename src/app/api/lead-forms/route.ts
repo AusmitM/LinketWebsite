@@ -186,7 +186,8 @@ export async function GET(request: NextRequest) {
     let query = supabase.from("lead_forms").select("*").eq("user_id", userId);
     if (profileId) query = query.eq("profile_id", profileId);
     if (handle) query = query.eq("handle", handle);
-    let { data, error: formError } = await query.maybeSingle();
+    const { data: initialData, error: formError } = await query.maybeSingle();
+    let data = initialData;
     if (formError && formError.code !== "PGRST116") {
       throw new Error(formError.message);
     }

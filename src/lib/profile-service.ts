@@ -290,11 +290,7 @@ function buildHandleSuggestions(base: string, existing: Set<string>): string[] {
   return suggestions;
 }
 
-async function assertHandleAvailable(
-  userId: string,
-  handle: string,
-  profileId?: string | null
-) {
+async function assertHandleAvailable(handle: string, profileId?: string | null) {
   if (!SUPABASE_ENABLED) {
     const existing = memoryGetProfileByHandle(handle);
     if (existing && existing.id !== profileId) {
@@ -390,8 +386,6 @@ function memorySaveProfileForUser(
   const handle = normaliseHandle(payload.handle);
   const theme = normaliseTheme(payload.theme);
   const headline = payload.headline?.trim() || null;
-  const headerImageUrl = payload.headerImageUrl ?? null;
-  const headerImageUpdatedAt = payload.headerImageUpdatedAt ?? null;
   const logoUrl = payload.logoUrl ?? null;
   const logoUpdatedAt = payload.logoUpdatedAt ?? null;
   const logoShape = payload.logoShape ?? "circle";
@@ -668,7 +662,7 @@ export async function saveProfileForUser(
 
   let profileId = payload.id ?? null;
 
-  await assertHandleAvailable(userId, handle, profileId);
+  await assertHandleAvailable(handle, profileId);
 
   if (!profileId) {
     const { data, error } = await supabaseAdmin

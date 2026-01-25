@@ -139,10 +139,6 @@ export default function LeadFormBuilder({
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
-  const [stats, setStats] = useState<ResponsesStats>({
-    count: 0,
-    lastSubmittedAt: null,
-  });
   const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null);
   const [fieldPickerOpen, setFieldPickerOpen] = useState(false);
   const [draggingFieldId, setDraggingFieldId] = useState<string | null>(null);
@@ -201,7 +197,6 @@ export default function LeadFormBuilder({
         );
         setForm(normalized);
         setSelectedFieldId(normalized.fields[0]?.id ?? null);
-        setStats(payload.meta?.stats ?? { count: 0, lastSubmittedAt: null });
         lastSnapshot.current = JSON.stringify(normalized);
         setLastSavedAt(payload.form?.meta?.updatedAt || null);
       } catch (error) {
@@ -269,7 +264,7 @@ export default function LeadFormBuilder({
     };
   }, [form, isDirty, loading, persist]);
 
-  const updateForm = (patch: Partial<LeadFormConfig>) => {
+  const updateForm = useCallback((patch: Partial<LeadFormConfig>) => {
     if (!form) return;
     const next: LeadFormConfig = {
       ...form,
@@ -281,7 +276,7 @@ export default function LeadFormBuilder({
       },
     };
     setForm(next);
-  };
+  }, [form]);
 
   const updateField = (fieldId: string, patch: Partial<LeadFormField>) => {
     if (!form) return;
@@ -305,13 +300,6 @@ export default function LeadFormBuilder({
     setSelectedFieldId(newField.id);
   };
 
-  const duplicateField = (field: LeadFormField) => {
-    if (!form) return;
-    const copy = { ...field, id: `field_${randomId()}` } as LeadFormField;
-    updateForm({ fields: [...form.fields, copy] });
-    setSelectedFieldId(copy.id);
-  };
-
   const deleteField = (fieldId: string) => {
     if (!form) return;
     const nextFields = form.fields.filter((field) => field.id !== fieldId);
@@ -319,7 +307,7 @@ export default function LeadFormBuilder({
     setSelectedFieldId(nextFields[0]?.id ?? null);
   };
 
-  const reorderFields = (sourceId: string, targetId: string) => {
+  const reorderFields = useCallback((sourceId: string, targetId: string) => {
     if (!form || sourceId === targetId) return;
     const next = [...form.fields];
     const sourceIndex = next.findIndex((field) => field.id === sourceId);
@@ -328,7 +316,7 @@ export default function LeadFormBuilder({
     const [moved] = next.splice(sourceIndex, 1);
     next.splice(targetIndex, 0, moved);
     updateForm({ fields: next });
-  };
+  }, [form, updateForm]);
 
   useEffect(() => {
     onRegisterReorder?.(reorderFields);

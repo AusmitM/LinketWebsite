@@ -17,7 +17,6 @@ import {
   Instagram,
   Link2,
   MessageSquare,
-  Palette,
   Pencil,
   Trash2,
   User,
@@ -37,7 +36,6 @@ import { getSignedProfileLogoUrl } from "@/lib/profile-logo-client";
 import { cn } from "@/lib/utils";
 import { shuffleFields } from "@/lib/lead-form";
 import { toast } from "@/components/system/toaster";
-import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -131,7 +129,6 @@ const LINK_COLORS = [
 export default function PublicProfileEditorPage() {
   const dashboardUser = useDashboardUser();
   const { theme } = useThemeOptional();
-  const supabase = useMemo(() => createClient(), []);
   const [userId, setUserId] = useState<string | null>(dashboardUser?.id ?? null);
   const [activeSection, setActiveSection] = useState<SectionId>("profile");
   const [draft, setDraft] = useState<ProfileDraft | null>(null);
@@ -929,7 +926,6 @@ export default function PublicProfileEditorPage() {
                     })
                   }
                   onRemoveLink={removeLink}
-                  onAddLink={addLink}
                   onReorderLink={reorderLinks}
                   draggingLinkId={draggingLinkId}
                   setDraggingLinkId={setDraggingLinkId}
@@ -1035,7 +1031,6 @@ export default function PublicProfileEditorPage() {
                   })
                 }
                 onRemoveLink={removeLink}
-                onAddLink={addLink}
                 onReorderLink={reorderLinks}
                 draggingLinkId={draggingLinkId}
                 setDraggingLinkId={setDraggingLinkId}
@@ -1184,9 +1179,6 @@ function EditorPanel({
   setHandleError: (value: string | null) => void;
 }) {
   const { theme } = useThemeOptional();
-  if (activeSection === "preview") {
-    return <div className="flex justify-center">{previewNode}</div>;
-  }
   const handleFieldsChange = useCallback(
     (fields: { email: string; phone: string; photoData: string | null }) => {
       onVCardFields({
@@ -1207,6 +1199,9 @@ function EditorPanel({
     },
     [onVCardStatus]
   );
+  if (activeSection === "preview") {
+    return <div className="flex justify-center">{previewNode}</div>;
+  }
   if (activeSection === "profile") {
     return (
       <Card className="rounded-2xl border border-border/60 bg-card/80 shadow-sm">
@@ -1531,7 +1526,6 @@ function PhonePreviewCard({
   onEditLink,
   onToggleLink,
   onRemoveLink,
-  onAddLink,
   onReorderLink,
   draggingLinkId,
   setDraggingLinkId,
@@ -1551,7 +1545,6 @@ function PhonePreviewCard({
   onEditLink: (linkId: string) => void;
   onToggleLink: (linkId: string) => void;
   onRemoveLink: (linkId: string) => void;
-  onAddLink: () => void;
   onReorderLink: (sourceId: string, targetId: string) => void;
   draggingLinkId: string | null;
   setDraggingLinkId: (id: string | null) => void;
