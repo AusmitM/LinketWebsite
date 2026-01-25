@@ -810,22 +810,6 @@ export default function ProfilesContent() {
             </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            {publicProfileUrl && (
-              <Button
-                asChild
-                variant="outline"
-                size="sm"
-                className="rounded-full"
-              >
-                <Link
-                  href={publicProfileUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <ExternalLink className="mr-2 h-4 w-4" /> View public profile
-                </Link>
-              </Button>
-            )}
             <Button
               variant="secondary"
               size="sm"

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
-import { Link as LinkIcon, LogOut, Menu, X } from "lucide-react";
+import { ArrowUpRight, LogOut, Menu, X } from "lucide-react";
 
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
@@ -87,6 +87,8 @@ export function Navbar() {
   const [loggingOut, setLoggingOut] = useState(false);
   const accountButtonRef = useRef<HTMLButtonElement | null>(null);
   const [accountHandle, setAccountHandle] = useState<string | null>(null);
+  const [copyLinkLabel, setCopyLinkLabel] = useState("copy link");
+  const copyLinkTimeout = useRef<number | null>(null);
 
   useEffect(() => {
     lockedSectionRef.current = lockedSection;
@@ -96,6 +98,9 @@ export function Navbar() {
     return () => {
       if (lockTimeout.current) {
         window.clearTimeout(lockTimeout.current);
+      }
+      if (copyLinkTimeout.current) {
+        window.clearTimeout(copyLinkTimeout.current);
       }
     };
   }, []);
@@ -204,7 +209,14 @@ export function Navbar() {
     if (!profileUrl) return;
     try {
       await navigator.clipboard.writeText(profileUrl);
-      toast({ title: "Link copied", variant: "success" });
+      setCopyLinkLabel("link copied");
+      if (copyLinkTimeout.current) {
+        window.clearTimeout(copyLinkTimeout.current);
+      }
+      copyLinkTimeout.current = window.setTimeout(() => {
+        setCopyLinkLabel("copy link");
+        copyLinkTimeout.current = null;
+      }, 2000);
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Unable to copy link";
@@ -495,6 +507,35 @@ export function Navbar() {
     </Button>
   );
 
+  const dashboardProfileActions = user ? (
+    <div className="dashboard-nav-actions flex items-center gap-2">
+      <Button
+        type="button"
+        size="sm"
+        variant="outline"
+        className="dashboard-copy-link-button rounded-full cursor-pointer disabled:cursor-not-allowed"
+        onClick={handleCopyProfileLink}
+        disabled={!profileUrl}
+      >
+        {copyLinkLabel}
+      </Button>
+      <Button
+        type="button"
+        size="sm"
+        variant="outline"
+        className="dashboard-view-profile-button rounded-full cursor-pointer disabled:cursor-not-allowed"
+        onClick={handleViewProfile}
+        disabled={!profileUrl}
+        aria-label="Open public profile"
+        title="Open public profile"
+      >
+        <span className="dashboard-view-profile-icon" aria-hidden="true">
+          <ArrowUpRight className="h-4 w-4" />
+        </span>
+      </Button>
+    </div>
+  ) : null;
+
   if (isDashboard) {
     const overviewHref = "/dashboard/overview";
     const activeDashboardHref = (() => {
@@ -568,29 +609,7 @@ export function Navbar() {
           </div>
 
           <div className="dashboard-navbar-right flex items-center gap-3">
-            {user && (
-              <div className="dashboard-navbar-cta hidden items-center gap-2 md:flex">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="dashboard-view-profile-button rounded-full"
-                  onClick={handleViewProfile}
-                  disabled={!profileUrl}
-                >
-                  <span className="dashboard-view-profile-label">View public profile</span>
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="dashboard-copy-link-button rounded-full"
-                  onClick={handleCopyProfileLink}
-                  disabled={!profileUrl}
-                  aria-label="Copy link"
-                >
-                  <LinkIcon className="h-4 w-4" />
-                </Button>
-              </div>
-            )}
+            {dashboardProfileActions}
             <Button
               asChild
               size="sm"

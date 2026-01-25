@@ -696,6 +696,15 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
   border-color: var(--premium-border);
 }
 
+#dashboard-theme-scope [data-slot=button] {
+  cursor: pointer;
+}
+
+#dashboard-theme-scope [data-slot=button]:disabled,
+#dashboard-theme-scope [data-slot=button][aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
 #dashboard-theme-scope [data-slot=input]::placeholder {
   color: color-mix(in srgb, var(--muted-foreground) 80%, transparent);
 }
