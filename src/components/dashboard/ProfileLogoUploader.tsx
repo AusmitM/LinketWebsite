@@ -92,6 +92,9 @@ export default function ProfileLogoUploader({
   }, []);
 
   const resetEditor = useCallback(() => {
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
     setSourceFile(null);
     setSourceUrl(null);
     setImageMeta(null);
@@ -343,6 +346,7 @@ export default function ProfileLogoUploader({
           <div className="flex-1 space-y-2">
             <Label htmlFor={inputTargetId}>Logo badge</Label>
             <Input
+              ref={fileInputRef}
               id={inputTargetId}
               type="file"
               accept="image/png,image/jpeg,image/jpg,image/webp"

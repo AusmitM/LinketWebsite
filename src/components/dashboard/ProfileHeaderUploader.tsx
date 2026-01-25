@@ -115,6 +115,9 @@ export default function ProfileHeaderUploader({
     if (sourceUrl) {
       URL.revokeObjectURL(sourceUrl);
     }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
     setSourceFile(null);
     setSourceUrl(null);
     setImageMeta(null);
@@ -371,6 +374,7 @@ export default function ProfileHeaderUploader({
           <div className="flex-1 space-y-2">
             <Label htmlFor={inputTargetId}>Header image</Label>
             <Input
+              ref={fileInputRef}
               id={inputTargetId}
               type="file"
               accept="image/png,image/jpeg,image/webp"

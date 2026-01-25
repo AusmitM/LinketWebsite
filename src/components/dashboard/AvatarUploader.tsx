@@ -72,6 +72,7 @@ export default function AvatarUploader({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isDraggingOver, setDraggingOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const baseScale = useMemo(() => {
     if (!imageMeta) return 1;
@@ -99,6 +100,9 @@ export default function AvatarUploader({
   const resetEditor = useCallback(() => {
     if (sourceUrl) {
       URL.revokeObjectURL(sourceUrl);
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
     setSourceFile(null);
     setSourceUrl(null);
@@ -394,6 +398,7 @@ export default function AvatarUploader({
           <div className="flex-1 space-y-2">
             <Label htmlFor={inputTargetId}>Profile photo</Label>
             <Input
+              ref={fileInputRef}
               id={inputTargetId}
               type="file"
               accept="image/png,image/jpeg,image/webp"
