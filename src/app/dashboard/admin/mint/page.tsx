@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUserWithAdmin } from "@/lib/admin";
 import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
 import MintControls from "@/components/dashboard/admin/MintControls";
+import { Button } from "@/components/ui/button";
 
 type BatchSummary = {
   id: string;
@@ -153,6 +154,17 @@ export default async function AdminMintPage() {
         <div className="space-y-1">
           <h2 className="text-lg font-semibold text-foreground">Recent batches</h2>
           <p className="text-xs text-muted-foreground">Last 25 batches minted from this console.</p>
+        </div>
+        <div className="mt-4 flex flex-col gap-4 rounded-2xl border border-border/60 bg-background/60 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div className="text-sm font-semibold text-foreground">Master log</div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Single CSV with every Linket ever minted across all batches.
+            </p>
+          </div>
+          <Button asChild variant="outline" className="rounded-full">
+            <a href="/api/admin/mint/master-log">Download master CSV</a>
+          </Button>
         </div>
         <div className="mt-4 grid gap-3">
           {batches.length === 0 ? (

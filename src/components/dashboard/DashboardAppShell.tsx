@@ -51,7 +51,7 @@ export default function DashboardAppShell({
       className="flex min-h-[100svh] bg-[var(--background)]"
       style={{ "--dashboard-nav-height": "64px" } as CSSProperties}
     >
-      <div className="hidden h-[calc(100vh-var(--dashboard-nav-height))] lg:sticky lg:top-[var(--dashboard-nav-height)] lg:block">
+      <div className="relative z-30 hidden h-[calc(100vh-var(--dashboard-nav-height))] lg:sticky lg:top-[var(--dashboard-nav-height)] lg:block">
         <Sidebar />
       </div>
       <div className="flex flex-1 flex-col overflow-hidden">

@@ -157,6 +157,7 @@ export default function Sidebar({
                 title={item.label}
                 className={cn(
                   "group relative flex items-center gap-3 rounded-xl px-2.5 py-2 text-sm outline-none transition",
+                  isCollapsed && !isMobile && "justify-center",
                   active
                     ? "bg-gradient-to-r from-[var(--primary)]/20 to-[var(--accent)]/20 text-foreground ring-1 ring-[var(--ring)]/40 shadow-[var(--shadow-ambient)]"
                     : "text-muted-foreground hover:bg-accent"
