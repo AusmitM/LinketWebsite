@@ -1514,8 +1514,8 @@ function PhonePreviewCard({
         {avatarUrl ? (
           <div className="-mt-16 flex flex-col items-center">
             <div className="relative flex flex-col items-center">
-              <div className="relative h-28 w-28 rounded-3xl border-4 border-[var(--avatar-border)] bg-background shadow-sm z-10 overflow-visible">
-                <div className="h-full w-full overflow-hidden rounded-3xl">
+              <div className="relative h-28 w-28 rounded-3xl bg-background shadow-sm z-10 overflow-visible">
+                <div className="h-full w-full overflow-hidden rounded-3xl ring-4 ring-[var(--avatar-border)]">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={avatarUrl}

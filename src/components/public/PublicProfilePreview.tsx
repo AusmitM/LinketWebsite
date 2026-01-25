@@ -196,8 +196,8 @@ export default function PublicProfilePreview({
                     {avatar ? (
                       <div className="flex flex-col items-center">
                         <div className="relative flex flex-col items-center">
-                        <div className="relative h-28 w-28 rounded-3xl border-4 border-[var(--avatar-border)] shadow-sm z-10 bg-muted/40 overflow-visible">
-                          <div className="h-full w-full overflow-hidden rounded-3xl">
+                        <div className="relative h-28 w-28 rounded-3xl shadow-sm z-10 bg-muted/40 overflow-visible">
+                          <div className="h-full w-full overflow-hidden rounded-3xl ring-4 ring-[var(--avatar-border)]">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                               src={avatar}
@@ -242,8 +242,8 @@ export default function PublicProfilePreview({
                 {avatar ? (
                   <div className="flex flex-col items-center">
                     <div className="relative flex flex-col items-center">
-                      <div className="relative h-20 w-20 rounded-3xl border-4 border-[var(--avatar-border)] bg-muted/40 overflow-visible">
-                        <div className="h-full w-full overflow-hidden rounded-3xl">
+                      <div className="relative h-20 w-20 rounded-3xl bg-muted/40 overflow-visible">
+                        <div className="h-full w-full overflow-hidden rounded-3xl ring-4 ring-[var(--avatar-border)]">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={avatar}
@@ -371,8 +371,8 @@ export default function PublicProfilePreview({
                     {avatar ? (
                       <div className="flex flex-col items-center">
                         <div className="relative flex flex-col items-center">
-                        <div className="relative h-28 w-28 rounded-3xl border-4 border-[var(--avatar-border)] shadow-sm z-10 bg-muted/40 overflow-visible">
-                          <div className="h-full w-full overflow-hidden rounded-3xl">
+                        <div className="relative h-28 w-28 rounded-3xl shadow-sm z-10 bg-muted/40 overflow-visible">
+                          <div className="h-full w-full overflow-hidden rounded-3xl ring-4 ring-[var(--avatar-border)]">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                               src={avatar}
@@ -417,8 +417,8 @@ export default function PublicProfilePreview({
                 {avatar ? (
                   <div className="flex flex-col items-center">
                     <div className="relative flex flex-col items-center">
-                      <div className="relative h-20 w-20 rounded-3xl border-4 border-[var(--avatar-border)] bg-muted/40 overflow-visible">
-                        <div className="h-full w-full overflow-hidden rounded-3xl">
+                      <div className="relative h-20 w-20 rounded-3xl bg-muted/40 overflow-visible">
+                        <div className="h-full w-full overflow-hidden rounded-3xl ring-4 ring-[var(--avatar-border)]">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={avatar}
