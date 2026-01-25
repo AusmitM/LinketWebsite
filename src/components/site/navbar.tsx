@@ -89,6 +89,7 @@ export function Navbar() {
   const [accountHandle, setAccountHandle] = useState<string | null>(null);
   const [copyLinkLabel, setCopyLinkLabel] = useState("copy link");
   const copyLinkTimeout = useRef<number | null>(null);
+  const [dashboardSidebarOpen, setDashboardSidebarOpen] = useState(false);
 
   useEffect(() => {
     lockedSectionRef.current = lockedSection;
@@ -198,6 +199,21 @@ export function Navbar() {
     };
   }, [isDashboard]);
 
+  useEffect(() => {
+    if (!isDashboard) {
+      setDashboardSidebarOpen(false);
+      return;
+    }
+    const handleSidebarState = (event: Event) => {
+      const detail = (event as CustomEvent<{ open?: boolean }>).detail;
+      setDashboardSidebarOpen(Boolean(detail?.open));
+    };
+    window.addEventListener("linket:dashboard-sidebar-state", handleSidebarState);
+    return () => {
+      window.removeEventListener("linket:dashboard-sidebar-state", handleSidebarState);
+    };
+  }, [isDashboard]);
+
   const profileUrl = accountHandle ? buildPublicProfileUrl(accountHandle) : null;
 
   const handleViewProfile = () => {
@@ -250,6 +266,11 @@ export function Navbar() {
       });
       setLoggingOut(false);
     }
+  };
+
+  const handleDashboardMenuToggle = () => {
+    if (typeof window === "undefined") return;
+    window.dispatchEvent(new CustomEvent("linket:dashboard-sidebar-toggle"));
   };
 
   useEffect(() => {
@@ -628,10 +649,13 @@ export function Navbar() {
             <button
               type="button"
               className="dashboard-mobile-toggle inline-flex items-center justify-center rounded-full border border-border/60 p-2 text-foreground lg:hidden"
-              onClick={() => setMobileOpen((prev) => !prev)}
-              aria-label={mobileOpen ? "Close navigation" : "Open navigation"}
+              onClick={handleDashboardMenuToggle}
+              aria-label={
+                dashboardSidebarOpen ? "Close navigation" : "Open navigation"
+              }
+              aria-expanded={dashboardSidebarOpen}
             >
-              {mobileOpen ? (
+              {dashboardSidebarOpen ? (
                 <X className="h-5 w-5" aria-hidden />
               ) : (
                 <Menu className="h-5 w-5" aria-hidden />

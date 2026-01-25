@@ -2,7 +2,7 @@
 
 import type { CSSProperties } from "react";
 import { useEffect, useState } from "react";
-import { Menu, X } from "lucide-react";
+import { X } from "lucide-react";
 import Sidebar from "@/components/dashboard/Sidebar";
 import { cn } from "@/lib/utils";
 
@@ -23,6 +23,28 @@ export default function DashboardAppShell({
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
+  useEffect(() => {
+    const handleToggle = () => setSidebarOpen((prev) => !prev);
+    const handleOpen = () => setSidebarOpen(true);
+    const handleClose = () => setSidebarOpen(false);
+    window.addEventListener("linket:dashboard-sidebar-toggle", handleToggle);
+    window.addEventListener("linket:dashboard-sidebar-open", handleOpen);
+    window.addEventListener("linket:dashboard-sidebar-close", handleClose);
+    return () => {
+      window.removeEventListener("linket:dashboard-sidebar-toggle", handleToggle);
+      window.removeEventListener("linket:dashboard-sidebar-open", handleOpen);
+      window.removeEventListener("linket:dashboard-sidebar-close", handleClose);
+    };
+  }, []);
+
+  useEffect(() => {
+    window.dispatchEvent(
+      new CustomEvent("linket:dashboard-sidebar-state", {
+        detail: { open: sidebarOpen },
+      })
+    );
+  }, [sidebarOpen]);
+
   return (
     <div
       id="dashboard-theme-scope"
@@ -33,21 +55,6 @@ export default function DashboardAppShell({
         <Sidebar />
       </div>
       <div className="flex flex-1 flex-col overflow-hidden">
-        <div className="dashboard-topbar sticky top-0 z-30 flex items-center justify-between border-b border-border/60 bg-background/90 px-4 py-3 backdrop-blur lg:hidden">
-          <button
-            type="button"
-            onClick={() => setSidebarOpen(true)}
-            className="dashboard-menu-button inline-flex items-center gap-2 rounded-full border border-border/60 bg-card/80 px-3 py-1.5 text-sm text-foreground shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]"
-            aria-label="Open navigation"
-          >
-            <Menu className="h-4 w-4" aria-hidden />
-            <span className="dashboard-menu-label">Menu</span>
-          </button>
-          <span className="dashboard-topbar-title text-sm font-semibold text-foreground">
-            Dashboard
-          </span>
-          <div className="dashboard-topbar-spacer h-8 w-8" aria-hidden />
-        </div>
         <div className="dashboard-scroll-area flex-1 overflow-auto px-3 pb-6 pt-3 sm:px-4 sm:pb-8 sm:pt-4 lg:px-8 lg:pb-10">
           <div className="dashboard-content mx-auto w-full max-w-none lg:max-w-7xl">
             {children}
