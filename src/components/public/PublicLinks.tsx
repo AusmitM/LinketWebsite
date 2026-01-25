@@ -172,7 +172,7 @@ export default function PublicLinks({
                     alt=""
                     width={32}
                     height={32}
-                    className="h-6 w-6 object-contain"
+                    className="h-10 w-10 object-contain"
                     unoptimized
                     onError={(event) => {
                       const fallback = s2Favicon(link.url);

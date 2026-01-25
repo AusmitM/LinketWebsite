@@ -242,7 +242,7 @@ html {
 }
 
 .public-profile-link-icon {
-  background: color-mix(in srgb, var(--background) 70%, transparent);
+  background: transparent;
 }
 
 .public-profile-link-action {
@@ -468,5 +468,4 @@ html {
   background: color-mix(in srgb, var(--card) 82%, transparent);
   padding: 1rem;
 }
-
 

@@ -59,7 +59,7 @@ export default function PublicProfileLinksList({
                 alt=""
                 loading="lazy"
                 decoding="async"
-                className="public-profile-link-icon h-6 w-6 rounded"
+                className="public-profile-link-icon h-10 w-10 rounded"
                 aria-hidden
               />
             ) : null}
