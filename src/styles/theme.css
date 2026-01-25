@@ -562,6 +562,97 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
   backdrop-filter: blur(12px);
 }
 
+#dashboard-theme-scope .dashboard-navbar-inner {
+  gap: 1rem;
+}
+
+#dashboard-theme-scope .dashboard-brand {
+  padding: 0.35rem 0.45rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--premium-border) 70%, transparent);
+  background: color-mix(in srgb, var(--card) 80%, transparent);
+  box-shadow: var(--premium-inset);
+}
+
+#dashboard-theme-scope .dashboard-logo-fallback {
+  background: var(--premium-button-gradient);
+  color: var(--foreground);
+  box-shadow: var(--premium-shadow);
+}
+
+#dashboard-theme-scope .dashboard-nav-links {
+  background: color-mix(in srgb, var(--card) 85%, transparent);
+  border: 1px solid var(--premium-border);
+  box-shadow: var(--premium-inset);
+  padding: 0.3rem 0.35rem;
+  gap: 0.25rem;
+  border-radius: 999px;
+}
+
+#dashboard-theme-scope .dashboard-nav-link {
+  position: relative;
+  border: 1px solid transparent;
+  transition: background-color var(--duration-base) var(--ease-smooth),
+    border-color var(--duration-base) var(--ease-smooth),
+    box-shadow var(--duration-base) var(--ease-smooth),
+    color var(--duration-base) var(--ease-smooth);
+}
+
+#dashboard-theme-scope .dashboard-nav-link[data-active="true"] {
+  background: color-mix(in srgb, var(--card) 92%, transparent);
+  border-color: var(--premium-border);
+  box-shadow: 0 12px 24px -18px rgba(0, 0, 0, 0.4), var(--premium-inset);
+  color: var(--foreground);
+}
+
+#dashboard-theme-scope .dashboard-nav-link[data-active="false"]:hover {
+  background: color-mix(in srgb, var(--card) 65%, transparent);
+  border-color: color-mix(in srgb, var(--premium-border) 60%, transparent);
+}
+
+#dashboard-theme-scope .dashboard-navbar-cta {
+  padding: 0.25rem;
+  border-radius: 999px;
+  border: 1px solid var(--premium-border);
+  background: color-mix(in srgb, var(--card) 78%, transparent);
+  box-shadow: var(--premium-inset);
+}
+
+#dashboard-theme-scope .dashboard-navbar .dashboard-view-profile-button,
+#dashboard-theme-scope .dashboard-navbar .dashboard-copy-link-button,
+#dashboard-theme-scope .dashboard-navbar button[aria-label="Open navigation"],
+#dashboard-theme-scope .dashboard-navbar button[aria-label="Close navigation"] {
+  background: color-mix(in srgb, var(--card) 82%, transparent);
+  border-color: var(--premium-border);
+  box-shadow: var(--premium-inset);
+}
+
+#dashboard-theme-scope .dashboard-navbar .dashboard-view-profile-button:hover,
+#dashboard-theme-scope .dashboard-navbar .dashboard-copy-link-button:hover {
+  background: color-mix(in srgb, var(--card) 92%, transparent);
+}
+
+#dashboard-theme-scope .dashboard-new-linket-button {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--primary) 75%, var(--ring) 25%),
+    color-mix(in srgb, var(--accent) 60%, var(--primary) 40%)
+  );
+  color: var(--primary-foreground);
+  border: 1px solid color-mix(in srgb, var(--primary) 65%, transparent);
+  box-shadow: 0 20px 40px -28px rgba(0, 0, 0, 0.6), var(--premium-inset);
+}
+
+#dashboard-theme-scope .dashboard-new-linket-button:hover {
+  filter: brightness(1.05);
+}
+
+#dashboard-theme-scope .dashboard-mobile-toggle {
+  background: color-mix(in srgb, var(--card) 80%, transparent);
+  border-color: var(--premium-border);
+  box-shadow: var(--premium-inset);
+}
+
 #dashboard-theme-scope .dashboard-sidebar {
   background: var(--premium-card-gradient);
   border-right: 1px solid var(--premium-border);

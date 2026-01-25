@@ -522,11 +522,10 @@ export function Navbar() {
         <Link
           key={link.href}
           href={link.href}
+          data-active={isActive ? "true" : "false"}
           className={cn(
-            "rounded-full px-4 py-2 text-sm font-semibold tracking-wide transition lg:inline-flex",
-            isActive
-              ? "bg-foreground text-background shadow-[var(--shadow-ambient)]"
-              : "text-muted-foreground hover:text-foreground"
+            "dashboard-nav-link rounded-full px-4 py-2 text-sm font-semibold tracking-wide transition lg:inline-flex",
+            isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"
           )}
         >
           {link.label}
@@ -537,17 +536,17 @@ export function Navbar() {
     return (
       <header className="dashboard-navbar sticky top-0 z-50 w-full border-b border-border/60 bg-background/90 text-foreground backdrop-blur supports-[backdrop-filter]:bg-background/70">
         <nav
-          className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 text-foreground md:px-6"
+          className="dashboard-navbar-inner mx-auto flex max-w-6xl items-center justify-between px-4 py-3 text-foreground md:px-6"
           aria-label="Dashboard"
         >
-          <div className="flex items-center gap-6">
+          <div className="dashboard-navbar-left flex items-center gap-4">
             <Link
               href="/dashboard"
-              className="inline-flex items-center gap-2"
+              className="dashboard-brand inline-flex items-center gap-3"
               aria-label={`${brand.name} dashboard`}
             >
               {brand.logo ? (
-                <span className="dashboard-logo relative h-15 w-32 overflow-hidden">
+                <span className="dashboard-logo relative h-10 w-32 overflow-hidden">
                   <Image
                     src={brand.logo}
                     alt={`${brand.name} logo`}
@@ -558,36 +557,32 @@ export function Navbar() {
                   />
                 </span>
               ) : (
-                <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-foreground/10 text-lg font-bold text-foreground">
+                <span className="dashboard-logo-fallback inline-flex h-10 w-10 items-center justify-center rounded-2xl text-lg font-bold">
                   {(brand.shortName ?? brand.name).slice(0, 2)}
                 </span>
               )}
             </Link>
-            <div className="hidden items-center gap-2 rounded-full border border-border/60 bg-card/80 px-2 py-1 lg:flex">
+            <div className="dashboard-nav-links hidden items-center gap-2 lg:flex">
               {DASHBOARD_NAV.map(dashboardLink)}
             </div>
           </div>
-          <div className="dashboard-nav-actions flex items-center gap-3">
+
+          <div className="dashboard-navbar-right flex items-center gap-3">
             {user && (
-              <div className="flex items-center gap-1">
+              <div className="dashboard-navbar-cta hidden items-center gap-2 md:flex">
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="dashboard-view-profile-button rounded-full border border-border/60"
+                  className="dashboard-view-profile-button rounded-full"
                   onClick={handleViewProfile}
                   disabled={!profileUrl}
                 >
-                  <span className="dashboard-view-profile-label hidden lg:inline">
-                    View Public Profile
-                  </span>
-                  <span className="dashboard-view-profile-icon inline-flex lg:hidden" aria-hidden>
-                    <LinkIcon className="h-4 w-4" />
-                  </span>
+                  <span className="dashboard-view-profile-label">View public profile</span>
                 </Button>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="dashboard-copy-link-button hidden rounded-full border border-border/60 lg:inline-flex"
+                  className="dashboard-copy-link-button rounded-full"
                   onClick={handleCopyProfileLink}
                   disabled={!profileUrl}
                   aria-label="Copy link"
@@ -599,21 +594,21 @@ export function Navbar() {
             <Button
               asChild
               size="sm"
-              className="hidden rounded-full bg-gradient-to-r from-[#6ee7b7] via-[#3b82f6] to-[#8b5cf6] text-white shadow-[0_20px_40px_rgba(59,130,246,0.35)] hover:scale-[1.01] lg:inline-flex"
+              className="dashboard-new-linket-button hidden rounded-full lg:inline-flex"
             >
               <Link href="/dashboard/linkets">New Linket</Link>
             </Button>
             <Button
               asChild
               size="sm"
-              className="dashboard-new-linket-button rounded-full bg-gradient-to-r from-[#6ee7b7] via-[#3b82f6] to-[#8b5cf6] text-white shadow-[0_18px_35px_rgba(59,130,246,0.35)] lg:hidden"
+              className="dashboard-new-linket-button rounded-full lg:hidden"
             >
               <Link href="/dashboard/linkets">New Linket</Link>
             </Button>
             {dashboardAvatar}
             <button
               type="button"
-              className="hidden items-center justify-center rounded-full border border-border/60 p-2 text-foreground lg:hidden"
+              className="dashboard-mobile-toggle inline-flex items-center justify-center rounded-full border border-border/60 p-2 text-foreground lg:hidden"
               onClick={() => setMobileOpen((prev) => !prev)}
               aria-label={mobileOpen ? "Close navigation" : "Open navigation"}
             >
