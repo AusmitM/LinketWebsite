@@ -20,6 +20,7 @@ type Props = {
   userId: string;
   profileId: string;
   logoUrl: string | null;
+  logoShape: "circle" | "rect";
   onUploaded: (payload: { path: string; version: string; publicUrl: string }) => void;
   variant?: "default" | "compact";
   inputId?: string;
@@ -35,6 +36,7 @@ export default function ProfileLogoUploader({
   userId,
   profileId,
   logoUrl,
+  logoShape,
   onUploaded,
   variant = "compact",
   inputId,
@@ -307,6 +309,7 @@ export default function ProfileLogoUploader({
     isCompact ? "rounded-2xl" : "rounded-3xl",
     !sourceUrl && "border-dashed"
   );
+  const logoFrameClassName = logoShape === "circle" ? "rounded-full" : "rounded-xl";
 
   const displayUrl = sourceUrl || latestLogoUrl;
   const inputTargetId = inputId ?? "profile-logo-upload";
@@ -318,7 +321,12 @@ export default function ProfileLogoUploader({
     return (
       <section className="flex flex-col gap-3 rounded-2xl border border-dashed border-muted/70 p-3">
         <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center">
-          <div className="h-16 w-16 overflow-hidden rounded-xl border bg-background/80 sm:h-20 sm:w-20">
+          <div
+            className={cn(
+              "h-16 w-16 overflow-hidden border bg-background/80 sm:h-20 sm:w-20",
+              logoFrameClassName
+            )}
+          >
             {displayUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={displayUrl} alt="Logo badge" className="h-full w-full object-cover" />

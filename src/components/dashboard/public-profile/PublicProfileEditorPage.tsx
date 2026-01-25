@@ -1191,6 +1191,7 @@ function EditorPanel({
               userId={userId}
               profileId={draft.id}
               logoUrl={logoPreviewUrl}
+              logoShape={draft?.logoShape ?? "circle"}
               onUploaded={onLogoUpdate}
               variant="compact"
               inputId="profile-logo-upload"
