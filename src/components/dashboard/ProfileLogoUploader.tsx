@@ -42,15 +42,15 @@ export default function ProfileLogoUploader({
   const [isSmallScreen, setIsSmallScreen] = useState(false);
   const previewSize = isCompact
     ? isSmallScreen
-      ? 180
-      : 220
+      ? 140
+      : 170
     : isSmallScreen
       ? 240
       : 300;
   const cropSize = isCompact
     ? isSmallScreen
-      ? 120
-      : 150
+      ? 90
+      : 110
     : isSmallScreen
       ? 160
       : 200;
@@ -70,6 +70,7 @@ export default function ProfileLogoUploader({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isDraggingOver, setDraggingOver] = useState(false);
+  const [isExpanded, setExpanded] = useState(Boolean(logoUrl));
 
   const baseScale = useMemo(() => {
     if (!imageMeta) return 1;
@@ -78,6 +79,7 @@ export default function ProfileLogoUploader({
 
   useEffect(() => {
     setLatestLogoUrl(logoUrl ?? null);
+    if (logoUrl) setExpanded(true);
   }, [logoUrl]);
 
   useEffect(() => {
@@ -294,7 +296,7 @@ export default function ProfileLogoUploader({
 
   const cardClassName = cn(
     "rounded-2xl border border-dashed border-muted/70 bg-card/80",
-    isCompact && "gap-4"
+    isCompact && "gap-3"
   );
 
   const previewContainerClassName = cn(
@@ -306,14 +308,47 @@ export default function ProfileLogoUploader({
   const displayUrl = sourceUrl || latestLogoUrl;
   const inputTargetId = inputId ?? "profile-logo-upload";
 
+  if (isCompact && !isExpanded) {
+    return (
+      <Card className={cardClassName}>
+        <CardContent className="flex items-center justify-between gap-3 px-4 py-3">
+          <div className="flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl border border-border/60 bg-muted/40">
+              {latestLogoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={latestLogoUrl} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <span className="text-xs text-muted-foreground">Logo</span>
+              )}
+            </span>
+            <div>
+              <div className="text-sm font-semibold text-foreground">Logo badge</div>
+              <div className="text-xs text-muted-foreground">Optional</div>
+            </div>
+          </div>
+          <Button type="button" size="sm" variant="outline" onClick={() => setExpanded(true)}>
+            {latestLogoUrl ? "Edit" : "Add"}
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className={cardClassName}>
-      <CardHeader className={cn(isCompact && "px-4 py-4")}>
-        <CardTitle className={cn("text-sm font-semibold", isCompact && "text-sm")}>
-          Logo badge
-        </CardTitle>
+      <CardHeader className={cn(isCompact && "px-4 py-3")}>
+        <div className="flex items-center justify-between gap-3">
+          <CardTitle className={cn("text-sm font-semibold", isCompact && "text-sm")}>
+            Logo badge
+          </CardTitle>
+          {isCompact ? (
+            <Button type="button" size="sm" variant="ghost" onClick={() => setExpanded(false)}>
+              Hide
+            </Button>
+          ) : null}
+        </div>
       </CardHeader>
-      <CardContent className={cn("flex flex-col gap-4 px-4 pb-4", isCompact && "pt-0")}>
+      <CardContent className={cn("flex flex-col gap-3 px-4 pb-4", isCompact && "pt-0")}>
         <div className={cn("flex flex-col gap-4 sm:flex-row sm:items-center")}>
           <div
             className={previewContainerClassName}
