@@ -318,7 +318,7 @@ export default function ProfileLogoUploader({
     return (
       <section className="flex flex-col gap-3 rounded-2xl border border-dashed border-muted/70 p-3">
         <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center">
-          <div className="h-16 w-16 overflow-hidden rounded-xl border bg-muted sm:h-20 sm:w-20">
+          <div className="h-16 w-16 overflow-hidden rounded-xl border bg-background/80 sm:h-20 sm:w-20">
             {displayUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={displayUrl} alt="Logo badge" className="h-full w-full object-cover" />

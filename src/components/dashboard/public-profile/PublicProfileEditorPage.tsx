@@ -1514,12 +1514,6 @@ function PhonePreviewCard({
         {avatarUrl ? (
           <div className="-mt-16 flex flex-col items-center">
             <div className="relative flex flex-col items-center">
-              {logoUrl && logoShape === "rect" ? (
-                <span className="mb-2 h-8 w-20 overflow-hidden rounded-md border border-[var(--avatar-border)] bg-white shadow-sm">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={logoUrl} alt="" className="h-full w-full object-cover" />
-                </span>
-              ) : null}
               <div className="relative h-28 w-28 overflow-hidden rounded-3xl border-4 border-[var(--avatar-border)] bg-background shadow-sm z-10">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -1527,9 +1521,15 @@ function PhonePreviewCard({
                   alt=""
                   className="h-full w-full object-cover"
                 />
+                {logoUrl && logoShape === "circle" ? (
+                  <span className="absolute -bottom-2 -right-2 h-12 w-12 overflow-hidden rounded-full border-2 border-[var(--avatar-border)] bg-white shadow-md">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={logoUrl} alt="" className="h-full w-full object-cover" />
+                  </span>
+                ) : null}
               </div>
-              {logoUrl && logoShape === "circle" ? (
-                <span className="absolute -top-4 left-1/2 h-12 w-12 -translate-x-1/2 overflow-hidden rounded-full border-2 border-[var(--avatar-border)] bg-white shadow-md">
+              {logoUrl && logoShape === "rect" ? (
+                <span className="mt-2 h-8 w-20 overflow-hidden rounded-md border border-[var(--avatar-border)] bg-white shadow-sm">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={logoUrl} alt="" className="h-full w-full object-cover" />
                 </span>
