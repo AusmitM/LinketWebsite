@@ -28,7 +28,7 @@ type Props = {
 };
 
 const OUTPUT_SIZE = 640;
-const MIN_ZOOM = 1;
+const MIN_ZOOM = 0.7;
 const MAX_ZOOM = 3;
 const ZOOM_STEP = 0.01;
 
@@ -513,7 +513,7 @@ export default function AvatarUploader({
                 step={ZOOM_STEP}
                 value={zoom}
                 onChange={(event) => setZoom(Number(event.target.value))}
-                className="w-full accent-primary"
+                className="dashboard-zoom-slider w-full"
               />
             </div>
 
@@ -712,7 +712,7 @@ export default function AvatarUploader({
                   step={ZOOM_STEP}
                   value={zoom}
                   onChange={(event) => setZoom(Number(event.target.value))}
-                  className="w-full accent-primary"
+                  className="dashboard-zoom-slider w-full"
                 />
               </div>
             )}
