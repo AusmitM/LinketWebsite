@@ -160,7 +160,7 @@ export default function Sidebar({
                   isCollapsed && !isMobile && "justify-center",
                   active
                     ? "bg-gradient-to-r from-[var(--primary)]/20 to-[var(--accent)]/20 text-foreground ring-1 ring-[var(--ring)]/40 shadow-[var(--shadow-ambient)]"
-                    : "text-muted-foreground hover:bg-accent"
+                    : "text-muted-foreground hover:bg-accent hover:text-foreground"
                 )}
                 onClick={(event) => {
                   requestAutosave();
