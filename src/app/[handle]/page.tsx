@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getSignedAvatarUrl } from "@/lib/avatar-server";
 import { getSignedProfileHeaderUrl } from "@/lib/profile-header-server";
+import { getSignedProfileLogoUrl } from "@/lib/profile-logo-server";
 import { normalizeLeadFormConfig } from "@/lib/lead-form";
 import { getActiveProfileForPublicHandle } from "@/lib/profile-service";
 import { createServerSupabaseReadonly } from "@/lib/supabase/server";
@@ -47,6 +48,11 @@ export default async function PublicProfilePage({ params }: Props) {
     profile.header_image_url,
     profile.header_image_updated_at
   );
+  const logoUrl = await getSignedProfileLogoUrl(
+    profile.logo_url,
+    profile.logo_updated_at
+  );
+  const logoShape = profile.logo_shape === "rect" ? "rect" : "circle";
   const publicHandle = profile.handle || handle;
   let leadFormRow: { id: string; config: LeadFormConfig | null; status?: string } | null =
     null;
@@ -131,14 +137,30 @@ export default async function PublicProfilePage({ params }: Props) {
                     }
                   >
                     {avatar ? (
-                      <div className="h-28 w-28 overflow-hidden rounded-3xl border-4 border-[var(--avatar-border)] shadow-sm relative z-10 bg-muted/40">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={avatar}
-                          alt={`${displayName} avatar`}
-                          decoding="async"
-                          className="h-full w-full object-cover"
-                        />
+                      <div className="flex flex-col items-center">
+                        <div className="relative h-28 w-28 rounded-3xl shadow-sm z-10 bg-muted/40 overflow-visible">
+                          <div className="h-full w-full overflow-hidden rounded-3xl ring-4 ring-[var(--avatar-border)]">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={avatar}
+                              alt={`${displayName} avatar`}
+                              decoding="async"
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
+                          {logoUrl && logoShape === "circle" ? (
+                            <span className="absolute -bottom-2 -right-2 h-12 w-12 overflow-hidden rounded-full border-2 border-[var(--avatar-border)] bg-background shadow-md">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={logoUrl} alt="" className="h-full w-full object-cover" />
+                            </span>
+                          ) : null}
+                        </div>
+                        {logoUrl && logoShape === "rect" ? (
+                          <span className="mt-2 h-8 w-20 overflow-hidden rounded-md border border-[var(--avatar-border)] bg-background shadow-sm">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={logoUrl} alt="" className="h-full w-full object-cover" />
+                          </span>
+                        ) : null}
                       </div>
                     ) : null}
                     <div className={avatar ? "mt-3 space-y-1" : "mt-2 space-y-1"}>
@@ -159,14 +181,30 @@ export default async function PublicProfilePage({ params }: Props) {
               </div>
               <div className="hidden flex-wrap items-center gap-4 sm:flex">
                 {avatar ? (
-                  <div className="h-20 w-20 overflow-hidden rounded-3xl border-4 border-[var(--avatar-border)] bg-muted/40">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={avatar}
-                      alt={`${displayName} avatar`}
-                      decoding="async"
-                      className="h-full w-full object-cover"
-                    />
+                  <div className="flex flex-col items-center">
+                    <div className="relative h-20 w-20 rounded-3xl bg-muted/40 overflow-visible">
+                      <div className="h-full w-full overflow-hidden rounded-3xl ring-4 ring-[var(--avatar-border)]">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={avatar}
+                          alt={`${displayName} avatar`}
+                          decoding="async"
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                      {logoUrl && logoShape === "circle" ? (
+                        <span className="absolute -bottom-1.5 -right-1.5 h-8 w-8 overflow-hidden rounded-full border-2 border-[var(--avatar-border)] bg-background shadow-md">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={logoUrl} alt="" className="h-full w-full object-cover" />
+                        </span>
+                      ) : null}
+                    </div>
+                    {logoUrl && logoShape === "rect" ? (
+                      <span className="mt-2 h-6 w-16 overflow-hidden rounded-md border border-[var(--avatar-border)] bg-background shadow-sm">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={logoUrl} alt="" className="h-full w-full object-cover" />
+                      </span>
+                    ) : null}
                   </div>
                 ) : null}
                 <div className="min-w-0 space-y-1">
