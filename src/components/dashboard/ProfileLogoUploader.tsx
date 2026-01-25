@@ -70,7 +70,6 @@ export default function ProfileLogoUploader({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isDraggingOver, setDraggingOver] = useState(false);
-  const [isExpanded, setExpanded] = useState(Boolean(logoUrl));
 
   const baseScale = useMemo(() => {
     if (!imageMeta) return 1;
@@ -79,7 +78,6 @@ export default function ProfileLogoUploader({
 
   useEffect(() => {
     setLatestLogoUrl(logoUrl ?? null);
-    if (logoUrl) setExpanded(true);
   }, [logoUrl]);
 
   useEffect(() => {
@@ -101,25 +99,38 @@ export default function ProfileLogoUploader({
     setDraggingOver(false);
   }, []);
 
-  const handleFile = useCallback((file: File | null) => {
-    if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      setError("Please select an image file.");
-      return;
-    }
-    setError(null);
-    const url = URL.createObjectURL(file);
-    setSourceFile(file);
-    setSourceUrl(url);
-  }, []);
-
-  const handleFileChange = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.[0] ?? null;
-      handleFile(file);
+  const handleFile = useCallback(
+    (file: File | null) => {
+      resetEditor();
+      if (!file) return;
+      if (!file.type.startsWith("image/")) {
+        setError("Please select an image file.");
+        return;
+      }
+      setError(null);
+      setSourceFile(file);
+      setSourceUrl(URL.createObjectURL(file));
     },
-    [handleFile]
+    [resetEditor]
   );
+
+  const handleReCrop = useCallback(async () => {
+    if (!latestLogoUrl || loading) return;
+    setError(null);
+    try {
+      const response = await fetch(latestLogoUrl);
+      if (!response.ok) throw new Error("Unable to load logo");
+      const blob = await response.blob();
+      handleFile(
+        new File([blob], "logo.webp", {
+          type: blob.type || "image/webp",
+        })
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unable to load logo";
+      setError(message);
+    }
+  }, [latestLogoUrl, loading, handleFile]);
 
   const handleDrop = useCallback(
     (event: DragEvent<HTMLDivElement>) => {
@@ -258,8 +269,10 @@ export default function ProfileLogoUploader({
       setError(null);
       return;
     }
-    resetEditor();
-  }, [sourceUrl, resetEditor]);
+    if (latestLogoUrl) {
+      void handleReCrop();
+    }
+  }, [sourceUrl, latestLogoUrl, handleReCrop]);
 
   const handleRemove = useCallback(async () => {
     if (loading) return;
@@ -290,15 +303,6 @@ export default function ProfileLogoUploader({
     }
   }, [loading, latestLogoUrl, sourceUrl, profileId, userId, onUploaded, resetEditor]);
 
-  const helperText = sourceFile
-    ? "Drag to reposition the logo inside the crop."
-    : "Upload a logo to start cropping.";
-
-  const cardClassName = cn(
-    "rounded-2xl border border-dashed border-muted/70 bg-card/80",
-    isCompact && "gap-3"
-  );
-
   const previewContainerClassName = cn(
     "relative flex items-center justify-center overflow-hidden border bg-muted/40",
     isCompact ? "rounded-2xl" : "rounded-3xl",
@@ -308,131 +312,275 @@ export default function ProfileLogoUploader({
   const displayUrl = sourceUrl || latestLogoUrl;
   const inputTargetId = inputId ?? "profile-logo-upload";
 
-  if (isCompact && !isExpanded) {
+  if (variant === "compact") {
+    const previewScale = baseScale * zoom;
+    const displayUrl = sourceUrl || latestLogoUrl;
+    const inputTargetId = inputId ?? "profile-logo-upload";
     return (
-      <Card className={cardClassName}>
-        <CardContent className="flex items-center justify-between gap-3 px-4 py-3">
-          <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl border border-border/60 bg-muted/40">
-              {latestLogoUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={latestLogoUrl} alt="" className="h-full w-full object-cover" />
+      <section className="flex flex-col gap-4 rounded-2xl border border-dashed border-muted/70 p-4">
+        <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center">
+          <div className="h-16 w-16 overflow-hidden rounded-xl border bg-muted sm:h-20 sm:w-20">
+            {displayUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={displayUrl} alt="Logo badge" className="h-full w-full object-cover" />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
+                120A-120
+              </div>
+            )}
+          </div>
+          <div className="flex-1 space-y-2">
+            <Label htmlFor={inputTargetId}>Logo badge</Label>
+            <Input
+              id={inputTargetId}
+              type="file"
+              accept="image/png,image/jpeg,image/jpg,image/webp"
+              onChange={(event) => handleFile(event.target.files?.[0] ?? null)}
+              disabled={loading}
+            />
+            <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+              {sourceFile?.name ? (
+                <span className="truncate">Selected: {sourceFile.name}</span>
+              ) : latestLogoUrl ? (
+                <span>Current logo</span>
               ) : (
-                <span className="text-xs text-muted-foreground">Logo</span>
+                <span>Square logos work best. JPG/PNG/WebP.</span>
               )}
-            </span>
-            <div>
-              <div className="text-sm font-semibold text-foreground">Logo badge</div>
-              <div className="text-xs text-muted-foreground">Optional</div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="rounded-full"
+                onClick={handleReCrop}
+                disabled={!latestLogoUrl || loading}
+              >
+                Re-crop
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="rounded-full"
+                onClick={handleRemove}
+                disabled={!(latestLogoUrl || sourceUrl) || loading}
+              >
+                Remove
+              </Button>
             </div>
           </div>
-          <Button type="button" size="sm" variant="outline" onClick={() => setExpanded(true)}>
-            {latestLogoUrl ? "Edit" : "Add"}
-          </Button>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return (
-    <Card className={cardClassName}>
-      <CardHeader className={cn(isCompact && "px-4 py-3")}>
-        <div className="flex items-center justify-between gap-3">
-          <CardTitle className={cn("text-sm font-semibold", isCompact && "text-sm")}>
-            Logo badge
-          </CardTitle>
-          {isCompact ? (
-            <Button type="button" size="sm" variant="ghost" onClick={() => setExpanded(false)}>
-              Hide
-            </Button>
-          ) : null}
         </div>
-      </CardHeader>
-      <CardContent className={cn("flex flex-col gap-3 px-4 pb-4", isCompact && "pt-0")}>
-        <div className={cn("flex flex-col gap-4 sm:flex-row sm:items-center")}>
-          <div
-            className={previewContainerClassName}
-            style={{ width: previewSize, height: previewSize }}
-            onDrop={handleDrop}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-          >
-            {displayUrl ? (
+
+        {sourceUrl && (
+          <div className="space-y-3">
+            <div
+              className="relative flex items-center justify-center overflow-hidden rounded-2xl border bg-muted/40 cursor-grab touch-none active:cursor-grabbing"
+              style={{ width: "100%", maxWidth: `${previewSize}px`, height: `${previewSize}px` }}
+              onPointerDown={handlePointerDown}
+              onPointerMove={handlePointerMove}
+              onPointerUp={handlePointerUp}
+              onPointerLeave={handlePointerUp}
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              role="application"
+              aria-label="Logo crop preview"
+            >
+              {!previewReady && (
+                <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-muted/60 text-sm text-muted-foreground">
+                  Loading preview...
+                </div>
+              )}
               <div
-                className="absolute inset-0 cursor-grab active:cursor-grabbing"
-                onPointerDown={handlePointerDown}
-                onPointerMove={handlePointerMove}
-                onPointerUp={handlePointerUp}
-                onPointerLeave={handlePointerUp}
-                onPointerCancel={handlePointerUp}
+                className="pointer-events-none absolute inset-0"
+                style={{
+                  transform: `translate(${offset.x}px, ${offset.y}px)`,
+                }}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={displayUrl}
-                  alt=""
-                  className="absolute left-1/2 top-1/2 max-w-none select-none"
+                  src={sourceUrl}
+                  alt="Crop preview"
+                  className="absolute left-1/2 top-1/2 block select-none opacity-90"
                   style={{
-                    transform: `translate(calc(-50% + ${offset.x}px), calc(-50% + ${offset.y}px)) scale(${baseScale * zoom})`,
                     width: imageMeta?.width ?? "auto",
                     height: imageMeta?.height ?? "auto",
+                    maxWidth: "none",
+                    maxHeight: "none",
+                    transform: `translate(-50%, -50%) scale(${previewScale})`,
+                    transformOrigin: "center",
+                    zIndex: 1,
                   }}
                   draggable={false}
                 />
               </div>
-            ) : null}
-            <div
-              className={cn(
-                "pointer-events-none absolute left-1/2 top-1/2 border border-dashed border-border/70",
-                isDraggingOver && "border-primary/70"
-              )}
-              style={{
-                width: cropSize,
-                height: cropSize,
-                marginLeft: -cropHalf,
-                marginTop: -cropHalf,
-                borderRadius: cropCorner,
-              }}
-            />
-          </div>
-          <div className="flex flex-1 flex-col gap-3">
-            <Label htmlFor={inputTargetId} className="text-xs text-muted-foreground">
-              Upload logo image
-            </Label>
-            <Input
-              id={inputTargetId}
-              ref={fileInputRef}
-              type="file"
-              accept="image/png,image/jpeg,image/jpg,image/webp"
-              onChange={handleFileChange}
-              disabled={loading}
-            />
-            <p className="text-xs text-muted-foreground">{helperText}</p>
-            <div className="flex items-center gap-2">
-              <Button type="button" size="sm" onClick={handleUpload} disabled={!sourceFile || loading}>
-                {loading ? "Uploading..." : "Save logo"}
-              </Button>
-              <Button type="button" size="sm" variant="outline" onClick={handleReset} disabled={loading}>
-                Reset
-              </Button>
-              <Button type="button" size="sm" variant="ghost" onClick={handleRemove} disabled={loading}>
-                Remove
-              </Button>
+              <div className="pointer-events-none absolute inset-0" aria-hidden>
+                <svg className="h-full w-full" viewBox={`0 0 ${previewSize} ${previewSize}`}>
+                  <rect width={previewSize} height={previewSize} fill="transparent" />
+                  <rect
+                    x={(previewSize - cropSize) / 2}
+                    y={(previewSize - cropSize) / 2}
+                    width={cropSize}
+                    height={cropSize}
+                    rx={cropCorner}
+                    ry={cropCorner}
+                    fill="none"
+                    stroke="rgba(255,255,255,0.85)"
+                    strokeWidth="2"
+                  />
+                </svg>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">Zoom</span>
+
+            <div className="space-y-2">
+              <label
+                htmlFor="logo-zoom"
+                className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-muted-foreground"
+              >
+                Zoom
+                <span className="text-[11px] font-semibold text-foreground">
+                  {Math.round(zoom * 100)}%
+                </span>
+              </label>
               <input
+                id="logo-zoom"
                 type="range"
                 min={MIN_ZOOM}
                 max={MAX_ZOOM}
                 step={ZOOM_STEP}
                 value={zoom}
-                onChange={handleZoomChange}
-                className="flex-1"
+                onChange={(event) => setZoom(Number(event.target.value))}
+                className="w-full accent-primary"
               />
             </div>
+
+            <div className="flex flex-wrap items-center gap-3">
+              <Button
+                type="button"
+                size="sm"
+                className="rounded-full"
+                disabled={!previewReady || loading}
+                onClick={handleUpload}
+              >
+                {loading ? "Saving..." : "Save"}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="rounded-full"
+                onClick={handleReset}
+                disabled={!(sourceUrl || latestLogoUrl) || loading}
+              >
+                Cancel
+              </Button>
+            </div>
           </div>
-        </div>
-        {error ? <p className="text-xs text-destructive">{error}</p> : null}
+        )}
+        {error && <p className="text-sm text-destructive">{error}</p>}
+      </section>
+    );
+  }
+
+  return (
+    <Card className="rounded-2xl border border-border/70 bg-card/80 shadow-sm">
+      <CardHeader className={cn(isCompact && "px-4")}>
+        <CardTitle className={cn(isCompact && "text-sm")}>Logo badge</CardTitle>
+      </CardHeader>
+      <CardContent className={cn("flex flex-col gap-6 lg:flex-row lg:items-start", isCompact && "gap-4 px-4")}>
+        <section className="flex-1 space-y-4">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            id={inputTargetId}
+            className="hidden"
+            onChange={(event) => handleFile(event.target.files?.[0] ?? null)}
+          />
+          <div
+            className={previewContainerClassName}
+            onDragOver={(event) => {
+              event.preventDefault();
+              setDraggingOver(true);
+            }}
+            onDragLeave={(event) => {
+              event.preventDefault();
+              setDraggingOver(false);
+            }}
+            onDrop={handleDrop}
+          >
+            {sourceUrl ? (
+              <div
+                className="relative cursor-grab touch-none active:cursor-grabbing"
+                style={{ width: previewSize, height: previewSize }}
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                onPointerLeave={handlePointerUp}
+                role="application"
+                aria-label="Logo crop preview"
+              >
+                {!previewReady && (
+                  <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-muted/60 text-sm text-muted-foreground">
+                    Loading preview...
+                  </div>
+                )}
+                <div
+                  className="pointer-events-none absolute inset-0"
+                  style={{
+                    transform: `translate(${offset.x}px, ${offset.y}px)`,
+                  }}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={sourceUrl}
+                    alt="Crop preview"
+                    className="absolute left-1/2 top-1/2 block select-none opacity-90"
+                    style={{
+                      width: imageMeta?.width ?? "auto",
+                      height: imageMeta?.height ?? "auto",
+                      maxWidth: "none",
+                      maxHeight: "none",
+                      transform: `translate(-50%, -50%) scale(${baseScale * zoom})`,
+                      transformOrigin: "center",
+                      zIndex: 1,
+                    }}
+                    draggable={false}
+                  />
+                </div>
+                <div className="pointer-events-none absolute inset-0" aria-hidden>
+                  <svg className="h-full w-full" viewBox={`0 0 ${previewSize} ${previewSize}`}>
+                    <rect width={previewSize} height={previewSize} fill="transparent" />
+                    <rect
+                      x={(previewSize - cropSize) / 2}
+                      y={(previewSize - cropSize) / 2}
+                      width={cropSize}
+                      height={cropSize}
+                      rx={cropCorner}
+                      ry={cropCorner}
+                      fill="none"
+                      stroke="rgba(255,255,255,0.85)"
+                      strokeWidth="2"
+                    />
+                  </svg>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                className="flex h-full w-full flex-col items-center justify-center gap-3 text-center rounded-3xl p-10"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <div className="flex h-20 w-20 items-center justify-center rounded-2xl border-2 border-dashed border-border text-muted-foreground">
+                  Upload
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  PNG/JPG/WebP  Up to 4MB  Saved as WebP
+                </div>
+              </button>
+            )}
+          </div>
+          {error && <p className="text-sm text-destructive">{error}</p>}
+        </section>
       </CardContent>
     </Card>
   );
