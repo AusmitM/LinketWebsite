@@ -10,6 +10,7 @@ import {
   MoonStar,
   Trees,
   Sparkles,
+  Flame,
   Leaf,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ const ORDER: ThemeName[] = [
   "midnight",
   "forest",
   "gilded",
+  "ember",
   "autumn",
   "honey",
 ];
@@ -33,6 +35,7 @@ const ICONS: Record<ThemeName, React.ComponentType<{ className?: string }>> = {
   midnight: MoonStar,
   forest: Trees,
   gilded: Sparkles,
+  ember: Flame,
   autumn: Leaf,
   honey: Hexagon,
 };
@@ -43,6 +46,7 @@ const LABELS: Record<ThemeName, string> = {
   midnight: "Midnight",
   forest: "Forest",
   gilded: "Gilded",
+  ember: "Ember",
   autumn: "Autumn",
   honey: "Honey",
 };

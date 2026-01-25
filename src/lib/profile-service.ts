@@ -162,6 +162,7 @@ function normaliseTheme(
     "midnight",
     "forest",
     "gilded",
+    "ember",
     "autumn",
     "honey",
   ];

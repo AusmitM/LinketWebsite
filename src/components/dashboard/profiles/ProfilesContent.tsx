@@ -65,6 +65,13 @@ const THEME_OPTIONS: Array<{
     textTone: "light",
   },
   {
+    id: "ember",
+    label: "Ember",
+    description: "Smoky charcoal with ember-orange glow",
+    preview: "linear-gradient(135deg, #ffe1d1 0%, #ffb66f 55%, #e23b2e 100%)",
+    textTone: "dark",
+  },
+  {
     id: "autumn",
     label: "Autumn",
     description: "Warm amber and spice for fall launches",

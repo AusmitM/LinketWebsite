@@ -12,6 +12,7 @@ const THEMES: ThemeName[] = [
   "midnight",
   "forest",
   "gilded",
+  "ember",
   "autumn",
   "honey",
 ];
