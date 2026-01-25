@@ -224,7 +224,12 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
                 id="claim-code"
                 placeholder="e.g., ABC123"
                 value={claimCode}
-                onChange={(event) => setClaimCode(event.target.value)}
+                onChange={(event) => {
+                  const nextValue = event.target.value
+                    .toUpperCase()
+                    .replace(/[^A-Z0-9]/g, "");
+                  setClaimCode(nextValue);
+                }}
                 disabled={claiming}
                 autoComplete="off"
               />
