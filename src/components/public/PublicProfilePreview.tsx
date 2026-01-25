@@ -293,7 +293,7 @@ export default function PublicProfilePreview({
                 >
                   <VCardDownload
                     handle={publicHandle}
-                    label="Download contact information"
+                    label="Save Contact Information"
                     className="w-full rounded-full bg-foreground text-background shadow-[0_16px_32px_-24px_rgba(15,23,42,0.6)] hover:bg-foreground/90 sm:w-auto"
                   />
                   <ShareContactButton
@@ -463,7 +463,7 @@ export default function PublicProfilePreview({
                 <div className="flex flex-wrap items-center gap-3">
                   <VCardDownload
                     handle={publicHandle}
-                    label="Download contact information"
+                    label="Save Contact Information"
                     className="w-full rounded-full bg-foreground text-background shadow-[0_16px_32px_-24px_rgba(15,23,42,0.6)] hover:bg-foreground/90 sm:w-auto"
                   />
                   <ShareContactButton
