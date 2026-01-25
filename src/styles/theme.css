@@ -1123,26 +1123,6 @@ body.theme-forest .dashboard-forest-pin {
   #dashboard-theme-scope .dashboard-overview-page [data-slot=card] {
     width: min(100%, 18rem);
     max-width: 18rem;
-dding-right: 0.5rem;
-  }
-
-  #dashboard-theme-scope .dashboard-content [data-slot=card-title] {
-    font-size: 0.85rem;
-  }
-
-  #dashboard-theme-scope .dashboard-overview-page [data-slot=card] {
-    width: min(100%, 18rem);
-    max-width: 18rem;
-dding-right: 0.5rem;
-  }
-
-  #dashboard-theme-scope .dashboard-content [data-slot=card-title] {
-    font-size: 0.85rem;
-  }
-
-  #dashboard-theme-scope .dashboard-overview-page [data-slot=card] {
-    width: min(100%, 18rem);
-    max-width: 18rem;
   }
 
   #dashboard-theme-scope .dashboard-analytics-card {
