@@ -206,14 +206,14 @@ export default function PublicProfilePreview({
                             />
                           </div>
                           {logoUrl && logoShape === "circle" ? (
-                            <span className="absolute -bottom-2 -right-2 h-12 w-12 overflow-hidden rounded-full border-2 border-[var(--avatar-border)] shadow-md">
+                            <span className="absolute -bottom-2 -right-2 h-12 w-12 overflow-hidden rounded-full border-2 border-[var(--avatar-border)] bg-background shadow-md">
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img src={logoUrl} alt="" className="h-full w-full object-cover" />
                             </span>
                           ) : null}
                         </div>
                           {logoUrl && logoShape === "rect" ? (
-                          <span className="mt-2 h-8 w-20 overflow-hidden rounded-md border border-[var(--avatar-border)] shadow-sm">
+                          <span className="mt-2 h-8 w-20 overflow-hidden rounded-md border border-[var(--avatar-border)] bg-background shadow-sm">
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img src={logoUrl} alt="" className="h-full w-full object-cover" />
                             </span>
@@ -252,14 +252,14 @@ export default function PublicProfilePreview({
                           />
                         </div>
                         {logoUrl && logoShape === "circle" ? (
-                        <span className="absolute -bottom-1.5 -right-1.5 h-8 w-8 overflow-hidden rounded-full border-2 border-[var(--avatar-border)] shadow-md">
+                        <span className="absolute -bottom-1.5 -right-1.5 h-8 w-8 overflow-hidden rounded-full border-2 border-[var(--avatar-border)] bg-background shadow-md">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img src={logoUrl} alt="" className="h-full w-full object-cover" />
                           </span>
                         ) : null}
                       </div>
                       {logoUrl && logoShape === "rect" ? (
-                      <span className="mt-2 h-6 w-16 overflow-hidden rounded-md border border-[var(--avatar-border)] shadow-sm">
+                      <span className="mt-2 h-6 w-16 overflow-hidden rounded-md border border-[var(--avatar-border)] bg-background shadow-sm">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img src={logoUrl} alt="" className="h-full w-full object-cover" />
                         </span>
@@ -381,14 +381,14 @@ export default function PublicProfilePreview({
                             />
                           </div>
                           {logoUrl && logoShape === "circle" ? (
-                            <span className="absolute -bottom-2 -right-2 h-12 w-12 overflow-hidden rounded-full border-2 border-[var(--avatar-border)] shadow-md">
+                            <span className="absolute -bottom-2 -right-2 h-12 w-12 overflow-hidden rounded-full border-2 border-[var(--avatar-border)] bg-background shadow-md">
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img src={logoUrl} alt="" className="h-full w-full object-cover" />
                             </span>
                           ) : null}
                         </div>
                           {logoUrl && logoShape === "rect" ? (
-                          <span className="mt-2 h-8 w-20 overflow-hidden rounded-md border border-[var(--avatar-border)] shadow-sm">
+                          <span className="mt-2 h-8 w-20 overflow-hidden rounded-md border border-[var(--avatar-border)] bg-background shadow-sm">
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img src={logoUrl} alt="" className="h-full w-full object-cover" />
                             </span>
@@ -427,14 +427,14 @@ export default function PublicProfilePreview({
                           />
                         </div>
                         {logoUrl && logoShape === "circle" ? (
-                        <span className="absolute -bottom-1.5 -right-1.5 h-8 w-8 overflow-hidden rounded-full border-2 border-[var(--avatar-border)] shadow-md">
+                        <span className="absolute -bottom-1.5 -right-1.5 h-8 w-8 overflow-hidden rounded-full border-2 border-[var(--avatar-border)] bg-background shadow-md">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img src={logoUrl} alt="" className="h-full w-full object-cover" />
                           </span>
                         ) : null}
                       </div>
                       {logoUrl && logoShape === "rect" ? (
-                      <span className="mt-2 h-6 w-16 overflow-hidden rounded-md border border-[var(--avatar-border)] shadow-sm">
+                      <span className="mt-2 h-6 w-16 overflow-hidden rounded-md border border-[var(--avatar-border)] bg-background shadow-sm">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img src={logoUrl} alt="" className="h-full w-full object-cover" />
                         </span>

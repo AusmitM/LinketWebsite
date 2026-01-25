@@ -214,6 +214,8 @@ export default function PublicProfileEditorPage() {
   const reorderSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const themeSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastThemeRef = useRef<ThemeName | null>(null);
+  const logoShapeSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastLogoShapeRef = useRef<ProfileDraft["logoShape"] | null>(null);
   const dragScrollFrame = useRef<number | null>(null);
   const leadFormReorderRef = useRef<
     ((sourceId: string, targetId: string) => void) | null
@@ -431,6 +433,9 @@ export default function PublicProfileEditorPage() {
       if (themeSaveTimer.current) {
         clearTimeout(themeSaveTimer.current);
       }
+      if (logoShapeSaveTimer.current) {
+        clearTimeout(logoShapeSaveTimer.current);
+      }
     };
   }, []);
 
@@ -542,6 +547,24 @@ export default function PublicProfileEditorPage() {
       if (!isDirty) return;
       void handleSave();
     }, 1000);
+  }, [draft, handleSave, isDirty, userId]);
+
+  useEffect(() => {
+    if (!draft || !userId) return;
+    if (lastLogoShapeRef.current === null) {
+      lastLogoShapeRef.current = draft.logoShape;
+      return;
+    }
+    if (draft.logoShape === lastLogoShapeRef.current) return;
+    lastLogoShapeRef.current = draft.logoShape;
+    if (logoShapeSaveTimer.current) {
+      clearTimeout(logoShapeSaveTimer.current);
+    }
+    logoShapeSaveTimer.current = setTimeout(() => {
+      logoShapeSaveTimer.current = null;
+      if (!isDirty) return;
+      void handleSave();
+    }, 400);
   }, [draft, handleSave, isDirty, userId]);
 
   useEffect(() => {
@@ -1525,14 +1548,14 @@ function PhonePreviewCard({
                   />
                 </div>
                 {logoUrl && logoShape === "circle" ? (
-                  <span className="absolute -bottom-2 -right-2 h-12 w-12 overflow-hidden rounded-full border-2 border-[var(--avatar-border)] shadow-md">
+                  <span className="absolute -bottom-2 -right-2 h-12 w-12 overflow-hidden rounded-full border-2 border-[var(--avatar-border)] bg-background shadow-md">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={logoUrl} alt="" className="h-full w-full object-cover" />
                   </span>
                 ) : null}
               </div>
               {logoUrl && logoShape === "rect" ? (
-                <span className="mt-2 h-8 w-20 overflow-hidden rounded-md border border-[var(--avatar-border)] shadow-sm">
+                <span className="mt-2 h-8 w-20 overflow-hidden rounded-md border border-[var(--avatar-border)] bg-background shadow-sm">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={logoUrl} alt="" className="h-full w-full object-cover" />
                 </span>
