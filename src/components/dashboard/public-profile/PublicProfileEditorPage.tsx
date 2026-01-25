@@ -1513,28 +1513,28 @@ function PhonePreviewCard({
       <div className="flex flex-col items-center px-6 pb-6">
         {avatarUrl ? (
           <div className="-mt-16 flex flex-col items-center">
-            <div className="relative h-28 w-28 overflow-hidden rounded-3xl border-4 border-[var(--avatar-border)] bg-background shadow-sm z-10">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={avatarUrl}
-                alt=""
-                className="h-full w-full object-cover"
-              />
+            <div className="relative flex flex-col items-center">
+              {logoUrl && logoShape === "rect" ? (
+                <span className="mb-2 h-8 w-20 overflow-hidden rounded-md border border-[var(--avatar-border)] bg-white shadow-sm">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={logoUrl} alt="" className="h-full w-full object-cover" />
+                </span>
+              ) : null}
+              <div className="relative h-28 w-28 overflow-hidden rounded-3xl border-4 border-[var(--avatar-border)] bg-background shadow-sm z-10">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={avatarUrl}
+                  alt=""
+                  className="h-full w-full object-cover"
+                />
+              </div>
               {logoUrl && logoShape === "circle" ? (
-                <span className="absolute -bottom-2 -right-2 h-8 w-8 overflow-hidden rounded-full border-2 border-[var(--avatar-border)] bg-background shadow-md">
+                <span className="absolute -top-4 left-1/2 h-12 w-12 -translate-x-1/2 overflow-hidden rounded-full border-2 border-[var(--avatar-border)] bg-white shadow-md">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={logoUrl} alt="" className="h-full w-full object-cover" />
                 </span>
               ) : null}
             </div>
-            {logoUrl && logoShape === "rect" ? (
-              <div className="mt-2 flex w-full justify-end">
-                <span className="h-6 w-16 overflow-hidden rounded-md border border-[var(--avatar-border)] bg-background shadow-sm">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={logoUrl} alt="" className="h-full w-full object-cover" />
-                </span>
-              </div>
-            ) : null}
           </div>
         ) : null}
         <div className={avatarUrl ? "mt-3 text-center" : "mt-2 text-center"}>

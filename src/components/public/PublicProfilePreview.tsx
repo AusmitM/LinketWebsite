@@ -195,28 +195,28 @@ export default function PublicProfilePreview({
                   >
                     {avatar ? (
                       <div className="flex flex-col items-center">
-                        <div className="relative h-28 w-28 overflow-hidden rounded-3xl border-4 border-[var(--avatar-border)] shadow-sm z-10 bg-muted/40">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={avatar}
-                            alt={`${displayName} avatar`}
-                            className="h-full w-full object-cover"
-                          />
+                        <div className="relative flex flex-col items-center">
+                          {logoUrl && logoShape === "rect" ? (
+                            <span className="mb-2 h-8 w-20 overflow-hidden rounded-md border border-[var(--avatar-border)] bg-white shadow-sm">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={logoUrl} alt="" className="h-full w-full object-cover" />
+                            </span>
+                          ) : null}
+                          <div className="relative h-28 w-28 overflow-hidden rounded-3xl border-4 border-[var(--avatar-border)] shadow-sm z-10 bg-muted/40">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={avatar}
+                              alt={`${displayName} avatar`}
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
                           {logoUrl && logoShape === "circle" ? (
-                            <span className="absolute -bottom-2 -right-2 h-8 w-8 overflow-hidden rounded-full border-2 border-[var(--avatar-border)] bg-background shadow-md">
+                            <span className="absolute -top-4 left-1/2 h-12 w-12 -translate-x-1/2 overflow-hidden rounded-full border-2 border-[var(--avatar-border)] bg-white shadow-md">
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img src={logoUrl} alt="" className="h-full w-full object-cover" />
                             </span>
                           ) : null}
                         </div>
-                        {logoUrl && logoShape === "rect" ? (
-                          <div className="mt-2 flex w-full justify-end">
-                            <span className="h-6 w-16 overflow-hidden rounded-md border border-[var(--avatar-border)] bg-background shadow-sm">
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img src={logoUrl} alt="" className="h-full w-full object-cover" />
-                            </span>
-                          </div>
-                        ) : null}
                       </div>
                     ) : null}
                     <div className={avatar ? "mt-3 space-y-1" : "mt-2 space-y-1"}>
@@ -239,28 +239,28 @@ export default function PublicProfilePreview({
               <div className="hidden flex-wrap items-center gap-4 sm:flex">
                 {avatar ? (
                   <div className="flex flex-col items-center">
-                    <div className="relative h-20 w-20 overflow-hidden rounded-3xl border-4 border-[var(--avatar-border)] bg-muted/40">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={avatar}
-                        alt={`${displayName} avatar`}
-                        className="h-full w-full object-cover"
-                      />
+                    <div className="relative flex flex-col items-center">
+                      {logoUrl && logoShape === "rect" ? (
+                        <span className="mb-2 h-6 w-16 overflow-hidden rounded-md border border-[var(--avatar-border)] bg-white shadow-sm">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={logoUrl} alt="" className="h-full w-full object-cover" />
+                        </span>
+                      ) : null}
+                      <div className="relative h-20 w-20 overflow-hidden rounded-3xl border-4 border-[var(--avatar-border)] bg-muted/40">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={avatar}
+                          alt={`${displayName} avatar`}
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
                       {logoUrl && logoShape === "circle" ? (
-                        <span className="absolute -bottom-1.5 -right-1.5 h-6 w-6 overflow-hidden rounded-full border-2 border-[var(--avatar-border)] bg-background shadow-md">
+                        <span className="absolute -top-3 left-1/2 h-8 w-8 -translate-x-1/2 overflow-hidden rounded-full border-2 border-[var(--avatar-border)] bg-white shadow-md">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img src={logoUrl} alt="" className="h-full w-full object-cover" />
                         </span>
                       ) : null}
                     </div>
-                    {logoUrl && logoShape === "rect" ? (
-                      <div className="mt-2 flex w-full justify-end">
-                        <span className="h-5 w-14 overflow-hidden rounded-md border border-[var(--avatar-border)] bg-background shadow-sm">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={logoUrl} alt="" className="h-full w-full object-cover" />
-                        </span>
-                      </div>
-                    ) : null}
                   </div>
                 ) : null}
                   <div className="min-w-0 space-y-1">
@@ -366,28 +366,28 @@ export default function PublicProfilePreview({
                   >
                     {avatar ? (
                       <div className="flex flex-col items-center">
-                        <div className="relative h-28 w-28 overflow-hidden rounded-3xl border-4 border-[var(--avatar-border)] shadow-sm z-10 bg-muted/40">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={avatar}
-                            alt={`${displayName} avatar`}
-                            className="h-full w-full object-cover"
-                          />
+                        <div className="relative flex flex-col items-center">
+                          {logoUrl && logoShape === "rect" ? (
+                            <span className="mb-2 h-8 w-20 overflow-hidden rounded-md border border-[var(--avatar-border)] bg-white shadow-sm">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={logoUrl} alt="" className="h-full w-full object-cover" />
+                            </span>
+                          ) : null}
+                          <div className="relative h-28 w-28 overflow-hidden rounded-3xl border-4 border-[var(--avatar-border)] shadow-sm z-10 bg-muted/40">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={avatar}
+                              alt={`${displayName} avatar`}
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
                           {logoUrl && logoShape === "circle" ? (
-                            <span className="absolute -bottom-2 -right-2 h-8 w-8 overflow-hidden rounded-full border-2 border-[var(--avatar-border)] bg-background shadow-md">
+                            <span className="absolute -top-4 left-1/2 h-12 w-12 -translate-x-1/2 overflow-hidden rounded-full border-2 border-[var(--avatar-border)] bg-white shadow-md">
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img src={logoUrl} alt="" className="h-full w-full object-cover" />
                             </span>
                           ) : null}
                         </div>
-                        {logoUrl && logoShape === "rect" ? (
-                          <div className="mt-2 flex w-full justify-end">
-                            <span className="h-6 w-16 overflow-hidden rounded-md border border-[var(--avatar-border)] bg-background shadow-sm">
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img src={logoUrl} alt="" className="h-full w-full object-cover" />
-                            </span>
-                          </div>
-                        ) : null}
                       </div>
                     ) : null}
                     <div className={avatar ? "mt-3 space-y-1" : "mt-2 space-y-1"}>
@@ -410,28 +410,28 @@ export default function PublicProfilePreview({
               <div className="hidden flex-wrap items-center gap-4 sm:flex">
                 {avatar ? (
                   <div className="flex flex-col items-center">
-                    <div className="relative h-20 w-20 overflow-hidden rounded-3xl border-4 border-[var(--avatar-border)] bg-muted/40">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={avatar}
-                        alt={`${displayName} avatar`}
-                        className="h-full w-full object-cover"
-                      />
+                    <div className="relative flex flex-col items-center">
+                      {logoUrl && logoShape === "rect" ? (
+                        <span className="mb-2 h-6 w-16 overflow-hidden rounded-md border border-[var(--avatar-border)] bg-white shadow-sm">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={logoUrl} alt="" className="h-full w-full object-cover" />
+                        </span>
+                      ) : null}
+                      <div className="relative h-20 w-20 overflow-hidden rounded-3xl border-4 border-[var(--avatar-border)] bg-muted/40">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={avatar}
+                          alt={`${displayName} avatar`}
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
                       {logoUrl && logoShape === "circle" ? (
-                        <span className="absolute -bottom-1.5 -right-1.5 h-6 w-6 overflow-hidden rounded-full border-2 border-[var(--avatar-border)] bg-background shadow-md">
+                        <span className="absolute -top-3 left-1/2 h-8 w-8 -translate-x-1/2 overflow-hidden rounded-full border-2 border-[var(--avatar-border)] bg-white shadow-md">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img src={logoUrl} alt="" className="h-full w-full object-cover" />
                         </span>
                       ) : null}
                     </div>
-                    {logoUrl && logoShape === "rect" ? (
-                      <div className="mt-2 flex w-full justify-end">
-                        <span className="h-5 w-14 overflow-hidden rounded-md border border-[var(--avatar-border)] bg-background shadow-sm">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={logoUrl} alt="" className="h-full w-full object-cover" />
-                        </span>
-                      </div>
-                    ) : null}
                   </div>
                 ) : null}
                   <div className="min-w-0 space-y-1">

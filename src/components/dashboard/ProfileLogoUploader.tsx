@@ -29,6 +29,7 @@ const OUTPUT_SIZE = 480;
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 3;
 const ZOOM_STEP = 0.01;
+const RECT_GUIDE_RATIO = 2.5;
 
 export default function ProfileLogoUploader({
   userId,
@@ -42,20 +43,18 @@ export default function ProfileLogoUploader({
   const [isSmallScreen, setIsSmallScreen] = useState(false);
   const previewSize = isCompact
     ? isSmallScreen
-      ? 140
-      : 170
+      ? 150
+      : 180
     : isSmallScreen
-      ? 240
-      : 300;
-  const cropSize = isCompact
-    ? isSmallScreen
-      ? 90
-      : 110
-    : isSmallScreen
-      ? 160
-      : 200;
+      ? 230
+      : 280;
+  const cropSize = Math.round(previewSize * 0.82);
   const cropHalf = cropSize / 2;
   const cropCorner = Math.round(cropSize * 0.2);
+  const rectGuideHeight = cropSize / RECT_GUIDE_RATIO;
+  const rectGuideCorner = Math.round(rectGuideHeight * 0.4);
+  const cropOffset = (previewSize - cropSize) / 2;
+  const rectGuideOffset = (previewSize - rectGuideHeight) / 2;
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const pointerPosition = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
@@ -317,7 +316,7 @@ export default function ProfileLogoUploader({
     const displayUrl = sourceUrl || latestLogoUrl;
     const inputTargetId = inputId ?? "profile-logo-upload";
     return (
-      <section className="flex flex-col gap-4 rounded-2xl border border-dashed border-muted/70 p-4">
+      <section className="flex flex-col gap-3 rounded-2xl border border-dashed border-muted/70 p-3">
         <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center">
           <div className="h-16 w-16 overflow-hidden rounded-xl border bg-muted sm:h-20 sm:w-20">
             {displayUrl ? (
@@ -371,7 +370,7 @@ export default function ProfileLogoUploader({
         </div>
 
         {sourceUrl && (
-          <div className="space-y-3">
+          <div className="space-y-2">
             <div
               className="relative flex items-center justify-center overflow-hidden rounded-2xl border bg-muted/40 cursor-grab touch-none active:cursor-grabbing"
               style={{ width: "100%", maxWidth: `${previewSize}px`, height: `${previewSize}px` }}
@@ -417,14 +416,35 @@ export default function ProfileLogoUploader({
                 <svg className="h-full w-full" viewBox={`0 0 ${previewSize} ${previewSize}`}>
                   <rect width={previewSize} height={previewSize} fill="transparent" />
                   <rect
-                    x={(previewSize - cropSize) / 2}
-                    y={(previewSize - cropSize) / 2}
+                    x={cropOffset}
+                    y={cropOffset}
                     width={cropSize}
                     height={cropSize}
                     rx={cropCorner}
                     ry={cropCorner}
                     fill="none"
                     stroke="rgba(255,255,255,0.85)"
+                    strokeWidth="2"
+                  />
+                  <rect
+                    x={cropOffset}
+                    y={rectGuideOffset}
+                    width={cropSize}
+                    height={rectGuideHeight}
+                    rx={rectGuideCorner}
+                    ry={rectGuideCorner}
+                    fill="none"
+                    stroke="rgba(255,255,255,0.55)"
+                    strokeDasharray="6 6"
+                    strokeWidth="2"
+                  />
+                  <circle
+                    cx={previewSize / 2}
+                    cy={previewSize / 2}
+                    r={cropHalf}
+                    fill="none"
+                    stroke="rgba(255,255,255,0.55)"
+                    strokeDasharray="4 6"
                     strokeWidth="2"
                   />
                 </svg>
@@ -548,22 +568,43 @@ export default function ProfileLogoUploader({
                   />
                 </div>
                 <div className="pointer-events-none absolute inset-0" aria-hidden>
-                  <svg className="h-full w-full" viewBox={`0 0 ${previewSize} ${previewSize}`}>
-                    <rect width={previewSize} height={previewSize} fill="transparent" />
-                    <rect
-                      x={(previewSize - cropSize) / 2}
-                      y={(previewSize - cropSize) / 2}
-                      width={cropSize}
-                      height={cropSize}
-                      rx={cropCorner}
-                      ry={cropCorner}
-                      fill="none"
-                      stroke="rgba(255,255,255,0.85)"
-                      strokeWidth="2"
-                    />
-                  </svg>
-                </div>
+                <svg className="h-full w-full" viewBox={`0 0 ${previewSize} ${previewSize}`}>
+                  <rect width={previewSize} height={previewSize} fill="transparent" />
+                  <rect
+                    x={cropOffset}
+                    y={cropOffset}
+                    width={cropSize}
+                    height={cropSize}
+                    rx={cropCorner}
+                    ry={cropCorner}
+                    fill="none"
+                    stroke="rgba(255,255,255,0.85)"
+                    strokeWidth="2"
+                  />
+                  <rect
+                    x={cropOffset}
+                    y={rectGuideOffset}
+                    width={cropSize}
+                    height={rectGuideHeight}
+                    rx={rectGuideCorner}
+                    ry={rectGuideCorner}
+                    fill="none"
+                    stroke="rgba(255,255,255,0.55)"
+                    strokeDasharray="6 6"
+                    strokeWidth="2"
+                  />
+                  <circle
+                    cx={previewSize / 2}
+                    cy={previewSize / 2}
+                    r={cropHalf}
+                    fill="none"
+                    stroke="rgba(255,255,255,0.55)"
+                    strokeDasharray="4 6"
+                    strokeWidth="2"
+                  />
+                </svg>
               </div>
+            </div>
             ) : (
               <button
                 type="button"
