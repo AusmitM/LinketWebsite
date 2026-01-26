@@ -34,6 +34,7 @@ import PublicProfilePreview from "@/components/public/PublicProfilePreview";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { brand } from "@/config/brand";
+import { getActiveProfileForPublicHandle } from "@/lib/profile-service";
 import type { ProfileWithLinks } from "@/lib/profile-service";
 
 export const metadata: Metadata = {
@@ -60,6 +61,15 @@ export const metadata: Metadata = {
       "Linket is the customizable tap-to-share keychain that keeps your information current with every scan.",
     images: ["/og.png"],
   },
+};
+
+export const revalidate = 60;
+
+type PublicPreviewAccount = {
+  handle: string;
+  displayName: string | null;
+  avatarPath: string | null;
+  avatarUpdatedAt: string | null;
 };
 
 const SOCIAL_PROOF = [
@@ -199,6 +209,32 @@ const MOCK_PUBLIC_ACCOUNT = {
   avatarPath: `${PUBLIC_SITE_URL}/mockups/profile-avatar.jpg`,
   avatarUpdatedAt: "2026-01-01T00:00:00.000Z",
 };
+
+async function loadPublicProfilePreview() {
+  const handle = "punit";
+  try {
+    const payload = await getActiveProfileForPublicHandle(handle);
+    if (!payload) {
+      return {
+        profile: MOCK_PUBLIC_PROFILE,
+        account: MOCK_PUBLIC_ACCOUNT,
+      };
+    }
+    const { account, profile } = payload;
+    const previewAccount: PublicPreviewAccount = {
+      handle: account.username,
+      displayName: account.display_name ?? null,
+      avatarPath: account.avatar_url ?? null,
+      avatarUpdatedAt: account.avatar_updated_at ?? null,
+    };
+    return { profile, account: previewAccount };
+  } catch {
+    return {
+      profile: MOCK_PUBLIC_PROFILE,
+      account: MOCK_PUBLIC_ACCOUNT,
+    };
+  }
+}
 
 const FOOTER_LINK_GROUPS = [
   {
@@ -432,8 +468,9 @@ const FAQ = [
   },
 ] as const;
 
-export default function Home() {
+export default async function Home() {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://linket.app";
+  const publicPreview = await loadPublicProfilePreview();
 
   const faqSchema = {
     "@context": "https://schema.org",
@@ -510,7 +547,10 @@ export default function Home() {
           <div className="absolute right-[40%] bottom-[32%] h-[130px] w-[130px] rounded-full bg-[radial-gradient(circle,_rgba(88,180,255,0.4),_transparent_72%)] opacity-50 blur-2xl motion-safe:animate-[pulse_21s_ease-in-out_infinite]" />
         </div>
         <LiveDemoSection />
-        <PublicProfilePreviewSection />
+        <PublicProfilePreviewSection
+          profile={publicPreview.profile}
+          account={publicPreview.account}
+        />
         <TestimonialsSection />
         <PricingSection />
         <FAQSection />
@@ -955,73 +995,101 @@ function LiveDemoSection() {
   );
 }
 
-function PublicProfilePreviewSection() {
+function PublicProfilePreviewSection({
+  profile,
+  account,
+}: {
+  profile: ProfileWithLinks;
+  account: PublicPreviewAccount;
+}) {
   return (
-    <section id="public-preview" className="relative py-20">
+    <section id="public-preview" className="relative overflow-hidden py-24">
+      <div className="pointer-events-none absolute inset-0 -z-10">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_10%_10%,rgba(13,22,44,0.35),transparent_45%),radial-gradient(circle_at_85%_15%,rgba(255,214,170,0.45),transparent_45%),radial-gradient(circle_at_50%_85%,rgba(112,159,255,0.35),transparent_55%)]" />
+        <div className="absolute inset-0 opacity-[0.08] [background-image:linear-gradient(90deg,rgba(15,23,42,0.12)_1px,transparent_1px),linear-gradient(180deg,rgba(15,23,42,0.12)_1px,transparent_1px)] [background-size:120px_120px]" />
+      </div>
       <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
-        <div className="grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr]">
-          <div className="space-y-6 text-slate-900">
-            <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.35em] text-slate-500">
+        <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
+          <div className="space-y-8 text-slate-900">
+            <div className="inline-flex items-center gap-3 rounded-full border border-white/60 bg-white/70 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.35em] text-slate-500 shadow-[0_10px_25px_rgba(15,23,42,0.08)] backdrop-blur">
+              <span className="h-2 w-2 rounded-full bg-[#1e3a8a]" />
               Public profile preview
-            </span>
-            <h2 className="font-display text-3xl tracking-tight sm:text-4xl">
-              See exactly how clients experience you
-            </h2>
-            <p className="text-base text-slate-600">
-              Every tap opens a clean public page with your photo, headline, and
-              links. Visitors can save your contact or share theirs in seconds.
-            </p>
-            <div className="grid gap-3 text-sm text-slate-600 sm:grid-cols-2">
-              <div className="rounded-2xl border border-slate-200 bg-white/80 px-4 py-3">
-                <p className="text-sm font-semibold text-slate-900">
-                  Instant contact save
-                </p>
-                <p className="mt-1 text-xs text-slate-500">
-                  vCard with photo and details.
-                </p>
-              </div>
-              <div className="rounded-2xl border border-slate-200 bg-white/80 px-4 py-3">
-                <p className="text-sm font-semibold text-slate-900">
-                  Branded link hub
-                </p>
-                <p className="mt-1 text-xs text-slate-500">
-                  Showcase your most important links.
-                </p>
-              </div>
-              <div className="rounded-2xl border border-slate-200 bg-white/80 px-4 py-3">
-                <p className="text-sm font-semibold text-slate-900">
-                  Lead capture ready
-                </p>
-                <p className="mt-1 text-xs text-slate-500">
-                  Prospects share their info fast.
-                </p>
-              </div>
-              <div className="rounded-2xl border border-slate-200 bg-white/80 px-4 py-3">
-                <p className="text-sm font-semibold text-slate-900">
-                  Theme customization
-                </p>
-                <p className="mt-1 text-xs text-slate-500">
-                  Match your logo and brand vibe.
-                </p>
-              </div>
+            </div>
+            <div className="space-y-4">
+              <h2 className="font-display text-3xl tracking-tight sm:text-4xl">
+                A premium page that looks ready for the spotlight
+              </h2>
+              <p className="text-base text-slate-600">
+                Your live profile shows the exact layout clients see — polished
+                visuals, clean links, and a frictionless contact save.
+              </p>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {[
+                {
+                  title: "Instant contact save",
+                  description: "vCard with photo and verified details.",
+                },
+                {
+                  title: "Branded link hub",
+                  description: "Your most important links, always current.",
+                },
+                {
+                  title: "Lead capture ready",
+                  description: "Prospects share their info in seconds.",
+                },
+                {
+                  title: "Theme customization",
+                  description: "Match your logo and brand mood.",
+                },
+              ].map((item) => (
+                <div
+                  key={item.title}
+                  className="rounded-3xl border border-white/70 bg-white/80 px-5 py-4 text-sm text-slate-600 shadow-[0_16px_40px_rgba(15,23,42,0.08)] backdrop-blur"
+                >
+                  <p className="text-sm font-semibold text-slate-900">
+                    {item.title}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {item.description}
+                  </p>
+                </div>
+              ))}
+            </div>
+            <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
+              <span className="rounded-full border border-slate-200 bg-white/80 px-3 py-1">
+                Live theme sync
+              </span>
+              <span className="rounded-full border border-slate-200 bg-white/80 px-3 py-1">
+                Dynamic link updates
+              </span>
+              <span className="rounded-full border border-slate-200 bg-white/80 px-3 py-1">
+                Instant contact save
+              </span>
             </div>
           </div>
           <div className="relative mx-auto w-full max-w-sm">
             <div
-              className="absolute -inset-6 rounded-[48px] bg-gradient-to-br from-[#2b3c5c]/45 via-[#0b1220]/0 to-[#1a2237]/45 blur-3xl"
+              className="absolute -inset-8 rounded-[56px] bg-[radial-gradient(circle_at_20%_10%,rgba(255,226,190,0.7),transparent_55%),radial-gradient(circle_at_80%_90%,rgba(120,155,255,0.55),transparent_55%)] blur-3xl"
               aria-hidden
             />
-            <div className="relative overflow-hidden rounded-[36px] border border-border/60 bg-background shadow-[0_30px_70px_rgba(15,23,42,0.3)]">
-              <div className="h-[620px] w-full overflow-y-auto">
+            <div className="relative overflow-hidden rounded-[36px] border border-white/60 bg-white/70 shadow-[0_45px_90px_rgba(15,23,42,0.25)] backdrop-blur">
+              <div className="h-[620px] w-full overflow-y-auto bg-[#0b1220]">
                 <PublicProfilePreview
-                  profile={MOCK_PUBLIC_PROFILE}
-                  account={MOCK_PUBLIC_ACCOUNT}
-                  handle={MOCK_PUBLIC_ACCOUNT.handle}
+                  profile={profile}
+                  account={account}
+                  handle={account.handle}
                   layout="stacked"
                   forceMobile
-                  themeOverride="dark"
                 />
               </div>
+            </div>
+            <div className="mt-5 flex items-center justify-between rounded-2xl border border-white/60 bg-white/80 px-4 py-3 text-xs text-slate-600 shadow-[0_12px_30px_rgba(15,23,42,0.08)]">
+              <span className="font-semibold text-slate-900">Live preview</span>
+              <span className="inline-flex items-center gap-2 text-slate-500">
+                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                Synced to your profile
+              </span>
             </div>
           </div>
         </div>
@@ -1193,5 +1261,3 @@ function LandingFooter() {
     </footer>
   );
 }
-
-
