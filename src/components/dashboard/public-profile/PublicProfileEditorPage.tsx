@@ -718,33 +718,38 @@ export default function PublicProfileEditorPage() {
   }, []);
 
   const removeLink = useCallback((linkId: string) => {
+    let removedLink: LinkItem | undefined;
+    let removedIndex = -1;
     setDraft((prev) => {
       if (!prev) return prev;
       const index = prev.links.findIndex((link) => link.id === linkId);
       if (index === -1) return prev;
-      const removed = prev.links[index];
+      removedLink = prev.links[index];
+      removedIndex = index;
       const nextLinks = prev.links.filter((link) => link.id !== linkId);
-      toast({
-        title: "Link removed",
-        description: "Undo",
-        actionLabel: "Undo",
-        onAction: () => {
-          setDraft((current) =>
-            current
-              ? {
-                  ...current,
-                  links: insertAt(current.links, removed, index),
-                  updatedAt: new Date().toISOString(),
-                }
-              : current
-          );
-        },
-      });
       return {
         ...prev,
         links: nextLinks,
         updatedAt: new Date().toISOString(),
       };
+    });
+    if (!removedLink || removedIndex === -1) return;
+    toast({
+      title: "Link removed",
+      description: "Undo",
+      actionLabel: "Undo",
+      onAction: () => {
+        const link = removedLink;
+        if (!link || removedIndex === -1) return;
+        setDraft((current) => {
+          if (!current) return current;
+          return {
+            ...current,
+            links: insertAt(current.links, link, removedIndex),
+            updatedAt: new Date().toISOString(),
+          };
+        });
+      },
     });
   }, []);
 

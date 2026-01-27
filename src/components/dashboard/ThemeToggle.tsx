@@ -77,11 +77,16 @@ export default function ThemeToggle({ showLabel = false }: { showLabel?: boolean
   const { theme, setTheme } = useThemeOptional();
   const user = useDashboardUser();
   const abortRef = useRef<AbortController | null>(null);
+  const [mounted, setMounted] = useState(false);
   const [index, setIndex] = useState(Math.max(0, ORDER.indexOf(theme)));
 
   useEffect(() => {
     setIndex(Math.max(0, ORDER.indexOf(theme)));
   }, [theme]);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   async function syncPublicTheme(nextTheme: ThemeName) {
     if (!user?.id) return;
@@ -166,6 +171,50 @@ export default function ThemeToggle({ showLabel = false }: { showLabel?: boolean
   const current = ORDER[index] || ORDER[0];
   const Icon = ICONS[current];
   const label = LABELS[current];
+
+  if (!mounted) {
+    if (!showLabel) {
+      return (
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="Theme"
+          title="Theme"
+          disabled
+        >
+          <Sun className="h-5 w-5" />
+        </Button>
+      );
+    }
+    return (
+      <div className="flex w-full items-center gap-2 rounded-xl border border-border/60 bg-card/80 px-2 py-1.5 shadow-sm backdrop-blur">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          aria-label="Previous theme"
+          className="h-8 w-8 rounded-lg"
+          disabled
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        <div className="flex flex-1 items-center gap-2 rounded-lg px-2 text-xs text-muted-foreground">
+          <Sun className="h-5 w-5" />
+          <span className="font-medium">Theme</span>
+        </div>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          aria-label="Next theme"
+          className="h-8 w-8 rounded-lg"
+          disabled
+        >
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
+    );
+  }
 
   if (!showLabel) {
     return (
