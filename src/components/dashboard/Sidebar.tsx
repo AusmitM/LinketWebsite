@@ -44,17 +44,19 @@ export default function Sidebar({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [collapsed, setCollapsed] = useState(() => {
-    if (variant === "mobile") return false;
-    if (typeof window === "undefined") return false;
-    return localStorage.getItem(STORAGE_KEY) === "1";
-  });
+  const [collapsed, setCollapsed] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const supabase = useMemo(() => createClient(), []);
   const isMobile = variant === "mobile";
   const isProfileEditor = pathname?.startsWith("/dashboard/profiles") ?? false;
   const canCollapse = !isMobile;
   const isCollapsed = canCollapse && collapsed;
+
+  useEffect(() => {
+    if (isMobile) return;
+    const saved = localStorage.getItem(STORAGE_KEY);
+    setCollapsed(saved === "1");
+  }, [isMobile]);
 
   useEffect(() => {
     if (isMobile) return;

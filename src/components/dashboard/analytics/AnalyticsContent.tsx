@@ -10,6 +10,7 @@ import { Download } from "lucide-react";
 
 const numberFormatter = new Intl.NumberFormat("en-US");
 const shortDate = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" });
+const longDate = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 
 const RANGES = [
   { label: "7 days", value: 7 },

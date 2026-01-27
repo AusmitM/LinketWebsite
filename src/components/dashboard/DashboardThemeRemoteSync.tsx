@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
 import type { ThemeName } from "@/components/theme/theme-provider";
 import { useThemeOptional } from "@/components/theme/theme-provider";
@@ -80,31 +80,32 @@ export default function DashboardThemeRemoteSync() {
   const user = useDashboardUser();
   const abortRef = useRef<AbortController | null>(null);
 
+  const syncTheme = useCallback(async () => {
+    if (!hasProvider || !user?.id) return;
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+    try {
+      const pending = readPendingTheme();
+      const nextTheme = await fetchActiveProfileTheme(user.id, controller.signal);
+      if (pending?.theme) {
+        if (nextTheme === pending.theme) {
+          clearPendingTheme();
+        } else if (nextTheme && nextTheme !== pending.theme) {
+          return;
+        }
+      }
+      if (nextTheme && nextTheme !== theme) {
+        setTheme(nextTheme);
+      }
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
+      console.warn("Theme sync failed.");
+    }
+  }, [hasProvider, setTheme, theme, user?.id]);
+
   useEffect(() => {
     if (!hasProvider || !user?.id) return;
-    const userId = user.id;
-    const syncTheme = async () => {
-      abortRef.current?.abort();
-      const controller = new AbortController();
-      abortRef.current = controller;
-      try {
-        const pending = readPendingTheme();
-        const nextTheme = await fetchActiveProfileTheme(userId, controller.signal);
-        if (pending?.theme) {
-          if (nextTheme === pending.theme) {
-            clearPendingTheme();
-          } else if (nextTheme && nextTheme !== pending.theme) {
-            return;
-          }
-        }
-        if (nextTheme && nextTheme !== theme) {
-          setTheme(nextTheme);
-        }
-      } catch (error) {
-        if (error instanceof DOMException && error.name === "AbortError") return;
-        console.warn("Theme sync failed.");
-      }
-    };
     void syncTheme();
 
     const handleFocus = () => {
@@ -128,7 +129,7 @@ export default function DashboardThemeRemoteSync() {
       document.removeEventListener("visibilitychange", handleVisibility);
       window.clearInterval(interval);
     };
-  }, [hasProvider, setTheme, theme, user?.id]);
+  }, [syncTheme, user?.id]);
 
   return null;
 }

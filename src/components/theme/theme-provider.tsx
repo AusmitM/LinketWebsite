@@ -60,20 +60,16 @@ export function ThemeProvider({
   scopeSelector?: string;
   storageKey?: string | null;
 }) {
+  const [theme, setThemeState] = useState<ThemeName>(initial || "light");
   const storage = storageKey ?? STORAGE_KEY;
   const persist = storageKey !== null;
-  const [theme, setThemeState] = useState<ThemeName>(() => {
-    if (persist && typeof window !== "undefined") {
-      const saved = localStorage.getItem(storage) as ThemeName | null;
-      return saved || initial || "light";
-    }
-    return initial || "light";
-  });
 
   useEffect(() => {
+    const saved = persist ? ((localStorage.getItem(storage) as ThemeName | null) || initial || "light") : (initial || "light");
+    setThemeState(saved);
     const scope = scopeSelector ? document.querySelector(scopeSelector) : undefined;
-    applyThemeClass(theme, scope ?? undefined);
-  }, [scopeSelector, theme]);
+    applyThemeClass(saved, scope ?? undefined);
+  }, [initial, scopeSelector, storage, persist]);
 
   const setTheme = useCallback(
     (t: ThemeName) => {

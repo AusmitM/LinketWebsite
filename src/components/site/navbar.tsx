@@ -112,6 +112,10 @@ export function Navbar() {
   const isAuthPage =
     pathname?.startsWith("/auth") || pathname?.startsWith("/forgot-password");
 
+  if (isPublicProfile) {
+    return null;
+  }
+
   useEffect(() => {
     if (!isDashboard) {
       setUser(null);
@@ -553,10 +557,6 @@ export function Navbar() {
     </div>
   ) : null;
 
-  if (isPublicProfile) {
-    return null;
-  }
-
   if (isDashboard) {
     const overviewHref = "/dashboard/overview";
     const activeDashboardHref = (() => {
@@ -979,7 +979,7 @@ function usePopoverPosition(
       window.removeEventListener("resize", update);
       window.removeEventListener("scroll", update, true);
     };
-  }, [anchorRef, open, align]);
+  }, [anchorRef, open]);
 
   return style;
 }

@@ -60,7 +60,6 @@ export default function PublicProfilePreview({
   const logoPath = profile.logo_url ?? null;
   const logoShape = profile.logo_shape === "rect" ? "rect" : "circle";
   const logoBadgeClass = profile.logo_bg_white ? "bg-white" : "bg-background";
-  const resolvedLogoUrl = logoPath ? logoUrl : null;
   const links = sortLinks(profile.links);
   const hasLinks = links.length > 0;
   const hasHeadline = Boolean(headline);
@@ -98,7 +97,10 @@ export default function PublicProfilePreview({
   }, [profile.header_image_url, profile.header_image_updated_at]);
 
   useEffect(() => {
-    if (!logoPath) return;
+    if (!logoPath) {
+      setLogoUrl(null);
+      return;
+    }
     let active = true;
     (async () => {
       const signed = await getSignedProfileLogoUrl(
@@ -204,17 +206,17 @@ export default function PublicProfilePreview({
                               className="h-full w-full object-cover"
                             />
                           </div>
-                          {resolvedLogoUrl && logoShape === "circle" ? (
+                          {logoUrl && logoShape === "circle" ? (
                             <span className={`absolute -bottom-2 -right-2 h-12 w-12 overflow-hidden rounded-full border-2 border-[var(--avatar-border)] shadow-md ${logoBadgeClass}`}>
                               {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img src={resolvedLogoUrl} alt="" className="h-full w-full object-cover" />
+                              <img src={logoUrl} alt="" className="h-full w-full object-cover" />
                             </span>
                           ) : null}
                         </div>
-                          {resolvedLogoUrl && logoShape === "rect" ? (
+                          {logoUrl && logoShape === "rect" ? (
                           <span className={`mt-2 h-8 w-20 overflow-hidden rounded-md border border-[var(--avatar-border)] shadow-sm ${logoBadgeClass}`}>
                               {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img src={resolvedLogoUrl} alt="" className="h-full w-full object-cover" />
+                              <img src={logoUrl} alt="" className="h-full w-full object-cover" />
                             </span>
                           ) : null}
                         </div>
@@ -250,17 +252,17 @@ export default function PublicProfilePreview({
                             className="h-full w-full object-cover"
                           />
                         </div>
-                        {resolvedLogoUrl && logoShape === "circle" ? (
+                        {logoUrl && logoShape === "circle" ? (
                         <span className={`absolute -bottom-1.5 -right-1.5 h-8 w-8 overflow-hidden rounded-full border-2 border-[var(--avatar-border)] shadow-md ${logoBadgeClass}`}>
                             {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={resolvedLogoUrl} alt="" className="h-full w-full object-cover" />
+                            <img src={logoUrl} alt="" className="h-full w-full object-cover" />
                           </span>
                         ) : null}
                       </div>
-                      {resolvedLogoUrl && logoShape === "rect" ? (
+                      {logoUrl && logoShape === "rect" ? (
                       <span className={`mt-2 h-6 w-16 overflow-hidden rounded-md border border-[var(--avatar-border)] shadow-sm ${logoBadgeClass}`}>
                           {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={resolvedLogoUrl} alt="" className="h-full w-full object-cover" />
+                          <img src={logoUrl} alt="" className="h-full w-full object-cover" />
                         </span>
                       ) : null}
                     </div>
@@ -379,17 +381,17 @@ export default function PublicProfilePreview({
                               className="h-full w-full object-cover"
                             />
                           </div>
-                          {resolvedLogoUrl && logoShape === "circle" ? (
+                          {logoUrl && logoShape === "circle" ? (
                             <span className={`absolute -bottom-2 -right-2 h-12 w-12 overflow-hidden rounded-full border-2 border-[var(--avatar-border)] shadow-md ${logoBadgeClass}`}>
                               {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img src={resolvedLogoUrl} alt="" className="h-full w-full object-cover" />
+                              <img src={logoUrl} alt="" className="h-full w-full object-cover" />
                             </span>
                           ) : null}
                         </div>
-                          {resolvedLogoUrl && logoShape === "rect" ? (
+                          {logoUrl && logoShape === "rect" ? (
                           <span className={`mt-2 h-8 w-20 overflow-hidden rounded-md border border-[var(--avatar-border)] shadow-sm ${logoBadgeClass}`}>
                               {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img src={resolvedLogoUrl} alt="" className="h-full w-full object-cover" />
+                              <img src={logoUrl} alt="" className="h-full w-full object-cover" />
                             </span>
                           ) : null}
                         </div>
@@ -425,17 +427,17 @@ export default function PublicProfilePreview({
                             className="h-full w-full object-cover"
                           />
                         </div>
-                        {resolvedLogoUrl && logoShape === "circle" ? (
+                        {logoUrl && logoShape === "circle" ? (
                         <span className={`absolute -bottom-1.5 -right-1.5 h-8 w-8 overflow-hidden rounded-full border-2 border-[var(--avatar-border)] shadow-md ${logoBadgeClass}`}>
                             {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={resolvedLogoUrl} alt="" className="h-full w-full object-cover" />
+                            <img src={logoUrl} alt="" className="h-full w-full object-cover" />
                           </span>
                         ) : null}
                       </div>
-                      {resolvedLogoUrl && logoShape === "rect" ? (
+                      {logoUrl && logoShape === "rect" ? (
                       <span className={`mt-2 h-6 w-16 overflow-hidden rounded-md border border-[var(--avatar-border)] shadow-sm ${logoBadgeClass}`}>
                           {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={resolvedLogoUrl} alt="" className="h-full w-full object-cover" />
+                          <img src={logoUrl} alt="" className="h-full w-full object-cover" />
                         </span>
                       ) : null}
                     </div>

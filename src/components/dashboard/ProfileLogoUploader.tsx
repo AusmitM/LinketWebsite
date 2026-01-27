@@ -72,6 +72,7 @@ export default function ProfileLogoUploader({
   const [isDragging, setIsDragging] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isDraggingOver, setDraggingOver] = useState(false);
 
   const baseScale = useMemo(() => {
     if (!imageMeta) return 1;
@@ -97,6 +98,7 @@ export default function ProfileLogoUploader({
     setZoom(1);
     setOffset({ x: 0, y: 0 });
     setIsDragging(false);
+    setDraggingOver(false);
   }, []);
 
   const handleFile = useCallback(
@@ -135,6 +137,7 @@ export default function ProfileLogoUploader({
   const handleDrop = useCallback(
     (event: DragEvent<HTMLDivElement>) => {
       event.preventDefault();
+      setDraggingOver(false);
       const file = event.dataTransfer.files?.[0] ?? null;
       handleFile(file);
     },
@@ -143,6 +146,11 @@ export default function ProfileLogoUploader({
 
   const handleDragOver = useCallback((event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
+    setDraggingOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback(() => {
+    setDraggingOver(false);
   }, []);
 
   const handlePointerDown = useCallback(
@@ -171,6 +179,10 @@ export default function ProfileLogoUploader({
 
   const handlePointerUp = useCallback(() => {
     setIsDragging(false);
+  }, []);
+
+  const handleZoomChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setZoom(Number(event.target.value));
   }, []);
 
   const handleCropReady = useCallback(async () => {
@@ -242,6 +254,7 @@ export default function ProfileLogoUploader({
     sourceUrl,
     imageMeta,
     cropSize,
+    cropCorner,
     baseScale,
     zoom,
     offset,
@@ -304,11 +317,13 @@ export default function ProfileLogoUploader({
   const logoFrameClassName = logoShape === "circle" ? "rounded-full" : "rounded-xl";
   const logoFrameBgClassName = logoBackgroundWhite ? "bg-white" : "bg-background/80";
 
+  const displayUrl = sourceUrl || latestLogoUrl;
   const inputTargetId = inputId ?? "profile-logo-upload";
 
   if (variant === "compact") {
     const previewScale = baseScale * zoom;
     const displayUrl = sourceUrl || latestLogoUrl;
+    const inputTargetId = inputId ?? "profile-logo-upload";
     return (
       <section className="flex flex-col gap-3 rounded-2xl border border-dashed border-muted/70 p-3">
         <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center">
@@ -381,6 +396,7 @@ export default function ProfileLogoUploader({
               onPointerLeave={handlePointerUp}
               onDrop={handleDrop}
               onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
               role="application"
               aria-label="Logo crop preview"
             >
@@ -520,6 +536,11 @@ export default function ProfileLogoUploader({
             className={previewContainerClassName}
             onDragOver={(event) => {
               event.preventDefault();
+              setDraggingOver(true);
+            }}
+            onDragLeave={(event) => {
+              event.preventDefault();
+              setDraggingOver(false);
             }}
             onDrop={handleDrop}
           >

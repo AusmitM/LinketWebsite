@@ -57,7 +57,7 @@ function getSiteBase() {
 }
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ batchId: string }> }
 ) {
   if (!isSupabaseAdminAvailable) {

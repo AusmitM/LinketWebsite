@@ -141,6 +141,10 @@ export default function PublicLeadForm({
     })();
   }, [handle]);
 
+  if (!loading && (disabled || !hasFields)) {
+    return null;
+  }
+
   useEffect(() => {
     if (!form) return;
     setAnswers((prev) => {
@@ -792,7 +796,7 @@ export default function PublicLeadForm({
     );
   }
 
-  if (loading || disabled || !hasFields) return null;
+  if (loading || disabled) return null;
 
   if (submitted && form) {
     return (

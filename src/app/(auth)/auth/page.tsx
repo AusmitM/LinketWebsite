@@ -145,7 +145,7 @@ export default function AuthPage() {
         setPending(false);
       }
     },
-    [email, password, supabase, router, next, resolveRedirect, siteUrl]
+    [email, password, supabase, router, next, resolveRedirect]
   );
 
   const handlePasswordSignIn = useCallback(
@@ -212,7 +212,7 @@ export default function AuthPage() {
         setPending(false);
       }
     },
-    [supabase, next, siteUrl]
+    [supabase, next]
   );
 
   const isSignUp = view === "signup";

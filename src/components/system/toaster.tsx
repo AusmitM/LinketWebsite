@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 
@@ -34,17 +34,10 @@ export function toast(opts: ToastOptions) {
 
 export function Toaster() {
   const [toasts, setToasts] = useState<ToastInternal[]>([]);
-  const mounted = useSyncExternalStore(
-    () => () => {},
-    () => true,
-    () => false
-  );
-
-  const dismiss = (id: string) => {
-    setToasts((list) => list.filter((t) => t.id !== id));
-  };
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     function onToast(e: Event) {
       const ce = e as CustomEvent<ToastInternal>;
       const t = ce.detail;
@@ -59,6 +52,10 @@ export function Toaster() {
 
   // Avoid SSR markup so extensions cannot mutate this subtree before hydration
   if (!mounted) return null;
+
+  function dismiss(id: string) {
+    setToasts((list) => list.filter((t) => t.id !== id));
+  }
 
   return (
     <div className="pointer-events-none fixed inset-0 z-[100] flex items-start justify-end p-4 sm:p-6">

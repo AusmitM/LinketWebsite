@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { Button } from "@/components/ui/button"
@@ -19,11 +19,12 @@ type FormData = z.infer<typeof schema>
 const STORAGE = "newsletter:subscribed"
 
 export default function Newsletter() {
-  const [hidden] = useState(() => {
-    if (typeof window === "undefined") return false
-    return localStorage.getItem(STORAGE) === "1"
-  })
+  const [hidden, setHidden] = useState(false)
   const { register, handleSubmit, formState, setError, reset } = useForm<FormData>()
+
+  useEffect(() => {
+    setHidden(localStorage.getItem(STORAGE) === "1")
+  }, [])
 
   if (hidden) return null
 
