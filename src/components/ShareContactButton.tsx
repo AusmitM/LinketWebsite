@@ -34,6 +34,7 @@ type ContactProperty = (typeof CONTACT_PROPERTIES)[number];
 const DEFAULT_PROPERTIES: ContactProperty[] = ["name", "email", "tel"];
 const PHOTO_LABELS = ["photo", "avatar", "headshot", "picture", "image"];
 const COMPANY_LABELS = ["company", "organization", "org"];
+const TITLE_LABELS = ["title", "job", "position", "role"];
 const MAX_PHOTO_BYTES = 220 * 1024;
 
 function getFirst(value?: string[] | null) {
@@ -46,30 +47,50 @@ function matchesLabel(label: string, needles: string[]) {
 }
 
 function buildAnswers(form: LeadFormConfig, contact: ContactPickerContact) {
-  const name = getFirst(contact.name);
+  const fullName = getFirst(contact.name);
   const email = getFirst(contact.email);
   const phone = getFirst(contact.tel);
   const answers: LeadFormSubmission["answers"] = {};
-  const company = getFirst(contact.organization);
+  const orgs = contact.organization ?? [];
+  const company = getFirst(orgs);
+  const title =
+    orgs.length > 1 ? orgs.find((value, index) => index > 0) ?? "" : "";
+  const normalizedName = fullName.trim().replace(/\s+/g, " ");
+  const [firstName, ...rest] = normalizedName ? normalizedName.split(" ") : [];
+  const lastName = rest.join(" ");
 
   for (const field of form.fields) {
     if (field.type === "section") continue;
     const label = field.label.toLowerCase();
-    if (name && !answers[field.id] && label.includes("name")) {
-      answers[field.id] = { value: name };
-      continue;
-    }
-    if (email && !answers[field.id] && label.includes("email")) {
-      answers[field.id] = { value: email };
-      continue;
-    }
-    if (phone && !answers[field.id] && label.includes("phone")) {
-      answers[field.id] = { value: phone };
-      continue;
-    }
-    if (company && !answers[field.id] && matchesLabel(label, COMPANY_LABELS)) {
-      answers[field.id] = { value: company };
-      continue;
+    if (!answers[field.id]) {
+      if (firstName && label.includes("first") && label.includes("name")) {
+        answers[field.id] = { value: firstName };
+        continue;
+      }
+      if (lastName && label.includes("last") && label.includes("name")) {
+        answers[field.id] = { value: lastName };
+        continue;
+      }
+      if (normalizedName && label.includes("name")) {
+        answers[field.id] = { value: normalizedName };
+        continue;
+      }
+      if (email && label.includes("email")) {
+        answers[field.id] = { value: email };
+        continue;
+      }
+      if (phone && (label.includes("phone") || label.includes("mobile"))) {
+        answers[field.id] = { value: phone };
+        continue;
+      }
+      if (company && matchesLabel(label, COMPANY_LABELS)) {
+        answers[field.id] = { value: company };
+        continue;
+      }
+      if (title && matchesLabel(label, TITLE_LABELS)) {
+        answers[field.id] = { value: title };
+        continue;
+      }
     }
   }
 
