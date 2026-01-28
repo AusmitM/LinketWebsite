@@ -238,7 +238,7 @@ export default function OverviewContent() {
                 Your latest Linket performance snapshot.
               </p>
             </CardHeader>
-            <CardContent className="dashboard-overview-metrics grid grid-cols-2 gap-4 sm:grid-cols-1">
+            <CardContent className="dashboard-overview-metrics grid grid-cols-1 gap-4 sm:grid-cols-2">
               {overviewItems.map((item) => (
                 <MetricRow
                   key={item.label}
