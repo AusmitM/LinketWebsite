@@ -13,6 +13,36 @@ type LeadFormRow = {
   config: LeadFormConfig;
 };
 
+function shouldRetryWithoutToken(message: string) {
+  const lowered = message.toLowerCase();
+  return lowered.includes("response_token") || lowered.includes("schema cache");
+}
+
+async function insertLeadFormResponse(
+  client: typeof supabaseAdmin,
+  payload: {
+    form_id: string;
+    response_id: string;
+    response_token?: string;
+    submitted_at: string;
+    answers: LeadFormSubmission["answers"];
+    responder_email: string | null;
+  }
+) {
+  const { error } = await client.from("lead_form_responses").insert(payload);
+  if (!error) return;
+  if (payload.response_token && shouldRetryWithoutToken(error.message)) {
+    const fallback = { ...payload };
+    delete (fallback as { response_token?: string }).response_token;
+    const { error: retryError } = await client
+      .from("lead_form_responses")
+      .insert(fallback);
+    if (!retryError) return;
+    throw new Error(retryError.message);
+  }
+  throw new Error(error.message);
+}
+
 function mapLeadFields(
   answers: LeadFormSubmission["answers"],
   config: LeadFormConfig
@@ -129,15 +159,9 @@ export async function POST(request: NextRequest) {
     };
 
     if (isSupabaseAdminAvailable) {
-      const { error: insertError } = await supabaseAdmin
-        .from("lead_form_responses")
-        .insert(payload);
-      if (insertError) throw new Error(insertError.message);
+      await insertLeadFormResponse(supabaseAdmin, payload);
     } else {
-      const { error: insertError } = await supabase
-        .from("lead_form_responses")
-        .insert(payload);
-      if (insertError) throw new Error(insertError.message);
+      await insertLeadFormResponse(supabase as typeof supabaseAdmin, payload);
     }
 
     const leadValues = inferLeadFields(answers, config);
