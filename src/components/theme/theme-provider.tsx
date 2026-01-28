@@ -10,7 +10,7 @@ export type ThemeName =
   | "dream"
   | "forest"
   | "gilded"
-  | "ember"
+  | "rose"
   | "autumn"
   | "honey"
   | "burnt-orange"

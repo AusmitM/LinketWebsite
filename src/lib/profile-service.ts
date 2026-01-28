@@ -163,7 +163,7 @@ function normaliseTheme(
     "dream",
     "forest",
     "gilded",
-    "ember",
+    "rose",
     "autumn",
     "honey",
     "burnt-orange",

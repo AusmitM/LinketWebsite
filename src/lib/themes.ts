@@ -5,7 +5,7 @@ export type ThemeName =
   | "dream"
   | "forest"
   | "gilded"
-  | "ember"
+  | "rose"
   | "autumn"
   | "honey"
   | "burnt-orange"
@@ -104,7 +104,7 @@ const themes: Record<ThemeName, Vars> = {
     "--ring": "#d3ac2c",
     "--avatar-border": "#d3ac2c",
   },
-  ember: {
+  rose: {
     "--background": "#ffe1d1",
     "--foreground": "#4a1612",
     "--card": "#ffeadf",
