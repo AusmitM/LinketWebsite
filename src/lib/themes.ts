@@ -7,7 +7,9 @@ export type ThemeName =
   | "gilded"
   | "ember"
   | "autumn"
-  | "honey";
+  | "honey"
+  | "burnt-orange"
+  | "maroon";
 
 type Vars = Record<string, string>;
 
@@ -147,9 +149,46 @@ const themes: Record<ThemeName, Vars> = {
     "--ring": "#df6206",
     "--avatar-border": "#df6206",
   },
+  "burnt-orange": {
+    "--background": "#120b09",
+    "--foreground": "#f6ede7",
+    "--card": "#22110c",
+    "--card-foreground": "#f6ede7",
+    "--muted": "#1a0e0a",
+    "--muted-foreground": "#d2a48f",
+    "--accent": "#bf5700",
+    "--accent-foreground": "#fff4ed",
+    "--destructive": "#fb7185",
+    "--border": "#2a1410",
+    "--input": "#2a1410",
+    "--ring": "#bf5700",
+    "--avatar-border": "#bf5700",
+  },
+  maroon: {
+    "--background": "#14080b",
+    "--foreground": "#f6e9ea",
+    "--card": "#241014",
+    "--card-foreground": "#f6e9ea",
+    "--muted": "#1b0c10",
+    "--muted-foreground": "#d7a6ad",
+    "--accent": "#6b0f1a",
+    "--accent-foreground": "#fbeff0",
+    "--destructive": "#fb7185",
+    "--border": "#2a1418",
+    "--input": "#2a1418",
+    "--ring": "#8f2a36",
+    "--avatar-border": "#8f2a36",
+  },
 };
 
-const DARK_SET: Set<ThemeName> = new Set(["dark", "midnight", "forest", "gilded"]);
+const DARK_SET: Set<ThemeName> = new Set([
+  "dark",
+  "midnight",
+  "forest",
+  "gilded",
+  "burnt-orange",
+  "maroon",
+]);
 
 export function isDarkTheme(name: ThemeName) {
   return DARK_SET.has(name);

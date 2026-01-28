@@ -5,6 +5,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Hexagon,
+  Shield,
   Sun,
   Moon,
   MoonStar,
@@ -30,7 +31,28 @@ const ORDER: ThemeName[] = [
   "ember",
   "autumn",
   "honey",
+  "burnt-orange",
+  "maroon",
 ];
+
+const BullHead = ({ className }: { className?: string }) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+    aria-hidden="true"
+  >
+    <path d="M4 7c2-3 6-3 8 0" />
+    <path d="M20 7c-2-3-6-3-8 0" />
+    <path d="M6 9c0 5 2.5 8 6 8s6-3 6-8" />
+    <path d="M9 12h.01" />
+    <path d="M15 12h.01" />
+  </svg>
+);
 const ICONS: Record<ThemeName, React.ComponentType<{ className?: string }>> = {
   light: Sun,
   dark: Moon,
@@ -41,6 +63,8 @@ const ICONS: Record<ThemeName, React.ComponentType<{ className?: string }>> = {
   ember: Flame,
   autumn: Leaf,
   honey: Hexagon,
+  "burnt-orange": BullHead,
+  maroon: Shield,
 };
 
 const LABELS: Record<ThemeName, string> = {
@@ -53,6 +77,8 @@ const LABELS: Record<ThemeName, string> = {
   ember: "Ember",
   autumn: "Autumn",
   honey: "Honey",
+  "burnt-orange": "Hook 'Em",
+  maroon: "Aggie",
 };
 
 const PENDING_THEME_KEY = "linket:dashboard-theme:pending";
@@ -199,8 +225,8 @@ export default function ThemeToggle({ showLabel = false }: { showLabel?: boolean
           <ChevronLeft className="h-4 w-4" />
         </Button>
         <div className="flex flex-1 items-center gap-2 rounded-lg px-2 text-xs text-muted-foreground">
-          <Sun className="h-5 w-5" />
-          <span className="font-medium">Theme</span>
+          <Sun className="h-4 w-4 shrink-0" />
+          <span className="font-medium whitespace-nowrap">Theme</span>
         </div>
         <Button
           type="button"
@@ -247,8 +273,10 @@ export default function ThemeToggle({ showLabel = false }: { showLabel?: boolean
         title={`Theme: ${label}`}
         className="flex flex-1 items-center gap-2 rounded-lg px-2 text-xs"
       >
-        <Icon className="h-5 w-5" />
-        <span className="font-medium text-muted-foreground">{label}</span>
+        <Icon className="h-4 w-4 shrink-0" />
+        <span className="font-medium text-muted-foreground whitespace-nowrap">
+          {label}
+        </span>
       </div>
       <Button
         type="button"

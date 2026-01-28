@@ -478,6 +478,88 @@
   border-color: rgba(223, 98, 6, 0.4);
 }
 
+/* Burnt Orange theme token mapping (UT Austin) */
+.theme-burnt-orange {
+  --background: #120b09;
+  --foreground: #f6ede7;
+  --card: rgba(34, 17, 12, 0.96);
+  --card-foreground: #f6ede7;
+  --popover: rgba(34, 17, 12, 0.98);
+  --popover-foreground: #f6ede7;
+  --primary: #bf5700;
+  --primary-foreground: #fff4ed;
+  --secondary: #2a1410;
+  --secondary-foreground: #f6ede7;
+  --muted: #1a0e0a;
+  --muted-foreground: #d2a48f;
+  --accent: #bf5700;
+  --accent-foreground: #fff4ed;
+  --destructive: #fb7185;
+  --border: #2a1410;
+  --input: #2a1410;
+  --ring: #bf5700;
+  --avatar-border: var(--ring);
+  --sidebar: #160c0a;
+  --sidebar-foreground: #f6ede7;
+  --sidebar-primary: #bf5700;
+  --sidebar-primary-foreground: #fff4ed;
+  --sidebar-accent: #2a1410;
+  --sidebar-accent-foreground: #f6ede7;
+  --sidebar-border: #2a1410;
+  --sidebar-ring: #bf5700;
+  --premium-gradient: radial-gradient(120% 120% at 18% 0%, rgba(191, 87, 0, 0.25) 0%, transparent 60%),
+    radial-gradient(120% 120% at 82% 0%, rgba(191, 87, 0, 0.22) 0%, transparent 55%),
+    linear-gradient(180deg, #1a0e0a 0%, #120b09 100%);
+  --premium-card-gradient: linear-gradient(180deg, rgba(36, 18, 13, 0.96) 0%, rgba(24, 12, 9, 0.94) 100%);
+  --premium-topbar-gradient: linear-gradient(90deg, rgba(28, 14, 11, 0.96) 0%, rgba(20, 10, 8, 0.94) 100%);
+  --premium-border: rgba(246, 237, 231, 0.12);
+  --premium-shadow: 0 18px 45px -30px rgba(7, 4, 3, 0.8);
+  --premium-glow: 0 0 0 1px rgba(34, 17, 12, 0.8);
+  --premium-hairline: rgba(246, 237, 231, 0.12);
+  --premium-inset: 0 1px 0 rgba(255, 255, 255, 0.06) inset;
+}
+
+/* Maroon theme token mapping (Texas A&M) */
+.theme-maroon {
+  --background: #14080b;
+  --foreground: #f6e9ea;
+  --card: rgba(33, 16, 20, 0.96);
+  --card-foreground: #f6e9ea;
+  --popover: rgba(33, 16, 20, 0.98);
+  --popover-foreground: #f6e9ea;
+  --primary: #6b0f1a;
+  --primary-foreground: #fbeff0;
+  --secondary: #3b151c;
+  --secondary-foreground: #f2d7da;
+  --muted: #1b0c10;
+  --muted-foreground: #d7a6ad;
+  --accent: #8f2a36;
+  --accent-foreground: #fbeff0;
+  --destructive: #fb7185;
+  --border: #2a1418;
+  --input: #2a1418;
+  --ring: #8f2a36;
+  --avatar-border: var(--ring);
+  --sidebar: #1a0b0f;
+  --sidebar-foreground: #f6e9ea;
+  --sidebar-primary: #6b0f1a;
+  --sidebar-primary-foreground: #fbeff0;
+  --sidebar-accent: #3b151c;
+  --sidebar-accent-foreground: #f2d7da;
+  --sidebar-border: #2a1418;
+  --sidebar-ring: #8f2a36;
+  --premium-gradient: radial-gradient(120% 120% at 20% 0%, rgba(143, 42, 54, 0.24) 0%, transparent 60%),
+    radial-gradient(120% 120% at 80% 0%, rgba(107, 15, 26, 0.24) 0%, transparent 55%),
+    linear-gradient(180deg, #1a0b0f 0%, #12070a 100%);
+  --premium-card-gradient: linear-gradient(180deg, rgba(36, 16, 21, 0.96) 0%, rgba(24, 11, 14, 0.94) 100%);
+  --premium-topbar-gradient: linear-gradient(90deg, rgba(34, 14, 18, 0.96) 0%, rgba(21, 9, 12, 0.94) 100%);
+  --premium-border: rgba(246, 233, 234, 0.12);
+  --premium-shadow: 0 18px 45px -30px rgba(7, 3, 4, 0.8);
+  --premium-glow: 0 0 0 1px rgba(35, 15, 18, 0.8);
+  --premium-hairline: rgba(246, 233, 234, 0.12);
+  --premium-inset: 0 1px 0 rgba(255, 255, 255, 0.08) inset;
+}
+
 /* Typography harmony */
 html:where(.typography-smooth) h1 { font-size: var(--step-4); line-height: 1.1; letter-spacing: -0.01em; }
 html:where(.typography-smooth) h2 { font-size: var(--step-3); line-height: 1.15; }

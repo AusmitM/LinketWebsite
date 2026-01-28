@@ -16,6 +16,8 @@ const THEMES: ThemeName[] = [
   "ember",
   "autumn",
   "honey",
+  "burnt-orange",
+  "maroon",
 ];
 
 const PENDING_THEME_KEY = "linket:dashboard-theme:pending";

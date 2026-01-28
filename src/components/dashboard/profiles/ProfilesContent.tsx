@@ -92,6 +92,20 @@ const THEME_OPTIONS: Array<{
     preview: "linear-gradient(135deg, #c32701 0%, #fddb9c 100%)",
     textTone: "dark",
   },
+  {
+    id: "burnt-orange",
+    label: "Hook 'Em",
+    description: "UT Austin-inspired burnt orange with warm neutrals",
+    preview: "linear-gradient(135deg, #120b09 0%, #bf5700 100%)",
+    textTone: "light",
+  },
+  {
+    id: "maroon",
+    label: "Aggie",
+    description: "Texas A&M maroon with rich, dramatic depth",
+    preview: "linear-gradient(135deg, #14080b 0%, #6b0f1a 100%)",
+    textTone: "light",
+  },
 ];
 
 const DEFAULT_THEME: ThemeName = "autumn";

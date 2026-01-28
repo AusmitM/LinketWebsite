@@ -166,6 +166,8 @@ function normaliseTheme(
     "ember",
     "autumn",
     "honey",
+    "burnt-orange",
+    "maroon",
   ];
   const value = (theme ?? "autumn").toLowerCase();
   return allowed.includes(value as ThemeName) ? (value as ThemeName) : "light";

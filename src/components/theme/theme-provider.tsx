@@ -12,7 +12,9 @@ export type ThemeName =
   | "gilded"
   | "ember"
   | "autumn"
-  | "honey";
+  | "honey"
+  | "burnt-orange"
+  | "maroon";
 
 type ThemeContextValue = {
   theme: ThemeName;
@@ -22,7 +24,14 @@ type ThemeContextValue = {
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 const STORAGE_KEY = "linket:theme";
 const THEME_EVENT = "linket:theme-change";
-const DARK_THEMES = new Set<ThemeName>(["dark", "midnight", "gilded", "forest"]);
+const DARK_THEMES = new Set<ThemeName>([
+  "dark",
+  "midnight",
+  "gilded",
+  "forest",
+  "burnt-orange",
+  "maroon",
+]);
 
 function applyThemeClass(t: ThemeName, scopeEl?: Element | null) {
   if (typeof document === "undefined") return;
