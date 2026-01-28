@@ -1203,7 +1203,7 @@ body.theme-forest .dashboard-forest-pin {
 }
 
 /* Phone baseline layout */
-@media (max-width: 425px) {
+@media (max-width: 426px) {
   #dashboard-theme-scope {
     width: 100vw;
     max-width: 100vw;
@@ -1248,6 +1248,25 @@ body.theme-forest .dashboard-forest-pin {
   #dashboard-theme-scope .dashboard-content [data-slot=card-footer] {
     padding-left: 0.6rem;
     padding-right: 0.6rem;
+  }
+
+  #dashboard-theme-scope .linkets-card-header {
+    position: relative;
+    padding-right: 4.5rem;
+  }
+
+  #dashboard-theme-scope .linkets-refresh {
+    display: none;
+    position: absolute;
+    top: 0.6rem;
+    right: 0.6rem;
+    margin: 0;
+  }
+
+  #dashboard-theme-scope .linkets-refresh [data-slot=button] {
+    height: auto;
+    padding: 0.35rem 0.7rem;
+    font-size: 0.75rem;
   }
 
   #dashboard-theme-scope .dashboard-content [data-slot=card-title] {
@@ -1365,6 +1384,10 @@ body.theme-forest .dashboard-forest-pin {
     justify-content: center;
     margin-left: auto;
     margin-right: auto;
+  }
+
+  #dashboard-theme-scope .dashboard-date-pill {
+    display: none;
   }
 
   #dashboard-theme-scope .dashboard-nav-actions {

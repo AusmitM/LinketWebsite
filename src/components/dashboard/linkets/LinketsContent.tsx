@@ -187,7 +187,7 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
       >
         <CardHeader
           className={cn(
-            "flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between",
+            "linkets-card-header flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between",
             isEmbedded && "gap-2.5"
           )}
         >
@@ -202,7 +202,7 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
             </CardTitle>
             <CardDescription>Manage every physical Linket tag tied to your account.</CardDescription>
           </div>
-          <div className="flex gap-2">
+          <div className="linkets-refresh flex gap-2">
             <Button variant="outline" onClick={() => userId && loadData(userId)} className="rounded-full" aria-label="Refresh Linkets">
               <RefreshCcw className="mr-2 h-4 w-4" /> Refresh
             </Button>
@@ -238,7 +238,11 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
               </p>
             </div>
             <div className="flex items-end justify-end md:justify-start">
-              <Button type="submit" className="rounded-full" disabled={claiming}>
+              <Button
+                type="submit"
+                className="rounded-full text-foreground"
+                disabled={claiming}
+              >
                 {claiming ? (
                   <span className="inline-flex items-center gap-2 text-sm">
                     <Loader2 className="h-4 w-4 animate-spin" />
