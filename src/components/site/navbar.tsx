@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
-import { ArrowUpRight, LogOut, Menu, X } from "lucide-react";
+import { ArrowUpRight, IdCard, Link2, LogOut, Menu, MessageSquare, User, X } from "lucide-react";
 
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
@@ -72,6 +72,13 @@ const DASHBOARD_NAV = [
   { href: "/dashboard/profiles", label: "Profiles" },
 ] as const;
 
+const PROFILE_SECTIONS = [
+  { id: "profile", label: "Profile", icon: User },
+  { id: "contact", label: "Contact", icon: IdCard },
+  { id: "links", label: "Links", icon: Link2 },
+  { id: "lead", label: "Lead Form", icon: MessageSquare },
+] as const;
+
 export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
@@ -90,6 +97,9 @@ export function Navbar() {
   const [copyLinkLabel, setCopyLinkLabel] = useState("copy link");
   const copyLinkTimeout = useRef<number | null>(null);
   const [dashboardSidebarOpen, setDashboardSidebarOpen] = useState(false);
+  const [activeProfileSection, setActiveProfileSection] = useState<
+    (typeof PROFILE_SECTIONS)[number]["id"] | null
+  >(null);
 
   useEffect(() => {
     lockedSectionRef.current = lockedSection;
@@ -111,10 +121,7 @@ export function Navbar() {
   const isLandingPage = pathname === "/";
   const isAuthPage =
     pathname?.startsWith("/auth") || pathname?.startsWith("/forgot-password");
-
-  if (isPublicProfile) {
-    return null;
-  }
+  const isProfileEditor = pathname?.startsWith("/dashboard/profiles") ?? false;
 
   useEffect(() => {
     if (!isDashboard) {
@@ -198,6 +205,25 @@ export function Navbar() {
       window.removeEventListener("linket:handle-updated", handleUpdated);
     };
   }, [isDashboard]);
+
+  useEffect(() => {
+    if (!isProfileEditor) {
+      setActiveProfileSection(null);
+      return;
+    }
+    const handleSection = (event: Event) => {
+      const detail = (event as CustomEvent<{ section?: string }>).detail;
+      const next = detail?.section;
+      if (!next) return;
+      if (PROFILE_SECTIONS.some((section) => section.id === next)) {
+        setActiveProfileSection(next as (typeof PROFILE_SECTIONS)[number]["id"]);
+      }
+    };
+    window.addEventListener("linket:profile-section-updated", handleSection);
+    return () => {
+      window.removeEventListener("linket:profile-section-updated", handleSection);
+    };
+  }, [isProfileEditor]);
 
   useEffect(() => {
     if (!isDashboard) {
@@ -347,6 +373,9 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [isPublic]);
 
+  if (isPublicProfile) {
+    return null;
+  }
 
   const overlayMode = isPublic && isAtTop && isLandingPage;
 
@@ -529,7 +558,7 @@ export function Navbar() {
   );
 
   const dashboardProfileActions = user ? (
-    <div className="dashboard-nav-actions flex items-center gap-2">
+    <div className="dashboard-nav-actions hidden items-center gap-2 md:flex">
       <Button
         type="button"
         size="sm"
@@ -598,17 +627,17 @@ export function Navbar() {
     return (
       <header className="dashboard-navbar sticky top-0 z-50 w-full border-b border-border/60 bg-background/90 text-foreground backdrop-blur supports-[backdrop-filter]:bg-background/70">
         <nav
-          className="dashboard-navbar-inner mx-auto flex max-w-6xl items-center justify-between px-4 py-3 text-foreground md:px-6"
+          className="dashboard-navbar-inner mx-auto flex max-w-6xl items-center justify-between px-2 py-3 text-foreground sm:px-3 md:px-6"
           aria-label="Dashboard"
         >
-          <div className="dashboard-navbar-left flex items-center gap-4">
+          <div className="dashboard-navbar-left flex min-w-0 flex-1 items-center gap-4 pr-3">
             <Link
               href="/dashboard"
               className="dashboard-brand inline-flex items-center gap-3"
               aria-label={`${brand.name} dashboard`}
             >
               {brand.logo ? (
-                <span className="dashboard-logo relative h-10 w-32 overflow-hidden">
+                <span className="dashboard-logo relative h-12 w-36 overflow-hidden">
                   <Image
                     src={brand.logo}
                     alt={`${brand.name} logo`}
@@ -624,12 +653,47 @@ export function Navbar() {
                 </span>
               )}
             </Link>
-            <div className="dashboard-nav-links hidden items-center gap-2 lg:flex">
-              {DASHBOARD_NAV.map(dashboardLink)}
-            </div>
+            {isProfileEditor ? (
+              <>
+                <div className="hidden min-w-0 max-w-[550px] flex-1 lg:ml-[calc(2rem)] md:flex">
+                  <div className="flex min-h-[52px] w-full items-center rounded-2xl border border-border/50 bg-card/70 px-3 py-2 shadow-[0_20px_40px_-32px_rgba(15,23,42,0.45)]">
+                    <div className="flex w-full flex-nowrap items-center gap-2">
+                      {PROFILE_SECTIONS.map((section) => {
+                        const Icon = section.icon;
+                        const isActive = activeProfileSection === section.id;
+                        return (
+                          <button
+                            key={section.id}
+                            type="button"
+                            onClick={() => {
+                              window.dispatchEvent(
+                                new CustomEvent("linket:profile-section-nav", {
+                                  detail: { section: section.id },
+                                })
+                              );
+                            }}
+                            className={cn(
+                              "flex min-w-0 flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold transition cursor-pointer",
+                              isActive
+                                ? "bg-muted text-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]"
+                                : "text-muted-foreground"
+                            )}
+                          >
+                            <Icon className="h-5 w-5 shrink-0" aria-hidden />
+                            <span className="min-w-0 truncate whitespace-nowrap">
+                              {section.label}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </>
+            ) : null}
           </div>
 
-          <div className="dashboard-navbar-right flex items-center gap-3">
+          <div className="dashboard-navbar-right flex shrink-0 items-center gap-3">
             {dashboardProfileActions}
             <Button
               asChild
@@ -979,7 +1043,7 @@ function usePopoverPosition(
       window.removeEventListener("resize", update);
       window.removeEventListener("scroll", update, true);
     };
-  }, [anchorRef, open]);
+  }, [anchorRef, open, align]);
 
   return style;
 }

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUserWithAdmin } from "@/lib/admin";
 import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
@@ -163,7 +164,9 @@ export default async function AdminMintPage() {
             </p>
           </div>
           <Button asChild variant="outline" className="rounded-full">
-            <a href="/api/admin/mint/master-log">Download master CSV</a>
+            <Link href="/api/admin/mint/master-log" prefetch={false}>
+              Download master CSV
+            </Link>
           </Button>
         </div>
         <div className="mt-4 grid gap-3">
@@ -176,11 +179,12 @@ export default async function AdminMintPage() {
               const label = batch.label?.trim() || "Untitled batch";
               const downloadHref = `/api/admin/mint/batch/${batch.id}`;
               return (
-                <a
+                <Link
                   key={batch.id}
                   href={downloadHref}
                   className="group flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border/60 bg-background/60 px-4 py-3 transition-colors hover:border-foreground/30 hover:bg-background/80"
                   aria-label={`Download CSV for ${label}`}
+                  prefetch={false}
                 >
                   <div className="min-w-0">
                     <div className="truncate text-sm font-semibold text-foreground">{label}</div>
@@ -197,7 +201,7 @@ export default async function AdminMintPage() {
                       Download CSV
                     </div>
                   </div>
-                </a>
+                </Link>
               );
             })
           )}

@@ -13,10 +13,8 @@ import {
   EyeOff,
   Globe,
   GripVertical,
-  IdCard,
   Instagram,
   Link2,
-  MessageSquare,
   Palette,
   Pencil,
   Trash2,
@@ -31,6 +29,13 @@ import LeadFormBuilder from "@/components/dashboard/LeadFormBuilder";
 import VCardContent from "@/components/dashboard/vcard/VCardContent";
 import { useDashboardUser } from "@/components/dashboard/DashboardSessionContext";
 import { useThemeOptional } from "@/components/theme/theme-provider";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { getSignedAvatarUrl } from "@/lib/avatar-client";
 import { getSignedProfileHeaderUrl } from "@/lib/profile-header-client";
 import { getSignedProfileLogoUrl } from "@/lib/profile-logo-client";
@@ -96,17 +101,6 @@ type VCardSnapshot = {
   error: string | null;
 };
 
-const SECTIONS: Array<{ id: SectionId; label: string; icon: typeof User }> = [
-  { id: "profile", label: "Profile", icon: User },
-  { id: "contact", label: "Contact Card", icon: IdCard },
-  { id: "links", label: "Links", icon: Link2 },
-  { id: "lead", label: "Lead Form", icon: MessageSquare },
-];
-
-const MOBILE_SECTIONS: Array<{ id: SectionId; label: string; icon: typeof User }> = [
-  ...SECTIONS,
-  { id: "preview", label: "Preview", icon: Eye },
-];
 
 const ICON_OPTIONS: Array<{
   value: LinkIconKey;
@@ -126,6 +120,14 @@ const LINK_COLORS = [
   "#F1B16C",
   "#6AB7FF",
   "#F28AA0",
+];
+
+const MOBILE_PROFILE_SECTIONS: Array<{ id: SectionId; label: string }> = [
+  { id: "profile", label: "Profile" },
+  { id: "contact", label: "Contact Card" },
+  { id: "links", label: "Links" },
+  { id: "lead", label: "Lead Form" },
+  { id: "preview", label: "Preview" },
 ];
 
 export default function PublicProfileEditorPage() {
@@ -849,6 +851,28 @@ export default function PublicProfileEditorPage() {
     };
   }, [isDirty, vcardSnapshot.isDirty, saveError, vcardSnapshot.status]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.dispatchEvent(
+      new CustomEvent("linket:profile-section-updated", {
+        detail: { section: activeSection },
+      })
+    );
+  }, [activeSection]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handleSection = (event: Event) => {
+      const detail = (event as CustomEvent<{ section?: SectionId }>).detail;
+      if (!detail?.section) return;
+      setActiveSection(detail.section);
+    };
+    window.addEventListener("linket:profile-section-nav", handleSection);
+    return () => {
+      window.removeEventListener("linket:profile-section-nav", handleSection);
+    };
+  }, []);
+
   const handleContactCta = useCallback(() => {
     if (!hasContactDetails) {
       setActiveSection("contact");
@@ -871,36 +895,33 @@ export default function PublicProfileEditorPage() {
 
   return (
     <div className="space-y-6" onBlurCapture={handleBlurCapture}>
-      <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-        <span className="font-medium text-foreground">
-          {isPublished ? "Published" : "Draft"}
-        </span>
-        <span>
-          Last saved: {lastSavedAt ? formatShortDate(lastSavedAt) : "Just now"}
-        </span>
-        {(saveState === "saving" || sidebarSavePulse) && (
-          <span className="dashboard-saving-indicator text-foreground">
-            Saving...
-          </span>
-        )}
-        {isDirty && <span className="text-amber-600">Unsaved changes</span>}
-        {saveState === "failed" ? (
-          <Button variant="outline" size="sm" onClick={() => void handleSave()}>
-            Retry save
-          </Button>
-        ) : null}
+      <div className="md:hidden">
+        <Select
+          value={activeSection}
+          onValueChange={(value) => setActiveSection(value as SectionId)}
+        >
+          <SelectTrigger className="h-11 w-full max-w-[260px] rounded-full border-border/30 bg-gradient-to-r from-background/60 via-card/80 to-background/60 px-5 text-sm font-semibold text-foreground shadow-[0_18px_40px_-26px_rgba(15,23,42,0.65)] ring-1 ring-border/30 backdrop-blur">
+            <SelectValue placeholder="Section" />
+          </SelectTrigger>
+          <SelectContent className="rounded-2xl border-border/40 bg-card/95 p-1 shadow-[0_18px_40px_-28px_rgba(15,23,42,0.6)] backdrop-blur">
+            {MOBILE_PROFILE_SECTIONS.map((section) => (
+              <SelectItem
+                key={section.id}
+                value={section.id}
+                className="rounded-xl text-sm font-medium focus:bg-muted/60"
+              >
+                {section.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
-
         {/*
           On phones, the preview lives in its own "Preview" section.
           Keep the live preview column on desktop/tablet.
         */}
-        <div className="grid gap-6 lg:grid-cols-[550px_minmax(0,1fr)_50px]">
-          <div className="space-y-4">
-            <ProfileSectionsNav
-              activeSection={activeSection}
-              onSectionChange={setActiveSection}
-            />
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="min-w-0 space-y-4">
             {/*
               Keep a single preview instance for reuse.
             */}
@@ -1019,7 +1040,29 @@ export default function PublicProfileEditorPage() {
           </div>
           {activeSection !== "preview" ? (
           <div className="hidden justify-end self-start pt-0 lg:flex">
-            <div className="origin-top-left scale-[1] -mt-2">
+            <div className="flex w-full max-w-[340px] flex-col items-center gap-3">
+              <div className="w-full text-center text-xs text-muted-foreground">
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                <span className="font-medium text-foreground">
+                  {isPublished ? "Published" : "Draft"}
+                </span>
+                <span>
+                  Last saved: {lastSavedAt ? formatShortDate(lastSavedAt) : "Just now"}
+                </span>
+                {(saveState === "saving" || sidebarSavePulse) && (
+                  <span className="dashboard-saving-indicator text-foreground">
+                    Saving...
+                  </span>
+                )}
+                {isDirty && <span className="text-amber-600">Unsaved changes</span>}
+                {saveState === "failed" ? (
+                  <Button variant="outline" size="sm" onClick={() => void handleSave()}>
+                    Retry save
+                  </Button>
+                ) : null}
+                </div>
+              </div>
+              <div className="w-full max-w-[340px] origin-top-left scale-[1]">
               <PhonePreviewCard
                 profile={{ name: profileDisplayName, tagline: profileTagline }}
                 avatarUrl={avatarUrl}
@@ -1045,6 +1088,7 @@ export default function PublicProfileEditorPage() {
                 draggingLinkId={draggingLinkId}
                 setDraggingLinkId={setDraggingLinkId}
               />
+              </div>
             </div>
           </div>
           ) : null}
@@ -1058,63 +1102,6 @@ export default function PublicProfileEditorPage() {
         onChange={setLinkForm}
         onSave={saveLinkModal}
       />
-    </div>
-  );
-}
-
-  function ProfileSectionsNav({
-    activeSection,
-    onSectionChange,
-  }: {
-    activeSection: SectionId;
-    onSectionChange: (section: SectionId) => void;
-  }) {
-    return (
-      <div className="space-y-4">
-        <div className="lg:hidden">
-          <label className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
-            Profile sections
-          </label>
-          <select
-            value={activeSection}
-            onChange={(event) => onSectionChange(event.target.value as SectionId)}
-            className="mt-2 w-full rounded-xl border border-border/60 bg-background px-3 py-2 text-sm"
-          >
-            {MOBILE_SECTIONS.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.label}
-              </option>
-            ))}
-          </select>
-        </div>
-      <aside className="hidden rounded-2xl border border-border/60 bg-card/80 p-4 shadow-sm lg:block">
-        <div className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
-          PROFILE SECTIONS
-        </div>
-        <div className="mt-3 grid grid-cols-2 gap-2">
-          {SECTIONS.map((item) => {
-            const Icon = item.icon;
-            const active = activeSection === item.id;
-            const iconClassName = item.id === "contact" ? "h-6 w-6" : "h-5 w-5";
-            return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => onSectionChange(item.id)}
-                className={cn(
-                  "flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm transition",
-                  active
-                    ? "bg-muted text-foreground"
-                    : "text-muted-foreground hover:bg-accent/60"
-                )}
-              >
-                <Icon className={iconClassName} aria-hidden />
-                {item.label}
-              </button>
-            );
-          })}
-        </div>
-      </aside>
     </div>
   );
 }
@@ -1189,9 +1176,6 @@ function EditorPanel({
   setHandleError: (value: string | null) => void;
 }) {
   const { theme } = useThemeOptional();
-  if (activeSection === "preview") {
-    return <div className="flex justify-center">{previewNode}</div>;
-  }
   const handleFieldsChange = useCallback(
     (fields: { email: string; phone: string; photoData: string | null }) => {
       onVCardFields({
@@ -1212,6 +1196,9 @@ function EditorPanel({
     },
     [onVCardStatus]
   );
+  if (activeSection === "preview") {
+    return <div className="flex justify-center">{previewNode}</div>;
+  }
   if (activeSection === "profile") {
     return (
       <Card className="rounded-2xl border border-border/60 bg-card/80 shadow-sm">
@@ -1633,10 +1620,10 @@ function PhonePreviewCard({
           type="button"
           onClick={onContactClick}
           className={cn(
-            "mt-4 w-full rounded-full px-4 py-2 text-xs font-semibold",
+            "mt-4 w-full rounded-full px-4 py-2 text-xs font-semibold transition",
             contactEnabled
-              ? "bg-[#D9ECFF] text-[#2E6AA5] hover:bg-[#C8E3FF]"
-              : "bg-[#EEF3F9] text-[#7AA7D8] opacity-80"
+              ? "bg-[var(--primary)] text-[var(--primary-foreground)] shadow-[0_12px_28px_-18px_var(--ring)] hover:bg-[color-mix(in_oklab,var(--primary),#fff_15%)]"
+              : "bg-muted text-muted-foreground opacity-80"
           )}
         >
           <span className="block truncate">

@@ -141,10 +141,6 @@ export default function PublicLeadForm({
     })();
   }, [handle]);
 
-  if (!loading && (disabled || !hasFields)) {
-    return null;
-  }
-
   useEffect(() => {
     if (!form) return;
     setAnswers((prev) => {
@@ -191,6 +187,10 @@ export default function PublicLeadForm({
     ).length;
     return Math.round((answered / fields.length) * 100);
   }, [answers, form]);
+
+  if (!loading && (disabled || !hasFields)) {
+    return null;
+  }
 
   function setAnswer(fieldId: string, value: unknown) {
     setAnswers((prev) => ({ ...prev, [fieldId]: { value } }));

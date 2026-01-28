@@ -50,7 +50,10 @@ export default function PublicProfilePreview({
 }: Props) {
   const [avatar, setAvatar] = useState<string | null>(null);
   const [headerImage, setHeaderImage] = useState<string | null>(null);
-  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [logoAsset, setLogoAsset] = useState<{
+    path: string;
+    url: string | null;
+  } | null>(null);
   const publicHandle = account.handle || profile.handle || handle;
   const displayName = profile.name || account.displayName || publicHandle;
   const resolvedTheme = themeOverride ?? profile.theme;
@@ -58,6 +61,7 @@ export default function PublicProfilePreview({
   const themeClass = `theme-${resolvedTheme} ${isDark ? "dark" : ""}`;
   const headline = profile.headline?.trim() ?? "";
   const logoPath = profile.logo_url ?? null;
+  const logoUrl = logoAsset?.path === logoPath ? logoAsset.url : null;
   const logoShape = profile.logo_shape === "rect" ? "rect" : "circle";
   const logoBadgeClass = profile.logo_bg_white ? "bg-white" : "bg-background";
   const links = sortLinks(profile.links);
@@ -97,10 +101,7 @@ export default function PublicProfilePreview({
   }, [profile.header_image_url, profile.header_image_updated_at]);
 
   useEffect(() => {
-    if (!logoPath) {
-      setLogoUrl(null);
-      return;
-    }
+    if (!logoPath) return;
     let active = true;
     (async () => {
       const signed = await getSignedProfileLogoUrl(
@@ -108,7 +109,7 @@ export default function PublicProfilePreview({
         profile.logo_updated_at
       );
       if (!active) return;
-      setLogoUrl(signed);
+      setLogoAsset({ path: logoPath, url: signed });
     })();
     return () => {
       active = false;

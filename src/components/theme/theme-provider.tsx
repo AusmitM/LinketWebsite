@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useSyncExternalStore } from "react";
 import type { ReactNode } from "react";
 
 export type ThemeName =
@@ -21,6 +21,7 @@ type ThemeContextValue = {
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 const STORAGE_KEY = "linket:theme";
+const THEME_EVENT = "linket:theme-change";
 const DARK_THEMES = new Set<ThemeName>(["dark", "midnight", "gilded", "forest"]);
 
 function applyThemeClass(t: ThemeName, scopeEl?: Element | null) {
@@ -60,23 +61,56 @@ export function ThemeProvider({
   scopeSelector?: string;
   storageKey?: string | null;
 }) {
-  const [theme, setThemeState] = useState<ThemeName>(initial || "light");
   const storage = storageKey ?? STORAGE_KEY;
   const persist = storageKey !== null;
 
+  const getSnapshot = useCallback(() => {
+    if (!persist) return initial || "light";
+    if (typeof window === "undefined") return initial || "light";
+    return (
+      (localStorage.getItem(storage) as ThemeName | null) ||
+      initial ||
+      "light"
+    );
+  }, [initial, persist, storage]);
+
+  const subscribe = useCallback(
+    (callback: () => void) => {
+      if (typeof window === "undefined") return () => {};
+      const handler = () => callback();
+      if (persist) {
+        window.addEventListener("storage", handler);
+      }
+      window.addEventListener(THEME_EVENT, handler);
+      return () => {
+        if (persist) {
+          window.removeEventListener("storage", handler);
+        }
+        window.removeEventListener(THEME_EVENT, handler);
+      };
+    },
+    [persist]
+  );
+
+  const theme = useSyncExternalStore(
+    subscribe,
+    getSnapshot,
+    () => initial || "light"
+  );
+
   useEffect(() => {
-    const saved = persist ? ((localStorage.getItem(storage) as ThemeName | null) || initial || "light") : (initial || "light");
-    setThemeState(saved);
     const scope = scopeSelector ? document.querySelector(scopeSelector) : undefined;
-    applyThemeClass(saved, scope ?? undefined);
-  }, [initial, scopeSelector, storage, persist]);
+    applyThemeClass(theme, scope ?? undefined);
+  }, [theme, scopeSelector]);
 
   const setTheme = useCallback(
     (t: ThemeName) => {
-      setThemeState(t);
       if (persist && typeof localStorage !== "undefined") localStorage.setItem(storage, t);
       const scope = scopeSelector ? (typeof document !== "undefined" ? document.querySelector(scopeSelector) : null) : undefined;
       applyThemeClass(t, scope ?? undefined);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event(THEME_EVENT));
+      }
     },
     [scopeSelector, storage, persist]
   );

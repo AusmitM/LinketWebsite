@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 
 import type { ThemeName } from "@/components/theme/theme-provider";
 import { useThemeOptional } from "@/components/theme/theme-provider";
@@ -79,33 +79,40 @@ export default function DashboardThemeRemoteSync() {
   const { theme, setTheme, hasProvider } = useThemeOptional();
   const user = useDashboardUser();
   const abortRef = useRef<AbortController | null>(null);
-
-  const syncTheme = useCallback(async () => {
-    if (!hasProvider || !user?.id) return;
-    abortRef.current?.abort();
-    const controller = new AbortController();
-    abortRef.current = controller;
-    try {
-      const pending = readPendingTheme();
-      const nextTheme = await fetchActiveProfileTheme(user.id, controller.signal);
-      if (pending?.theme) {
-        if (nextTheme === pending.theme) {
-          clearPendingTheme();
-        } else if (nextTheme && nextTheme !== pending.theme) {
-          return;
-        }
-      }
-      if (nextTheme && nextTheme !== theme) {
-        setTheme(nextTheme);
-      }
-    } catch (error) {
-      if (error instanceof DOMException && error.name === "AbortError") return;
-      console.warn("Theme sync failed.");
-    }
-  }, [hasProvider, setTheme, theme, user?.id]);
+  const userId = user?.id ?? null;
 
   useEffect(() => {
-    if (!hasProvider || !user?.id) return;
+    if (!hasProvider || !userId) return;
+    let active = true;
+
+    const syncTheme = async () => {
+      if (!active) return;
+      abortRef.current?.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
+      try {
+        const pending = readPendingTheme();
+        const nextTheme = await fetchActiveProfileTheme(
+          userId,
+          controller.signal
+        );
+        if (!active) return;
+        if (pending?.theme) {
+          if (nextTheme === pending.theme) {
+            clearPendingTheme();
+          } else if (nextTheme && nextTheme !== pending.theme) {
+            return;
+          }
+        }
+        if (nextTheme && nextTheme !== theme) {
+          setTheme(nextTheme);
+        }
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        console.warn("Theme sync failed.");
+      }
+    };
+
     void syncTheme();
 
     const handleFocus = () => {
@@ -124,12 +131,13 @@ export default function DashboardThemeRemoteSync() {
     }, 15000);
 
     return () => {
+      active = false;
       abortRef.current?.abort();
       window.removeEventListener("focus", handleFocus);
       document.removeEventListener("visibilitychange", handleVisibility);
       window.clearInterval(interval);
     };
-  }, [syncTheme, user?.id]);
+  }, [hasProvider, setTheme, theme, userId]);
 
   return null;
 }

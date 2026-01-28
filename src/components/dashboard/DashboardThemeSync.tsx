@@ -61,7 +61,7 @@ export default function DashboardThemeSync() {
       restoreTheme(document.body, bodyClasses, bodyDark);
       restoreTheme(document.documentElement, rootClasses, rootDark);
     };
-  }, []);
+  }, [hasProvider]);
 
   useEffect(() => {
     if (!hasProvider) return;

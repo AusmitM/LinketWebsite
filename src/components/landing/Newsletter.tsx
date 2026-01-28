@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useSyncExternalStore } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { Button } from "@/components/ui/button"
@@ -17,14 +17,31 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>
 
 const STORAGE = "newsletter:subscribed"
+const NEWSLETTER_EVENT = "newsletter:subscribed"
+
+function getSnapshot() {
+  if (typeof window === "undefined") return false
+  return localStorage.getItem(STORAGE) === "1"
+}
+
+function getServerSnapshot() {
+  return false
+}
+
+function subscribe(callback: () => void) {
+  if (typeof window === "undefined") return () => {}
+  const handler = () => callback()
+  window.addEventListener("storage", handler)
+  window.addEventListener(NEWSLETTER_EVENT, handler)
+  return () => {
+    window.removeEventListener("storage", handler)
+    window.removeEventListener(NEWSLETTER_EVENT, handler)
+  }
+}
 
 export default function Newsletter() {
-  const [hidden, setHidden] = useState(false)
+  const hidden = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
   const { register, handleSubmit, formState, setError, reset } = useForm<FormData>()
-
-  useEffect(() => {
-    setHidden(localStorage.getItem(STORAGE) === "1")
-  }, [])
 
   if (hidden) return null
 
@@ -38,6 +55,9 @@ export default function Newsletter() {
       return
     }
     localStorage.setItem(STORAGE, "1")
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event(NEWSLETTER_EVENT))
+    }
     toast({ title: "You're in!", description: "We'll keep you posted.", variant: "success" })
     // analytics
     const fake = document.createElement("div")
@@ -97,4 +117,3 @@ function confetti() {
     ).onfinish = () => p.remove()
   }
 }
-

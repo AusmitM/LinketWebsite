@@ -269,19 +269,20 @@ export default function LeadFormBuilder({
     };
   }, [form, isDirty, loading, persist]);
 
-  const updateForm = (patch: Partial<LeadFormConfig>) => {
-    if (!form) return;
-    const next: LeadFormConfig = {
-      ...form,
-      ...patch,
-      meta: {
-        ...form.meta,
-        updatedAt: new Date().toISOString(),
-        version: form.meta.version + 1,
-      },
-    };
-    setForm(next);
-  };
+  const updateForm = useCallback((patch: Partial<LeadFormConfig>) => {
+    setForm((current) => {
+      if (!current) return current;
+      return {
+        ...current,
+        ...patch,
+        meta: {
+          ...current.meta,
+          updatedAt: new Date().toISOString(),
+          version: current.meta.version + 1,
+        },
+      };
+    });
+  }, []);
 
   const updateField = (fieldId: string, patch: Partial<LeadFormField>) => {
     if (!form) return;
@@ -319,7 +320,7 @@ export default function LeadFormBuilder({
     setSelectedFieldId(nextFields[0]?.id ?? null);
   };
 
-  const reorderFields = (sourceId: string, targetId: string) => {
+  const reorderFields = useCallback((sourceId: string, targetId: string) => {
     if (!form || sourceId === targetId) return;
     const next = [...form.fields];
     const sourceIndex = next.findIndex((field) => field.id === sourceId);
@@ -328,7 +329,7 @@ export default function LeadFormBuilder({
     const [moved] = next.splice(sourceIndex, 1);
     next.splice(targetIndex, 0, moved);
     updateForm({ fields: next });
-  };
+  }, [form, updateForm]);
 
   useEffect(() => {
     onRegisterReorder?.(reorderFields);

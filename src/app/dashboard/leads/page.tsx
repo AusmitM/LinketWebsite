@@ -10,17 +10,15 @@ import { Card, CardContent } from "@/components/ui/card";
 export default function LeadsPage() {
   const dashboardUser = useDashboardUser();
   const userId = dashboardUser?.id ?? null;
-  const [handle, setHandle] = useState<string | null>(null);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const [fetchedHandle, setFetchedHandle] = useState<{
+    userId: string;
+    handle: string | null;
+  } | null>(null);
+  const handle = fetchedHandle?.userId === userId ? fetchedHandle.handle : null;
 
   useEffect(() => {
     let active = true;
     if (!userId) {
-      setHandle(null);
       return () => {
         active = false;
       };
@@ -33,14 +31,17 @@ export default function LeadsPage() {
           { cache: "no-store" }
         );
         if (!response.ok) {
-          setHandle(null);
+          setFetchedHandle({ userId, handle: null });
           return;
         }
         const payload = await response.json().catch(() => null);
         if (!active) return;
-        setHandle(typeof payload?.handle === "string" ? payload.handle : null);
+        setFetchedHandle({
+          userId,
+          handle: typeof payload?.handle === "string" ? payload.handle : null,
+        });
       } catch {
-        if (active) setHandle(null);
+        if (active) setFetchedHandle({ userId, handle: null });
       }
     })();
 
@@ -48,18 +49,6 @@ export default function LeadsPage() {
       active = false;
     };
   }, [userId]);
-
-  if (!mounted) {
-    return (
-      <div className="space-y-6">
-        <Card className="rounded-3xl border bg-card/80 shadow-sm">
-          <CardContent className="py-10 text-center text-sm text-muted-foreground">
-            Loading leads...
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   if (!userId) {
     return (

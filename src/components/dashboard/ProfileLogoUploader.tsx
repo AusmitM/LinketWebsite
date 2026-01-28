@@ -254,7 +254,6 @@ export default function ProfileLogoUploader({
     sourceUrl,
     imageMeta,
     cropSize,
-    cropCorner,
     baseScale,
     zoom,
     offset,
