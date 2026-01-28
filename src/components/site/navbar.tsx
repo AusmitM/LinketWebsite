@@ -679,7 +679,13 @@ export function Navbar() {
                                 : "text-muted-foreground"
                             )}
                           >
-                            <Icon className="h-5 w-5 shrink-0" aria-hidden />
+                            <Icon
+                              className={cn(
+                                "shrink-0",
+                                section.id === "contact" ? "h-7 w-7" : "h-5 w-5"
+                              )}
+                              aria-hidden
+                            />
                             <span className="min-w-0 truncate whitespace-nowrap">
                               {section.label}
                             </span>
