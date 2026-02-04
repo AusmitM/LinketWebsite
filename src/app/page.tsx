@@ -82,8 +82,6 @@ const SOCIAL_PROOF = [
 
 const DASHBOARD_TABS = ["Overview", "Linkets", "Profiles", "Leads"] as const;
 
-const DASHBOARD_VIEWS = ["Overview", "Linkets", "Profiles", "Leads"] as const;
-
 const DASHBOARD_STATS = [
   { label: "Leads collected", value: "128", delta: "+32 vs last quarter" },
   { label: "Scans", value: "842", delta: "+19% vs last quarter" },
@@ -601,6 +599,17 @@ function HeroSection() {
 }
 
 function HeroDashboardPreview() {
+  const now = new Date();
+  const start = new Date(now);
+  start.setDate(now.getDate() - 30);
+  const formatDate = (value: Date) =>
+    value.toLocaleDateString("en-US", {
+      month: "short",
+      day: "2-digit",
+      year: "numeric",
+    });
+  const dateRange = `${formatDate(start)} - ${formatDate(now)}`;
+
   const trendPoints = DASHBOARD_TREND.map((value, index) => {
     const x = 10 + (index / (DASHBOARD_TREND.length - 1)) * 300;
     const y = 92 - (value / 100) * 70;
@@ -615,16 +624,13 @@ function HeroDashboardPreview() {
 
   return (
     <div className="relative w-full max-w-6xl rounded-[32px] border border-[#f5d7b0]/80 bg-white/85 p-6 text-left text-slate-900 shadow-[0_45px_120px_rgba(254,215,170,0.45)] backdrop-blur">
-      <div className="flex flex-col gap-4 border-b border-orange-100 pb-6 lg:flex-row lg:items-center lg:justify-between">
+      <div className="flex flex-col gap-4 border-b border-orange-100 pb-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center gap-3 rounded-full border border-[#ffd4c2] bg-[#fff6ef] px-4 py-2">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#ff9776] to-[#ffd27f] text-sm font-semibold text-white">
-            AK
+            PK
           </div>
           <div>
-            <p className="text-xs uppercase tracking-[0.35em] text-slate-700">
-              Operator
-            </p>
-            <p className="font-semibold text-slate-900">Alicia Koch</p>
+            <p className="font-semibold text-slate-900">Punit Kothakonda</p>
           </div>
         </div>
         <div className="flex w-full flex-col gap-3 lg:flex-1 lg:flex-row lg:items-center lg:justify-between">
@@ -656,7 +662,7 @@ function HeroDashboardPreview() {
             </div>
             <div className="hidden items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-600 sm:flex">
               <Calendar className="h-4 w-4 text-slate-400" aria-hidden />
-              <span>Jan 20, 2023 - Feb 09, 2023</span>
+              <span>{dateRange}</span>
             </div>
             <button className="hidden items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white sm:inline-flex">
               <Download className="h-4 w-4" aria-hidden />
@@ -668,26 +674,12 @@ function HeroDashboardPreview() {
           </div>
         </div>
       </div>
-      <div className="mt-8 space-y-6">
+      <div className="mt-3 space-y-6">
         <div className="flex flex-wrap items-center gap-4">
-          <h2 className="text-3xl font-semibold text-slate-900">Dashboard</h2>
           <div className="flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-[0.2em]">
-            {DASHBOARD_VIEWS.map((view, index) => (
-              <span
-                key={view}
-                className={cn(
-                  "rounded-full border px-3 py-1",
-                  index === 0
-                    ? "border-[#7dd3fc] bg-[#7dd3fc]/20 text-[#0f172a]"
-                    : "border-slate-200 text-slate-600"
-                )}
-              >
-                {view}
-              </span>
-            ))}
           </div>
         </div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {DASHBOARD_STATS.map((stat) => (
             <div
               key={stat.label}
@@ -704,7 +696,7 @@ function HeroDashboardPreview() {
           ))}
         </div>
         <div className="grid gap-4 lg:grid-cols-[1.4fr_0.6fr]">
-          <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-[#fff7ef] p-6">
+          <div className="relative hidden justify-center overflow-hidden rounded-3xl border border-slate-200 bg-[#fff7ef] p-3 md:flex">
             <div
               className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.75),_rgba(255,247,239,0)_60%)]"
               aria-hidden
@@ -712,15 +704,9 @@ function HeroDashboardPreview() {
             <div className="relative space-y-5">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
-                  <p className="text-lg font-semibold text-slate-900">
-                    Scans and leads over time
-                  </p>
-                  <p className="mt-1 text-xs uppercase tracking-[0.35em] text-slate-600">
-                    Activity pulse
-                  </p>
                 </div>
               </div>
-              <div className="grid gap-4 lg:grid-cols-1">
+              <div className="grid w-full max-w-[640px] gap-4 lg:grid-cols-1">
                 <div className="flex min-h-[320px] flex-col rounded-2xl border border-slate-100 bg-white/90 p-5">
                   <div className="flex items-center justify-between text-xs text-slate-600">
                     <span className="uppercase tracking-[0.35em]">
