@@ -34,6 +34,9 @@ import { brand } from "@/config/brand";
 import { getActiveProfileForPublicHandle } from "@/lib/profile-service";
 import type { ProfileWithLinks } from "@/lib/profile-service";
 
+// -----------------------------------------------------------------------------
+// Landing page metadata and runtime configuration.
+// -----------------------------------------------------------------------------
 export const metadata: Metadata = {
   title: "Linket Connect",
   description:
@@ -60,8 +63,12 @@ export const metadata: Metadata = {
   },
 };
 
+// Revalidate the landing page every 60 seconds to keep preview data fresh.
 export const revalidate = 60;
 
+// -----------------------------------------------------------------------------
+// Types used only on the landing page.
+// -----------------------------------------------------------------------------
 type PublicPreviewAccount = {
   handle: string;
   displayName: string | null;
@@ -69,6 +76,9 @@ type PublicPreviewAccount = {
   avatarUpdatedAt: string | null;
 };
 
+// -----------------------------------------------------------------------------
+// Marketing content data. These collections drive UI sections below.
+// -----------------------------------------------------------------------------
 const SOCIAL_PROOF = [
   "AAcuisine",
   "Houston Bee Rescue",
@@ -79,6 +89,7 @@ const SOCIAL_PROOF = [
 
 const DASHBOARD_TABS = ["Overview", "Linkets", "Profiles", "Leads"] as const;
 
+// Dashboard summary stats for the hero mock.
 const DASHBOARD_STATS = [
   { label: "Leads collected", value: "128", delta: "+32 vs last quarter" },
   { label: "Scans", value: "842", delta: "+19% vs last quarter" },
@@ -94,6 +105,7 @@ const DASHBOARD_STATS = [
   },
 ] as const;
 
+// Bar chart values used in the hero dashboard preview.
 const DASHBOARD_BARS = [
   { label: "Jan", value: 72 },
   { label: "Feb", value: 35 },
@@ -109,10 +121,12 @@ const DASHBOARD_BARS = [
   { label: "Dec", value: 86 },
 ] as const;
 
+// Line chart values used in the hero dashboard preview.
 const DASHBOARD_TREND = [
   28, 34, 39, 46, 53, 61, 69, 76, 82, 88, 94, 98,
 ] as const;
 
+// Recent activity list shown in the mock dashboard.
 const RECENT_SALES = [
   { name: "Olivia Martin", email: "olivia.martin@email.com", amount: "New" },
   { name: "Jackson Lee", email: "jackson.lee@email.com", amount: "Yesterday" },
@@ -125,9 +139,11 @@ const RECENT_SALES = [
   { name: "Sofia Davis", email: "sofia.davis@email.com", amount: "1 week ago" },
 ] as const;
 
+// Use a stable site URL for mock assets in environments without a public URL.
 const PUBLIC_SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
+// Links rendered inside the public profile preview mock.
 const PUBLIC_PROFILE_PREVIEW_LINKS = [
   {
     id: "link-photo",
@@ -179,6 +195,7 @@ const PUBLIC_PROFILE_PREVIEW_LINKS = [
   },
 ] as const;
 
+// Full mock profile payload used when live profile data is unavailable.
 const MOCK_PUBLIC_PROFILE: ProfileWithLinks = {
   id: "mock-profile",
   user_id: "mock-user",
@@ -198,6 +215,7 @@ const MOCK_PUBLIC_PROFILE: ProfileWithLinks = {
   links: [...PUBLIC_PROFILE_PREVIEW_LINKS],
 };
 
+// Mock account record used alongside the mock profile preview.
 const MOCK_PUBLIC_ACCOUNT = {
   handle: "punit",
   displayName: "Punit Kothakonda",
@@ -205,9 +223,13 @@ const MOCK_PUBLIC_ACCOUNT = {
   avatarUpdatedAt: "2026-01-01T00:00:00.000Z",
 };
 
+// -----------------------------------------------------------------------------
+// Data loaders: attempt to pull live profile data, otherwise use mock data.
+// -----------------------------------------------------------------------------
 async function loadPublicProfilePreview() {
   const handle = "punit";
   try {
+    // Try to fetch a real public profile to keep the preview realistic.
     const payload = await getActiveProfileForPublicHandle(handle);
     if (!payload) {
       return {
@@ -224,6 +246,7 @@ async function loadPublicProfilePreview() {
     };
     return { profile, account: previewAccount };
   } catch {
+    // Any failure falls back to stable mock data for consistent rendering.
     return {
       profile: MOCK_PUBLIC_PROFILE,
       account: MOCK_PUBLIC_ACCOUNT,
@@ -231,6 +254,7 @@ async function loadPublicProfilePreview() {
   }
 }
 
+// Footer link groups (kept minimal to match current nav).
 const FOOTER_LINK_GROUPS = [
   {
     title: "Legal",
@@ -243,12 +267,14 @@ const FOOTER_LINK_GROUPS = [
   },
 ] as const;
 
+// Footer social icons + URLs.
 const FOOTER_SOCIALS = [
   { label: "Twitter", href: "https://twitter.com/linket", icon: Twitter },
   { label: "Instagram", href: "https://instagram.com/linket", icon: Instagram },
   { label: "YouTube", href: "https://youtube.com/@linket", icon: Youtube },
 ] as const;
 
+// Pricing tiers fed into the CreativePricing component.
 const PRICING_TIERS: PricingTier[] = [
   {
     name: "Field Starter",
@@ -300,6 +326,7 @@ type JourneyStep = {
   accent: string;
 };
 
+// Journey steps shown in the "How Linket flows" section.
 const JOURNEY_STEPS: JourneyStep[] = [
   {
     title: "Invite with a tap",
@@ -326,6 +353,7 @@ const JOURNEY_STEPS: JourneyStep[] = [
   },
 ];
 
+// Image-backed marketing cards tied to the journey steps.
 const JOURNEY_FEATURES = [
   {
     step: "Step 1",
@@ -350,6 +378,7 @@ const JOURNEY_FEATURES = [
   },
 ] as const;
 
+// Testimonials copy for marketing proof.
 type Testimonial = {
   quote: string;
   name: string;
@@ -381,6 +410,7 @@ const TESTIMONIALS: Testimonial[] = [
   },
 ];
 
+// Slider-ready testimonials (kept for future carousel use).
 const SLIDER_TESTIMONIALS = [
   {
     id: 1,
@@ -408,6 +438,7 @@ const SLIDER_TESTIMONIALS = [
   },
 ] as const;
 
+// FAQ content for the accordion + JSON-LD schema.
 const FAQ = [
   {
     question: "Does Linket work with both iPhone and Android?",
@@ -436,10 +467,16 @@ const FAQ = [
   },
 ] as const;
 
+// -----------------------------------------------------------------------------
+// Page component: composes all landing sections and structured data.
+// -----------------------------------------------------------------------------
 export default async function Home() {
+  // Resolve the site URL for structured data and assets.
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://linket.app";
+  // Load the public profile preview (live if possible, mock if not).
   const publicPreview = await loadPublicProfilePreview();
 
+  // FAQ schema powers rich results for search engines.
   const faqSchema = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
@@ -453,6 +490,7 @@ export default async function Home() {
     })),
   };
 
+  // Organization schema provides a canonical brand footprint.
   const organizationSchema = {
     "@context": "https://schema.org",
     "@type": "Organization",
@@ -467,6 +505,7 @@ export default async function Home() {
   };
 
   return (
+    // Page wrapper keeps the landing background consistent across sections.
     <div className="relative overflow-hidden bg-[#fff7ed] text-foreground">
       <div className="pointer-events-none absolute inset-0 -z-10">
         <div className="absolute inset-0 bg-[#fff7ed]" />
@@ -476,16 +515,19 @@ export default async function Home() {
           <div className="absolute inset-0 bg-[#fff7ed]" />
         </div>
         <div className="relative z-10">
+          {/* Primary story arc: hero, trust, and workflow. */}
           <HeroSection />
           <TrustedBy />
           <JourneySection />
         </div>
       </div>
+      {/* Dark feature spotlight section. */}
       <ExperienceSection />
       <div className="relative overflow-hidden">
         <div className="pointer-events-none absolute inset-0 -z-10">
           <div className="absolute inset-0 bg-[#fff7ed]" />
         </div>
+        {/* Live demo + profile preview + pricing + FAQ. */}
         <LiveDemoSection />
         <PublicProfilePreviewSection
           profile={publicPreview.profile}
@@ -495,6 +537,7 @@ export default async function Home() {
         <FAQSection />
       </div>
       <LandingFooter />
+      {/* Structured data for SEO. */}
       <Script id="linket-faq-schema" type="application/ld+json">
         {JSON.stringify(faqSchema)}
       </Script>
@@ -504,6 +547,12 @@ export default async function Home() {
     </div>
   );
 }
+
+// -----------------------------------------------------------------------------
+// Section components
+// -----------------------------------------------------------------------------
+
+// Hero: core headline, CTA, and dashboard preview.
 function HeroSection() {
   return (
     <section
@@ -512,17 +561,20 @@ function HeroSection() {
     >
       <div className="relative z-10 flex min-h-screen flex-col items-center px-4 pb-2 pt-8 text-center sm:px-6 lg:px-8">
         <div className="mx-auto max-w-4xl py-12">
+          {/* Primary headline + brand callout. */}
           <h1 className="landing-fade-up landing-delay-1 mt-10 text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl lg:text-[4.5rem] lg:leading-[1.1]">
             <span className="landing-alt-font">Don&apos;t just share it...</span>{" "}
             <span className="block text-8xl font-black italic tracking-tight sm:text-8xl lg:text-[5.25rem] bg-[linear-gradient(100deg,_#ff9776_0%,_#ffd27f_40%,_#7dd3fc_70%,_#2f80ed_100%)] bg-clip-text text-transparent">
               LINKET!
             </span>
           </h1>
+          {/* Supporting value proposition. */}
           <p className="landing-fade-up landing-delay-2 mx-auto mt-6 max-w-2xl text-base text-slate-600 sm:text-lg">
             Transform your market into leads, and your leads into sales with our comprehensive suite of
             development tools and resources. Launch faster, adapt in real time,
             and keep every interaction memorable.
           </p>
+          {/* Primary CTA. */}
           <div className="landing-fade-up landing-delay-3 mt-10 flex justify-center">
             <Button
               asChild
@@ -533,13 +585,16 @@ function HeroSection() {
             </Button>
           </div>
         </div>
+        {/* Hero mock dashboard. */}
         <HeroDashboardPreview />
       </div>
     </section>
   );
 }
 
+// Mock dashboard preview used to visualize analytics value.
 function HeroDashboardPreview() {
+  // Date range (last 30 days) for the mock date pill.
   const now = new Date();
   const start = new Date(now);
   start.setDate(now.getDate() - 30);
@@ -551,11 +606,13 @@ function HeroDashboardPreview() {
     });
   const dateRange = `${formatDate(start)} - ${formatDate(now)}`;
 
+  // Map trend values into SVG coordinate points.
   const trendPoints = DASHBOARD_TREND.map((value, index) => {
     const x = 10 + (index / (DASHBOARD_TREND.length - 1)) * 300;
     const y = 92 - (value / 100) * 70;
     return { x, y };
   });
+  // Create the stroke path + the filled area.
   const trendPath = `M ${trendPoints
     .map((point) => `${point.x} ${point.y}`)
     .join(" L ")}`;
@@ -565,6 +622,7 @@ function HeroDashboardPreview() {
 
   return (
     <div className="landing-fade-up landing-delay-4 landing-float relative w-full max-w-6xl rounded-[32px] border border-[#f5d7b0]/80 bg-white/85 p-6 text-left text-slate-900 shadow-[0_45px_120px_rgba(254,215,170,0.45)] backdrop-blur transition-transform duration-500 hover:-translate-y-2">
+      {/* Top bar: user badge, tabs, search, date range, and download CTA. */}
       <div className="flex flex-col gap-4 border-b border-orange-100 pb-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center gap-3 rounded-full border border-[#ffd4c2] bg-[#fff6ef] px-4 py-2">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#ff9776] to-[#ffd27f] text-sm font-semibold text-white">
@@ -613,10 +671,12 @@ function HeroDashboardPreview() {
         </div>
       </div>
       <div className="mt-3 space-y-6">
+        {/* Reserved space for future filters or status pills. */}
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-[0.2em]">
           </div>
         </div>
+        {/* KPI tiles. */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {DASHBOARD_STATS.map((stat) => (
             <div
@@ -633,6 +693,7 @@ function HeroDashboardPreview() {
             </div>
           ))}
         </div>
+        {/* Trend chart + recent activity. */}
         <div className="grid gap-4 lg:grid-cols-[1.4fr_0.6fr]">
           <div className="relative hidden justify-center overflow-hidden rounded-3xl border border-slate-200 bg-[#fff7ef] p-3 transition-transform duration-500 hover:-translate-y-1 md:flex">
             <div className="relative space-y-5">
@@ -650,6 +711,7 @@ function HeroDashboardPreview() {
                       Last 12 months
                     </span>
                   </div>
+                  {/* SVG line/area chart for the mock trend. */}
                   <svg
                     viewBox="0 0 320 120"
                     className="mt-4 h-56 w-full flex-1"
@@ -712,6 +774,7 @@ function HeroDashboardPreview() {
               You made {RECENT_SALES.length} new connections this period.
             </p>
             <div className="mt-6 space-y-4">
+              {/* Recent lead rows. */}
               {RECENT_SALES.map((sale) => {
                 const initials = sale.name
                   .split(" ")
@@ -750,10 +813,12 @@ function HeroDashboardPreview() {
   );
 }
 
+// Social proof chips to establish trust quickly.
 function TrustedBy() {
   return (
     <section className="landing-alt-font mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
       <div className="landing-fade-up rounded-[28px] border border-foreground/10 bg-white/80 p-6 text-center shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur">
+        {/* Section heading + supporting copy. */}
         <p className="text-xs font-semibold uppercase tracking-[0.35em] text-muted-foreground">
           Trusted By
         </p>
@@ -761,6 +826,7 @@ function TrustedBy() {
           Sales pods, university teams, and creators keep Linket on their
           keychains to turn every intro into a saved contact.
         </p>
+        {/* Brand proof chips. */}
         <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs font-semibold text-foreground/80 sm:gap-3 sm:text-sm">
           {SOCIAL_PROOF.map((name) => (
             <span
@@ -777,12 +843,14 @@ function TrustedBy() {
   );
 }
 
+// How-it-works section powered by the FeatureSteps component.
 function JourneySection() {
   return (
     <section
       id="how-it-works"
       className="landing-alt-font mx-auto max-w-6xl px-4 pt-6 pb-10 sm:px-6"
     >
+      {/* FeatureSteps handles the image + text carousel. */}
       <FeatureSteps
         className="landing-fade-up mt-8 rounded-[36px] border border-foreground/5 bg-white/90 shadow-[0_35px_80px_rgba(15,23,42,0.08)]"
         features={JOURNEY_FEATURES}
@@ -794,12 +862,14 @@ function JourneySection() {
   );
 }
 
+// Dark-mode spotlight for custom orders and hardware benefits.
 function ExperienceSection() {
   return (
     <section
       id="customization"
       className="landing-alt-font relative overflow-hidden bg-[#050816] py-24 text-white"
     >
+      {/* Ambient gradients to add depth on the dark section. */}
       <div
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_12%,rgba(255,151,118,0.18),transparent_55%),radial-gradient(circle_at_82%_18%,rgba(93,188,255,0.22),transparent_60%)]"
         aria-hidden
@@ -813,6 +883,7 @@ function ExperienceSection() {
           <p className="text-sm font-semibold uppercase tracking-[0.4em] text-white/60">
             Custom orders
           </p>
+          {/* Section headline + explanation. */}
           <div>
             <p className="text-3xl font-semibold sm:text-4xl">
               <span className="text-white/80">
@@ -828,6 +899,7 @@ function ExperienceSection() {
               you can stay focused on demos.
             </p>
           </div>
+          {/* Feature bullet cards. */}
           <div className="grid gap-4 text-sm text-white/80 sm:grid-cols-2">
             {[
               "UV-resistant plastic that holds up to daily wear",
@@ -844,6 +916,7 @@ function ExperienceSection() {
             ))}
           </div>
         </div>
+        {/* Contact form card. */}
         <div className="landing-fade-up landing-delay-2 w-full max-w-md rounded-3xl border border-white/10 bg-white/5 p-8 shadow-[0_30px_80px_rgba(5,5,20,0.45)] backdrop-blur transition-transform duration-500 hover:-translate-y-2">
           <div className="flex items-center gap-3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -862,11 +935,13 @@ function ExperienceSection() {
   );
 }
 
+// Video demo section that shows the product flow.
 function LiveDemoSection() {
   return (
     <section id="demo" className="landing-alt-font relative py-24">
       <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
         <div className="landing-fade-up mx-auto max-w-3xl text-center">
+          {/* Section heading + lead-in copy. */}
           <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-4 py-1 text-xs font-semibold uppercase tracking-[0.35em] text-slate-500 shadow-sm">
             <span className="h-2 w-2 rounded-full bg-[#ffb48a]" />
             Product demo
@@ -882,6 +957,7 @@ function LiveDemoSection() {
 
         <div className="relative mx-auto mt-12 max-w-5xl">
           <div className="landing-fade-up landing-delay-2 relative overflow-hidden rounded-[32px] border border-slate-200 bg-[#111317] shadow-[0_45px_120px_rgba(15,23,42,0.25)] transition-transform duration-500 hover:-translate-y-1">
+            {/* Product demo video. */}
             <video
               className="aspect-video w-full"
               controls
@@ -893,6 +969,7 @@ function LiveDemoSection() {
               Your browser does not support the video tag.
             </video>
           </div>
+          {/* Quick feature chips. */}
           <div className="mt-5 flex flex-wrap items-center justify-center gap-3 text-xs text-slate-500">
             <span className="rounded-full border border-slate-200 bg-white/80 px-3 py-1 transition-transform duration-300 hover:-translate-y-0.5">
               0:30 walkthrough
@@ -910,6 +987,7 @@ function LiveDemoSection() {
   );
 }
 
+// Public profile preview: show the mobile layout customers will see.
 function PublicProfilePreviewSection({
   profile,
   account,
@@ -925,6 +1003,7 @@ function PublicProfilePreviewSection({
       <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
         <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="landing-fade-up space-y-8 text-slate-900">
+            {/* Section label + headline. */}
             <div className="inline-flex items-center gap-3 rounded-full border border-white/60 bg-white/70 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.35em] text-slate-500 shadow-[0_10px_25px_rgba(15,23,42,0.08)] backdrop-blur">
               <span className="h-2 w-2 rounded-full bg-[#1e3a8a]" />
               Public profile preview
@@ -938,6 +1017,7 @@ function PublicProfilePreviewSection({
                 visuals, clean links, and a frictionless contact save.
               </p>
             </div>
+            {/* Feature callouts. */}
             <div className="grid gap-4 sm:grid-cols-2">
               {[
                 {
@@ -970,6 +1050,7 @@ function PublicProfilePreviewSection({
                 </div>
               ))}
             </div>
+            {/* Supporting capability chips. */}
             <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
               <span className="rounded-full border border-slate-200 bg-white/80 px-3 py-1">
                 Live theme sync
@@ -982,6 +1063,7 @@ function PublicProfilePreviewSection({
               </span>
             </div>
           </div>
+          {/* Mobile preview shell with live data. */}
           <div className="landing-fade-up landing-delay-2 relative mx-auto w-full max-w-sm">
             <div className="relative overflow-hidden rounded-[36px] border border-white/60 bg-white/70 shadow-[0_45px_90px_rgba(15,23,42,0.25)] backdrop-blur transition-transform duration-500 hover:-translate-y-2">
               <div className="h-[620px] w-full overflow-y-auto bg-[#0b1220]">
@@ -1008,12 +1090,14 @@ function PublicProfilePreviewSection({
   );
 }
 
+// Pricing section wrapper around the CreativePricing component.
 function PricingSection() {
   return (
     <section
       id="pricing"
       className="landing-alt-font landing-fade-up relative mx-auto max-w-6xl px-4 py-24 sm:px-6"
     >
+      {/* Pricing component handles tier layout and CTA styling. */}
       <CreativePricing
         tag="Linket plans"
         title="The tap-to-share stack for every crew"
@@ -1024,6 +1108,7 @@ function PricingSection() {
   );
 }
 
+// FAQ accordion with structured data handled in the page component.
 function FAQSection() {
   return (
     <section
@@ -1041,6 +1126,7 @@ function FAQSection() {
           Everything you need to know about Linket hardware, profiles, and data.
         </p>
       </div>
+      {/* FAQ accordion items. */}
       <Accordion type="single" collapsible className="mt-10 space-y-4">
         {FAQ.map((item, index) => (
           <AccordionItem
@@ -1061,6 +1147,7 @@ function FAQSection() {
   );
 }
 
+// Footer with brand positioning, legal links, and CTA.
 function LandingFooter() {
   const currentYear = new Date().getFullYear();
 
@@ -1072,6 +1159,7 @@ function LandingFooter() {
       />
       <div className="relative mx-auto max-w-6xl px-4 py-16 sm:px-6">
         <div className="grid gap-12 lg:grid-cols-[1.3fr_1fr_1fr]">
+          {/* Brand block + mission copy. */}
           <div className="space-y-8">
             <div className="flex items-center gap-3 text-lg font-semibold">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10">
@@ -1092,6 +1180,7 @@ function LandingFooter() {
               follow-up customers actually remember. Built for students,
               creators, and field teams who want intros that stick.
             </p>
+            {/* Social icons. */}
             <div className="flex flex-wrap items-center gap-4 pt-2">
               {FOOTER_SOCIALS.map((social) => (
                 <Link
@@ -1105,6 +1194,7 @@ function LandingFooter() {
               ))}
             </div>
           </div>
+          {/* Legal link column. */}
           <div className="space-y-6">
             {FOOTER_LINK_GROUPS.map((group) => (
               <div key={group.title} className="space-y-4">
@@ -1126,6 +1216,7 @@ function LandingFooter() {
               </div>
             ))}
           </div>
+          {/* Contact + CTA block. */}
           <div className="space-y-6 text-sm text-white/70">
             <div className="space-y-2">
               <p className="text-xs font-semibold uppercase tracking-[0.35em] text-white/60">
@@ -1160,6 +1251,7 @@ function LandingFooter() {
             </div>
           </div>
         </div>
+        {/* Footer bottom row with legal shortcuts. */}
         <div className="mt-12 flex flex-col gap-4 border-t border-white/10 pt-6 text-xs text-white/60 sm:flex-row sm:items-center sm:justify-between">
           <p>
             {"\u00a9"} {currentYear} {brand.name}. All rights reserved.

@@ -324,8 +324,6 @@ export default function ProfileLogoUploader({
 
   if (variant === "compact") {
     const previewScale = baseScale * zoom;
-    const displayUrl = sourceUrl || latestLogoUrl;
-    const inputTargetId = inputId ?? "profile-logo-upload";
     return (
       <section className="flex flex-col gap-3 rounded-2xl border border-dashed border-muted/70 p-3">
         <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center">
