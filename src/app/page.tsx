@@ -15,6 +15,7 @@ import {
   Focus,
   Instagram,
   LineChart,
+  Quote,
   Pencil,
   UserRound,
   Search,
@@ -25,10 +26,7 @@ import {
 } from "lucide-react";
 import { CreativePricing } from "@/components/ui/creative-pricing";
 import type { PricingTier } from "@/components/ui/creative-pricing";
-import {
-  FeatureSteps,
-  TestimonialSlider,
-} from "@/components/landing/LandingLazySections";
+import { FeatureSteps } from "@/components/landing/LandingLazySections";
 import ConsultForm from "@/components/landing/ConsultForm";
 import PublicProfilePreview from "@/components/public/PublicProfilePreview";
 import { Button } from "@/components/ui/button";
@@ -88,7 +86,7 @@ const DASHBOARD_STATS = [
   {
     label: "Conversion rate",
     value: "15.2%",
-    delta: "Leads ÷ scans in this range",
+    delta: "Leads ÃÂÂ· scans in this range",
   },
   {
     label: "Active Linkets",
@@ -499,25 +497,11 @@ export default async function Home() {
   return (
     <div className="relative overflow-hidden bg-[#fff7ed] text-foreground">
       <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute inset-0 bg-gradient-to-b from-[#fff8ef] via-[#fff6f0] to-[#eef6ff] opacity-70" />
-        <div className="absolute left-1/2 -top-40 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,_rgba(255,170,140,0.2),_rgba(255,245,225,0))] blur-3xl" />
-        <div className="absolute right-0 top-24 h-[480px] w-[480px] rounded-full bg-[radial-gradient(circle,_rgba(255,210,180,0.18),_rgba(255,247,236,0))] blur-3xl" />
-        <div className="absolute inset-x-0 bottom-[-30%] h-[520px] bg-[radial-gradient(circle_at_bottom,_rgba(94,211,243,0.22),_rgba(207,232,255,0))]" />
+        <div className="absolute inset-0 bg-[#fff7ed]" />
       </div>
       <div className="relative z-0 overflow-hidden">
         <div className="pointer-events-none absolute inset-0 z-0">
-          <div className="absolute inset-0 bg-gradient-to-b from-[#fff6ef] via-[#fff9f4] to-[#f3f7ff]" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_22%_16%,_rgba(255,190,155,0.22),_transparent_55%),radial-gradient(circle_at_72%_22%,_rgba(140,195,255,0.22),_transparent_56%),radial-gradient(circle_at_50%_62%,_rgba(255,215,195,0.18),_transparent_60%)] opacity-70" />
-          <div className="absolute left-[22%] -top-24 h-[380px] w-[380px] rounded-full bg-[radial-gradient(circle,_rgba(255,185,150,0.25),_transparent_72%)] blur-3xl" />
-          <div className="absolute right-[22%] top-[50px] h-[380px] w-[380px] rounded-full bg-[radial-gradient(circle,_rgba(130,190,255,0.25),_transparent_72%)] blur-3xl" />
-          <div className="absolute left-[10%] bottom-[-200px] h-[420px] w-[420px] rounded-full bg-[radial-gradient(circle,_rgba(255,205,180,0.2),_transparent_72%)] blur-3xl" />
-          <div className="absolute right-[10%] bottom-[-200px] h-[420px] w-[420px] rounded-full bg-[radial-gradient(circle,_rgba(160,205,255,0.2),_transparent_72%)] blur-3xl" />
-          <div className="absolute left-[26%] top-[14%] h-[170px] w-[170px] rounded-full bg-[radial-gradient(circle,_rgba(255,155,110,0.45),_transparent_72%)] opacity-60 blur-2xl motion-safe:animate-[pulse_20s_ease-in-out_infinite]" />
-          <div className="absolute right-[28%] top-[18%] h-[170px] w-[170px] rounded-full bg-[radial-gradient(circle,_rgba(90,200,190,0.45),_transparent_72%)] opacity-60 blur-2xl motion-safe:animate-[pulse_22s_ease-in-out_infinite]" />
-          <div className="absolute left-[34%] bottom-[22%] h-[180px] w-[180px] rounded-full bg-[radial-gradient(circle,_rgba(255,170,130,0.4),_transparent_72%)] opacity-50 blur-2xl motion-safe:animate-[pulse_24s_ease-in-out_infinite]" />
-          <div className="absolute right-[36%] bottom-[24%] h-[180px] w-[180px] rounded-full bg-[radial-gradient(circle,_rgba(95,205,195,0.4),_transparent_72%)] opacity-50 blur-2xl motion-safe:animate-[pulse_26s_ease-in-out_infinite]" />
-          <div className="absolute left-[46%] top-[38%] h-[160px] w-[160px] rounded-full bg-[radial-gradient(circle,_rgba(255,160,120,0.38),_transparent_72%)] opacity-45 blur-2xl motion-safe:animate-[pulse_28s_ease-in-out_infinite]" />
-          <div className="absolute inset-0 opacity-[0.08] [background-image:linear-gradient(90deg,rgba(15,23,42,0.04)_1px,transparent_1px),linear-gradient(180deg,rgba(15,23,42,0.04)_1px,transparent_1px)] [background-size:96px_96px]" />
+          <div className="absolute inset-0 bg-[#fff7ed]" />
         </div>
         <div className="relative z-10">
           <HeroSection />
@@ -528,21 +512,7 @@ export default async function Home() {
       <ExperienceSection />
       <div className="relative overflow-hidden">
         <div className="pointer-events-none absolute inset-0 -z-10">
-          <div className="absolute inset-0 bg-gradient-to-b from-[#f6fbff] via-[#fff4ea] to-[#f2f7ff]" />
-          <div className="absolute -top-44 left-[8%] h-[520px] w-[520px] rounded-full bg-[radial-gradient(circle,_rgba(255,204,161,0.5),_transparent_68%)] blur-3xl" />
-          <div className="absolute -top-24 right-[6%] h-[460px] w-[460px] rounded-full bg-[radial-gradient(circle,_rgba(164,213,255,0.55),_transparent_70%)] blur-3xl" />
-          <div className="absolute bottom-[-220px] right-[18%] h-[520px] w-[520px] rounded-full bg-[radial-gradient(circle,_rgba(255,176,139,0.45),_transparent_70%)] blur-3xl" />
-          <div className="absolute bottom-[-260px] left-[-6%] h-[520px] w-[520px] rounded-full bg-[radial-gradient(circle,_rgba(140,198,255,0.5),_transparent_70%)] blur-3xl" />
-          <div className="absolute left-[8%] top-[6%] h-[220px] w-[220px] rounded-full bg-[radial-gradient(circle,_rgba(86,182,255,0.5),_transparent_70%)] opacity-75 blur-2xl motion-safe:animate-[pulse_12s_ease-in-out_infinite]" />
-          <div className="absolute left-[22%] top-[18%] h-[160px] w-[160px] rounded-full bg-[radial-gradient(circle,_rgba(255,160,122,0.45),_transparent_72%)] opacity-60 blur-2xl motion-safe:animate-[pulse_15s_ease-in-out_infinite]" />
-          <div className="absolute right-[14%] top-[26%] h-[240px] w-[240px] rounded-full bg-[radial-gradient(circle,_rgba(255,160,122,0.55),_transparent_72%)] opacity-70 blur-2xl motion-safe:animate-[pulse_14s_ease-in-out_infinite]" />
-          <div className="absolute right-[28%] top-[10%] h-[140px] w-[140px] rounded-full bg-[radial-gradient(circle,_rgba(86,182,255,0.4),_transparent_72%)] opacity-40 blur-2xl motion-safe:animate-[pulse_17s_ease-in-out_infinite]" />
-          <div className="absolute right-[26%] bottom-[18%] h-[180px] w-[180px] rounded-full bg-[radial-gradient(circle,_rgba(86,182,255,0.45),_transparent_72%)] opacity-60 blur-2xl motion-safe:animate-[pulse_16s_ease-in-out_infinite]" />
-          <div className="absolute left-[28%] bottom-[12%] h-[200px] w-[200px] rounded-full bg-[radial-gradient(circle,_rgba(255,169,132,0.5),_transparent_72%)] opacity-50 blur-2xl motion-safe:animate-[pulse_18s_ease-in-out_infinite]" />
-          <div className="absolute left-[6%] bottom-[22%] h-[150px] w-[150px] rounded-full bg-[radial-gradient(circle,_rgba(255,180,145,0.45),_transparent_72%)] opacity-30 blur-2xl motion-safe:animate-[pulse_20s_ease-in-out_infinite]" />
-          <div className="absolute right-[8%] bottom-[8%] h-[200px] w-[200px] rounded-full bg-[radial-gradient(circle,_rgba(93,188,255,0.45),_transparent_72%)] opacity-50 blur-2xl motion-safe:animate-[pulse_22s_ease-in-out_infinite]" />
-          <div className="absolute left-[40%] top-[40%] h-[120px] w-[120px] rounded-full bg-[radial-gradient(circle,_rgba(255,170,136,0.4),_transparent_72%)] opacity-40 blur-2xl motion-safe:animate-[pulse_19s_ease-in-out_infinite]" />
-          <div className="absolute right-[40%] bottom-[32%] h-[130px] w-[130px] rounded-full bg-[radial-gradient(circle,_rgba(88,180,255,0.4),_transparent_72%)] opacity-50 blur-2xl motion-safe:animate-[pulse_21s_ease-in-out_infinite]" />
+          <div className="absolute inset-0 bg-[#fff7ed]" />
         </div>
         <LiveDemoSection />
         <PublicProfilePreviewSection
@@ -569,7 +539,7 @@ function HeroSection() {
       id="hero"
       className="relative isolate text-slate-900"
     >
-      <div className="relative z-10 flex min-h-screen flex-col items-center px-4 pb-24 pt-8 text-center sm:px-6 lg:px-8">
+      <div className="relative z-10 flex min-h-screen flex-col items-center px-4 pb-2 pt-8 text-center sm:px-6 lg:px-8">
         <div className="mx-auto max-w-4xl py-12">
           <h1 className="mt-10 text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl lg:text-[4.5rem] lg:leading-[1.1]">
             Don&apos;t just share it...{" "}
@@ -697,10 +667,6 @@ function HeroDashboardPreview() {
         </div>
         <div className="grid gap-4 lg:grid-cols-[1.4fr_0.6fr]">
           <div className="relative hidden justify-center overflow-hidden rounded-3xl border border-slate-200 bg-[#fff7ef] p-3 md:flex">
-            <div
-              className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.75),_rgba(255,247,239,0)_60%)]"
-              aria-hidden
-            />
             <div className="relative space-y-5">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
@@ -792,7 +758,7 @@ function HeroDashboardPreview() {
                     className="flex items-center justify-between gap-3"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#fff1db] text-sm font-semibold text-slate-800">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#fff1db] text-base font-semibold text-slate-800">
                         {initials}
                       </div>
                       <div>
@@ -818,7 +784,7 @@ function HeroDashboardPreview() {
 
 function TrustedBy() {
   return (
-    <section className="mx-auto max-w-5xl px-4 pt-8 sm:px-6 lg:px-8">
+    <section className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
       <div className="rounded-[28px] border border-foreground/10 bg-white/80 p-6 text-center shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur">
         <p className="text-xs font-semibold uppercase tracking-[0.35em] text-muted-foreground">
           Trusted By
@@ -845,7 +811,7 @@ function TrustedBy() {
 
 function JourneySection() {
   return (
-    <section id="how-it-works" className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
+    <section id="how-it-works" className="mx-auto max-w-6xl px-4 pt-6 pb-10 sm:px-6">
       <FeatureSteps
         className="mt-8 rounded-[36px] border border-foreground/5 bg-white/90 shadow-[0_35px_80px_rgba(15,23,42,0.08)]"
         features={JOURNEY_FEATURES}
@@ -864,15 +830,11 @@ function ExperienceSection() {
       className="relative overflow-hidden bg-[#050816] py-24 text-white"
     >
       <div
-        className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(77,121,255,0.25),_rgba(5,8,22,0))]"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_12%,rgba(255,151,118,0.18),transparent_55%),radial-gradient(circle_at_82%_18%,rgba(93,188,255,0.22),transparent_60%)]"
         aria-hidden
       />
       <div
-        className="absolute inset-y-0 right-[-10%] h-[480px] w-[480px] rounded-full bg-[radial-gradient(circle,_rgba(255,151,118,0.25),_rgba(5,8,22,0))] blur-[160px]"
-        aria-hidden
-      />
-      <div
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#050816] via-[#0a0f1e]/30 to-transparent"
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[#050816] via-[#0a0f1e]/40 to-transparent"
         aria-hidden
       />
       <div className="relative mx-auto flex max-w-6xl flex-col gap-10 px-4 sm:px-6 lg:flex-row lg:items-center">
@@ -948,10 +910,6 @@ function LiveDemoSection() {
         </div>
 
         <div className="relative mx-auto mt-12 max-w-5xl">
-          <div
-            className="absolute -inset-8 rounded-[48px] bg-gradient-to-br from-[#ffe0c4]/70 via-white/0 to-[#c1ddff]/70 blur-3xl"
-            aria-hidden
-          />
           <div className="relative overflow-hidden rounded-[32px] border border-slate-200 bg-[#111317] shadow-[0_45px_120px_rgba(15,23,42,0.25)]">
             <video
               className="aspect-video w-full"
@@ -991,8 +949,7 @@ function PublicProfilePreviewSection({
   return (
     <section id="public-preview" className="relative overflow-hidden py-24">
       <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_10%_10%,rgba(13,22,44,0.35),transparent_45%),radial-gradient(circle_at_85%_15%,rgba(255,214,170,0.45),transparent_45%),radial-gradient(circle_at_50%_85%,rgba(112,159,255,0.35),transparent_55%)]" />
-        <div className="absolute inset-0 opacity-[0.08] [background-image:linear-gradient(90deg,rgba(15,23,42,0.12)_1px,transparent_1px),linear-gradient(180deg,rgba(15,23,42,0.12)_1px,transparent_1px)] [background-size:120px_120px]" />
+        <div className="absolute inset-0 bg-[#fff7ed]" />
       </div>
       <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
         <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
@@ -1006,7 +963,7 @@ function PublicProfilePreviewSection({
                 A premium page that looks ready for the spotlight
               </h2>
               <p className="text-base text-slate-600">
-                Your live profile shows the exact layout clients see — polished
+                Your live profile shows the exact layout clients see Â polished
                 visuals, clean links, and a frictionless contact save.
               </p>
             </div>
@@ -1055,10 +1012,6 @@ function PublicProfilePreviewSection({
             </div>
           </div>
           <div className="relative mx-auto w-full max-w-sm">
-            <div
-              className="absolute -inset-8 rounded-[56px] bg-[radial-gradient(circle_at_20%_10%,rgba(255,226,190,0.7),transparent_55%),radial-gradient(circle_at_80%_90%,rgba(120,155,255,0.55),transparent_55%)] blur-3xl"
-              aria-hidden
-            />
             <div className="relative overflow-hidden rounded-[36px] border border-white/60 bg-white/70 shadow-[0_45px_90px_rgba(15,23,42,0.25)] backdrop-blur">
               <div className="h-[620px] w-full overflow-y-auto bg-[#0b1220]">
                 <PublicProfilePreview
@@ -1085,20 +1038,9 @@ function PublicProfilePreviewSection({
 }
 
 function TestimonialsSection() {
-  return (
-    <section className="relative pb-24 pt-20 text-[#0f172a]">
-      <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
-        <TestimonialSlider
-          testimonials={SLIDER_TESTIMONIALS}
-          eyebrow="Proof in motion"
-          title="Linket keeps intros warm long after the tap"
-          tone="light"
-          className="shadow-[0_45px_120px_rgba(255,151,118,0.25)]"
-        />
-      </div>
-    </section>
-  );
+  return null;
 }
+
 function PricingSection() {
   return (
     <section
@@ -1108,7 +1050,7 @@ function PricingSection() {
       <CreativePricing
         tag="Linket plans"
         title="The tap-to-share stack for every crew"
-        description="Choose the plan that keeps every intro warm—from solo sellers to nationwide teams."
+        description="Choose the plan that keeps every intro warmfrom solo sellers to nationwide teams."
         tiers={PRICING_TIERS}
       />
     </section>
@@ -1223,7 +1165,7 @@ function LandingFooter() {
         </div>
         <div className="mt-12 flex flex-col gap-4 border-t border-white/10 pt-6 text-xs text-white/60 sm:flex-row sm:items-center sm:justify-between">
           <p>
-            © {currentYear} {brand.name}. All rights reserved.
+            ÃÂÃÂ© {currentYear} {brand.name}. All rights reserved.
           </p>
           <div className="flex flex-wrap items-center gap-4">
             <Link href="/privacy" className="transition hover:text-white">
@@ -1247,3 +1189,9 @@ function LandingFooter() {
     </footer>
   );
 }
+
+
+
+
+
+
