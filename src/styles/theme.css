@@ -671,6 +671,17 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--border) 65%, transparent);
 }
 
+/* Forest theme: make lead selection checkboxes use the brighter accent */
+#dashboard-theme-scope.theme-forest .dashboard-leads-checkbox {
+  border-color: var(--ring);
+}
+
+#dashboard-theme-scope.theme-forest .dashboard-leads-checkbox:checked {
+  background: var(--ring);
+  border-color: var(--ring);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ring) 60%, transparent);
+}
+
 /* Component polish */
 [data-slot=card] { box-shadow: var(--shadow-ambient); }
 [data-slot=button] { transition: all var(--duration-base) var(--ease-smooth); }

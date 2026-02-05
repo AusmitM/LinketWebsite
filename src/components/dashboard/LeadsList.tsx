@@ -23,10 +23,19 @@ export default function LeadsList({ userId }: { userId: string }) {
   const [fetching, setFetching] = useState(false);
   const [q, setQ] = useState("");
   const [hasMore, setHasMore] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const pageSize = 20;
   const offsetRef = useRef(0);
+  const selectAllRef = useRef<HTMLInputElement | null>(null);
 
   const like = useMemo(() => q.trim(), [q]);
+  const selectedLeads = useMemo(
+    () => leads.filter((lead) => selectedIds.has(lead.id)),
+    [leads, selectedIds]
+  );
+  const allVisibleSelected =
+    leads.length > 0 && leads.every((lead) => selectedIds.has(lead.id));
+  const someVisibleSelected = selectedIds.size > 0 && !allVisibleSelected;
 
   async function load({ reset = false }: { reset?: boolean } = {}) {
     if (!userId) return;
@@ -85,6 +94,26 @@ export default function LeadsList({ userId }: { userId: string }) {
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [like]);
+
+  // Keep the "select all" checkbox in sync with partial selections.
+  useEffect(() => {
+    if (selectAllRef.current) {
+      selectAllRef.current.indeterminate = someVisibleSelected;
+    }
+  }, [someVisibleSelected]);
+
+  // Ensure selection state stays valid when the visible list changes.
+  useEffect(() => {
+    if (selectedIds.size === 0) return;
+    const visibleIds = new Set(leads.map((lead) => lead.id));
+    setSelectedIds((prev) => {
+      const next = new Set<string>();
+      prev.forEach((id) => {
+        if (visibleIds.has(id)) next.add(id);
+      });
+      return next.size === prev.size ? prev : next;
+    });
+  }, [leads, selectedIds.size]);
 
   useEffect(() => {
     const handles = Array.from(new Set(leads.map((lead) => lead.handle).filter(Boolean)));
@@ -158,6 +187,29 @@ export default function LeadsList({ userId }: { userId: string }) {
     return out;
   }
 
+  // Toggle a single lead selection on/off.
+  function toggleLeadSelection(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  // Select or clear all currently visible leads.
+  function toggleSelectAll() {
+    if (leads.length === 0) return;
+    setSelectedIds(() => {
+      if (allVisibleSelected) return new Set();
+      return new Set(leads.map((lead) => lead.id));
+    });
+  }
+
+  function clearSelection() {
+    setSelectedIds(new Set());
+  }
+
   async function onDelete(id: string) {
     const ok = confirm("Delete this lead? This cannot be undone.");
     if (!ok) return;
@@ -174,18 +226,24 @@ export default function LeadsList({ userId }: { userId: string }) {
       });
     else {
       setLeads((prev) => prev.filter((lead) => lead.id !== id));
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
       toast({ title: "Lead deleted", variant: "success" });
     }
   }
 
-  function exportCsv() {
-    if (leads.length === 0) {
+  // Export CSV for a given list of leads (defaults to all leads).
+  function exportCsv(targetLeads: Lead[] = leads) {
+    if (targetLeads.length === 0) {
       toast({ title: "No leads to export" });
       return;
     }
     const customKeySet = new Set<string>();
     const labelByKey: Record<string, string> = {};
-    leads.forEach((lead) => {
+    targetLeads.forEach((lead) => {
       const custom = lead.custom_fields;
       if (!custom || typeof custom !== "object") return;
       Object.entries(custom).forEach(([key, value]) => {
@@ -224,7 +282,7 @@ export default function LeadsList({ userId }: { userId: string }) {
       "handle",
       ...customHeaders,
     ];
-    const rows = leads.map((l) => [
+    const rows = targetLeads.map((l) => [
       safeCsv(l.created_at),
       safeCsv(l.name),
       safeCsv(l.email),
@@ -246,6 +304,30 @@ export default function LeadsList({ userId }: { userId: string }) {
     document.body.appendChild(a);
     a.click();
     a.remove();
+  }
+
+  // Remove all selected leads in one action.
+  async function onDeleteSelected() {
+    if (selectedIds.size === 0) return;
+    const ok = confirm(`Delete ${selectedIds.size} lead(s)? This cannot be undone.`);
+    if (!ok) return;
+    const ids = Array.from(selectedIds);
+    const { error } = await supabase
+      .from("leads")
+      .delete()
+      .in("id", ids)
+      .eq("user_id", userId);
+    if (error) {
+      toast({
+        title: "Delete failed",
+        description: error.message,
+        variant: "destructive",
+      });
+      return;
+    }
+    setLeads((prev) => prev.filter((lead) => !selectedIds.has(lead.id)));
+    clearSelection();
+    toast({ title: "Leads deleted", variant: "success" });
   }
 
   function safeCsv(s: string) {
@@ -306,6 +388,25 @@ export default function LeadsList({ userId }: { userId: string }) {
     URL.revokeObjectURL(url);
   }
 
+  // Download multiple contacts as a single .vcf file.
+  function downloadSelectedVCardBundle() {
+    if (selectedLeads.length === 0) {
+      toast({ title: "Select at least one lead" });
+      return;
+    }
+    const vcard = selectedLeads.map((lead) => buildVCard(lead)).join("\n");
+    const blob = new Blob([vcard], { type: "text/vcard;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const date = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `linket-contacts-${date}.vcf`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <Card className="rounded-2xl">
       <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -334,12 +435,70 @@ export default function LeadsList({ userId }: { userId: string }) {
               onClick={exportCsv}
               aria-label="Export CSV"
             >
-              Export
+              Export All
             </Button>
           </div>
         </div>
       </CardHeader>
       <CardContent>
+        {/* Bulk selection toolbar */}
+        {leads.length > 0 && (
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/60 bg-card/80 p-3 text-foreground shadow-[0_12px_30px_rgba(15,23,42,0.06)] backdrop-blur">
+            <label className="flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.2em] text-foreground/80">
+              <span className="relative inline-flex h-5 w-5 items-center justify-center">
+                <input
+                  ref={selectAllRef}
+                  type="checkbox"
+                  checked={allVisibleSelected}
+                  onChange={toggleSelectAll}
+                  className="dashboard-leads-checkbox peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-[var(--accent)] bg-background/80 shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/40 checked:border-[var(--accent)] checked:bg-[var(--accent)]"
+                  aria-label="Select all visible leads"
+                />
+                <span className="pointer-events-none absolute text-xs font-bold text-[var(--accent-foreground)] opacity-0 transition peer-checked:opacity-100">
+                  ✓
+                </span>
+              </span>
+              Select all
+            </label>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-full border border-border/60 bg-background/70 px-3 py-1 text-xs font-medium text-foreground/80">
+                {selectedIds.size} selected
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => exportCsv(selectedLeads)}
+                disabled={selectedIds.size === 0}
+              >
+                Export selected
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={downloadSelectedVCardBundle}
+                disabled={selectedIds.size === 0}
+              >
+                Download contacts
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={onDeleteSelected}
+                disabled={selectedIds.size === 0}
+              >
+                Delete selected
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearSelection}
+                disabled={selectedIds.size === 0}
+              >
+                Clear
+              </Button>
+            </div>
+          </div>
+        )}
         {loading ? (
           <div className="dashboard-skeleton space-y-3">
             {[...Array(3)].map((_, i) => (
@@ -356,25 +515,52 @@ export default function LeadsList({ userId }: { userId: string }) {
         ) : (
           <div className="space-y-2">
             {leads.map((l) => (
-              <article key={l.id} className="rounded-xl border p-3 shadow-sm">
+              <article
+                key={l.id}
+                className={`rounded-xl border p-3 shadow-sm transition cursor-pointer ${
+                  selectedIds.has(l.id)
+                    ? "border-primary/50 bg-primary/5"
+                    : "border-border/70 bg-background"
+                }`}
+                onClick={(event) => {
+                  const target = event.target as HTMLElement | null;
+                  if (!target) return;
+                  if (target.closest("button, a, input, select, textarea, label")) return;
+                  toggleLeadSelection(l.id);
+                }}
+              >
                 <header className="flex flex-wrap items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <h3 className="text-sm font-medium">
-                      {l.name}
-                      {l.company ? (
-                        <span className="text-muted-foreground">
-                          {" "}
-                          - {l.company}
-                        </span>
-                      ) : null}
-                    </h3>
-                    {(l.email || l.phone) && (
-                      <p className="text-xs text-muted-foreground break-all">
-                        {l.email || ""}
-                        {l.email && l.phone ? " - " : ""}
-                        {l.phone || ""}
-                      </p>
-                    )}
+                  <div className="flex min-w-0 items-start gap-3">
+                    <span className="relative mt-0.5 inline-flex h-5 w-5 items-center justify-center">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(l.id)}
+                        onChange={() => toggleLeadSelection(l.id)}
+                        className="dashboard-leads-checkbox peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-[var(--accent)] bg-background/80 shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/40 checked:border-[var(--accent)] checked:bg-[var(--accent)]"
+                        aria-label={`Select lead ${l.name || l.email || "entry"}`}
+                      />
+                      <span className="pointer-events-none absolute text-xs font-bold text-[var(--accent-foreground)] opacity-0 transition peer-checked:opacity-100">
+                        ✓
+                      </span>
+                    </span>
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-medium">
+                        {l.name}
+                        {l.company ? (
+                          <span className="text-muted-foreground">
+                            {" "}
+                            - {l.company}
+                          </span>
+                        ) : null}
+                      </h3>
+                      {(l.email || l.phone) && (
+                        <p className="text-xs text-muted-foreground break-all">
+                          {l.email || ""}
+                          {l.email && l.phone ? " - " : ""}
+                          {l.phone || ""}
+                        </p>
+                      )}
+                    </div>
                   </div>
                   <time
                     className="text-xs text-muted-foreground"
