@@ -609,9 +609,6 @@ function HeroDashboardPreview() {
               <Download className="h-4 w-4" aria-hidden />
               Download
             </button>
-            <div className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white">
-              <UserRound className="h-5 w-5 text-slate-700" aria-hidden />
-            </div>
           </div>
         </div>
       </div>
