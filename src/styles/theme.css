@@ -666,6 +666,11 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
   letter-spacing: 0.01em;
 }
 
+/* Profile details: subtle button outline for separation */
+#dashboard-theme-scope .profile-details-panel button {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--border) 65%, transparent);
+}
+
 /* Component polish */
 [data-slot=card] { box-shadow: var(--shadow-ambient); }
 [data-slot=button] { transition: all var(--duration-base) var(--ease-smooth); }

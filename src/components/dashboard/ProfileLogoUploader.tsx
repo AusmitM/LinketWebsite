@@ -6,6 +6,7 @@ import {
   useState,
   type DragEvent,
   type PointerEvent as ReactPointerEvent,
+  type ReactNode,
 } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -25,6 +26,7 @@ type Props = {
   onUploaded: (payload: { path: string; version: string; publicUrl: string }) => void;
   variant?: "default" | "compact";
   inputId?: string;
+  controls?: ReactNode;
 };
 
 const OUTPUT_SIZE = 480;
@@ -42,6 +44,7 @@ export default function ProfileLogoUploader({
   onUploaded,
   variant = "compact",
   inputId,
+  controls,
 }: Props) {
   const isCompact = variant === "compact";
   const [isSmallScreen, setIsSmallScreen] = useState(false);
@@ -381,6 +384,11 @@ export default function ProfileLogoUploader({
                 Remove
               </Button>
             </div>
+            {controls && (
+              <div className="mt-2 border-t border-border/60 pt-2">
+                {controls}
+              </div>
+            )}
           </div>
         </div>
 
