@@ -72,6 +72,8 @@ const DASHBOARD_NAV = [
   { href: "/dashboard/profiles", label: "Profiles" },
 ] as const;
 
+const MARKETING_LINKS: Array<{ href: string; label: string }> = [];
+
 const PROFILE_SECTIONS = [
   { id: "profile", label: "Profile", icon: User },
   { id: "contact", label: "Contact", icon: IdCard },
@@ -122,6 +124,8 @@ export function Navbar() {
   const isAuthPage =
     pathname?.startsWith("/auth") || pathname?.startsWith("/forgot-password");
   const isProfileEditor = pathname?.startsWith("/dashboard/profiles") ?? false;
+  const isMarketingPage =
+    isPublic && !isLandingPage && !isPublicProfile && !isAuthPage;
 
   useEffect(() => {
     if (!isDashboard) {
@@ -469,6 +473,26 @@ export function Navbar() {
     </div>
   );
 
+  const marketingNav = MARKETING_LINKS.length ? (
+    <div className="flex w-full items-center justify-center gap-6 px-4">
+      {MARKETING_LINKS.map((link) => {
+        const isActive = pathname === link.href;
+        return (
+          <Link
+            key={link.href}
+            href={link.href}
+            className={cn(
+              "text-sm font-semibold transition-colors",
+              isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            {link.label}
+          </Link>
+        );
+      })}
+    </div>
+  ) : null;
+
   const loginButton = user ? (
     <Link
       href="/dashboard/linkets"
@@ -513,8 +537,8 @@ export function Navbar() {
           : "bg-gradient-to-r from-[#7fc8e8] via-[#5fb7f5] to-[#a5f3fc] text-[#0b1220] shadow-[0_20px_45px_rgba(125,200,232,0.35)] hover:bg-gradient-to-r hover:from-[#ff9776] hover:via-[#ffb166] hover:to-[#ffd27f]"
       )}
     >
-      <Link href="/pricing" aria-label={`Buy ${brand.shortName ?? brand.name}`}>
-        {`Buy ${brand.shortName ?? brand.name}`}
+      <Link href="/#pricing" aria-label="Buy Linket">
+        Buy Linket
       </Link>
     </Button>
   );
@@ -766,39 +790,38 @@ export function Navbar() {
 
   if (isAuthPage) {
     return (
-      <header className="sticky top-0 z-50 w-full border-b border-foreground/10 bg-white/80 backdrop-blur">
-        <nav
-          className="mx-auto flex max-w-6xl items-center px-4 py-3 md:px-6"
-          aria-label="Main"
-        >
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]"
-            aria-label={`${brand.name} home`}
-          >
-            {brand.logo ? (
-              <span className="relative block h-8 w-32 md:h-10 md:w-40">
-                <Image
-                  src={brand.logo}
-                  alt={`${brand.name} logo`}
-                  fill
-                  className="object-contain"
-                  priority
-                  sizes="(max-width: 1024px) 160px, 200px"
-                />
-              </span>
-            ) : (
-              <span
-                className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-foreground text-sm font-bold text-background"
-                aria-hidden
-              >
-                {(brand.shortName ?? brand.name).slice(0, 2)}
-              </span>
-            )}
-            {!brand.logo && (
-              <span className={brandNameClass}>{brand.name}</span>
-            )}
-          </Link>
+      <header role="banner" className={headerClassName} aria-label="Site header">
+        <nav className={navClassName} aria-label="Main">
+          <div className="flex flex-1 items-center gap-3 md:gap-4">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]"
+              aria-label={`${brand.name} home`}
+            >
+              {brand.logo ? (
+                <span className="relative block h-15 w-32 md:h-18 md:w-40">
+                  <Image
+                    src={brand.logo}
+                    alt={`${brand.name} logo`}
+                    fill
+                    className="object-contain"
+                    priority
+                    sizes="(max-width: 1024px) 160px, 200px"
+                  />
+                </span>
+              ) : (
+                <span
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-foreground text-sm font-bold text-background"
+                  aria-hidden
+                >
+                  {(brand.shortName ?? brand.name).slice(0, 2)}
+                </span>
+              )}
+              {!brand.logo && (
+                <span className={brandNameClass}>{brand.name}</span>
+              )}
+            </Link>
+          </div>
         </nav>
       </header>
     );
@@ -836,17 +859,18 @@ export function Navbar() {
               <span className={brandNameClass}>{brand.name}</span>
             )}
           </Link>
-          <div
-            className="hidden flex-1 items-center justify-center lg:flex"
-            aria-label="Primary"
-          >
-            {isLandingPage ? desktopLinks : null}
-          </div>
+        <div
+          className="hidden flex-1 items-center justify-center lg:flex"
+          aria-label="Primary"
+        >
+          {isLandingPage ? desktopLinks : null}
+          {isMarketingPage ? marketingNav : null}
+        </div>
         </div>
         <div className="flex items-center gap-2 md:gap-4">
-          {isLandingPage ? loginButton : null}
-          {isLandingPage ? primaryCta : null}
-          {isLandingPage ? (
+          {isLandingPage || isMarketingPage ? loginButton : null}
+          {isLandingPage || isMarketingPage ? primaryCta : null}
+          {isLandingPage || isMarketingPage ? (
             <button
               type="button"
               className={cn(
@@ -869,7 +893,7 @@ export function Navbar() {
           ) : null}
         </div>
       </nav>
-      {isLandingPage && mobileOpen && (
+      {(isLandingPage || isMarketingPage) && mobileOpen && (
         <div className="lg:hidden">
           <button
             type="button"
@@ -879,43 +903,57 @@ export function Navbar() {
           />
           <div className={mobilePanelClass}>
             <nav aria-label="Mobile primary" className="grid gap-4">
-              <Select
-                value={activeLandingId}
-                onValueChange={(value) =>
-                  handleDropdownSelect(value as LandingSectionId)
-                }
-              >
-                <SelectTrigger
-                  className={cn(
-                    "w-full justify-between rounded-2xl px-4 py-3 text-base font-semibold",
-                    isDashboard
-                      ? "border-border/60 bg-card/80 text-foreground hover:bg-card"
-                      : overlayMode
-                      ? "border-white/40 bg-white/10 text-white shadow-[0_10px_24px_rgba(15,15,30,0.18)] hover:bg-white/15"
-                      : "border-foreground/10 bg-white text-[#0b1220] shadow-[0_12px_32px_rgba(15,23,42,0.12)] hover:bg-slate-50"
-                  )}
-                  aria-label="Jump to section"
+              {isLandingPage ? (
+                <Select
+                  value={activeLandingId}
+                  onValueChange={(value) =>
+                    handleDropdownSelect(value as LandingSectionId)
+                  }
                 >
-                  <SelectValue placeholder="Navigate" />
-                </SelectTrigger>
-                <SelectContent
-                  className={cn(
-                    "rounded-xl shadow-lg",
-                    isDashboard
-                      ? "border-border/60 bg-background/95 text-foreground"
-                      : overlayMode
-                      ? "border-white/20 bg-slate-900 text-white"
-                      : "border-foreground/10 bg-white text-[#0b1220]"
-                  )}
-                  position="popper"
-                >
-                  {LANDING_LINKS.map((link) => (
-                    <SelectItem key={link.id} value={link.id}>
+                  <SelectTrigger
+                    className={cn(
+                      "w-full justify-between rounded-2xl px-4 py-3 text-base font-semibold",
+                      isDashboard
+                        ? "border-border/60 bg-card/80 text-foreground hover:bg-card"
+                        : overlayMode
+                        ? "border-white/40 bg-white/10 text-white shadow-[0_10px_24px_rgba(15,15,30,0.18)] hover:bg-white/15"
+                        : "border-foreground/10 bg-white text-[#0b1220] shadow-[0_12px_32px_rgba(15,23,42,0.12)] hover:bg-slate-50"
+                    )}
+                    aria-label="Jump to section"
+                  >
+                    <SelectValue placeholder="Navigate" />
+                  </SelectTrigger>
+                  <SelectContent
+                    className={cn(
+                      "rounded-xl shadow-lg",
+                      isDashboard
+                        ? "border-border/60 bg-background/95 text-foreground"
+                        : overlayMode
+                        ? "border-white/20 bg-slate-900 text-white"
+                        : "border-foreground/10 bg-white text-[#0b1220]"
+                    )}
+                    position="popper"
+                  >
+                    {LANDING_LINKS.map((link) => (
+                      <SelectItem key={link.id} value={link.id}>
+                        {link.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : MARKETING_LINKS.length ? (
+                <div className="grid gap-2">
+                  {MARKETING_LINKS.map((link) => (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      className="rounded-2xl border border-foreground/10 bg-white px-4 py-3 text-sm font-semibold text-foreground shadow-[0_8px_20px_rgba(15,23,42,0.08)]"
+                    >
                       {link.label}
-                    </SelectItem>
+                    </Link>
                   ))}
-                </SelectContent>
-              </Select>
+                </div>
+              ) : null}
               <div className="grid gap-3">
                 <div className="w-full">{primaryCta}</div>
                 <div className="w-full">{loginButton}</div>

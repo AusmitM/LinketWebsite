@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Link from "next/link";
 import Script from "next/script";
 import type { LucideIcon } from "lucide-react";
@@ -15,7 +15,6 @@ import {
   Focus,
   Instagram,
   LineChart,
-  Quote,
   Pencil,
   UserRound,
   Search,
@@ -86,7 +85,7 @@ const DASHBOARD_STATS = [
   {
     label: "Conversion rate",
     value: "15.2%",
-    delta: "Leads ÃÂÂ· scans in this range",
+    delta: "Leads - scans in this range",
   },
   {
     label: "Active Linkets",
@@ -233,33 +232,6 @@ async function loadPublicProfilePreview() {
 }
 
 const FOOTER_LINK_GROUPS = [
-  {
-    title: "Product",
-    links: [
-      { label: "Features", href: "#demo" },
-      { label: "Pricing", href: "#pricing" },
-      { label: "Hardware", href: "/customize" },
-      { label: "Templates", href: "#teams" },
-    ],
-  },
-  {
-    title: "Company",
-    links: [
-      { label: "About", href: "/about" },
-      { label: "Careers", href: "/careers" },
-      { label: "Blog", href: "/blog" },
-      { label: "Press", href: "/press" },
-    ],
-  },
-  {
-    title: "Support",
-    links: [
-      { label: "Help center", href: "/support" },
-      { label: "Status", href: "/status" },
-      { label: "Contact", href: "/contact" },
-      { label: "Docs", href: "/docs" },
-    ],
-  },
   {
     title: "Legal",
     links: [
@@ -519,7 +491,6 @@ export default async function Home() {
           profile={publicPreview.profile}
           account={publicPreview.account}
         />
-        <TestimonialsSection />
         <PricingSection />
         <FAQSection />
       </div>
@@ -541,22 +512,22 @@ function HeroSection() {
     >
       <div className="relative z-10 flex min-h-screen flex-col items-center px-4 pb-2 pt-8 text-center sm:px-6 lg:px-8">
         <div className="mx-auto max-w-4xl py-12">
-          <h1 className="mt-10 text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl lg:text-[4.5rem] lg:leading-[1.1]">
-            Don&apos;t just share it...{" "}
+          <h1 className="landing-fade-up landing-delay-1 mt-10 text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl lg:text-[4.5rem] lg:leading-[1.1]">
+            <span className="landing-alt-font">Don&apos;t just share it...</span>{" "}
             <span className="block text-8xl font-black italic tracking-tight sm:text-8xl lg:text-[5.25rem] bg-[linear-gradient(100deg,_#ff9776_0%,_#ffd27f_40%,_#7dd3fc_70%,_#2f80ed_100%)] bg-clip-text text-transparent">
               LINKET!
             </span>
           </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-base text-slate-600 sm:text-lg">
+          <p className="landing-fade-up landing-delay-2 mx-auto mt-6 max-w-2xl text-base text-slate-600 sm:text-lg">
             Transform your market into leads, and your leads into sales with our comprehensive suite of
             development tools and resources. Launch faster, adapt in real time,
             and keep every interaction memorable.
           </p>
-          <div className="mt-10 flex justify-center">
+          <div className="landing-fade-up landing-delay-3 mt-10 flex justify-center">
             <Button
               asChild
               size="lg"
-              className="rounded-full bg-gradient-to-r from-[#ff9776] via-[#ffb866] to-[#5dd6f7] px-10 py-6 text-base font-semibold text-white shadow-[0_20px_50px_rgba(255,151,118,0.35)]"
+              className="rounded-full bg-gradient-to-r from-[#ff9776] via-[#ffb866] to-[#5dd6f7] px-10 py-6 text-base font-semibold text-white shadow-[0_20px_50px_rgba(255,151,118,0.35)] transition-transform duration-300 hover:-translate-y-1 hover:shadow-[0_28px_65px_rgba(255,151,118,0.45)]"
             >
               <Link href="/auth">Get Started</Link>
             </Button>
@@ -593,7 +564,7 @@ function HeroDashboardPreview() {
   } 110 L ${trendPoints[0].x} 110 Z`;
 
   return (
-    <div className="relative w-full max-w-6xl rounded-[32px] border border-[#f5d7b0]/80 bg-white/85 p-6 text-left text-slate-900 shadow-[0_45px_120px_rgba(254,215,170,0.45)] backdrop-blur">
+    <div className="landing-fade-up landing-delay-4 landing-float relative w-full max-w-6xl rounded-[32px] border border-[#f5d7b0]/80 bg-white/85 p-6 text-left text-slate-900 shadow-[0_45px_120px_rgba(254,215,170,0.45)] backdrop-blur transition-transform duration-500 hover:-translate-y-2">
       <div className="flex flex-col gap-4 border-b border-orange-100 pb-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center gap-3 rounded-full border border-[#ffd4c2] bg-[#fff6ef] px-4 py-2">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#ff9776] to-[#ffd27f] text-sm font-semibold text-white">
@@ -609,7 +580,7 @@ function HeroDashboardPreview() {
               <span
                 key={tab}
                 className={cn(
-                  "rounded-full border px-4 py-1.5 text-sm font-medium transition",
+                  "rounded-full border px-4 py-1.5 text-sm font-medium transition-transform duration-300 hover:-translate-y-0.5",
                   index === 0
                     ? "border-[#ff9776] bg-[#ff9776] text-[#0f172a]"
                     : "border-slate-200 text-slate-700"
@@ -634,7 +605,7 @@ function HeroDashboardPreview() {
               <Calendar className="h-4 w-4 text-slate-400" aria-hidden />
               <span>{dateRange}</span>
             </div>
-            <button className="hidden items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white sm:inline-flex">
+            <button className="hidden items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-transform duration-300 hover:-translate-y-0.5 sm:inline-flex">
               <Download className="h-4 w-4" aria-hidden />
               Download
             </button>
@@ -653,7 +624,7 @@ function HeroDashboardPreview() {
           {DASHBOARD_STATS.map((stat) => (
             <div
               key={stat.label}
-              className="rounded-2xl border border-slate-200 bg-[#fff9f3] p-4"
+              className="rounded-2xl border border-slate-200 bg-[#fff9f3] p-4 transition-transform duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(15,23,42,0.12)]"
             >
               <p className="text-xs uppercase tracking-[0.35em] text-slate-600">
                 {stat.label}
@@ -666,7 +637,7 @@ function HeroDashboardPreview() {
           ))}
         </div>
         <div className="grid gap-4 lg:grid-cols-[1.4fr_0.6fr]">
-          <div className="relative hidden justify-center overflow-hidden rounded-3xl border border-slate-200 bg-[#fff7ef] p-3 md:flex">
+          <div className="relative hidden justify-center overflow-hidden rounded-3xl border border-slate-200 bg-[#fff7ef] p-3 transition-transform duration-500 hover:-translate-y-1 md:flex">
             <div className="relative space-y-5">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
@@ -738,7 +709,7 @@ function HeroDashboardPreview() {
               </div>
             </div>
           </div>
-          <div className="rounded-3xl border border-slate-200 bg-white p-5">
+          <div className="rounded-3xl border border-slate-200 bg-white p-5 transition-transform duration-500 hover:-translate-y-1">
             <p className="text-lg font-semibold text-slate-900">Recent leads</p>
             <p className="text-xs text-slate-600">
               You made {RECENT_SALES.length} new connections this period.
@@ -755,7 +726,7 @@ function HeroDashboardPreview() {
                 return (
                   <div
                     key={sale.email}
-                    className="flex items-center justify-between gap-3"
+                    className="flex items-center justify-between gap-3 transition-transform duration-300 hover:-translate-y-0.5"
                   >
                     <div className="flex items-center gap-3">
                       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#fff1db] text-base font-semibold text-slate-800">
@@ -784,8 +755,8 @@ function HeroDashboardPreview() {
 
 function TrustedBy() {
   return (
-    <section className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
-      <div className="rounded-[28px] border border-foreground/10 bg-white/80 p-6 text-center shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur">
+    <section className="landing-alt-font mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
+      <div className="landing-fade-up rounded-[28px] border border-foreground/10 bg-white/80 p-6 text-center shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur">
         <p className="text-xs font-semibold uppercase tracking-[0.35em] text-muted-foreground">
           Trusted By
         </p>
@@ -797,7 +768,7 @@ function TrustedBy() {
           {SOCIAL_PROOF.map((name) => (
             <span
               key={name}
-              className="inline-flex items-center gap-2 rounded-full border border-foreground/10 px-3 py-1.5"
+              className="inline-flex items-center gap-2 rounded-full border border-foreground/10 px-3 py-1.5 transition-transform duration-300 hover:-translate-y-0.5 hover:shadow-[0_10px_25px_rgba(15,23,42,0.12)]"
             >
               <Sparkles className="h-3.5 w-3.5 text-primary" aria-hidden />
               {name}
@@ -811,9 +782,12 @@ function TrustedBy() {
 
 function JourneySection() {
   return (
-    <section id="how-it-works" className="mx-auto max-w-6xl px-4 pt-6 pb-10 sm:px-6">
+    <section
+      id="how-it-works"
+      className="landing-alt-font mx-auto max-w-6xl px-4 pt-6 pb-10 sm:px-6"
+    >
       <FeatureSteps
-        className="mt-8 rounded-[36px] border border-foreground/5 bg-white/90 shadow-[0_35px_80px_rgba(15,23,42,0.08)]"
+        className="landing-fade-up mt-8 rounded-[36px] border border-foreground/5 bg-white/90 shadow-[0_35px_80px_rgba(15,23,42,0.08)]"
         features={JOURNEY_FEATURES}
         title="How Linket flows"
         autoPlayInterval={4000}
@@ -827,7 +801,7 @@ function ExperienceSection() {
   return (
     <section
       id="customization"
-      className="relative overflow-hidden bg-[#050816] py-24 text-white"
+      className="landing-alt-font relative overflow-hidden bg-[#050816] py-24 text-white"
     >
       <div
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_12%,rgba(255,151,118,0.18),transparent_55%),radial-gradient(circle_at_82%_18%,rgba(93,188,255,0.22),transparent_60%)]"
@@ -838,7 +812,7 @@ function ExperienceSection() {
         aria-hidden
       />
       <div className="relative mx-auto flex max-w-6xl flex-col gap-10 px-4 sm:px-6 lg:flex-row lg:items-center">
-        <div className="space-y-6 lg:w-3/5">
+        <div className="landing-fade-up space-y-6 lg:w-3/5">
           <p className="text-sm font-semibold uppercase tracking-[0.4em] text-white/60">
             Custom orders
           </p>
@@ -866,14 +840,14 @@ function ExperienceSection() {
             ].map((item) => (
               <div
                 key={item}
-                className="rounded-2xl border border-white/10 bg-white/5 p-4"
+                className="rounded-2xl border border-white/10 bg-white/5 p-4 transition-transform duration-300 hover:-translate-y-1 hover:border-white/30"
               >
                 {item}
               </div>
             ))}
           </div>
         </div>
-        <div className="w-full max-w-md rounded-3xl border border-white/10 bg-white/5 p-8 shadow-[0_30px_80px_rgba(5,5,20,0.45)] backdrop-blur">
+        <div className="landing-fade-up landing-delay-2 w-full max-w-md rounded-3xl border border-white/10 bg-white/5 p-8 shadow-[0_30px_80px_rgba(5,5,20,0.45)] backdrop-blur transition-transform duration-500 hover:-translate-y-2">
           <div className="flex items-center gap-3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={brand.logomark} alt="Linket mark" className="h-14 w-14" />
@@ -893,14 +867,14 @@ function ExperienceSection() {
 
 function LiveDemoSection() {
   return (
-    <section id="demo" className="relative py-24">
+    <section id="demo" className="landing-alt-font relative py-24">
       <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
-        <div className="mx-auto max-w-3xl text-center">
+        <div className="landing-fade-up mx-auto max-w-3xl text-center">
           <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-4 py-1 text-xs font-semibold uppercase tracking-[0.35em] text-slate-500 shadow-sm">
             <span className="h-2 w-2 rounded-full bg-[#ffb48a]" />
             Product demo
           </span>
-          <h2 className="mt-6 font-display text-3xl tracking-tight text-slate-900 sm:text-4xl">
+          <h2 className="mt-6 font-semibold text-3xl tracking-tight text-slate-900 sm:text-4xl">
             See Linket in action
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-base text-slate-600">
@@ -910,7 +884,7 @@ function LiveDemoSection() {
         </div>
 
         <div className="relative mx-auto mt-12 max-w-5xl">
-          <div className="relative overflow-hidden rounded-[32px] border border-slate-200 bg-[#111317] shadow-[0_45px_120px_rgba(15,23,42,0.25)]">
+          <div className="landing-fade-up landing-delay-2 relative overflow-hidden rounded-[32px] border border-slate-200 bg-[#111317] shadow-[0_45px_120px_rgba(15,23,42,0.25)] transition-transform duration-500 hover:-translate-y-1">
             <video
               className="aspect-video w-full"
               controls
@@ -923,13 +897,13 @@ function LiveDemoSection() {
             </video>
           </div>
           <div className="mt-5 flex flex-wrap items-center justify-center gap-3 text-xs text-slate-500">
-            <span className="rounded-full border border-slate-200 bg-white/80 px-3 py-1">
+            <span className="rounded-full border border-slate-200 bg-white/80 px-3 py-1 transition-transform duration-300 hover:-translate-y-0.5">
               0:30 walkthrough
             </span>
-            <span className="rounded-full border border-slate-200 bg-white/80 px-3 py-1">
+            <span className="rounded-full border border-slate-200 bg-white/80 px-3 py-1 transition-transform duration-300 hover:-translate-y-0.5">
               Public profile + lead capture
             </span>
-            <span className="rounded-full border border-slate-200 bg-white/80 px-3 py-1">
+            <span className="rounded-full border border-slate-200 bg-white/80 px-3 py-1 transition-transform duration-300 hover:-translate-y-0.5">
               Real-time analytics
             </span>
           </div>
@@ -947,23 +921,23 @@ function PublicProfilePreviewSection({
   account: PublicPreviewAccount;
 }) {
   return (
-    <section id="public-preview" className="relative overflow-hidden py-24">
+    <section id="public-preview" className="landing-alt-font relative overflow-hidden py-24">
       <div className="pointer-events-none absolute inset-0 -z-10">
         <div className="absolute inset-0 bg-[#fff7ed]" />
       </div>
       <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
         <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
-          <div className="space-y-8 text-slate-900">
+          <div className="landing-fade-up space-y-8 text-slate-900">
             <div className="inline-flex items-center gap-3 rounded-full border border-white/60 bg-white/70 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.35em] text-slate-500 shadow-[0_10px_25px_rgba(15,23,42,0.08)] backdrop-blur">
               <span className="h-2 w-2 rounded-full bg-[#1e3a8a]" />
               Public profile preview
             </div>
             <div className="space-y-4">
-              <h2 className="font-display text-3xl tracking-tight sm:text-4xl">
+              <h2 className="font-semibold text-3xl tracking-tight sm:text-4xl">
                 A premium page that looks ready for the spotlight
               </h2>
               <p className="text-base text-slate-600">
-                Your live profile shows the exact layout clients see Â polished
+                Your live profile shows the exact layout clients see - polished
                 visuals, clean links, and a frictionless contact save.
               </p>
             </div>
@@ -988,7 +962,7 @@ function PublicProfilePreviewSection({
               ].map((item) => (
                 <div
                   key={item.title}
-                  className="rounded-3xl border border-white/70 bg-white/80 px-5 py-4 text-sm text-slate-600 shadow-[0_16px_40px_rgba(15,23,42,0.08)] backdrop-blur"
+                  className="rounded-3xl border border-white/70 bg-white/80 px-5 py-4 text-sm text-slate-600 shadow-[0_16px_40px_rgba(15,23,42,0.08)] backdrop-blur transition-transform duration-300 hover:-translate-y-1"
                 >
                   <p className="text-sm font-semibold text-slate-900">
                     {item.title}
@@ -1011,8 +985,8 @@ function PublicProfilePreviewSection({
               </span>
             </div>
           </div>
-          <div className="relative mx-auto w-full max-w-sm">
-            <div className="relative overflow-hidden rounded-[36px] border border-white/60 bg-white/70 shadow-[0_45px_90px_rgba(15,23,42,0.25)] backdrop-blur">
+          <div className="landing-fade-up landing-delay-2 relative mx-auto w-full max-w-sm">
+            <div className="relative overflow-hidden rounded-[36px] border border-white/60 bg-white/70 shadow-[0_45px_90px_rgba(15,23,42,0.25)] backdrop-blur transition-transform duration-500 hover:-translate-y-2">
               <div className="h-[620px] w-full overflow-y-auto bg-[#0b1220]">
                 <PublicProfilePreview
                   profile={profile}
@@ -1023,7 +997,7 @@ function PublicProfilePreviewSection({
                 />
               </div>
             </div>
-            <div className="mt-5 flex items-center justify-between rounded-2xl border border-white/60 bg-white/80 px-4 py-3 text-xs text-slate-600 shadow-[0_12px_30px_rgba(15,23,42,0.08)]">
+            <div className="mt-5 flex items-center justify-between rounded-2xl border border-white/60 bg-white/80 px-4 py-3 text-xs text-slate-600 shadow-[0_12px_30px_rgba(15,23,42,0.08)] transition-transform duration-300 hover:-translate-y-0.5">
               <span className="font-semibold text-slate-900">Live preview</span>
               <span className="inline-flex items-center gap-2 text-slate-500">
                 <span className="h-2 w-2 rounded-full bg-emerald-500" />
@@ -1037,20 +1011,16 @@ function PublicProfilePreviewSection({
   );
 }
 
-function TestimonialsSection() {
-  return null;
-}
-
 function PricingSection() {
   return (
     <section
       id="pricing"
-      className="relative mx-auto max-w-6xl px-4 py-24 sm:px-6"
+      className="landing-alt-font landing-fade-up relative mx-auto max-w-6xl px-4 py-24 sm:px-6"
     >
       <CreativePricing
         tag="Linket plans"
         title="The tap-to-share stack for every crew"
-        description="Choose the plan that keeps every intro warmfrom solo sellers to nationwide teams."
+        description="Choose the plan that keeps every intro warm - from solo sellers to nationwide teams."
         tiers={PRICING_TIERS}
       />
     </section>
@@ -1059,12 +1029,15 @@ function PricingSection() {
 
 function FAQSection() {
   return (
-    <section id="faq" className="mx-auto max-w-4xl px-4 py-24 sm:px-6">
+    <section
+      id="faq"
+      className="landing-alt-font landing-fade-up mx-auto max-w-4xl px-4 py-24 sm:px-6"
+    >
       <div className="text-center">
         <span className="inline-flex items-center gap-2 rounded-full border border-foreground/10 bg-foreground/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.35em] text-muted-foreground">
           FAQ
         </span>
-        <h2 className="mt-4 font-display text-3xl tracking-tight sm:text-4xl">
+        <h2 className="mt-4 font-semibold text-3xl tracking-tight sm:text-4xl">
           Answers before you tap
         </h2>
         <p className="mt-4 text-base text-muted-foreground">
@@ -1076,7 +1049,7 @@ function FAQSection() {
           <AccordionItem
             key={item.question}
             value={`faq-${index}`}
-            className="overflow-hidden rounded-3xl border border-foreground/10 bg-white/80 px-5"
+            className="overflow-hidden rounded-3xl border border-foreground/10 bg-white/80 px-5 transition-transform duration-300 hover:-translate-y-0.5"
           >
             <AccordionTrigger className="text-left text-base font-semibold text-foreground hover:no-underline">
               {item.question}
@@ -1095,14 +1068,14 @@ function LandingFooter() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="relative overflow-hidden border-t border-white/40 bg-[#050816] text-white">
+    <footer className="landing-alt-font relative overflow-hidden border-t border-white/40 bg-[#050816] text-white">
       <div
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.25),_rgba(5,8,22,0))]"
         aria-hidden
       />
       <div className="relative mx-auto max-w-6xl px-4 py-16 sm:px-6">
-        <div className="grid gap-10 lg:grid-cols-[1.2fr_2fr]">
-          <div>
+        <div className="grid gap-12 lg:grid-cols-[1.3fr_1fr_1fr]">
+          <div className="space-y-8">
             <div className="flex items-center gap-3 text-lg font-semibold">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1122,13 +1095,7 @@ function LandingFooter() {
               follow-up customers actually remember. Built for students,
               creators, and field teams who want intros that stick.
             </p>
-            <div className="mt-6 space-y-2 text-sm text-white/70">
-              <p className="text-white/80">Contact@LinketConnect.com</p>
-              <p className="text-white/60">
-                 400 Bizzell St, College Station, TX
-              </p>
-            </div>
-            <div className="mt-8 flex items-center gap-4">
+            <div className="flex flex-wrap items-center gap-4 pt-2">
               {FOOTER_SOCIALS.map((social) => (
                 <Link
                   key={social.label}
@@ -1141,7 +1108,7 @@ function LandingFooter() {
               ))}
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-8 text-sm text-white/70 sm:grid-cols-4">
+          <div className="space-y-6">
             {FOOTER_LINK_GROUPS.map((group) => (
               <div key={group.title} className="space-y-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.35em] text-white/60">
@@ -1162,10 +1129,43 @@ function LandingFooter() {
               </div>
             ))}
           </div>
+          <div className="space-y-6 text-sm text-white/70">
+            <div className="space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-[0.35em] text-white/60">
+                Contact
+              </p>
+              <p className="text-white/80">Contact@LinketConnect.com</p>
+              <p className="text-white/60">
+                400 Bizzell St, College Station, TX
+              </p>
+            </div>
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
+              <p className="text-sm font-semibold text-white">
+                Ready to keep intros warm?
+              </p>
+              <p className="mt-2 text-xs text-white/60">
+                Tap once and keep every follow-up effortless.
+              </p>
+              <div className="mt-4 flex flex-wrap gap-3">
+                <Link
+                  href="/auth?view=signin"
+                  className="rounded-full bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-900 transition hover:bg-white/90"
+                >
+                  Get started
+                </Link>
+                <Link
+                  href="#demo"
+                  className="rounded-full border border-white/30 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white/80 transition hover:text-white"
+                >
+                  View demo
+                </Link>
+              </div>
+            </div>
+          </div>
         </div>
         <div className="mt-12 flex flex-col gap-4 border-t border-white/10 pt-6 text-xs text-white/60 sm:flex-row sm:items-center sm:justify-between">
           <p>
-            ÃÂÃÂ© {currentYear} {brand.name}. All rights reserved.
+            {"\u00a9"} {currentYear} {brand.name}. All rights reserved.
           </p>
           <div className="flex flex-wrap items-center gap-4">
             <Link href="/privacy" className="transition hover:text-white">
@@ -1189,6 +1189,9 @@ function LandingFooter() {
     </footer>
   );
 }
+
+
+
 
 
 

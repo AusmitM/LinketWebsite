@@ -120,6 +120,32 @@
   --sidebar-ring: #60a5fa;
 }
 
+/* Ensure interactive elements show pointer cursor */
+a[href],
+button,
+summary,
+[role="button"],
+[role="link"],
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+select {
+  cursor: pointer;
+}
+
+nav a,
+nav button {
+  cursor: pointer;
+}
+
+button:disabled,
+input[type="button"]:disabled,
+input[type="submit"]:disabled,
+input[type="reset"]:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -468,4 +494,3 @@ html {
   background: color-mix(in srgb, var(--card) 82%, transparent);
   padding: 1rem;
 }
-

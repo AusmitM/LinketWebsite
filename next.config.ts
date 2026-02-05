@@ -20,9 +20,11 @@ const remoteImageHosts = [
   "farmui.vercel.app",
 ];
 
+const allowUnsafeEval = process.env.NODE_ENV !== "production";
+
 const csp = [
   `default-src 'self'`,
-  `script-src 'self' 'unsafe-inline'`,
+  `script-src 'self' 'unsafe-inline'${allowUnsafeEval ? " 'unsafe-eval'" : ""}`,
   `style-src 'self' 'unsafe-inline'`,
   `img-src 'self' data: blob: ${supabaseOrigin} ${remoteImageHosts
     .map((host) => `https://${host}`)

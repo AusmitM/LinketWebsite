@@ -88,6 +88,82 @@
   --premium-inset: 0 1px 0 rgba(255, 255, 255, 0.45) inset;
 }
 
+@keyframes landing-fade-up {
+  0% {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes landing-fade-in {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes landing-float {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+.landing-fade-up {
+  animation: landing-fade-up 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.landing-fade-in {
+  animation: landing-fade-in 0.85s ease both;
+}
+
+.landing-float {
+  animation: landing-float 8s ease-in-out infinite;
+}
+
+.landing-alt-font {
+  font-family: var(--font-landing), var(--font-geist-sans), system-ui, sans-serif;
+}
+
+.landing-delay-1 {
+  animation-delay: 0.08s;
+}
+
+.landing-delay-2 {
+  animation-delay: 0.16s;
+}
+
+.landing-delay-3 {
+  animation-delay: 0.24s;
+}
+
+.landing-delay-4 {
+  animation-delay: 0.32s;
+}
+
+.landing-delay-5 {
+  animation-delay: 0.4s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-fade-up,
+  .landing-fade-in,
+  .landing-float {
+    animation: none;
+  }
+}
+
 /* Light theme token mapping */
 .theme-light {
   --background: #f5f7fb;

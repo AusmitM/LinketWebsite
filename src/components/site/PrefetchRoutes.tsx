@@ -4,11 +4,10 @@ import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
 const MARKETING_ROUTES = [
-  "/pricing",
-  "/contact",
-  "/customize",
-  "/stories",
-  "/claim",
+  "/privacy",
+  "/terms",
+  "/security",
+  "/accessibility",
   "/auth",
 ];
 
@@ -20,7 +19,7 @@ export default function PrefetchRoutes() {
 
   useEffect(() => {
     const targets =
-      pathname === "/" ? ["/auth", "/customize"] : MARKETING_ROUTES;
+      pathname === "/" ? ["/auth"] : MARKETING_ROUTES;
     const targetSet = new Set<string>(targets);
     targetSet.add(DASHBOARD_ENTRY);
     const hasIdle = "requestIdleCallback" in window;

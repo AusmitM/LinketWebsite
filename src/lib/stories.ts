@@ -40,8 +40,8 @@ export const STORIES: Story[] = [
       { label: "Setup time", value: "18 min" },
     ],
     actions: [
-      { label: "Launch student preview", href: "/customize?preset=student", variant: "primary" },
-      { label: "Share with your org", href: "/pricing#student", variant: "secondary" },
+      { label: "Launch student preview", href: "/#customization", variant: "primary" },
+      { label: "Share with your org", href: "/#pricing", variant: "secondary" },
     ],
   },
   {
@@ -70,8 +70,8 @@ export const STORIES: Story[] = [
       { label: "Mini sessions booked", value: "12" },
     ],
     actions: [
-      { label: "Use creator template", href: "/customize?preset=creator", variant: "primary" },
-      { label: "See creator pricing", href: "/pricing#creator", variant: "secondary" },
+      { label: "Use creator template", href: "/#customization", variant: "primary" },
+      { label: "See creator pricing", href: "/#pricing", variant: "secondary" },
     ],
   },
   {
@@ -100,8 +100,8 @@ export const STORIES: Story[] = [
       { label: "Setup time", value: "22 min" },
     ],
     actions: [
-      { label: "Plan hospitality rollout", href: "/contact?topic=hospitality", variant: "primary" },
-      { label: "Explore team pricing", href: "/pricing#business", variant: "secondary" },
+      { label: "Plan hospitality rollout", href: "/#demo", variant: "primary" },
+      { label: "Explore team pricing", href: "/#pricing", variant: "secondary" },
     ],
   },
 ];

@@ -32,7 +32,7 @@ function CreativePricing({
         <span className="inline-flex items-center gap-2 rounded-full border border-[#ffd7c0] bg-white px-4 py-1 text-xs font-semibold uppercase tracking-[0.35em] text-[#b45309]">
           {tag}
         </span>
-        <h2 className="mt-5 font-display text-3xl tracking-tight text-[#0f172a] sm:text-4xl">
+        <h2 className="mt-5 font-display text-3xl font-semibold tracking-tight text-[#0f172a] sm:text-4xl">
           {title}
         </h2>
         <p className="mt-3 text-base text-slate-600">{description}</p>

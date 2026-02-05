@@ -218,206 +218,213 @@ export default function AuthPage() {
   const isSignUp = view === "signup";
 
   return (
-    <div className="auth-shell min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-[#fff7ed] text-slate-900">
       <div className="relative overflow-hidden">
-        <div className="auth-backdrop pointer-events-none absolute inset-0 -z-10">
-          <div className="auth-orb auth-orb-primary" />
-          <div className="auth-orb auth-orb-ring" />
-          <div className="auth-grid" />
+        <div className="pointer-events-none absolute inset-0 -z-10">
+          <div className="absolute -top-48 left-[-20%] h-[520px] w-[520px] rounded-full bg-[#ffe1c7] blur-[130px] opacity-70" />
+          <div className="absolute right-[-15%] top-[10%] h-[560px] w-[560px] rounded-full bg-[#d9f2ff] blur-[150px] opacity-70" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.85),_transparent_55%)]" />
         </div>
 
-        <section className="relative mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 py-12 lg:flex-row lg:items-center lg:gap-16">
-          <section className="auth-panel w-full max-w-md space-y-6 rounded-3xl border border-border/60 bg-card/70 p-6 shadow-[0_24px_70px_-52px_rgba(15,23,42,0.7)] backdrop-blur sm:p-8">
-            <div className="flex items-center justify-between text-xs uppercase tracking-[0.3em] text-muted-foreground">
-              <span className="font-display text-sm font-semibold text-foreground">
-                Linket
-              </span>
-              <span className="auth-pill">Secure access</span>
-            </div>
-
-            <header className="space-y-2">
-              <h1 className="text-3xl font-display font-semibold tracking-tight sm:text-4xl">
-                {isSignUp ? "Create your account" : "Welcome back"}
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                {isSignUp
-                  ? "Sign up to start managing your Linkets."
-                  : "Sign in with your credentials to access your dashboard."}
-              </p>
-            </header>
-
-            {(error || oauthError) && (
-              <div className="rounded-2xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-                {error ?? oauthMessage ?? "Authentication failed. Please try again."}
-              </div>
-            )}
-
-            <form
-              onSubmit={isSignUp ? handlePasswordSignUp : handlePasswordSignIn}
-              className="space-y-4"
-            >
-              <div className="flex flex-col gap-2">
-                <label htmlFor="email" className="text-sm font-medium">
-                  Email
-                </label>
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  autoComplete="email"
-                  onChange={(event) => setEmail(event.target.value)}
-                  className="auth-input"
-                  placeholder="you@example.com"
-                  required
-                />
+        <section className="relative mx-auto w-full max-w-6xl px-6 pb-16 pt-28 lg:pb-20 lg:pt-32">
+          <div className="grid gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
+            <section className="w-full rounded-[32px] border border-white/70 bg-white/80 p-8 shadow-[0_28px_70px_-55px_rgba(15,23,42,0.45)] backdrop-blur">
+              <div className="flex items-center justify-between text-xs uppercase tracking-[0.3em] text-slate-400">
+                <span className="font-display text-sm font-semibold text-slate-900">
+                  Linket
+                </span>
+                <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-[0.6rem] font-semibold text-slate-500">
+                  Secure access
+                </span>
               </div>
 
-              <div className="flex flex-col gap-2">
-                <label htmlFor="password" className="text-sm font-medium">
-                  Password
-                </label>
-                <input
-                  id="password"
-                  type="password"
-                  value={password}
-                  autoComplete={isSignUp ? "new-password" : "current-password"}
-                  onChange={(event) => setPassword(event.target.value)}
-                  className="auth-input"
-                  placeholder={
-                    isSignUp
-                      ? "Create a password (6+ characters)"
-                      : "Enter your password"
-                  }
-                  required
-                />
-              </div>
+              <header className="mt-6 space-y-2">
+                <h1 className="text-3xl font-display font-semibold tracking-tight sm:text-4xl">
+                  {isSignUp ? "Create your account" : "Welcome back"}
+                </h1>
+                <p className="text-sm text-slate-600">
+                  {isSignUp
+                    ? "Sign up to manage your Linkets, profiles, and team templates."
+                    : "Sign in with your credentials to access your dashboard."}
+                </p>
+              </header>
 
-              <button
-                type="submit"
-                disabled={pending}
-                className="auth-button-primary"
-              >
-                {pending
-                  ? isSignUp
-                    ? "Creating account..."
-                    : "Signing in..."
-                  : isSignUp
-                  ? "Create account"
-                  : "Sign in with email"}
-              </button>
-
-              {!isSignUp && (
-                <div className="flex justify-end">
-                  <Link
-                    href={`/forgot-password${
-                      next ? `?next=${encodeURIComponent(next)}` : ""
-                    }`}
-                    className="text-sm font-medium text-foreground/80 transition hover:text-foreground"
-                  >
-                    Forgot password?
-                  </Link>
+              {(error || oauthError) && (
+                <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+                  {error ?? oauthMessage ?? "Authentication failed. Please try again."}
                 </div>
               )}
-            </form>
 
-            <div className="space-y-3">
-              <div className="auth-divider text-center text-xs uppercase tracking-[0.3em] text-muted-foreground">
-                <span>or continue with</span>
-              </div>
+              <form
+                onSubmit={isSignUp ? handlePasswordSignUp : handlePasswordSignIn}
+                className="mt-6 space-y-4"
+              >
+                <div className="flex flex-col gap-2">
+                  <label htmlFor="email" className="text-sm font-medium text-slate-700">
+                    Email
+                  </label>
+                  <input
+                    id="email"
+                    type="email"
+                    value={email}
+                    autoComplete="email"
+                    onChange={(event) => setEmail(event.target.value)}
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#ff9776] focus:outline-none focus:ring-2 focus:ring-[#ff9776]/30"
+                    placeholder="you@example.com"
+                    required
+                  />
+                </div>
 
-              <div className="flex justify-center">
+                <div className="flex flex-col gap-2">
+                  <label htmlFor="password" className="text-sm font-medium text-slate-700">
+                    Password
+                  </label>
+                  <input
+                    id="password"
+                    type="password"
+                    value={password}
+                    autoComplete={isSignUp ? "new-password" : "current-password"}
+                    onChange={(event) => setPassword(event.target.value)}
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#5dd6f7] focus:outline-none focus:ring-2 focus:ring-[#5dd6f7]/30"
+                    placeholder={
+                      isSignUp
+                        ? "Create a password (6+ characters)"
+                        : "Enter your password"
+                    }
+                    required
+                  />
+                </div>
+
                 <button
-                  type="button"
-                  onClick={() => handleOAuth("google")}
+                  type="submit"
                   disabled={pending}
-                  className="auth-button-secondary"
+                  className="w-full rounded-2xl bg-gradient-to-r from-[#ff9776] via-[#ffb866] to-[#5dd6f7] py-3 text-sm font-semibold text-slate-900 shadow-[0_16px_40px_rgba(255,151,118,0.35)] transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-70"
                 >
-                  <svg className="h-5 w-5" viewBox="0 0 24 24">
-                    <path
-                      fill="#4285F4"
-                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                    />
-                    <path
-                      fill="#34A853"
-                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                    />
-                    <path
-                      fill="#FBBC05"
-                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                    />
-                    <path
-                      fill="#EA4335"
-                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                    />
-                  </svg>
-                  <span>Continue with Google</span>
+                  {pending
+                    ? isSignUp
+                      ? "Creating account..."
+                      : "Signing in..."
+                    : isSignUp
+                    ? "Create account"
+                    : "Sign in with email"}
                 </button>
-              </div>
-            </div>
 
-            {isSignUp ? (
-              <p className="text-center text-sm text-muted-foreground">
-                Already have an account?{" "}
-                <Link
-                  href={`/auth?next=${encodeURIComponent(next)}&view=signin`}
-                  className="font-semibold text-foreground transition hover:text-foreground/80"
-                >
-                  Sign in
-                </Link>
-              </p>
-            ) : (
-              <p className="text-center text-sm text-muted-foreground">
-                New to Linket?{" "}
-                <Link
-                  href={`/auth?next=${encodeURIComponent(next)}&view=signup`}
-                  className="font-semibold text-foreground transition hover:text-foreground/80"
-                >
-                  Create an account
-                </Link>
-              </p>
-            )}
-          </section>
+                {!isSignUp && (
+                  <div className="flex justify-end">
+                    <Link
+                      href={`/forgot-password${
+                        next ? `?next=${encodeURIComponent(next)}` : ""
+                      }`}
+                      className="text-sm font-medium text-slate-600 transition hover:text-slate-900"
+                    >
+                      Forgot password?
+                    </Link>
+                  </div>
+                )}
+              </form>
 
-          <aside className="auth-hero hidden flex-1 flex-col gap-6 rounded-3xl border border-border/60 bg-card/40 p-8 text-left shadow-[0_30px_80px_-60px_rgba(15,23,42,0.6)] backdrop-blur lg:flex">
-            <div className="space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.4em] text-muted-foreground">
-                Linket dashboard
-              </p>
-              <h2 className="text-3xl font-display font-semibold leading-tight text-foreground">
-                A premium workspace for your links, profiles, and brand.
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                Manage your public profile, build lead forms, and share contact
-                info with a cohesive visual system tailored to your theme.
-              </p>
-            </div>
-            <div className="auth-feature-grid">
-              <div className="auth-feature-card">
-                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
-                  Unified theme
+              <div className="mt-6 space-y-3">
+                <div className="flex items-center gap-4 text-xs uppercase tracking-[0.3em] text-slate-400">
+                  <span className="h-px flex-1 bg-slate-200" />
+                  <span>or continue with</span>
+                  <span className="h-px flex-1 bg-slate-200" />
+                </div>
+
+                <div className="flex justify-center">
+                  <button
+                    type="button"
+                    onClick={() => handleOAuth("google")}
+                    disabled={pending}
+                    className="flex w-full items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-[0_12px_32px_rgba(15,23,42,0.08)] transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-70"
+                  >
+                    <svg className="h-5 w-5" viewBox="0 0 24 24">
+                      <path
+                        fill="#4285F4"
+                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                      />
+                      <path
+                        fill="#34A853"
+                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                      />
+                      <path
+                        fill="#FBBC05"
+                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                      />
+                      <path
+                        fill="#EA4335"
+                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                      />
+                    </svg>
+                    <span>Continue with Google</span>
+                  </button>
+                </div>
+              </div>
+
+              {isSignUp ? (
+                <p className="mt-6 text-center text-sm text-slate-600">
+                  Already have an account?{" "}
+                  <Link
+                    href={`/auth?next=${encodeURIComponent(next)}&view=signin`}
+                    className="font-semibold text-slate-900 transition hover:text-slate-700"
+                  >
+                    Sign in
+                  </Link>
                 </p>
-                <p className="text-sm text-foreground">
-                  Every surface, border, and highlight aligns with your brand.
+              ) : (
+                <p className="mt-6 text-center text-sm text-slate-600">
+                  New to Linket?{" "}
+                  <Link
+                    href={`/auth?next=${encodeURIComponent(next)}&view=signup`}
+                    className="font-semibold text-slate-900 transition hover:text-slate-700"
+                  >
+                    Create an account
+                  </Link>
+                </p>
+              )}
+            </section>
+
+            <aside className="hidden flex-col gap-6 rounded-[32px] border border-white/70 bg-white/70 p-8 shadow-[0_28px_70px_-55px_rgba(15,23,42,0.35)] backdrop-blur lg:flex">
+              <div className="space-y-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.4em] text-slate-400">
+                  Linket dashboard
+                </p>
+                <h2 className="text-3xl font-display font-semibold leading-tight text-slate-900">
+                  A premium workspace for your links, profiles, and brand.
+                </h2>
+                <p className="text-sm text-slate-600">
+                  Manage your public profile, build lead forms, and share contact info with a cohesive visual system tailored to your theme.
                 </p>
               </div>
-              <div className="auth-feature-card">
-                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
-                  Smart links
-                </p>
-                <p className="text-sm text-foreground">
-                  Track clicks and keep your most important links in focus.
-                </p>
+              <div className="space-y-4">
+                {[
+                  {
+                    title: "Unified theme",
+                    description: "Every surface and highlight aligns with your brand.",
+                  },
+                  {
+                    title: "Smart links",
+                    description: "Track clicks and keep your most important links in focus.",
+                  },
+                  {
+                    title: "Lead capture",
+                    description: "Collect contacts with branded forms and a smooth mobile view.",
+                  },
+                ].map((item) => (
+                  <div
+                    key={item.title}
+                    className="rounded-2xl border border-white/70 bg-white/80 px-5 py-4 shadow-[0_12px_30px_rgba(15,23,42,0.08)]"
+                  >
+                    <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
+                      {item.title}
+                    </p>
+                    <p className="mt-2 text-sm text-slate-600">
+                      {item.description}
+                    </p>
+                  </div>
+                ))}
               </div>
-              <div className="auth-feature-card">
-                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
-                  Lead capture
-                </p>
-                <p className="text-sm text-foreground">
-                  Collect contacts with branded forms and a smooth mobile view.
-                </p>
-              </div>
-            </div>
-          </aside>
+            </aside>
+          </div>
         </section>
       </div>
     </div>

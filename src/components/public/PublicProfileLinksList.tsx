@@ -8,7 +8,7 @@ function faviconForUrl(url: string) {
   try {
     const parsed = new URL(url);
     if (!parsed.hostname) return null;
-    return `/api/favicon?u=${encodeURIComponent(parsed.toString())}`;
+    return `/api/favicon?u=${encodeURIComponent(parsed.toString())}&v=2`;
   } catch {
     return null;
   }

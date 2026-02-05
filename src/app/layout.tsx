@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Quicksand } from "next/font/google";
+import { Geist, Geist_Mono, Quicksand, Nunito } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/site/navbar";
 import PrefetchRoutes from "@/components/site/PrefetchRoutes";
@@ -25,6 +25,11 @@ const geistMono = Geist_Mono({
 
 const display = Quicksand({
   variable: "--font-display",
+  subsets: ["latin"],
+});
+
+const landing = Nunito({
+  variable: "--font-landing",
   subsets: ["latin"],
 });
 
@@ -101,7 +106,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body
         suppressHydrationWarning
-        className={`${geistSans.variable} ${geistMono.variable} ${display.variable} flex min-h-dvh flex-col antialiased bg-background text-foreground`}
+        className={`${geistSans.variable} ${geistMono.variable} ${display.variable} ${landing.variable} flex min-h-dvh flex-col antialiased bg-background text-foreground`}
       >
         <ThemeProvider initial="light" storageKey={null}>
           <PrefetchRoutes />
