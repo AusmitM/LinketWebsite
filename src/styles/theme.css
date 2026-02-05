@@ -554,6 +554,33 @@
   border-color: rgba(223, 98, 6, 0.4);
 }
 
+/* Honey theme: give the dashboard logo a light pill + glow for contrast */
+.theme-honey .dashboard-logo,
+.theme-honey .dashboard-logo-fallback {
+  border-radius: 999px;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.55);
+}
+
+.theme-honey .dashboard-logo::before {
+  content: "";
+  position: absolute;
+  inset-block: 2px;
+  inset-inline: 6px;
+  border-radius: 999px;
+  background: rgba(255, 248, 235, 0.9);
+  box-shadow: 0 0 14px rgba(255, 214, 140, 0.65), 0 0 28px rgba(223, 98, 6, 0.22);
+  z-index: 0;
+}
+
+.theme-honey .dashboard-logo img {
+  z-index: 1;
+}
+
+.theme-honey .dashboard-logo-fallback {
+  background: rgba(255, 248, 235, 0.9);
+  box-shadow: 0 0 14px rgba(255, 214, 140, 0.65), 0 0 28px rgba(223, 98, 6, 0.22);
+}
+
 /* Burnt Orange theme token mapping (UT Austin) */
 .theme-burnt-orange {
   --background: #120b09;
@@ -1571,8 +1598,8 @@ body.theme-forest .dashboard-forest-pin {
   }
 
   #dashboard-theme-scope .dashboard-logo {
-    width: 6.5rem;
-    height: 2.25rem;
+    width: 7.5rem;
+    height: 2.75rem;
   }
 
   #dashboard-theme-scope .dashboard-topbar {
@@ -1690,8 +1717,8 @@ body.theme-forest .dashboard-forest-pin {
   }
 
   #dashboard-theme-scope .dashboard-logo {
-    width: 6rem;
-    height: 2.125rem;
+    width: 7rem;
+    height: 2.5rem;
   }
 
   #dashboard-theme-scope .dashboard-topbar {
@@ -1800,8 +1827,8 @@ body.theme-forest .dashboard-forest-pin {
   }
 
   #dashboard-theme-scope .dashboard-logo {
-    width: 5.5rem;
-    height: 2rem;
+    width: 6.5rem;
+    height: 2.35rem;
   }
 
   #dashboard-theme-scope .dashboard-topbar {

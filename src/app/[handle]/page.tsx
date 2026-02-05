@@ -169,7 +169,10 @@ export default async function PublicProfilePage({ params }: Props) {
                         {displayName}
                       </h1>
                       {hasHeadline ? (
-                        <p className="break-words text-sm text-muted-foreground">
+                        <p
+                          className="break-words text-sm text-muted-foreground"
+                          style={{ whiteSpace: "normal", overflow: "visible", textOverflow: "clip" }}
+                        >
                           {headline}
                         </p>
                       ) : null}
@@ -213,7 +216,10 @@ export default async function PublicProfilePage({ params }: Props) {
                     {displayName}
                   </h1>
                   {hasHeadline ? (
-                    <p className="break-words text-sm text-muted-foreground">
+                    <p
+                      className="break-words text-sm text-muted-foreground"
+                      style={{ whiteSpace: "normal", overflow: "visible", textOverflow: "clip" }}
+                    >
                       {headline}
                     </p>
                   ) : null}

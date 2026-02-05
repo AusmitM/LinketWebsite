@@ -199,7 +199,7 @@ export default function SettingsContent() {
         </CardHeader>
         <CardContent className="grid gap-6 lg:grid-cols-[minmax(0,0.55fr)_minmax(0,1.45fr)]">
           <div className="flex items-center gap-4 rounded-2xl border border-border/60 bg-background/60 p-4">
-            <div className="relative h-16 w-16 overflow-hidden rounded-full border border-border/60 bg-muted">
+            <div className="relative h-20 w-20 overflow-hidden rounded-full border-2 border-[var(--accent)] bg-muted">
               {avatarLoading ? (
                 <div className="dashboard-skeleton h-full w-full animate-pulse bg-muted" data-skeleton />
               ) : avatarUrl ? (

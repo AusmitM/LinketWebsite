@@ -13,12 +13,14 @@ import { toast } from "@/components/system/toaster";
 import { normalizeLeadFormConfig } from "@/lib/lead-form";
 import { Download, RefreshCw, Trash2, XCircle } from "lucide-react";
 import type { Lead } from "@/types/db";
-import type { LeadFormConfig } from "@/types/lead-form";
+import type { LeadFormConfig, LeadFormFieldType } from "@/types/lead-form";
 import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 
 export default function LeadsList({ userId }: { userId: string }) {
   const [leads, setLeads] = useState<Lead[]>([]);
-  const [fieldLabels, setFieldLabels] = useState<Record<string, Record<string, string>>>({});
+  const [fieldLabels, setFieldLabels] = useState<
+    Record<string, Record<string, { label: string; type: LeadFormFieldType }>>
+  >({});
   const [loading, setLoading] = useState(true);
   const [fetching, setFetching] = useState(false);
   const [q, setQ] = useState("");
@@ -126,14 +128,14 @@ export default function LeadsList({ userId }: { userId: string }) {
         .in("handle", handles)
         .eq("user_id", userId);
       if (error || !data || cancelled) return;
-      const next: Record<string, Record<string, string>> = {};
+      const next: Record<string, Record<string, { label: string; type: LeadFormFieldType }>> = {};
       for (const row of data as Array<{ handle: string | null; config: LeadFormConfig }>) {
         if (!row.handle) continue;
         const handle = row.handle;
         const normalized = normalizeLeadFormConfig(row.config, handle);
         if (!next[handle]) next[handle] = {};
         normalized.fields.forEach((field) => {
-          next[handle][field.id] = field.label;
+          next[handle][field.id] = { label: field.label, type: field.type };
         });
       }
       setFieldLabels((prev) => ({ ...prev, ...next }));
@@ -526,23 +528,8 @@ export default function LeadsList({ userId }: { userId: string }) {
                         ✓
                       </span>
                     </span>
-                    <div className="min-w-0">
-                      <h3 className="text-sm font-medium">
-                        {l.name}
-                        {l.company ? (
-                          <span className="text-muted-foreground">
-                            {" "}
-                            - {l.company}
-                          </span>
-                        ) : null}
-                      </h3>
-                      {(l.email || l.phone) && (
-                        <p className="text-xs text-muted-foreground break-all">
-                          {l.email || ""}
-                          {l.email && l.phone ? " - " : ""}
-                          {l.phone || ""}
-                        </p>
-                      )}
+                  <div className="min-w-0">
+                      <h3 className="text-sm font-medium">{l.name}</h3>
                     </div>
                   </div>
                   <time
@@ -552,12 +539,7 @@ export default function LeadsList({ userId }: { userId: string }) {
                     {new Date(l.created_at).toLocaleString()}
                   </time>
                 </header>
-                {l.message ? (
-                  <p className="mt-2 text-sm whitespace-pre-wrap">
-                    {l.message}
-                  </p>
-                ) : null}
-                {renderCustomFields(l, fieldLabels)}
+                {renderLeadFields(l, fieldLabels)}
                 <footer className="mt-2 flex flex-col gap-2 text-xs sm:flex-row sm:flex-wrap sm:items-center">
                   {(l.name || l.email || l.phone || l.company || l.message) ? (
                     <Button
@@ -604,10 +586,19 @@ export default function LeadsList({ userId }: { userId: string }) {
 
 const CORE_FIELD_KEYS = new Set(["name", "email", "phone", "company", "message"]);
 
-function renderCustomFields(lead: Lead, labelsByHandle: Record<string, Record<string, string>>) {
+function renderLeadFields(
+  lead: Lead,
+  labelsByHandle: Record<string, Record<string, { label: string; type: LeadFormFieldType }>>
+) {
   const custom = lead.custom_fields;
-  if (!custom || typeof custom !== "object") return null;
-  const entries = Object.entries(custom)
+  const metaMap = labelsByHandle[lead.handle] ?? {};
+
+  const fields: Array<{ key: string; label: string; value: string }> = [];
+
+  if (lead.email) fields.push({ key: "email", label: "Email", value: lead.email });
+  if (lead.phone) fields.push({ key: "phone", label: "Phone number", value: lead.phone });
+
+  const customEntries = Object.entries(custom ?? {})
     .filter(([key, value]) => {
       if (!key || isCoreFieldKey(key)) return false;
       if (value === true || value === false) return true;
@@ -616,18 +607,58 @@ function renderCustomFields(lead: Lead, labelsByHandle: Record<string, Record<st
     })
     .map(([key, value]) => {
       const parsed = parseCustomFieldKey(key);
-      const label =
-        parsed.label ||
-        labelsByHandle[lead.handle]?.[parsed.id] ||
-        toReadableLabel(parsed.id);
-      return { key, label, value: formatLeadValue(value) };
+      const meta = metaMap[parsed.id];
+      const label = meta?.label || parsed.label || toReadableLabel(parsed.id);
+      const type = meta?.type;
+      return { key, label, value: formatLeadValue(value), type };
+    })
+    .filter((entry) => entry.label.toLowerCase() !== "phone number");
+
+  const dateTimeTypes: LeadFormFieldType[] = ["date", "time"];
+  const textTypes: LeadFormFieldType[] = ["short_text", "long_text"];
+
+  dateTimeTypes.forEach((type) => {
+    customEntries
+      .filter((entry) => entry.type === type)
+      .forEach((entry) => {
+        fields.push({
+          key: `${type}-${entry.key}`,
+          label: entry.label,
+          value: entry.value,
+        });
+      });
+  });
+
+  if (lead.message) fields.push({ key: "note", label: "Note", value: lead.message });
+
+  textTypes.forEach((type) => {
+    customEntries
+      .filter((entry) => entry.type === type)
+      .forEach((entry) => {
+        fields.push({
+          key: `${type}-${entry.key}`,
+          label: entry.label,
+          value: entry.value,
+        });
+      });
+  });
+
+  // Append any remaining custom fields (types without metadata) last.
+  customEntries
+    .filter((entry) => !entry.type || (!dateTimeTypes.includes(entry.type) && !textTypes.includes(entry.type)))
+    .forEach((entry) => {
+      fields.push({
+        key: `custom-${entry.key}`,
+        label: entry.label,
+        value: entry.value,
+      });
     });
 
-  if (entries.length === 0) return null;
+  if (fields.length === 0) return null;
 
   return (
-    <dl className="mt-2 grid gap-2 text-xs text-muted-foreground sm:grid-cols-2">
-      {entries.map((entry) => (
+    <dl className="mt-3 grid gap-2 text-xs text-muted-foreground sm:grid-cols-2">
+      {fields.map((entry) => (
         <div key={entry.key} className="min-w-0">
           <dt className="font-medium text-foreground">{entry.label}</dt>
           <dd className="break-words">{entry.value}</dd>

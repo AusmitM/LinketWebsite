@@ -661,7 +661,7 @@ export function Navbar() {
               aria-label={`${brand.name} dashboard`}
             >
               {brand.logo ? (
-                <span className="dashboard-logo relative h-12 w-36 overflow-hidden">
+                <span className="dashboard-logo relative h-14 w-44 overflow-hidden">
                   <Image
                     src={brand.logo}
                     alt={`${brand.name} logo`}
@@ -672,7 +672,7 @@ export function Navbar() {
                   />
                 </span>
               ) : (
-                <span className="dashboard-logo-fallback inline-flex h-10 w-10 items-center justify-center rounded-2xl text-lg font-bold">
+                <span className="dashboard-logo-fallback inline-flex h-12 w-12 items-center justify-center rounded-2xl text-xl font-bold">
                   {(brand.shortName ?? brand.name).slice(0, 2)}
                 </span>
               )}

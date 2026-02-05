@@ -1611,10 +1611,10 @@ function PhonePreviewCard({
           </div>
         ) : null}
         <div className={avatarUrl ? "mt-3 text-center" : "mt-2 text-center"}>
-          <div className="mx-auto max-w-[240px] truncate text-base font-semibold text-foreground">
+          <div className="mx-auto max-w-[240px] text-base font-semibold text-foreground leading-snug whitespace-normal break-words">
             {profile.name}
           </div>
-          <div className="mx-auto mt-1 max-w-[240px] truncate text-xs text-muted-foreground">
+          <div className="mx-auto mt-1 max-w-[240px] text-xs text-muted-foreground leading-snug whitespace-normal break-words">
             {profile.tagline}
           </div>
         </div>
