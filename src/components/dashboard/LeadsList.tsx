@@ -415,7 +415,7 @@ export default function LeadsList({ userId }: { userId: string }) {
             <Button
               variant="outline"
               size="sm"
-              onClick={exportCsv}
+              onClick={() => exportCsv()}
               aria-label="Export CSV"
               className="w-full sm:w-auto"
             >
