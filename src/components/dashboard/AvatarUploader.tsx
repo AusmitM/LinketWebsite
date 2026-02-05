@@ -384,15 +384,17 @@ export default function AvatarUploader({
     return (
       <section className="flex flex-col gap-4 rounded-2xl border border-dashed border-muted/70 p-4">
         <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center">
-          <div className="h-16 w-16 overflow-hidden rounded-full border bg-muted sm:h-20 sm:w-20">
-            {displayUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={displayUrl} alt="Profile photo" className="h-full w-full object-cover" />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
-                150A-150
-              </div>
-            )}
+          <div className="flex w-full justify-center sm:w-auto sm:justify-start">
+            <div className="h-32 w-32 overflow-hidden rounded-full border-2 border-[var(--accent)] bg-muted sm:h-20 sm:w-20">
+              {displayUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={displayUrl} alt="Profile photo" className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
+                  150A-150
+                </div>
+              )}
+            </div>
           </div>
           <div className="flex-1 space-y-2">
             <Label htmlFor={inputTargetId}>Profile photo</Label>
@@ -404,7 +406,7 @@ export default function AvatarUploader({
               onChange={(event) => handleFile(event.target.files?.[0] ?? null)}
               disabled={loading}
             />
-            <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+            <div className="flex flex-wrap items-center justify-end gap-[2px] text-xs text-muted-foreground sm:justify-start sm:gap-3">
               {sourceFile?.name ? (
                 <span className="truncate">Selected: {sourceFile.name}</span>
               ) : latestAvatarUrl ? (
@@ -828,6 +830,3 @@ function loadImage(src: string): Promise<HTMLImageElement> {
     img.src = src;
   });
 }
-
-
-

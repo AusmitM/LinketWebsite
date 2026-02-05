@@ -1242,8 +1242,8 @@ function EditorPanel({
               inputId="profile-logo-upload"
               controls={
                 <div className="flex flex-col gap-2">
-                  <Label className="text-xs text-muted-foreground">Logo shape</Label>
-                  <div className="flex items-center gap-2">
+                  <Label className="text-[11px] text-muted-foreground sm:text-xs">Logo shape</Label>
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                     <Button
                       type="button"
                       size="sm"
@@ -1251,7 +1251,7 @@ function EditorPanel({
                       onClick={() => onProfileChange({ logoShape: "circle" })}
                       disabled={loading || !userId}
                       className={cn(
-                        "h-8 px-3",
+                        "h-9 w-full px-3 sm:h-8 sm:w-auto",
                         draft?.logoShape !== "rect"
                           ? `bg-[#cfe4ff] ${theme === "honey" ? "text-[#8a3f0a]" : "text-foreground"} border-2 border-[#5aa0ff] shadow-[0_6px_16px_-10px_rgba(90,160,255,0.6)]`
                           : "text-muted-foreground border border-border/60 hover:bg-muted/40"
@@ -1266,7 +1266,7 @@ function EditorPanel({
                       onClick={() => onProfileChange({ logoShape: "rect" })}
                       disabled={loading || !userId}
                       className={cn(
-                        "h-8 px-3",
+                        "h-9 w-full px-3 sm:h-8 sm:w-auto",
                         draft?.logoShape === "rect"
                           ? `bg-[#cfe4ff] ${theme === "honey" ? "text-[#8a3f0a]" : "text-foreground"} border-2 border-[#5aa0ff] shadow-[0_6px_16px_-10px_rgba(90,160,255,0.6)]`
                           : "text-muted-foreground border border-border/60 hover:bg-muted/40"
@@ -1275,7 +1275,7 @@ function EditorPanel({
                       Rectangle
                     </Button>
                   </div>
-                  <label className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                  <label className="mt-1 flex w-full items-center justify-start gap-3 rounded-full">
                     <Switch
                       checked={draft?.logoBackgroundWhite ?? false}
                       onCheckedChange={(value) =>
@@ -1293,7 +1293,7 @@ function EditorPanel({
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="profile-name" className="text-xs text-muted-foreground">
+            <Label htmlFor="profile-name" className="text-[11px] text-muted-foreground sm:text-xs">
               Display name
             </Label>
             <Input
@@ -1301,11 +1301,11 @@ function EditorPanel({
               value={draft?.name ?? ""}
               onChange={(event) => onProfileChange({ name: event.target.value })}
               disabled={loading || !userId}
-              className="h-9 text-sm"
+              className="h-10 text-sm sm:h-9"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="profile-headline" className="text-xs text-muted-foreground">
+            <Label htmlFor="profile-headline" className="text-[11px] text-muted-foreground sm:text-xs">
               Headline
             </Label>
             <Textarea
@@ -1317,15 +1317,15 @@ function EditorPanel({
               }
               disabled={loading || !userId}
               placeholder="I do things | other things & more things..."
-              className="min-h-16 text-sm"
+              className="min-h-20 text-sm sm:min-h-16"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="profile-handle" className="text-xs text-muted-foreground">
+            <Label htmlFor="profile-handle" className="text-[11px] text-muted-foreground sm:text-xs">
               Public handle
             </Label>
             <div className="relative">
-              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+              <span className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground sm:left-3 sm:text-xs">
                 linketconnect.com/
               </span>
               <Input
@@ -1337,7 +1337,7 @@ function EditorPanel({
                     handle: event.target.value.replace(/\s+/g, "").toLowerCase(),
                   });
                 }}
-                className={`h-9 pl-40 text-sm${handleError ? " border-destructive focus-visible:ring-destructive" : ""}`}
+                className={`h-10 pl-28 text-sm sm:h-9 sm:pl-40${handleError ? " border-destructive focus-visible:ring-destructive" : ""}`}
                 disabled={loading || !userId}
               />
             </div>

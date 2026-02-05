@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/system/toaster";
 import { normalizeLeadFormConfig } from "@/lib/lead-form";
-import { Trash2 } from "lucide-react";
+import { Download, RefreshCw, Trash2, XCircle } from "lucide-react";
 import type { Lead } from "@/types/db";
 import type { LeadFormConfig } from "@/types/lead-form";
 import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
@@ -388,25 +388,6 @@ export default function LeadsList({ userId }: { userId: string }) {
     URL.revokeObjectURL(url);
   }
 
-  // Download multiple contacts as a single .vcf file.
-  function downloadSelectedVCardBundle() {
-    if (selectedLeads.length === 0) {
-      toast({ title: "Select at least one lead" });
-      return;
-    }
-    const vcard = selectedLeads.map((lead) => buildVCard(lead)).join("\n");
-    const blob = new Blob([vcard], { type: "text/vcard;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const date = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = `linket-contacts-${date}.vcf`;
-    document.body.appendChild(anchor);
-    anchor.click();
-    anchor.remove();
-    URL.revokeObjectURL(url);
-  }
-
   return (
     <Card className="rounded-2xl">
       <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -419,14 +400,16 @@ export default function LeadsList({ userId }: { userId: string }) {
             className="rounded-xl"
             aria-label="Search leads"
           />
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row">
             <Button
               variant="outline"
               size="sm"
               onClick={() => load({ reset: true })}
               disabled={fetching}
               aria-label="Refresh leads"
+              className="hidden w-full sm:flex sm:w-auto"
             >
+              <RefreshCw className="mr-2 h-4 w-4 sm:hidden" aria-hidden />
               {fetching || loading ? "Refreshing…" : "Refresh"}
             </Button>
             <Button
@@ -434,7 +417,9 @@ export default function LeadsList({ userId }: { userId: string }) {
               size="sm"
               onClick={exportCsv}
               aria-label="Export CSV"
+              className="w-full sm:w-auto"
             >
+              <Download className="mr-2 h-4 w-4 sm:hidden" aria-hidden />
               Export All
             </Button>
           </div>
@@ -443,15 +428,15 @@ export default function LeadsList({ userId }: { userId: string }) {
       <CardContent>
         {/* Bulk selection toolbar */}
         {leads.length > 0 && (
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/60 bg-card/80 p-3 text-foreground shadow-[0_12px_30px_rgba(15,23,42,0.06)] backdrop-blur">
+          <div className="mb-4 flex flex-col gap-3 rounded-2xl border border-border/60 bg-card/80 p-3 text-foreground shadow-[0_12px_30px_rgba(15,23,42,0.06)] backdrop-blur sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
             <label className="flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.2em] text-foreground/80">
-              <span className="relative inline-flex h-5 w-5 items-center justify-center">
+              <span className="relative inline-flex h-6 w-6 items-center justify-center sm:h-5 sm:w-5">
                 <input
                   ref={selectAllRef}
                   type="checkbox"
                   checked={allVisibleSelected}
                   onChange={toggleSelectAll}
-                  className="dashboard-leads-checkbox peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-[var(--accent)] bg-background/80 shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/40 checked:border-[var(--accent)] checked:bg-[var(--accent)]"
+                  className="dashboard-leads-checkbox peer h-6 w-6 cursor-pointer appearance-none rounded-md border border-[var(--accent)] bg-background/80 shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/40 checked:border-[var(--accent)] checked:bg-[var(--accent)] sm:h-5 sm:w-5"
                   aria-label="Select all visible leads"
                 />
                 <span className="pointer-events-none absolute text-xs font-bold text-[var(--accent-foreground)] opacity-0 transition peer-checked:opacity-100">
@@ -460,7 +445,7 @@ export default function LeadsList({ userId }: { userId: string }) {
               </span>
               Select all
             </label>
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
               <span className="rounded-full border border-border/60 bg-background/70 px-3 py-1 text-xs font-medium text-foreground/80">
                 {selectedIds.size} selected
               </span>
@@ -469,23 +454,19 @@ export default function LeadsList({ userId }: { userId: string }) {
                 size="sm"
                 onClick={() => exportCsv(selectedLeads)}
                 disabled={selectedIds.size === 0}
+                className="w-full sm:w-auto"
               >
+                <Download className="mr-2 h-4 w-4 sm:hidden" aria-hidden />
                 Export selected
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={downloadSelectedVCardBundle}
-                disabled={selectedIds.size === 0}
-              >
-                Download contacts
               </Button>
               <Button
                 variant="destructive"
                 size="sm"
                 onClick={onDeleteSelected}
                 disabled={selectedIds.size === 0}
+                className="w-full sm:w-auto"
               >
+                <Trash2 className="mr-2 h-4 w-4 sm:hidden" aria-hidden />
                 Delete selected
               </Button>
               <Button
@@ -493,7 +474,9 @@ export default function LeadsList({ userId }: { userId: string }) {
                 size="sm"
                 onClick={clearSelection}
                 disabled={selectedIds.size === 0}
+                className="w-full sm:w-auto"
               >
+                <XCircle className="mr-2 h-4 w-4 sm:hidden" aria-hidden />
                 Clear
               </Button>
             </div>
@@ -529,14 +512,14 @@ export default function LeadsList({ userId }: { userId: string }) {
                   toggleLeadSelection(l.id);
                 }}
               >
-                <header className="flex flex-wrap items-start justify-between gap-2">
+                <header className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                   <div className="flex min-w-0 items-start gap-3">
-                    <span className="relative mt-0.5 inline-flex h-5 w-5 items-center justify-center">
+                    <span className="relative mt-0.5 inline-flex h-6 w-6 items-center justify-center sm:h-5 sm:w-5">
                       <input
                         type="checkbox"
                         checked={selectedIds.has(l.id)}
                         onChange={() => toggleLeadSelection(l.id)}
-                        className="dashboard-leads-checkbox peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-[var(--accent)] bg-background/80 shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/40 checked:border-[var(--accent)] checked:bg-[var(--accent)]"
+                        className="dashboard-leads-checkbox peer h-6 w-6 cursor-pointer appearance-none rounded-md border border-[var(--accent)] bg-background/80 shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/40 checked:border-[var(--accent)] checked:bg-[var(--accent)] sm:h-5 sm:w-5"
                         aria-label={`Select lead ${l.name || l.email || "entry"}`}
                       />
                       <span className="pointer-events-none absolute text-xs font-bold text-[var(--accent-foreground)] opacity-0 transition peer-checked:opacity-100">
@@ -563,7 +546,7 @@ export default function LeadsList({ userId }: { userId: string }) {
                     </div>
                   </div>
                   <time
-                    className="text-xs text-muted-foreground"
+                    className="text-xs text-muted-foreground sm:ml-auto"
                     dateTime={l.created_at}
                   >
                     {new Date(l.created_at).toLocaleString()}
@@ -575,13 +558,14 @@ export default function LeadsList({ userId }: { userId: string }) {
                   </p>
                 ) : null}
                 {renderCustomFields(l, fieldLabels)}
-                <footer className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                <footer className="mt-2 flex flex-col gap-2 text-xs sm:flex-row sm:flex-wrap sm:items-center">
                   {(l.name || l.email || l.phone || l.company || l.message) ? (
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => downloadVCard(l)}
                       aria-label="Download contact"
+                      className="w-full sm:w-auto"
                     >
                       Download contact
                     </Button>
@@ -589,9 +573,9 @@ export default function LeadsList({ userId }: { userId: string }) {
                   <Button
                     variant="destructive"
                     size="sm"
-                    className="flex items-center gap-1"
                     onClick={() => onDelete(l.id)}
                     aria-label="Delete lead"
+                    className="flex w-full items-center gap-1 sm:w-auto"
                   >
                     <Trash2 className="h-4 w-4" />
                     Delete
@@ -605,6 +589,7 @@ export default function LeadsList({ userId }: { userId: string }) {
                   onClick={() => load()}
                   disabled={fetching}
                   aria-label="Load more leads"
+                  className="w-full sm:w-auto"
                 >
                   {fetching ? "Loading…" : "Load more"}
                 </Button>

@@ -361,15 +361,17 @@ export default function ProfileHeaderUploader({
     return (
       <section className="flex flex-col gap-4 rounded-2xl border border-dashed border-muted/70 p-4">
         <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center">
-          <div className="h-16 w-28 overflow-hidden rounded-xl border bg-muted sm:h-20 sm:w-36">
-            {displayUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={displayUrl} alt="Header image" className="h-full w-full object-cover" />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
-                300A-150
-              </div>
-            )}
+          <div className="flex w-full justify-center sm:w-auto sm:justify-start">
+            <div className="h-30 w-48 overflow-hidden rounded-xl border-2 border-[var(--accent)] bg-muted sm:h-20 sm:w-36">
+              {displayUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={displayUrl} alt="Header image" className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
+                  300A-150
+                </div>
+              )}
+            </div>
           </div>
           <div className="flex-1 space-y-2">
             <Label htmlFor={inputTargetId}>Header image</Label>
@@ -381,7 +383,7 @@ export default function ProfileHeaderUploader({
               onChange={(event) => handleFile(event.target.files?.[0] ?? null)}
               disabled={loading}
             />
-            <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+            <div className="flex flex-wrap items-center justify-end gap-[2px] text-xs text-muted-foreground sm:justify-start sm:gap-3">
               {sourceFile?.name ? (
                 <span className="truncate">Selected: {sourceFile.name}</span>
               ) : latestHeaderUrl ? (
