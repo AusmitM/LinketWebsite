@@ -1325,7 +1325,7 @@ function EditorPanel({
               Public handle
             </Label>
             <div className="relative">
-              <span className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground sm:left-3 sm:text-xs">
+              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground sm:text-xs">
                 linketconnect.com/
               </span>
               <Input
@@ -1337,7 +1337,7 @@ function EditorPanel({
                     handle: event.target.value.replace(/\s+/g, "").toLowerCase(),
                   });
                 }}
-                className={`h-10 pl-28 text-sm sm:h-9 sm:pl-40${handleError ? " border-destructive focus-visible:ring-destructive" : ""}`}
+                className={`h-10 pl-36 text-sm sm:h-9 sm:pl-40${handleError ? " border-destructive focus-visible:ring-destructive" : ""}`}
                 disabled={loading || !userId}
               />
             </div>
