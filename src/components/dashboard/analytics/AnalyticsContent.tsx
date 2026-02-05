@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
+import { cn } from "@/lib/utils";
 import type { UserAnalytics } from "@/lib/analytics-service";
 import { ResponsiveContainer, LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, Legend } from "recharts";
 import { Download } from "lucide-react";
@@ -147,10 +148,16 @@ export default function AnalyticsContent() {
           {RANGES.map((option) => (
             <Button
               key={option.value}
-              variant={range === option.value ? "default" : "outline"}
+              variant="outline"
               size="sm"
-              className="rounded-full"
+              className={cn(
+                "rounded-full dashboard-analytics-range-button transition",
+                range === option.value
+                  ? "border-accent bg-accent text-accent-foreground shadow-[0_16px_40px_rgba(0,0,0,0.25)] ring-2 ring-accent/40 ring-offset-2 ring-offset-background hover:bg-accent/90"
+                  : "border-border/60 text-muted-foreground hover:border-accent/50 hover:text-foreground"
+              )}
               onClick={() => setRange(option.value)}
+              data-selected={range === option.value ? "true" : "false"}
             >
               {option.label}
             </Button>
