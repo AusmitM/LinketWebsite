@@ -1224,6 +1224,20 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
     linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, transparent 55%);
 }
 
+/* Dream theme: pastel pink new linket button */
+#dashboard-theme-scope.theme-dream .dashboard-new-linket-button,
+.theme-dream .dashboard-new-linket-button {
+  background: #e7a2d8;
+  color: #2e1a2f;
+  border-color: rgba(144, 70, 120, 0.35);
+  box-shadow: 0 16px 32px -24px rgba(111, 42, 96, 0.35), var(--premium-inset);
+}
+
+#dashboard-theme-scope.theme-dream .dashboard-new-linket-button:hover,
+.theme-dream .dashboard-new-linket-button:hover {
+  filter: brightness(1.04);
+}
+
 /* Forest atmosphere overlay */
 #dashboard-theme-scope.theme-forest::before {
   opacity: 0.42;
