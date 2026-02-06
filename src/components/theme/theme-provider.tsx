@@ -2,19 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useSyncExternalStore } from "react";
 import type { ReactNode } from "react";
-
-export type ThemeName =
-  | "light"
-  | "dark"
-  | "midnight"
-  | "dream"
-  | "forest"
-  | "gilded"
-  | "rose"
-  | "autumn"
-  | "honey"
-  | "burnt-orange"
-  | "maroon";
+import { isDarkTheme, type ThemeName } from "@/lib/themes";
 
 type ThemeContextValue = {
   theme: ThemeName;
@@ -24,15 +12,6 @@ type ThemeContextValue = {
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 const STORAGE_KEY = "linket:theme";
 const THEME_EVENT = "linket:theme-change";
-const DARK_THEMES = new Set<ThemeName>([
-  "dark",
-  "midnight",
-  "gilded",
-  "forest",
-  "burnt-orange",
-  "maroon",
-]);
-
 function applyThemeClass(t: ThemeName, scopeEl?: Element | null) {
   if (typeof document === "undefined") return;
 
@@ -50,12 +29,12 @@ function applyThemeClass(t: ThemeName, scopeEl?: Element | null) {
       .filter((x) => x.startsWith("theme-"))
       .forEach((x) => cl.remove(x));
     cl.add(`theme-${t}`);
-    if (DARK_THEMES.has(t)) cl.add("dark");
+    if (isDarkTheme(t)) cl.add("dark");
     else cl.remove("dark");
   }
 
   if (!scopeEl && root && !targets.includes(root)) {
-    root.classList.toggle("dark", DARK_THEMES.has(t));
+    root.classList.toggle("dark", isDarkTheme(t));
   }
 }
 

@@ -78,12 +78,13 @@ export default async function PublicProfilePage({ params }: Props) {
   const isDark = isDarkTheme(profile.theme);
   const themeClass = `theme-${profile.theme} ${isDark ? "dark" : ""}`;
   const headline = profile.headline?.trim() ?? "";
+  const isBurntOrange = profile.theme === "burnt-orange";
   const links = sortLinks(profile.links);
   const hasLinks = links.length > 0;
   const hasHeadline = Boolean(headline);
 
   return (
-    <div className={`min-h-screen bg-background text-foreground ${themeClass}`}>
+    <div className={`public-profile-shell min-h-screen text-foreground ${themeClass}`}>
       <PublicProfileLiteMode />
       <div className="relative overflow-hidden">
         <div className="pointer-events-none absolute inset-0 -z-10 public-profile-heavy">
@@ -183,7 +184,7 @@ export default async function PublicProfilePage({ params }: Props) {
                   </div>
                 </div>
               </div>
-              <div className="hidden flex-wrap items-center gap-4 sm:flex">
+              <div className="public-profile-desktop-header hidden flex-wrap items-center gap-4 sm:flex">
                 {avatar ? (
                   <div className="flex flex-col items-center">
                     <div className="relative h-20 w-20 rounded-3xl bg-muted/40 overflow-visible">
@@ -212,18 +213,28 @@ export default async function PublicProfilePage({ params }: Props) {
                   </div>
                 ) : null}
                 <div className="min-w-0 space-y-1">
-                  <h1 className="break-words font-display text-3xl tracking-tight sm:text-4xl">
+                  <h1
+                    className={`break-words font-display text-3xl tracking-tight sm:text-4xl ${
+                      isBurntOrange ? "sm:text-[#fff6ed]" : ""
+                    }`}
+                  >
                     {displayName}
                   </h1>
                   {hasHeadline ? (
                     <p
-                      className="break-words text-sm text-muted-foreground"
+                      className={`break-words text-sm text-muted-foreground ${
+                        isBurntOrange ? "sm:text-[rgba(255,246,237,0.82)]" : ""
+                      }`}
                       style={{ whiteSpace: "normal", overflow: "visible", textOverflow: "clip" }}
                     >
                       {headline}
                     </p>
                   ) : null}
-                  <div className="break-words text-xs text-muted-foreground">
+                  <div
+                    className={`break-words text-xs text-muted-foreground ${
+                      isBurntOrange ? "sm:text-[rgba(255,246,237,0.7)]" : ""
+                    }`}
+                  >
                     @{publicHandle}
                   </div>
                 </div>
@@ -233,7 +244,7 @@ export default async function PublicProfilePage({ params }: Props) {
                 <VCardDownload
                   handle={publicHandle}
                   label="Save Contact Information"
-                  className="w-full rounded-full bg-background text-foreground hover:bg-muted/60 dark:bg-background dark:text-foreground dark:hover:text-foreground dark:hover:bg-muted/30 shadow-[0_16px_32px_-24px_rgba(15,23,42,0.6)] sm:w-auto"
+                  className="public-profile-cta-primary w-full rounded-full bg-background text-foreground hover:bg-muted/60 dark:bg-background dark:text-foreground dark:hover:text-foreground dark:hover:bg-muted/30 shadow-[0_16px_32px_-24px_rgba(15,23,42,0.6)] sm:w-auto"
                 />
                 <ShareContactButton
                   handle={publicHandle}
@@ -245,7 +256,7 @@ export default async function PublicProfilePage({ params }: Props) {
 
                 {hasLinks ? (
                   <div className="space-y-3">
-                    <h2 className="text-sm font-semibold uppercase tracking-[0.3em] text-muted-foreground">
+                    <h2 className="public-profile-links-label text-sm font-semibold uppercase tracking-[0.3em] text-muted-foreground">
                       Links
                     </h2>
                     <PublicProfileLinksList links={links} trackClicks />

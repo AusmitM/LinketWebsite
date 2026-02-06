@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 
-import type { ThemeName } from "@/components/theme/theme-provider";
+import type { ThemeName } from "@/lib/themes";
 import { useThemeOptional } from "@/components/theme/theme-provider";
 import { isDarkTheme } from "@/lib/themes";
 

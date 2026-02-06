@@ -17,9 +17,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useThemeOptional } from "@/components/theme/theme-provider";
+import type { ThemeName } from "@/lib/themes";
 import { useDashboardUser } from "@/components/dashboard/DashboardSessionContext";
-
-type ThemeName = import("@/components/theme/theme-provider").ThemeName;
 
 const ORDER: ThemeName[] = [
   "light",

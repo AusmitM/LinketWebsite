@@ -942,6 +942,7 @@ export default function PublicProfileEditorPage() {
                   logoUrl={logoPreviewUrl}
                   logoShape={draft?.logoShape ?? "circle"}
                   logoBackgroundWhite={draft?.logoBackgroundWhite ?? false}
+                  themeName={draft?.theme ?? theme}
                   contactEnabled={hasContactDetails}
                   contactDisabledText="Add email or phone to enable Save contact"
                   onContactClick={handleContactCta}
@@ -1070,6 +1071,7 @@ export default function PublicProfileEditorPage() {
                 logoUrl={logoPreviewUrl}
                 logoShape={draft?.logoShape ?? "circle"}
                 logoBackgroundWhite={draft?.logoBackgroundWhite ?? false}
+                themeName={draft?.theme ?? theme}
                 contactEnabled={hasContactDetails}
                 contactDisabledText="Add email or phone to enable Save contact"
                 onContactClick={handleContactCta}
@@ -1516,6 +1518,7 @@ function PhonePreviewCard({
   logoUrl,
   logoShape,
   logoBackgroundWhite,
+  themeName,
   contactEnabled,
   contactDisabledText,
   onContactClick,
@@ -1536,6 +1539,7 @@ function PhonePreviewCard({
   logoUrl: string | null;
   logoShape: "circle" | "rect";
   logoBackgroundWhite: boolean;
+  themeName?: ThemeName;
   contactEnabled: boolean;
   contactDisabledText: string;
   onContactClick: () => void;
@@ -1561,9 +1565,16 @@ function PhonePreviewCard({
   const [draggingLeadFieldId, setDraggingLeadFieldId] = useState<string | null>(
     null
   );
+  const resolvedTheme = themeName;
+  const isBurntOrange = resolvedTheme === "burnt-orange";
 
   return (
-    <div className="h-fit w-full max-w-[340px] overflow-hidden rounded-[36px] border border-border/60 bg-background shadow-[0_20px_40px_-30px_rgba(15,23,42,0.3)]">
+    <div
+      className={cn(
+        "public-profile-preview h-fit w-full max-w-[340px] overflow-hidden rounded-[36px] border border-border/60 bg-background shadow-[0_20px_40px_-30px_rgba(15,23,42,0.3)]",
+        isBurntOrange && "theme-burnt-orange"
+      )}
+    >
       <div
         className="relative h-28 rounded-t-[36px]"
         style={{
@@ -1610,7 +1621,7 @@ function PhonePreviewCard({
             </div>
           </div>
         ) : null}
-        <div className={avatarUrl ? "mt-3 text-center" : "mt-2 text-center"}>
+        <div className={avatarUrl ? "public-profile-preview-header mt-3 text-center" : "public-profile-preview-header mt-2 text-center"}>
           <div className="mx-auto max-w-[240px] text-base font-semibold text-foreground leading-snug whitespace-normal break-words">
             {profile.name}
           </div>
@@ -1634,7 +1645,12 @@ function PhonePreviewCard({
         </button>
 
         <div className="mt-4 w-full text-left">
-          <div className="text-xs font-semibold text-muted-foreground">
+          <div
+            className={cn(
+              "public-profile-preview-section-label public-profile-links-label text-xs font-semibold text-muted-foreground",
+              isBurntOrange && "text-[#fff6ed]"
+            )}
+          >
             Links
           </div>
           <div className="mt-3 space-y-3">
@@ -1660,7 +1676,12 @@ function PhonePreviewCard({
           </div>
         </div>
 
-        <div className="mt-4 w-full text-xs text-muted-foreground">
+        <div
+          className={cn(
+            "public-profile-preview-section-label mt-4 w-full text-xs text-muted-foreground",
+            isBurntOrange && "text-[#fff6ed]"
+          )}
+        >
           {leadFormPreview?.title || "Get in Touch"}
         </div>
         <div className="mt-3 w-full space-y-2">

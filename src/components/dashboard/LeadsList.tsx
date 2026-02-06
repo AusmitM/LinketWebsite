@@ -257,7 +257,7 @@ export default function LeadsList({ userId }: { userId: string }) {
         if (!labelByKey[key]) {
           labelByKey[key] =
             parsed.label ||
-            fieldLabels[lead.handle]?.[parsed.id] ||
+            fieldLabels[lead.handle]?.[parsed.id]?.label ||
             toReadableLabel(parsed.id);
         }
       });
@@ -391,7 +391,7 @@ export default function LeadsList({ userId }: { userId: string }) {
   }
 
   return (
-    <Card className="rounded-2xl">
+    <Card className="dashboard-leads-card rounded-2xl">
       <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <CardTitle className="font-display">Leads</CardTitle>
         <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
