@@ -531,7 +531,7 @@ export default function LeadFormBuilder({
                   <div
                     key={field.id}
                     className={cn(
-                      "dashboard-drag-item flex items-start gap-3 rounded-xl border border-border/60 bg-background/80 p-3",
+                      "dashboard-drag-item lead-form-drag-item flex items-start gap-3 rounded-xl border border-border/60 bg-background/80 p-3",
                       selectedFieldId === field.id && "ring-2 ring-primary/20",
                       draggingFieldId === field.id && "is-dragging"
                     )}

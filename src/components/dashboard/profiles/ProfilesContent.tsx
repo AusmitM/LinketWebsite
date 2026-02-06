@@ -103,7 +103,7 @@ const THEME_OPTIONS: Array<{
     id: "maroon",
     label: "Aggie",
     description: "Texas A&M maroon with rich, dramatic depth",
-    preview: "linear-gradient(135deg, #14080b 0%, #6b0f1a 100%)",
+    preview: "linear-gradient(135deg, #500000 0%, #fff1f1 100%)",
     textTone: "light",
   },
 ];

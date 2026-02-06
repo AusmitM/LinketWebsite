@@ -1572,6 +1572,7 @@ function PhonePreviewCard({
     <div
       className={cn(
         "public-profile-preview h-fit w-full max-w-[340px] overflow-hidden rounded-[36px] border border-border/60 bg-background shadow-[0_20px_40px_-30px_rgba(15,23,42,0.3)]",
+        resolvedTheme ? `theme-${resolvedTheme}` : "",
         isBurntOrange && "theme-burnt-orange"
       )}
     >
@@ -1701,7 +1702,7 @@ function PhonePreviewCard({
                 <div
                   key={field.id}
                   className={cn(
-                    "dashboard-drag-item rounded-2xl border border-border/60 bg-background/70 px-3 py-2 text-xs text-muted-foreground cursor-grab active:cursor-grabbing",
+                    "preview-lead-item dashboard-drag-item rounded-2xl border border-border/60 bg-background/70 px-3 py-2 text-xs text-muted-foreground cursor-grab active:cursor-grabbing",
                     draggingLeadFieldId === field.id && "is-dragging"
                   )}
                   draggable
@@ -1732,7 +1733,7 @@ function PhonePreviewCard({
           )}
           <button
             type="button"
-            className="w-full rounded-full bg-foreground/90 px-4 py-2 text-xs font-semibold text-background"
+            className="public-profile-preview-submit w-full rounded-full bg-foreground/90 px-4 py-2 text-xs font-semibold text-background"
           >
             {submitLabel}
           </button>
@@ -1861,13 +1862,13 @@ function LinkListItem({
           </span>
         )}
         <div className="min-w-0">
-          <div className="truncate text-sm font-semibold text-foreground">
+          <div className="public-link-title truncate text-sm font-semibold text-foreground">
             {link.label}
           </div>
-          <div className="truncate text-[11px] text-muted-foreground">
+          <div className="public-link-url truncate text-[11px] text-muted-foreground">
             {link.url}
           </div>
-          <div className="text-[10px] text-muted-foreground">
+          <div className="public-link-clicks text-[10px] text-muted-foreground">
             {clicks.toLocaleString()} clicks
           </div>
         </div>

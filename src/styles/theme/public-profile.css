@@ -33,6 +33,11 @@
   background-image: linear-gradient(180deg, #c05600 55%, #ffffff 100%);
 }
 
+.theme-maroon.public-profile-shell,
+.theme-maroon .public-profile-shell {
+  background-image: linear-gradient(180deg, #500000 55%, #ffffff 100%);
+}
+
 .public-profile-backdrop {
   background: linear-gradient(
     180deg,
@@ -94,9 +99,21 @@
   box-shadow: 0 16px 32px -24px rgba(122, 58, 0, 0.45);
 }
 
+.theme-maroon .public-profile-actions [data-slot=button] {
+  background: rgba(255, 241, 241, 0.95);
+  color: #500000;
+  border: 1px solid rgba(255, 241, 241, 0.8);
+  box-shadow: 0 16px 32px -24px rgba(80, 0, 0, 0.45);
+}
+
 .theme-burnt-orange .public-profile-actions [data-slot=button]:hover {
   background: #fff6ed;
   color: #6a2f00;
+}
+
+.theme-maroon .public-profile-actions [data-slot=button]:hover {
+  background: #fff1f1;
+  color: #3b0000;
 }
 
 .theme-burnt-orange .public-profile-links h2 {
@@ -107,12 +124,29 @@
   color: #fff6ed;
 }
 
+.theme-maroon .public-profile-links h2 {
+  color: #fff1f1;
+}
+
+.theme-maroon .public-profile-links-label {
+  color: #fff1f1;
+}
+
 .theme-burnt-orange .public-profile-actions [data-slot=button] {
+  color: #ffffff;
+}
+
+.theme-maroon .public-profile-actions [data-slot=button] {
   color: #ffffff;
 }
 
 .theme-burnt-orange .public-profile-actions [data-slot=button] span,
 .theme-burnt-orange .public-profile-actions [data-slot=button] {
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
+}
+
+.theme-maroon .public-profile-actions [data-slot=button] span,
+.theme-maroon .public-profile-actions [data-slot=button] {
   text-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
 }
 
@@ -123,8 +157,30 @@
   border: 1px solid rgba(255, 214, 181, 0.6);
 }
 
+.theme-maroon .public-profile-cta-primary {
+  background: #500000 !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 214, 214, 0.6);
+}
+
 .theme-burnt-orange .public-profile-cta-primary:hover {
   background: #c35c00 !important;
+}
+
+.theme-maroon .public-profile-cta-primary:hover {
+  background: #5a0000 !important;
+}
+
+.theme-maroon .public-profile-link-action {
+  background: rgba(80, 0, 0, 0.7);
+  color: #ffffff;
+  border-color: rgba(255, 214, 214, 0.5);
+}
+
+.theme-maroon .public-profile-link-action:hover,
+.theme-maroon .public-profile-link:hover .public-profile-link-action {
+  color: #ffffff;
+  background: rgba(80, 0, 0, 0.85);
 }
 @media (min-width: 640px) {
   .theme-burnt-orange .public-profile-desktop-header h1 {
@@ -133,6 +189,14 @@
 
   .theme-burnt-orange .public-profile-desktop-header p {
     color: rgba(255, 246, 237, 0.82);
+  }
+
+  .theme-maroon .public-profile-desktop-header h1 {
+    color: #fff1f1;
+  }
+
+  .theme-maroon .public-profile-desktop-header p {
+    color: rgba(255, 241, 241, 0.82);
   }
 }
 
@@ -188,4 +252,16 @@
   border-color: color-mix(in srgb, var(--ring) 70%, transparent);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 18%, transparent),
     0 14px 28px -24px rgba(15, 23, 42, 0.5);
+}
+
+/* Aggie: maroon submit button with white text on public lead form */
+.theme-maroon #public-lead-form [data-slot="button"] {
+  background: #500000;
+  color: #ffffff;
+  border: 1px solid rgba(255, 214, 214, 0.4);
+}
+
+.theme-maroon #public-lead-form [data-slot="button"]:hover {
+  background: #5a0000;
+  color: #ffffff;
 }

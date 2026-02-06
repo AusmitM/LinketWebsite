@@ -491,6 +491,34 @@
   color: var(--card-foreground);
 }
 
+/* Hook 'Em: mirror Aggie navbar button styling */
+.theme-burnt-orange .dashboard-navbar .dashboard-copy-link-button {
+  background: #ffffff;
+  color: #c05600;
+  border-color: #ffffff;
+}
+
+.theme-burnt-orange .dashboard-navbar .dashboard-copy-link-button:hover {
+  background: #fff6ed;
+  color: #c05600;
+}
+
+.theme-burnt-orange .dashboard-navbar .dashboard-view-profile-button {
+  background: #ffffff;
+  color: #c05600;
+  border-color: #ffffff;
+}
+
+.theme-burnt-orange .dashboard-navbar .dashboard-view-profile-button:hover {
+  background: #fff6ed;
+  color: #c05600;
+}
+
+.theme-burnt-orange .dashboard-new-linket-button {
+  border-color: #ffffff;
+  box-shadow: 0 20px 40px -28px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.4), var(--premium-inset);
+}
+
 /* Hook 'Em: mock public profile preview matches desktop colors */
 .theme-burnt-orange .public-profile-preview {
   background-image: linear-gradient(180deg, #df6400 0%, #ffffff 100%);
@@ -524,6 +552,68 @@
   color: rgba(255, 246, 237, 0.78);
 }
 
+#dashboard-theme-scope.theme-burnt-orange .dashboard-leads-card h3,
+#dashboard-theme-scope.theme-burnt-orange .dashboard-leads-card dt {
+  color: #fff6ed;
+}
+
+#dashboard-theme-scope.theme-burnt-orange .dashboard-leads-card dd,
+#dashboard-theme-scope.theme-burnt-orange .dashboard-leads-card .text-foreground,
+#dashboard-theme-scope.theme-burnt-orange .dashboard-leads-card .text-muted-foreground {
+  color: rgba(255, 246, 237, 0.9);
+}
+
+#dashboard-theme-scope.theme-burnt-orange .dashboard-leads-card input::placeholder {
+  color: rgba(255, 246, 237, 0.7);
+}
+
+#dashboard-theme-scope.theme-burnt-orange .dashboard-leads-card h1,
+#dashboard-theme-scope.theme-burnt-orange .dashboard-leads-card h2,
+#dashboard-theme-scope.theme-burnt-orange .dashboard-leads-card h3,
+#dashboard-theme-scope.theme-burnt-orange .dashboard-leads-card .text-foreground,
+#dashboard-theme-scope.theme-burnt-orange .dashboard-leads-card input,
+#dashboard-theme-scope.theme-burnt-orange .dashboard-leads-card input::placeholder {
+  color: #4a2312;
+}
+
+#dashboard-theme-scope.theme-burnt-orange .dashboard-leads-card [data-slot="card-header"],
+#dashboard-theme-scope.theme-burnt-orange .dashboard-leads-card [data-slot="card-title"],
+#dashboard-theme-scope.theme-burnt-orange .dashboard-leads-card [data-slot="card-description"] {
+  color: #4a2312;
+}
+
+#dashboard-theme-scope.theme-burnt-orange .lead-form-drag-item,
+#dashboard-theme-scope.theme-burnt-orange .lead-form-drag-item .text-muted-foreground {
+  color: #fff6ed;
+}
+
+#dashboard-theme-scope.theme-burnt-orange .lead-form-drag-item button[aria-label="Delete field"] svg {
+  color: #c05600;
+  stroke: #c05600;
+}
+
+#dashboard-theme-scope.theme-burnt-orange select {
+  color: #fff6ed;
+  background: #b65300;
+}
+
+#dashboard-theme-scope.theme-burnt-orange select option {
+  color: #fff6ed;
+  background: #b65300;
+}
+
+#dashboard-theme-scope.theme-burnt-orange .dashboard-leads-card [data-slot="button"],
+#dashboard-theme-scope.theme-burnt-orange .dashboard-leads-card button {
+  color: #4a2312;
+  border-color: rgba(255, 246, 237, 0.5);
+  background: rgba(255, 246, 237, 0.08);
+}
+
+#dashboard-theme-scope.theme-burnt-orange .dashboard-leads-card [data-slot="button"]:hover,
+#dashboard-theme-scope.theme-burnt-orange .dashboard-leads-card button:hover {
+  background: rgba(255, 246, 237, 0.18);
+}
+
 #dashboard-theme-scope.theme-burnt-orange .dashboard-leads-card article {
   background: rgba(182, 76, 0, 0.92);
   border-color: rgba(255, 214, 181, 0.35);
@@ -538,43 +628,250 @@
   color: rgba(255, 246, 237, 0.8);
 }
 
-/* Maroon theme token mapping (Texas A&M) */
+
+
+/* Aggie theme token mapping (copy of Hook 'Em with maroon) */
 .theme-maroon {
-  --background: #14080b;
-  --foreground: #f6e9ea;
-  --card: rgba(33, 16, 20, 0.96);
-  --card-foreground: #f6e9ea;
-  --popover: rgba(33, 16, 20, 0.98);
-  --popover-foreground: #f6e9ea;
-  --primary: #6b0f1a;
-  --primary-foreground: #fbeff0;
-  --secondary: #3b151c;
-  --secondary-foreground: #f2d7da;
-  --muted: #1b0c10;
-  --muted-foreground: #d7a6ad;
-  --accent: #8f2a36;
-  --accent-foreground: #fbeff0;
-  --destructive: #fb7185;
-  --border: #2a1418;
-  --input: #2a1418;
-  --ring: #8f2a36;
+  --background: #500000;
+  --foreground: #500000;
+  --card: #ffffff;
+  --card-foreground: #500000;
+  --popover: rgba(255, 247, 247, 0.98);
+  --popover-foreground: #500000;
+  --primary: #500000;
+  --primary-foreground: #fff1f1;
+  --secondary: #f7dede;
+  --secondary-foreground: #3b0000;
+  --muted: #f7dede;
+  --muted-foreground: #8a4a4a;
+  --accent: #500000;
+  --accent-foreground: #fff1f1;
+  --destructive: #ef4444;
+  --border: #f0c6c6;
+  --input: #f0c6c6;
+  --ring: #500000;
   --avatar-border: var(--ring);
-  --sidebar: #1a0b0f;
-  --sidebar-foreground: #f6e9ea;
-  --sidebar-primary: #6b0f1a;
-  --sidebar-primary-foreground: #fbeff0;
-  --sidebar-accent: #3b151c;
-  --sidebar-accent-foreground: #f2d7da;
-  --sidebar-border: #2a1418;
-  --sidebar-ring: #8f2a36;
-  --premium-gradient: radial-gradient(120% 120% at 20% 0%, rgba(143, 42, 54, 0.24) 0%, transparent 60%),
-    radial-gradient(120% 120% at 80% 0%, rgba(107, 15, 26, 0.24) 0%, transparent 55%),
-    linear-gradient(180deg, #1a0b0f 0%, #12070a 100%);
-  --premium-card-gradient: linear-gradient(180deg, rgba(36, 16, 21, 0.96) 0%, rgba(24, 11, 14, 0.94) 100%);
-  --premium-topbar-gradient: linear-gradient(90deg, rgba(34, 14, 18, 0.96) 0%, rgba(21, 9, 12, 0.94) 100%);
-  --premium-border: rgba(246, 233, 234, 0.12);
-  --premium-shadow: 0 18px 45px -30px rgba(7, 3, 4, 0.8);
-  --premium-glow: 0 0 0 1px rgba(35, 15, 18, 0.8);
-  --premium-hairline: rgba(246, 233, 234, 0.12);
-  --premium-inset: 0 1px 0 rgba(255, 255, 255, 0.08) inset;
+  --sidebar: #fff1f1;
+  --sidebar-foreground: #500000;
+  --sidebar-primary: #500000;
+  --sidebar-primary-foreground: #fff1f1;
+  --sidebar-accent: #f7dede;
+  --sidebar-accent-foreground: #3b0000;
+  --sidebar-border: #f0c6c6;
+  --sidebar-ring: #500000;
+  --premium-gradient: radial-gradient(120% 120% at 18% 0%, rgba(80, 0, 0, 0.18) 0%, transparent 60%),
+    radial-gradient(120% 120% at 82% 0%, rgba(240, 198, 198, 0.35) 0%, transparent 55%),
+    linear-gradient(180deg, #fff7f7 0%, #fff1f1 100%);
+  --premium-card-gradient: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(255, 236, 236, 0.94) 100%);
+  --premium-topbar-gradient: linear-gradient(90deg, rgba(80, 0, 0, 0.98) 0%, rgba(64, 0, 0, 0.96) 100%);
+  --premium-input-gradient: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(255, 236, 236, 0.94) 100%);
+  --premium-button-gradient: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(255, 236, 236, 0.94) 100%);
+  --premium-border: rgba(80, 0, 0, 0.2);
+  --premium-shadow: 0 18px 45px -30px rgba(80, 0, 0, 0.32);
+  --premium-glow: 0 0 0 1px rgba(255, 241, 241, 0.55);
+  --premium-hairline: rgba(255, 241, 241, 0.4);
+  --premium-inset: 0 1px 0 rgba(255, 241, 241, 0.3) inset;
+}
+
+/* Aggie: mirror Hook 'Em readability rules */
+#dashboard-theme-scope.theme-maroon [data-slot=card],
+#dashboard-theme-scope.theme-maroon .dashboard-metric-row,
+#dashboard-theme-scope.theme-maroon .dashboard-analytics-tile {
+  color: var(--card-foreground);
+}
+
+#dashboard-theme-scope.theme-maroon [data-slot=card] .text-foreground,
+#dashboard-theme-scope.theme-maroon .dashboard-metric-row .text-foreground,
+#dashboard-theme-scope.theme-maroon .dashboard-analytics-tile .text-foreground {
+  color: var(--card-foreground);
+}
+
+#dashboard-theme-scope.theme-maroon [data-slot=card] .text-muted-foreground,
+#dashboard-theme-scope.theme-maroon .dashboard-metric-row .text-muted-foreground,
+#dashboard-theme-scope.theme-maroon .dashboard-analytics-tile .text-muted-foreground {
+  color: color-mix(in srgb, var(--card-foreground) 75%, transparent);
+}
+
+.theme-maroon .dashboard-nav-links,
+.theme-maroon .dashboard-navbar-cta,
+.theme-maroon .dashboard-navbar .dashboard-view-profile-button,
+.theme-maroon .dashboard-navbar .dashboard-copy-link-button,
+.theme-maroon .dashboard-navbar button[aria-label="Open navigation"],
+.theme-maroon .dashboard-navbar button[aria-label="Close navigation"] {
+  color: var(--card-foreground);
+}
+
+.theme-maroon .dashboard-nav-link[data-active="true"],
+.theme-maroon .dashboard-nav-link[data-active="false"]:hover {
+  color: var(--card-foreground);
+}
+
+/* Aggie: white copy-link buttons + white outline for New Linket */
+.theme-maroon .dashboard-navbar .dashboard-copy-link-button {
+  background: #ffffff;
+  color: #500000;
+  border-color: #ffffff;
+}
+
+.theme-maroon .dashboard-navbar .dashboard-copy-link-button:hover {
+  background: #fff1f1;
+  color: #500000;
+}
+
+.theme-maroon .dashboard-navbar .dashboard-view-profile-button {
+  background: #ffffff;
+  color: #500000;
+  border-color: #ffffff;
+}
+
+.theme-maroon .dashboard-navbar .dashboard-view-profile-button:hover {
+  background: #fff1f1;
+  color: #500000;
+}
+
+.theme-maroon .dashboard-new-linket-button {
+  border-color: #ffffff;
+  box-shadow: 0 20px 40px -28px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.4), var(--premium-inset);
+}
+
+/* Aggie: mock public profile preview matches desktop colors */
+.theme-maroon .public-profile-preview {
+  background-image: linear-gradient(180deg, #500000 0%, #ffffff 100%);
+}
+
+.theme-maroon
+  .public-profile-preview
+  .public-profile-preview-header
+  .text-foreground {
+  color: #fff1f1;
+}
+
+.theme-maroon
+  .public-profile-preview
+  .public-profile-preview-header
+  .text-muted-foreground {
+  color: rgba(255, 241, 241, 0.82);
+}
+
+.theme-maroon .public-profile-preview-section-label {
+  color: #ffffff;
+}
+
+/* Aggie: make lead form preview text white */
+.theme-maroon .public-profile-preview .preview-lead-item,
+.theme-maroon .public-profile-preview .preview-lead-item .text-muted-foreground,
+.theme-maroon .public-profile-preview .preview-lead-item svg {
+  color: #fff1f1;
+}
+
+.theme-maroon .public-profile-preview-submit {
+  color: #fff1f1;
+}
+
+/* Aggie: darker link text in mock preview cards */
+.theme-maroon .public-profile-preview .public-link-title,
+.theme-maroon .public-profile-preview .public-link-url,
+.theme-maroon .public-profile-preview .public-link-clicks {
+  color: #3b0000;
+}
+
+/* Aggie: boost leads list contrast */
+#dashboard-theme-scope.theme-maroon .dashboard-leads-card {
+  color: #fff1f1;
+}
+
+#dashboard-theme-scope.theme-maroon .dashboard-leads-card .text-muted-foreground,
+#dashboard-theme-scope.theme-maroon .dashboard-leads-card time {
+  color: rgba(255, 241, 241, 0.78);
+}
+
+#dashboard-theme-scope.theme-maroon .dashboard-leads-card h1,
+#dashboard-theme-scope.theme-maroon .dashboard-leads-card h2,
+#dashboard-theme-scope.theme-maroon .dashboard-leads-card h3,
+#dashboard-theme-scope.theme-maroon .dashboard-leads-card .text-foreground,
+#dashboard-theme-scope.theme-maroon .dashboard-leads-card input,
+#dashboard-theme-scope.theme-maroon .dashboard-leads-card input::placeholder,
+#dashboard-theme-scope.theme-maroon .dashboard-leads-card [data-slot="card-header"],
+#dashboard-theme-scope.theme-maroon .dashboard-leads-card [data-slot="card-title"],
+#dashboard-theme-scope.theme-maroon .dashboard-leads-card [data-slot="card-description"] {
+  color: #3b0000;
+}
+
+#dashboard-theme-scope.theme-maroon .dashboard-leads-card [data-slot="button"],
+#dashboard-theme-scope.theme-maroon .dashboard-leads-card button {
+  color: #3b0000;
+  border-color: rgba(255, 241, 241, 0.85);
+  background: #ffffff;
+}
+
+#dashboard-theme-scope.theme-maroon .dashboard-leads-card [data-slot="button"]:hover,
+#dashboard-theme-scope.theme-maroon .dashboard-leads-card button:hover {
+  background: #fff1f1;
+}
+
+#dashboard-theme-scope.theme-maroon .dashboard-leads-card button[aria-label="Delete lead"] svg {
+  color: #500000 !important;
+  stroke: #500000 !important;
+}
+
+#dashboard-theme-scope.theme-maroon .dashboard-leads-card button[aria-label="Delete lead"] {
+  color: #500000 !important;
+}
+
+#dashboard-theme-scope.theme-maroon .dashboard-leads-card article {
+  background: rgba(64, 0, 0, 0.92);
+  border-color: rgba(255, 214, 214, 0.35);
+}
+
+#dashboard-theme-scope.theme-maroon .dashboard-leads-card article h3,
+#dashboard-theme-scope.theme-maroon .dashboard-leads-card article dt {
+  color: #fff1f1 !important;
+}
+
+#dashboard-theme-scope.theme-maroon .dashboard-leads-card article dd {
+  color: rgba(255, 241, 241, 0.8);
+}
+
+#dashboard-theme-scope.theme-maroon .dashboard-leads-card article * {
+  color: #fff1f1;
+}
+
+#dashboard-theme-scope.theme-maroon .dashboard-leads-card article .text-foreground,
+#dashboard-theme-scope.theme-maroon .dashboard-leads-card article label {
+  color: #fff1f1 !important;
+}
+
+#dashboard-theme-scope.theme-maroon .dashboard-leads-checkbox {
+  border-color: #ffffff;
+  background: #ffffff;
+}
+
+#dashboard-theme-scope.theme-maroon .dashboard-leads-checkbox:checked {
+  background: #ffffff;
+  border-color: #ffffff;
+  box-shadow: 0 0 0 1px rgba(255, 241, 241, 0.6);
+}
+
+#dashboard-theme-scope.theme-maroon .dashboard-leads-checkbox + span {
+  color: #500000;
+}
+
+#dashboard-theme-scope.theme-maroon .lead-form-drag-item,
+#dashboard-theme-scope.theme-maroon .lead-form-drag-item .text-muted-foreground {
+  color: #fff1f1;
+}
+
+#dashboard-theme-scope.theme-maroon .lead-form-drag-item button[aria-label="Delete field"] svg {
+  color: #500000;
+  stroke: #500000;
+}
+
+#dashboard-theme-scope.theme-maroon select {
+  color: #fff1f1;
+  background: #5a0000;
+}
+
+#dashboard-theme-scope.theme-maroon select option {
+  color: #fff1f1;
+  background: #5a0000;
 }
