@@ -281,6 +281,8 @@ export default async function PublicProfilePage({ params }: Props) {
                   <PublicLeadForm
                     ownerId={profile.user_id}
                     handle={publicHandle}
+                    initialForm={normalizedLeadForm}
+                    initialFormId={leadFormRow?.id ?? null}
                     variant="profile"
                     showHeader={false}
                   />

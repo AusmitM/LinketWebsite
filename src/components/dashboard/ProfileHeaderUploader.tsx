@@ -357,6 +357,7 @@ export default function ProfileHeaderUploader({
 
   if (variant === "compact") {
     const displayUrl = sourceUrl || latestHeaderUrl;
+    const visibleFileName = sourceFile?.name ?? extractFileNameFromUrl(latestHeaderUrl);
     const inputTargetId = inputId ?? "profile-header-upload";
     return (
       <section className="flex flex-col gap-4 rounded-2xl border border-dashed border-muted/70 p-4">
@@ -384,10 +385,10 @@ export default function ProfileHeaderUploader({
               disabled={loading}
             />
             <div className="flex flex-wrap items-center justify-end gap-[2px] text-xs text-muted-foreground sm:justify-start sm:gap-3">
-              {sourceFile?.name ? (
-                <span className="truncate">Selected: {sourceFile.name}</span>
-              ) : latestHeaderUrl ? (
-                <span>Current header</span>
+              {visibleFileName ? (
+                <span className="truncate" title={visibleFileName}>
+                  File: {visibleFileName}
+                </span>
               ) : (
                 <span>Crop to fit the header. JPG/PNG/WebP.</span>
               )}
@@ -790,4 +791,15 @@ function loadImage(src: string): Promise<HTMLImageElement> {
     img.onerror = reject;
     img.src = src;
   });
+}
+
+function extractFileNameFromUrl(url: string | null): string | null {
+  if (!url) return null;
+  try {
+    const pathname = new URL(url, "https://linket.local").pathname;
+    const segment = pathname.split("/").filter(Boolean).pop();
+    return segment ? decodeURIComponent(segment) : null;
+  } catch {
+    return null;
+  }
 }

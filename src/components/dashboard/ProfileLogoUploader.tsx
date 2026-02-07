@@ -320,6 +320,7 @@ export default function ProfileLogoUploader({
   const logoFrameBgClassName = logoBackgroundWhite ? "bg-white" : "bg-background/80";
 
   const displayUrl = sourceUrl || latestLogoUrl;
+  const visibleFileName = sourceFile?.name ?? extractFileNameFromUrl(latestLogoUrl);
   const inputTargetId = inputId ?? "profile-logo-upload";
 
   if (variant === "compact") {
@@ -356,10 +357,10 @@ export default function ProfileLogoUploader({
               disabled={loading}
             />
             <div className="flex flex-wrap items-center justify-end gap-[2px] text-xs text-muted-foreground sm:justify-start sm:gap-3">
-              {sourceFile?.name ? (
-                <span className="truncate">Selected: {sourceFile.name}</span>
-              ) : latestLogoUrl ? (
-                <span>Current logo</span>
+              {visibleFileName ? (
+                <span className="truncate" title={visibleFileName}>
+                  File: {visibleFileName}
+                </span>
               ) : (
                 <span>Square logos work best. JPG/PNG/WebP.</span>
               )}
@@ -707,4 +708,15 @@ function loadImage(src: string): Promise<HTMLImageElement> {
     img.onerror = reject;
     img.src = src;
   });
+}
+
+function extractFileNameFromUrl(url: string | null): string | null {
+  if (!url) return null;
+  try {
+    const pathname = new URL(url, "https://linket.local").pathname;
+    const segment = pathname.split("/").filter(Boolean).pop();
+    return segment ? decodeURIComponent(segment) : null;
+  } catch {
+    return null;
+  }
 }

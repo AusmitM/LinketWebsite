@@ -10,6 +10,7 @@ import { createServerSupabase } from "@/lib/supabase/server";
 import type { ProfileLinkRecord, UserProfileRecord } from "@/types/db";
 
 type ProfileWithLinks = UserProfileRecord & { links: ProfileLinkRecord[] };
+const DEFAULT_PROFILE_LINK_URL = "https://www.linketconect.com";
 
 function normalizeHandle(handle: string) {
   return handle.trim().toLowerCase();
@@ -259,6 +260,11 @@ export async function POST(request: NextRequest) {
     }
 
     let profileId = profile.id ?? null;
+    const incomingLinks = profile.links ?? [];
+    const linksForSave =
+      !profileId && incomingLinks.length === 0
+        ? [{ title: "Website", url: DEFAULT_PROFILE_LINK_URL }]
+        : incomingLinks;
     if (!profileId) {
       const { data, error: insertError } = await supabase
         .from("user_profiles")
@@ -320,7 +326,7 @@ export async function POST(request: NextRequest) {
       .eq("profile_id", profileId);
     if (existingError) throw new Error(existingError.message);
 
-    const indexedLinks = (profile.links ?? []).map((link, index) => ({
+    const indexedLinks = linksForSave.map((link, index) => ({
       ...link,
       order_index: index,
     }));

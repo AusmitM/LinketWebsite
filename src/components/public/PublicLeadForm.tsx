@@ -35,6 +35,8 @@ type Appearance = {
 type Props = {
   ownerId?: string | null;
   handle: string;
+  initialForm?: LeadFormConfig | null;
+  initialFormId?: string | null;
   appearance?: Appearance;
   variant?: "card" | "profile";
   showHeader?: boolean;
@@ -50,16 +52,19 @@ const OTHER_PREFIX = "other:";
 
 export default function PublicLeadForm({
   handle,
+  initialForm = null,
+  initialFormId = null,
   appearance,
   variant = "card",
   showHeader = true,
   className,
 }: Props) {
-  const [form, setForm] = useState<LeadFormConfig | null>(null);
-  const [formId, setFormId] = useState<string | null>(null);
+  const hydratedFormId = initialFormId ?? initialForm?.id ?? null;
+  const [form, setForm] = useState<LeadFormConfig | null>(initialForm);
+  const [formId, setFormId] = useState<string | null>(hydratedFormId);
   const [answers, setAnswers] = useState<AnswerMap>({});
   const [errors, setErrors] = useState<ErrorMap>({});
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!initialForm);
   const [submitting, setSubmitting] = useState(false);
   const [responseId, setResponseId] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
@@ -103,7 +108,10 @@ export default function PublicLeadForm({
 
   useEffect(() => {
     if (!handle) return;
-    setLoading(true);
+    const hasHydratedForm = Boolean(initialForm && hydratedFormId);
+    if (!hasHydratedForm) {
+      setLoading(true);
+    }
     (async () => {
       try {
         const response = await fetch(
@@ -121,13 +129,10 @@ export default function PublicLeadForm({
         const nextFormId = payload.formId ?? payload.form?.id ?? null;
         setForm(payload.form);
         setFormId(nextFormId);
-        if (nextFormId) {
-          const savedResponseId = localStorage.getItem(
-            `lead-form-response:${nextFormId}`
-          );
-          if (savedResponseId) setResponseId(savedResponseId);
-        }
       } catch (error) {
+        if (hasHydratedForm) {
+          return;
+        }
         const message =
           error instanceof Error ? error.message : "Lead form unavailable";
         toast({
@@ -141,7 +146,17 @@ export default function PublicLeadForm({
         setLoading(false);
       }
     })();
-  }, [handle]);
+  }, [handle, hydratedFormId, initialForm]);
+
+  useEffect(() => {
+    if (!formId) return;
+    try {
+      const savedResponseId = localStorage.getItem(`lead-form-response:${formId}`);
+      if (savedResponseId) setResponseId(savedResponseId);
+    } catch {
+      // Ignore storage failures (private browsing / restricted storage).
+    }
+  }, [formId]);
 
   useEffect(() => {
     if (!form) return;
@@ -282,7 +297,11 @@ export default function PublicLeadForm({
       const payload = (await response.json()) as { responseId?: string };
       const nextResponseId = payload.responseId ?? responseId;
       if (nextResponseId) {
-        localStorage.setItem(`lead-form-response:${formId}`, nextResponseId);
+        try {
+          localStorage.setItem(`lead-form-response:${formId}`, nextResponseId);
+        } catch {
+          // Ignore storage failures (private browsing / restricted storage).
+        }
         setResponseId(nextResponseId);
       }
       setEditingResponse(false);

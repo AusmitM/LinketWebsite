@@ -85,11 +85,23 @@ export async function getUserAnalytics(userId: string, options: AnalyticsOptions
     };
   }
 
-  const start = new Date();
-  start.setHours(0, 0, 0, 0);
-  start.setDate(start.getDate() - (days - 1));
-  const end = new Date();
-  end.setHours(23, 59, 59, 999);
+  const now = new Date();
+  const start = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+  );
+  start.setUTCDate(start.getUTCDate() - (days - 1));
+  const end = new Date(
+    Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate(),
+      23,
+      59,
+      59,
+      999
+    )
+  );
+  const todayKey = dayKey(now);
 
   const timelineMap = initialiseTimelineMap(start, days);
 
@@ -133,7 +145,6 @@ export async function getUserAnalytics(userId: string, options: AnalyticsOptions
       if (entry) {
         entry.scans += 1;
       }
-      const todayKey = dayKey(new Date());
       if (key === todayKey) scansToday += 1;
       if (!lastScanAt || new Date(row.occurred_at) > new Date(lastScanAt)) {
         lastScanAt = row.occurred_at;
@@ -177,7 +188,6 @@ export async function getUserAnalytics(userId: string, options: AnalyticsOptions
     if (entry) {
       entry.leads += 1;
     }
-    const todayKey = dayKey(new Date());
     if (key === todayKey) leadsToday += 1;
 
     const profile = lead.handle ? profileByHandle.get(lead.handle) : undefined;
@@ -272,10 +282,11 @@ type ProfileAggregate = {
 };
 
 function buildEmptyTimeline(days: number): AnalyticsTimelinePoint[] {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const start = new Date(today);
-  start.setDate(today.getDate() - (days - 1));
+  const now = new Date();
+  const start = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+  );
+  start.setUTCDate(start.getUTCDate() - (days - 1));
   const map = initialiseTimelineMap(start, days);
   return Array.from(map.values());
 }
@@ -284,7 +295,7 @@ function initialiseTimelineMap(start: Date, days: number) {
   const map = new Map<string, AnalyticsTimelinePoint>();
   for (let i = 0; i < days; i += 1) {
     const day = new Date(start);
-    day.setDate(start.getDate() + i);
+    day.setUTCDate(start.getUTCDate() + i);
     const key = dayKey(day);
     map.set(key, { date: key, scans: 0, leads: 0 });
   }
@@ -294,7 +305,7 @@ function initialiseTimelineMap(start: Date, days: number) {
 function dayKey(input: string | Date) {
   const d = typeof input === "string" ? new Date(input) : input;
   const copy = new Date(d);
-  copy.setHours(0, 0, 0, 0);
+  copy.setUTCHours(0, 0, 0, 0);
   return copy.toISOString().slice(0, 10);
 }
 

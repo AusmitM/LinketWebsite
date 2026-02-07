@@ -150,6 +150,7 @@ const MOBILE_PROFILE_SECTIONS: Array<{ id: SectionId; label: string }> = [
   { id: "preview", label: "Preview" },
 ];
 const ACTIVE_PROFILE_SECTION_STORAGE_KEY = "linket:profile-editor:active-section";
+const DEFAULT_PROFILE_LINK_URL = "https://www.linketconect.com";
 
 export default function PublicProfileEditorPage() {
   const dashboardUser = useDashboardUser();
@@ -418,7 +419,7 @@ export default function PublicProfileEditorPage() {
           name: "Linket Public Profile",
           handle,
           headline: "",
-          links: [{ title: "Website", url: "https://www.linketconnect.com" }],
+          links: [{ title: "Website", url: DEFAULT_PROFILE_LINK_URL }],
           theme,
           active: true,
         };
@@ -2287,7 +2288,7 @@ function createLink(): LinkItem {
   return {
     id: `link-${cryptoRandom()}`,
     label: "New link",
-    url: "https://www.linketconnect.com",
+    url: DEFAULT_PROFILE_LINK_URL,
     icon: base.value,
     color: base.color,
     visible: true,

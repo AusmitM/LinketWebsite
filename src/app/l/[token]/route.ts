@@ -14,6 +14,59 @@ function normalizeHandle(value: string | null | undefined) {
   return trimmed.startsWith("@") ? trimmed.slice(1) : trimmed;
 }
 
+type AssignmentLookup = {
+  id: string;
+  user_id: string | null;
+  profile_id: string | null;
+  target_type: "profile" | "url" | null;
+  target_url: string | null;
+};
+
+async function recordScan(
+  req: NextRequest,
+  tagId: string,
+  assignment: AssignmentLookup | null
+) {
+  const now = new Date().toISOString();
+  const metadata = {
+    assignment_id: assignment?.id ?? null,
+    profile_id: assignment?.profile_id ?? null,
+    user_id: assignment?.user_id ?? null,
+    referrer: req.headers.get("referer"),
+    user_agent: req.headers.get("user-agent"),
+    path: req.nextUrl.pathname,
+  };
+
+  const scanInsert = supabaseAdmin.from("tag_events").insert({
+    tag_id: tagId,
+    event_type: "scan",
+    metadata,
+    occurred_at: now,
+  });
+
+  const redirectUpdate = assignment?.id
+    ? supabaseAdmin
+        .from("tag_assignments")
+        .update({ last_redirected_at: now })
+        .eq("id", assignment.id)
+    : Promise.resolve({ error: null });
+
+  const [scanResult, redirectResult] = await Promise.all([
+    scanInsert,
+    redirectUpdate,
+  ]);
+
+  if (scanResult.error) {
+    console.warn("linket-scan-log failed:", scanResult.error.message);
+  }
+  if (redirectResult.error) {
+    console.warn(
+      "linket-last-redirect update failed:",
+      redirectResult.error.message
+    );
+  }
+}
+
 async function resolveAssignmentHandle(assignment: {
   profile_id?: string | null;
   user_id?: string | null;
@@ -75,6 +128,12 @@ export async function GET(
     .eq("tag_id", tag.id)
     .limit(1)
     .maybeSingle();
+
+  if (!assignmentError) {
+    await recordScan(req, tag.id, (assignment as AssignmentLookup | null) ?? null);
+  } else {
+    await recordScan(req, tag.id, null);
+  }
 
   if (!assignmentError && assignment) {
     if (assignment.target_type === "url" && assignment.target_url) {

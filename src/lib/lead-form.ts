@@ -34,13 +34,12 @@ export function createDefaultLeadFormConfig(id: string): LeadFormConfig {
         helpText: "Ex. John Doe",
         required: true,
       }),
-      createField("short_text", "Phone Number", {
-        helpText: "(###) ### - ####",
-      }),
       createField("short_text", "Email", {
         helpText: "JDoe@LinketConnect.com",
         validation: { rule: "email" },
-        required: true,
+      }),
+      createField("short_text", "Phone Number", {
+        helpText: "(###) ### - ####",
       }),
       createField("long_text", "Note"),
     ],

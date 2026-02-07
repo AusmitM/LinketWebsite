@@ -115,6 +115,7 @@ const supabasePublic = createClient(
 
 const PROFILE_TABLE = "user_profiles";
 const PROFILE_LINKS_TABLE = "profile_links";
+const DEFAULT_PROFILE_LINK_URL = "https://www.linketconect.com";
 
 export class HandleConflictError extends Error {
   suggestions: string[];
@@ -398,7 +399,10 @@ function memorySaveProfileForUser(
   const logoUpdatedAt = payload.logoUpdatedAt ?? null;
   const logoShape = payload.logoShape ?? "circle";
   const logoBackgroundWhite = payload.logoBackgroundWhite ?? false;
-  const links = payload.links ?? [];
+  const links =
+    !payload.id && (!payload.links || payload.links.length === 0)
+      ? [{ title: "Website", url: DEFAULT_PROFILE_LINK_URL }]
+      : payload.links ?? [];
   const name = payload.name?.trim();
   if (!name) throw new Error("Profile name is required");
   if (!handle) throw new Error("Handle is required");
@@ -663,12 +667,14 @@ export async function saveProfileForUser(
   const logoUpdatedAt = payload.logoUpdatedAt ?? null;
   const logoShape = payload.logoShape ?? "circle";
   const logoBackgroundWhite = payload.logoBackgroundWhite ?? false;
-  const links = payload.links ?? [];
+  let profileId = payload.id ?? null;
+  const links =
+    !profileId && (!payload.links || payload.links.length === 0)
+      ? [{ title: "Website", url: DEFAULT_PROFILE_LINK_URL }]
+      : payload.links ?? [];
   const name = payload.name?.trim();
   if (!name) throw new Error("Profile name is required");
   if (!handle) throw new Error("Handle is required");
-
-  let profileId = payload.id ?? null;
 
   await assertHandleAvailable(userId, handle, profileId);
 

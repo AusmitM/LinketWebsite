@@ -1,6 +1,6 @@
 // app/api/analytics/supabase/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { getUserAnalyticsData } from "@/lib/supabase-analytics";
+import { getUserAnalytics } from "@/lib/analytics-service";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { isSupabaseAdminAvailable } from "@/lib/supabase-admin";
 
@@ -19,10 +19,14 @@ function buildEmptyTimeline(days: number) {
 }
 
 export async function GET(request: NextRequest) {
+  const searchParams = request.nextUrl.searchParams;
+  const parsedDays = parseInt(searchParams.get("days") || "30", 10);
+  const days = Number.isFinite(parsedDays)
+    ? Math.max(1, Math.min(parsedDays, 90))
+    : 30;
+
   try {
-    const searchParams = request.nextUrl.searchParams;
     const userId = searchParams.get("userId");
-    const days = parseInt(searchParams.get("days") || "30", 10);
 
     if (!userId) {
       return NextResponse.json(
@@ -41,7 +45,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (isSupabaseAdminAvailable) {
-      const analytics = await getUserAnalyticsData(userId, days);
+      const analytics = await getUserAnalytics(userId, { days });
       return NextResponse.json(analytics, {
         headers: {
           "Cache-Control": "no-store, max-age=0",
@@ -60,7 +64,7 @@ export async function GET(request: NextRequest) {
     }
 
     const analytics = {
-      meta: { available: false, generatedAt: new Date().toISOString() },
+      meta: { available: false, generatedAt: new Date().toISOString(), days },
       totals: {
         scansToday: 0,
         leadsToday: 0,
@@ -95,7 +99,7 @@ export async function GET(request: NextRequest) {
       {
         error:
           error instanceof Error ? error.message : "Failed to fetch analytics",
-        meta: { available: false, generatedAt: new Date().toISOString() },
+        meta: { available: false, generatedAt: new Date().toISOString(), days },
       },
       { status: 500 }
     );

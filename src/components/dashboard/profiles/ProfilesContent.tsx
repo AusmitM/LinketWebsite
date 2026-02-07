@@ -109,6 +109,7 @@ const THEME_OPTIONS: Array<{
 ];
 
 const DEFAULT_THEME: ThemeName = "autumn";
+const DEFAULT_PROFILE_LINK_URL = "https://www.linketconect.com";
 
 type LinkItem = {
   id: string;
@@ -401,12 +402,12 @@ export default function ProfilesContent() {
             ...prev,
             links: [
               ...prev.links,
-              {
-                id: `link-${cryptoRandom()}`,
-                label: "New link",
-                url: "https://www.linketconnect.com",
-                clicks: 0,
-              },
+                {
+                  id: `link-${cryptoRandom()}`,
+                  label: "New link",
+                  url: DEFAULT_PROFILE_LINK_URL,
+                  clicks: 0,
+                },
             ],
             updatedAt: new Date().toISOString(),
           }
@@ -442,7 +443,7 @@ export default function ProfilesContent() {
         name: "New profile",
         handle: `profile-${profiles.length + 1}`,
         headline: "",
-        links: [{ title: "Website", url: "https://www.linketconnect.com" }],
+        links: [{ title: "Website", url: DEFAULT_PROFILE_LINK_URL }],
         theme: DEFAULT_THEME,
         active: profiles.length === 0,
       };

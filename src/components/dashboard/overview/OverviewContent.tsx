@@ -14,7 +14,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useDashboardUser } from "@/components/dashboard/DashboardSessionContext";
 import { useThemeOptional } from "@/components/theme/theme-provider";
-import { supabase } from "@/lib/supabase";
 import PublicProfilePreview from "@/components/public/PublicProfilePreview";
 import type { UserAnalytics } from "@/lib/analytics-service";
 import type { ProfileWithLinks } from "@/lib/profile-service";
@@ -44,15 +43,6 @@ type ViewState = {
   analytics: UserAnalytics | null;
 };
 
-type LeadRow = {
-  id: string;
-  name: string | null;
-  email: string | null;
-  company: string | null;
-  message: string | null;
-  created_at: string;
-};
-
 export default function OverviewContent() {
   const dashboardUser = useDashboardUser();
   const userId = dashboardUser?.id ?? null;
@@ -61,9 +51,6 @@ export default function OverviewContent() {
     error: null,
     analytics: null,
   });
-  const [recentLeads, setRecentLeads] = useState<LeadRow[]>([]);
-  const [recentLeadsLoading, setRecentLeadsLoading] = useState(true);
-  const [recentLeadsError, setRecentLeadsError] = useState<string | null>(null);
 
   useEffect(() => {
     if (userId === null) {
@@ -126,6 +113,9 @@ export default function OverviewContent() {
 
   const totals = analytics?.totals;
   const leads = analytics?.recentLeads ?? [];
+  const recentLeads = leads.slice(0, 5);
+  const recentLeadsLoading = loading && !analytics;
+  const recentLeadsError = error && !analytics ? error : null;
 
   const overviewItems = [
     {
@@ -151,46 +141,6 @@ export default function OverviewContent() {
       icon: MessageSquare,
     },
   ];
-
-  useEffect(() => {
-    if (!userId) {
-      setRecentLeads([]);
-      setRecentLeadsLoading(false);
-      setRecentLeadsError(userId === null ? "Sign in to see leads." : null);
-      return;
-    }
-
-    let active = true;
-    setRecentLeadsLoading(true);
-    setRecentLeadsError(null);
-
-    (async () => {
-      try {
-        const { data, error: leadsError } = await supabase
-          .from("leads")
-          .select("id,name,email,company,message,created_at")
-          .eq("user_id", userId)
-          .order("created_at", { ascending: false })
-          .limit(5);
-
-        if (!active) return;
-        if (leadsError) throw leadsError;
-        setRecentLeads((data as LeadRow[]) ?? []);
-        setRecentLeadsLoading(false);
-      } catch (err) {
-        if (!active) return;
-        const message =
-          err instanceof Error ? err.message : "Unable to load leads.";
-        setRecentLeadsError(message);
-        setRecentLeads([]);
-        setRecentLeadsLoading(false);
-      }
-    })();
-
-    return () => {
-      active = false;
-    };
-  }, [userId]);
 
   const [dateLabel, setDateLabel] = useState<string>("");
 
@@ -298,7 +248,7 @@ export default function OverviewContent() {
                           </div>
                           <div className="text-xs text-muted-foreground">
                             {lead.email ?? "No email"}
-                            {lead.company ? ` · ${lead.company}` : ""}
+                            {lead.company ? ` - ${lead.company}` : ""}
                           </div>
                         </div>
                         <div className="text-xs text-muted-foreground">
