@@ -198,7 +198,7 @@ export default async function AdminMintPage() {
             </p>
           </div>
           <Button asChild variant="outline" className="dashboard-mint-master-log-button rounded-full">
-            <Link href="/api/admin/mint/master-log" prefetch={false}>
+            <Link href="/api/admin/mint/master-log" prefetch={false} className="dashboard-mint-master-log-text">
               Download master CSV
             </Link>
           </Button>
