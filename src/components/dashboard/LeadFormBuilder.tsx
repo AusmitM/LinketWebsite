@@ -164,6 +164,13 @@ export default function LeadFormBuilder({
     if (!snapshot) return false;
     return snapshot !== lastSnapshot.current;
   }, [snapshot]);
+  const saveState = saveError
+    ? "failed"
+    : saving
+    ? "saving"
+    : isDirty
+    ? "unsaved"
+    : "saved";
 
   const previewFields = useMemo(() => {
     if (!form) return [];
@@ -314,10 +321,59 @@ export default function LeadFormBuilder({
   };
 
   const deleteField = (fieldId: string) => {
-    if (!form) return;
-    const nextFields = form.fields.filter((field) => field.id !== fieldId);
-    updateForm({ fields: nextFields });
-    setSelectedFieldId(nextFields[0]?.id ?? null);
+    let removedField: LeadFormField | null = null;
+    let removedIndex = -1;
+    setForm((current) => {
+      if (!current) return current;
+      const index = current.fields.findIndex((field) => field.id === fieldId);
+      if (index === -1) return current;
+      removedField = current.fields[index];
+      removedIndex = index;
+      const nextFields = current.fields.filter((field) => field.id !== fieldId);
+      return {
+        ...current,
+        fields: nextFields,
+        meta: {
+          ...current.meta,
+          updatedAt: new Date().toISOString(),
+          version: current.meta.version + 1,
+        },
+      };
+    });
+
+    setSelectedFieldId((current) => (current === fieldId ? null : current));
+    if (!removedField || removedIndex < 0) return;
+    const fieldToRestore = removedField as LeadFormField;
+    toast({
+      title: "Field removed",
+      description: "Undo",
+      actionLabel: "Undo",
+      onAction: () => {
+        setForm((current) => {
+          if (!current) return current;
+          if (
+            current.fields.some(
+              (field: LeadFormField) => field.id === fieldToRestore.id
+            )
+          ) {
+            return current;
+          }
+          const nextFields = [...current.fields];
+          const index = Math.min(Math.max(removedIndex, 0), nextFields.length);
+          nextFields.splice(index, 0, fieldToRestore);
+          return {
+            ...current,
+            fields: nextFields,
+            meta: {
+              ...current.meta,
+              updatedAt: new Date().toISOString(),
+              version: current.meta.version + 1,
+            },
+          };
+        });
+        setSelectedFieldId(fieldToRestore.id);
+      },
+    });
   };
 
   const reorderFields = useCallback((sourceId: string, targetId: string) => {
@@ -386,9 +442,25 @@ export default function LeadFormBuilder({
                   {saving ? "Saving" : "Save"}
                 </Button>
               </div>
-              <div className="text-xs text-muted-foreground">
-                {form.status === "published" ? "Published" : "Draft"}
+              <div
+                className={cn(
+                  "text-xs",
+                  saveState === "failed"
+                    ? "text-destructive"
+                    : saveState === "saving"
+                    ? "text-foreground dashboard-saving-indicator"
+                    : "text-muted-foreground"
+                )}
+              >
+                {saveState === "failed"
+                  ? "Save failed"
+                  : saveState === "saving"
+                  ? "Saving changes..."
+                  : saveState === "unsaved"
+                  ? "Unsaved changes"
+                  : "All changes saved"}
                 {lastSavedAt ? ` - Updated ${formatShortDate(lastSavedAt)}` : ""}
+                {form.status === "published" ? " - Published" : " - Draft"}
               </div>
             </CardHeader>
             <CardContent className="space-y-3">

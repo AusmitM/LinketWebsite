@@ -28,10 +28,15 @@ async function recordScan(
   assignment: AssignmentLookup | null
 ) {
   const now = new Date().toISOString();
+  const ownerUserId = assignment?.user_id ?? null;
+  const ownerProfileId = assignment?.profile_id ?? null;
   const metadata = {
     assignment_id: assignment?.id ?? null,
-    profile_id: assignment?.profile_id ?? null,
-    user_id: assignment?.user_id ?? null,
+    owner_profile_id: ownerProfileId,
+    owner_user_id: ownerUserId,
+    // Legacy aliases kept for older analytics readers.
+    profile_id: ownerProfileId,
+    user_id: ownerUserId,
     referrer: req.headers.get("referer"),
     user_agent: req.headers.get("user-agent"),
     path: req.nextUrl.pathname,

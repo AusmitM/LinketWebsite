@@ -3,6 +3,7 @@
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { reportClientError } from "@/lib/client-error-reporting";
 
 type Props = {
   children: React.ReactNode;
@@ -23,6 +24,13 @@ export class ErrorBoundary extends React.Component<Props, State> {
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
     console.error("Section error:", error, info);
+    reportClientError({
+      message: error.message || "Section error",
+      name: error.name || "Error",
+      stack: error.stack || null,
+      componentStack: info.componentStack || null,
+      level: "error",
+    });
   }
 
   retry = () => {

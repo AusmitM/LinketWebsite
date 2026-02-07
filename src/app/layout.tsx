@@ -8,6 +8,7 @@ import Footer from "@/components/site/footer";
 import { Toaster } from "@/components/system/toaster";
 import ServiceWorkerRegister from "@/components/system/ServiceWorkerRegister";
 import DebugErrorOverlay from "@/components/system/DebugErrorOverlay";
+import GlobalErrorLogger from "@/components/system/GlobalErrorLogger";
 import "@/styles/theme.css";
 import Script from "next/script";
 import { CustomizationProvider } from "@/components/providers/customization-provider";
@@ -130,6 +131,7 @@ export default function RootLayout({
               {JSON.stringify(productJsonLd)}
             </Script>
             <ServiceWorkerRegister />
+            <GlobalErrorLogger />
             <DebugErrorOverlay />
             <Toaster />
           </CustomizationProvider>

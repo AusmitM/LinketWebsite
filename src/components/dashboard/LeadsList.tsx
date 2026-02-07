@@ -29,6 +29,9 @@ export default function LeadsList({ userId }: { userId: string }) {
   const pageSize = 20;
   const offsetRef = useRef(0);
   const selectAllRef = useRef<HTMLInputElement | null>(null);
+  const pendingDeleteTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(
+    new Map()
+  );
 
   const like = useMemo(() => q.trim(), [q]);
   const selectedLeads = useMemo(
@@ -116,6 +119,14 @@ export default function LeadsList({ userId }: { userId: string }) {
       return next.size === prev.size ? prev : next;
     });
   }, [leads, selectedIds.size]);
+
+  useEffect(() => {
+    const timers = pendingDeleteTimers.current;
+    return () => {
+      timers.forEach((timer) => clearTimeout(timer));
+      timers.clear();
+    };
+  }, []);
 
   useEffect(() => {
     const handles = Array.from(new Set(leads.map((lead) => lead.handle).filter(Boolean)));
@@ -212,29 +223,87 @@ export default function LeadsList({ userId }: { userId: string }) {
     setSelectedIds(new Set());
   }
 
+  type RemovedLeadEntry = {
+    lead: Lead;
+    index: number;
+  };
+
+  function restoreRemovedLeads(entries: RemovedLeadEntry[]) {
+    if (!entries.length) return;
+    const sorted = entries.slice().sort((a, b) => a.index - b.index);
+    setLeads((prev) => {
+      const next = [...prev];
+      sorted.forEach((entry) => {
+        if (next.some((lead) => lead.id === entry.lead.id)) return;
+        const insertIndex = Math.min(Math.max(entry.index, 0), next.length);
+        next.splice(insertIndex, 0, entry.lead);
+      });
+      return dedupeById(next);
+    });
+  }
+
+  function scheduleLeadDelete(entries: RemovedLeadEntry[]) {
+    if (!entries.length) return;
+    const ids = entries.map((entry) => entry.lead.id);
+    const idSet = new Set(ids);
+
+    setLeads((prev) => prev.filter((lead) => !idSet.has(lead.id)));
+    setSelectedIds((prev) => {
+      if (prev.size === 0) return prev;
+      const next = new Set(prev);
+      ids.forEach((id) => next.delete(id));
+      return next;
+    });
+
+    const transactionId = `lead-delete-${Date.now()}-${Math.random()
+      .toString(36)
+      .slice(2, 8)}`;
+    const timeout = setTimeout(async () => {
+      pendingDeleteTimers.current.delete(transactionId);
+      const { error } = await supabase
+        .from("leads")
+        .delete()
+        .in("id", ids)
+        .eq("user_id", userId);
+      if (error) {
+        restoreRemovedLeads(entries);
+        toast({
+          title: "Delete failed",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
+      }
+      toast({
+        title: ids.length === 1 ? "Lead deleted" : "Leads deleted",
+        variant: "success",
+      });
+    }, 5000);
+
+    pendingDeleteTimers.current.set(transactionId, timeout);
+
+    toast({
+      title: ids.length === 1 ? "Lead removed" : "Leads removed",
+      description: "Undo within 5 seconds.",
+      actionLabel: "Undo",
+      durationMs: 5000,
+      onAction: () => {
+        const activeTimer = pendingDeleteTimers.current.get(transactionId);
+        if (!activeTimer) return;
+        clearTimeout(activeTimer);
+        pendingDeleteTimers.current.delete(transactionId);
+        restoreRemovedLeads(entries);
+      },
+    });
+  }
+
   async function onDelete(id: string) {
     const ok = confirm("Delete this lead? This cannot be undone.");
     if (!ok) return;
-    const { error } = await supabase
-      .from("leads")
-      .delete()
-      .eq("id", id)
-      .eq("user_id", userId);
-    if (error)
-      toast({
-        title: "Delete failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    else {
-      setLeads((prev) => prev.filter((lead) => lead.id !== id));
-      setSelectedIds((prev) => {
-        const next = new Set(prev);
-        next.delete(id);
-        return next;
-      });
-      toast({ title: "Lead deleted", variant: "success" });
-    }
+    const index = leads.findIndex((lead) => lead.id === id);
+    if (index === -1) return;
+    const lead = leads[index];
+    scheduleLeadDelete([{ lead, index }]);
   }
 
   // Export CSV for a given list of leads (defaults to all leads).
@@ -313,23 +382,12 @@ export default function LeadsList({ userId }: { userId: string }) {
     if (selectedIds.size === 0) return;
     const ok = confirm(`Delete ${selectedIds.size} lead(s)? This cannot be undone.`);
     if (!ok) return;
-    const ids = Array.from(selectedIds);
-    const { error } = await supabase
-      .from("leads")
-      .delete()
-      .in("id", ids)
-      .eq("user_id", userId);
-    if (error) {
-      toast({
-        title: "Delete failed",
-        description: error.message,
-        variant: "destructive",
-      });
-      return;
-    }
-    setLeads((prev) => prev.filter((lead) => !selectedIds.has(lead.id)));
-    clearSelection();
-    toast({ title: "Leads deleted", variant: "success" });
+    const selected = new Set(selectedIds);
+    const entries = leads
+      .map((lead, index) => ({ lead, index }))
+      .filter(({ lead }) => selected.has(lead.id));
+    if (!entries.length) return;
+    scheduleLeadDelete(entries);
   }
 
   function safeCsv(s: string) {
@@ -494,8 +552,19 @@ export default function LeadsList({ userId }: { userId: string }) {
             ))}
           </div>
         ) : leads.length === 0 ? (
-          <div className="text-sm text-muted-foreground">
-            No leads yet. Share your public page to collect contacts.
+          <div className="rounded-2xl border border-dashed border-border/60 bg-card/40 px-4 py-6 text-center">
+            <p className="text-sm text-muted-foreground">
+              No leads yet. Share your public page to collect contacts.
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="mt-3"
+              onClick={() => load({ reset: true })}
+            >
+              Refresh leads
+            </Button>
           </div>
         ) : (
           <div className="space-y-2">

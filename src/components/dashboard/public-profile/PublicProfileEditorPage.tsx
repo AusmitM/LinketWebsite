@@ -61,6 +61,7 @@ import { getSignedProfileHeaderUrl } from "@/lib/profile-header-client";
 import { getSignedProfileLogoUrl } from "@/lib/profile-logo-client";
 import { cn } from "@/lib/utils";
 import { shuffleFields } from "@/lib/lead-form";
+import { readLocalStorage, writeLocalStorage } from "@/lib/browser-storage";
 import { toast } from "@/components/system/toaster";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -158,8 +159,7 @@ export default function PublicProfileEditorPage() {
   const supabase = useMemo(() => createClient(), []);
   const [userId, setUserId] = useState<string | null>(dashboardUser?.id ?? null);
   const [activeSection, setActiveSection] = useState<SectionId>(() => {
-    if (typeof window === "undefined") return "profile";
-    const saved = window.localStorage.getItem(ACTIVE_PROFILE_SECTION_STORAGE_KEY);
+    const saved = readLocalStorage(ACTIVE_PROFILE_SECTION_STORAGE_KEY);
     if (
       saved &&
       MOBILE_PROFILE_SECTIONS.some((section) => section.id === saved)
@@ -980,11 +980,7 @@ export default function PublicProfileEditorPage() {
   }, [isDirty, vcardSnapshot.isDirty, saveError, vcardSnapshot.status]);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    window.localStorage.setItem(
-      ACTIVE_PROFILE_SECTION_STORAGE_KEY,
-      activeSection
-    );
+    writeLocalStorage(ACTIVE_PROFILE_SECTION_STORAGE_KEY, activeSection);
   }, [activeSection]);
 
   useEffect(() => {

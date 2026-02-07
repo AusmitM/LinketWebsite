@@ -107,7 +107,7 @@ export async function GET(
 
   const { data: tags, error: tagsError } = await supabaseAdmin
     .from("hardware_tags")
-    .select("id, public_token, claim_code, batch_id, created_at")
+    .select("id, public_token, claim_code, batch_id, created_at, status")
     .eq("batch_id", batchId)
     .order("created_at", { ascending: true });
 
@@ -132,6 +132,7 @@ export async function GET(
     "claim_code_display",
     "batch_id",
     "batch_label",
+    "claimed",
   ];
 
   const rows = Array.isArray(tags) ? tags : [];
@@ -146,6 +147,7 @@ export async function GET(
         claim_code_display: formatClaimCode(row.claim_code),
         batch_id: row.batch_id,
         batch_label: safeLabel,
+        claimed: row.status === "claimed" ? "yes" : "no",
       };
       return columns.map((key) => csvEscape(record[key as keyof typeof record])).join(",");
     }),

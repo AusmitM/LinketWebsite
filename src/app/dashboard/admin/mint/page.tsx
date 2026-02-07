@@ -10,6 +10,7 @@ type BatchSummary = {
   label: string | null;
   createdAt: string;
   totalTags: number;
+  claimedTags: number;
 };
 
 async function fetchRecentBatches(): Promise<{
@@ -49,19 +50,52 @@ async function fetchRecentBatches(): Promise<{
     hardware_tags: Array<{ count: number | null }> | null;
   };
 
+  const rows = (data as RawBatchRow[] | null) ?? [];
+  const batchIds = rows.map((row) => row.id);
+  const claimedByBatch = new Map<string, number>();
+
+  if (batchIds.length > 0) {
+    const claimedCounts = await Promise.all(
+      batchIds.map(async (id) => {
+        const { count, error: countError } = await supabaseAdmin
+          .from("hardware_tags")
+          .select("*", { count: "exact", head: true })
+          .eq("batch_id", id)
+          .eq("status", "claimed");
+
+        if (countError) {
+          console.error("Failed to load hardware_tags claimed count for batch", {
+            batchId: id,
+            message: countError.message,
+            hint: countError.hint,
+            details: countError.details,
+            code: countError.code,
+          });
+          return { id, count: 0 };
+        }
+
+        return { id, count: count ?? 0 };
+      })
+    );
+
+    for (const result of claimedCounts) {
+      claimedByBatch.set(result.id, result.count);
+    }
+  }
+
   return {
-    batches:
-      data?.map((row: RawBatchRow) => {
-        const count = Array.isArray(row.hardware_tags)
-          ? Number(row.hardware_tags[0]?.count ?? 0)
-          : 0;
-        return {
-          id: row.id,
-          label: row.label,
-          createdAt: row.created_at,
-          totalTags: Number.isFinite(count) ? count : 0,
-        };
-      }) ?? [],
+    batches: rows.map((row) => {
+      const count = Array.isArray(row.hardware_tags)
+        ? Number(row.hardware_tags[0]?.count ?? 0)
+        : 0;
+      return {
+        id: row.id,
+        label: row.label,
+        createdAt: row.created_at,
+        totalTags: Number.isFinite(count) ? count : 0,
+        claimedTags: claimedByBatch.get(row.id) ?? 0,
+      };
+    }),
     error: null,
   };
 }
@@ -163,7 +197,7 @@ export default async function AdminMintPage() {
               Single CSV with every Linket ever minted across all batches.
             </p>
           </div>
-          <Button asChild variant="outline" className="rounded-full">
+          <Button asChild variant="outline" className="dashboard-mint-master-log-button rounded-full">
             <Link href="/api/admin/mint/master-log" prefetch={false}>
               Download master CSV
             </Link>
@@ -178,6 +212,10 @@ export default async function AdminMintPage() {
             batches.map((batch) => {
               const label = batch.label?.trim() || "Untitled batch";
               const downloadHref = `/api/admin/mint/batch/${batch.id}`;
+              const claimedPct =
+                batch.totalTags > 0
+                  ? Math.round((batch.claimedTags / batch.totalTags) * 100)
+                  : 0;
               return (
                 <Link
                   key={batch.id}
@@ -193,9 +231,22 @@ export default async function AdminMintPage() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="dashboard-mint-muted text-xs uppercase tracking-wide text-muted-foreground">Tags</div>
-                    <div className="dashboard-mint-title text-base font-semibold text-foreground">
-                      {batch.totalTags.toLocaleString()}
+                    <div className="grid grid-cols-2 gap-6">
+                      <div>
+                        <div className="dashboard-mint-muted text-xs uppercase tracking-wide text-muted-foreground">Tags</div>
+                        <div className="dashboard-mint-title text-base font-semibold text-foreground">
+                          {batch.totalTags.toLocaleString()}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="dashboard-mint-muted text-xs uppercase tracking-wide text-muted-foreground">Claimed</div>
+                        <div className="dashboard-mint-title text-base font-semibold text-foreground">
+                          {batch.claimedTags.toLocaleString()}
+                        </div>
+                        <div className="dashboard-mint-muted text-xs text-muted-foreground">
+                          {claimedPct}%
+                        </div>
+                      </div>
                     </div>
                     <div className="dashboard-mint-muted mt-1 text-xs font-medium text-muted-foreground group-hover:text-foreground">
                       Download CSV

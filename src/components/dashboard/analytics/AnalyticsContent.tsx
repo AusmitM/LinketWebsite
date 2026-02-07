@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
+import { readLocalStorage, writeLocalStorage } from "@/lib/browser-storage";
 import type { UserAnalytics } from "@/lib/analytics-service";
 import { ResponsiveContainer, LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, Legend } from "recharts";
 import { Download } from "lucide-react";
@@ -40,11 +41,9 @@ type DeltaBadge = {
 
 export default function AnalyticsContent() {
   const [userId, setUserId] = useState<string | null>(null);
+  const [reloadToken, setReloadToken] = useState(0);
   const [range, setRange] = useState<number>(() => {
-    if (typeof window === "undefined") return 30;
-    const saved = Number(
-      window.localStorage.getItem(ANALYTICS_RANGE_STORAGE_KEY)
-    );
+    const saved = Number(readLocalStorage(ANALYTICS_RANGE_STORAGE_KEY));
     if (
       Number.isFinite(saved) &&
       RANGES.some((option) => option.value === saved)
@@ -56,8 +55,7 @@ export default function AnalyticsContent() {
   const [{ loading, error, analytics }, setState] = useState<ViewState>({ loading: true, error: null, analytics: null });
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    window.localStorage.setItem(ANALYTICS_RANGE_STORAGE_KEY, String(range));
+    writeLocalStorage(ANALYTICS_RANGE_STORAGE_KEY, String(range));
   }, [range]);
 
   useEffect(() => {
@@ -112,7 +110,7 @@ export default function AnalyticsContent() {
     return () => {
       cancelled = true;
     };
-  }, [userId, range]);
+  }, [userId, range, reloadToken]);
 
   const totals = analytics?.totals;
 
@@ -218,7 +216,17 @@ export default function AnalyticsContent() {
 
       {error && (
         <Card className="dashboard-analytics-card rounded-3xl border bg-card/80 shadow-sm">
-          <CardContent className="py-8 text-center text-sm text-destructive">{error}</CardContent>
+          <CardContent className="space-y-4 py-8 text-center">
+            <p className="text-sm text-destructive">{error}</p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setReloadToken((value) => value + 1)}
+            >
+              Retry analytics
+            </Button>
+          </CardContent>
         </Card>
       )}
 
@@ -257,7 +265,11 @@ export default function AnalyticsContent() {
           {loading ? (
             <div className="dashboard-skeleton h-72 w-full animate-pulse rounded-2xl bg-muted" data-skeleton />
           ) : chartData.length === 0 ? (
-            <EmptyState message="No scans recorded in this range." />
+            <EmptyState
+              message="No scans recorded in this range."
+              actionLabel="Refresh"
+              onAction={() => setReloadToken((value) => value + 1)}
+            />
           ) : (
             <div className="dashboard-analytics-chart h-72 w-full">
               <ResponsiveContainer width="100%" height="100%">
@@ -291,7 +303,11 @@ export default function AnalyticsContent() {
           {loading ? (
             <div className="dashboard-skeleton h-56 w-full animate-pulse rounded-2xl bg-muted" data-skeleton />
           ) : conversionSeries.length === 0 ? (
-            <EmptyState message="No data available." />
+            <EmptyState
+              message="No data available yet."
+              actionLabel="Try 90 days"
+              onAction={() => setRange(90)}
+            />
           ) : (
             <div className="dashboard-analytics-chart h-56 w-full">
               <ResponsiveContainer width="100%" height="100%">
@@ -349,7 +365,11 @@ export default function AnalyticsContent() {
                 })}
               </div>
             ) : (
-              <EmptyState message="No scans in this range." />
+              <EmptyState
+                message="No scans in this range."
+                actionLabel="Refresh"
+                onAction={() => setReloadToken((value) => value + 1)}
+              />
             )}
           </CardContent>
         </Card>
@@ -436,8 +456,31 @@ function ConversionTooltip({ active, payload, label }: ConversionTooltipProps) {
   );
 }
 
-function EmptyState({ message }: { message: string }) {
-  return <p className="rounded-2xl border border-dashed px-3 py-8 text-center text-sm text-muted-foreground">{message}</p>;
+function EmptyState({
+  message,
+  actionLabel,
+  onAction,
+}: {
+  message: string;
+  actionLabel?: string;
+  onAction?: () => void;
+}) {
+  return (
+    <div className="rounded-2xl border border-dashed px-3 py-8 text-center">
+      <p className="text-sm text-muted-foreground">{message}</p>
+      {actionLabel && onAction ? (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="mt-3"
+          onClick={onAction}
+        >
+          {actionLabel}
+        </Button>
+      ) : null}
+    </div>
+  );
 }
 
 function summarizeTimelineWindow(points: UserAnalytics["timeline"]) {
