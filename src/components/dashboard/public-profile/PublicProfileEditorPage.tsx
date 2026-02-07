@@ -151,7 +151,7 @@ const MOBILE_PROFILE_SECTIONS: Array<{ id: SectionId; label: string }> = [
   { id: "preview", label: "Preview" },
 ];
 const ACTIVE_PROFILE_SECTION_STORAGE_KEY = "linket:profile-editor:active-section";
-const DEFAULT_PROFILE_LINK_URL = "https://www.linketconect.com";
+const DEFAULT_PROFILE_LINK_URL = "https://www.linketconnect.com";
 
 export default function PublicProfileEditorPage() {
   const dashboardUser = useDashboardUser();

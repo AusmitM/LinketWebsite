@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseReadonly } from "@/lib/supabase/server";
 import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
+import { limitRequest } from "@/lib/rate-limit";
 
 type ConsultPayload = {
   workEmail: string;
   teamSize: string;
   notes: string;
+  website?: string | null;
   pageUrl?: string | null;
 };
 
@@ -94,6 +96,7 @@ async function parsePayload(request: NextRequest): Promise<ConsultPayload> {
       workEmail: normalizeString(body.workEmail),
       teamSize: normalizeString(body.teamSize),
       notes: normalizeString(body.notes),
+      website: normalizeString(body.website) || null,
       pageUrl: normalizeString(body.pageUrl) || null,
     };
   }
@@ -103,14 +106,26 @@ async function parsePayload(request: NextRequest): Promise<ConsultPayload> {
     workEmail: normalizeString(formData.get("workEmail")),
     teamSize: normalizeString(formData.get("teamSize")),
     notes: normalizeString(formData.get("notes")),
+    website: normalizeString(formData.get("website")) || null,
     pageUrl: normalizeString(formData.get("pageUrl")) || null,
   };
 }
 
 export async function POST(request: NextRequest) {
   try {
+    if (await limitRequest(request, "consult-submit", 8, 60_000)) {
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        { status: 429 }
+      );
+    }
+
     const payload = await parsePayload(request);
     const { workEmail, teamSize, notes } = payload;
+
+    if (payload.website) {
+      return NextResponse.json({ ok: true });
+    }
 
     if (!workEmail || !EMAIL_RE.test(workEmail)) {
       return NextResponse.json(

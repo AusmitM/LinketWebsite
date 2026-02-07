@@ -21,6 +21,7 @@ import { getSignedAvatarUrl } from "@/lib/avatar-client";
 import type { ThemeName } from "@/lib/themes";
 import type { ProfileWithLinks } from "@/lib/profile-service";
 import { useDashboardUser } from "@/components/dashboard/DashboardSessionContext";
+import { getSiteOrigin } from "@/lib/site-url";
 
 const THEME_OPTIONS: Array<{
   id: ThemeName;
@@ -109,7 +110,7 @@ const THEME_OPTIONS: Array<{
 ];
 
 const DEFAULT_THEME: ThemeName = "autumn";
-const DEFAULT_PROFILE_LINK_URL = "https://www.linketconect.com";
+const DEFAULT_PROFILE_LINK_URL = "https://www.linketconnect.com";
 
 type LinkItem = {
   id: string;
@@ -750,12 +751,8 @@ export default function ProfilesContent() {
     accountHandle ?? draft?.handle ?? activeProfile?.handle ?? null;
   const publicProfileUrl = useMemo(() => {
     if (!effectiveHandle) return null;
-    const envBase = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://linketconnect.com").replace(/\/$/, "");
-    if (envBase) return `${envBase}/${effectiveHandle}`;
-    if (typeof window !== "undefined") {
-      return `${window.location.origin}/${effectiveHandle}`;
-    }
-    return `/${effectiveHandle}`;
+    const siteOrigin = getSiteOrigin().replace(/\/$/, "");
+    return `${siteOrigin}/${effectiveHandle}`;
   }, [effectiveHandle]);
 
   const copyPublicProfileUrl = useCallback(async () => {

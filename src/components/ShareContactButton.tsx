@@ -4,6 +4,7 @@ import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/system/toaster";
 import type { LeadFormConfig, LeadFormSubmission } from "@/types/lead-form";
+import { trackEvent } from "@/lib/analytics";
 
 type ButtonVariant = React.ComponentProps<typeof Button>["variant"];
 
@@ -180,6 +181,7 @@ export default function ShareContactButton({
     const picker = (navigator as Navigator & { contacts?: ContactPicker })
       .contacts;
     if (!picker?.select) return;
+    void trackEvent("share_contact_click", { handle });
     try {
       setSharing(true);
       const response = await fetch(
@@ -216,6 +218,10 @@ export default function ShareContactButton({
           description: "No matching fields were found for this form.",
           variant: "destructive",
         });
+        await trackEvent("share_contact_failed", {
+          handle,
+          reason: "no_matching_fields",
+        });
         return;
       }
 
@@ -238,6 +244,7 @@ export default function ShareContactButton({
         description: "Your contact was sent to the Linket owner.",
         variant: "success",
       });
+      await trackEvent("share_contact_success", { handle });
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Unable to share contact";
@@ -245,6 +252,10 @@ export default function ShareContactButton({
         title: "Contact not shared",
         description: message,
         variant: "destructive",
+      });
+      await trackEvent("share_contact_failed", {
+        handle,
+        reason: message.slice(0, 160),
       });
     } finally {
       setSharing(false);

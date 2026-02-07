@@ -33,6 +33,7 @@ import { cn } from "@/lib/utils";
 import { brand } from "@/config/brand";
 import { getActiveProfileForPublicHandle } from "@/lib/profile-service";
 import type { ProfileWithLinks } from "@/lib/profile-service";
+import { getConfiguredSiteOrigin } from "@/lib/site-url";
 
 // -----------------------------------------------------------------------------
 // Landing page metadata and runtime configuration.
@@ -48,14 +49,14 @@ export const metadata: Metadata = {
     images: [
       {
         url: "/og.png",
-        width: 120,
-        height: 120,
+        width: 1366,
+        height: 768,
         alt: "Linket logo mark.",
       },
     ],
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "Stay Connected",
     description:
       "Linket is the customizable tap-to-share keychain that keeps your information current with every scan.",
@@ -140,8 +141,7 @@ const RECENT_SALES = [
 ] as const;
 
 // Use a stable site URL for mock assets in environments without a public URL.
-const PUBLIC_SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+const PUBLIC_SITE_URL = getConfiguredSiteOrigin();
 
 // Links rendered inside the public profile preview mock.
 const PUBLIC_PROFILE_PREVIEW_LINKS = [
@@ -472,7 +472,7 @@ const FAQ = [
 // -----------------------------------------------------------------------------
 export default async function Home() {
   // Resolve the site URL for structured data and assets.
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://linket.app";
+  const siteUrl = getConfiguredSiteOrigin();
   // Load the public profile preview (live if possible, mock if not).
   const publicPreview = await loadPublicProfilePreview();
 
@@ -581,7 +581,13 @@ function HeroSection() {
               size="lg"
               className="rounded-full bg-gradient-to-r from-[#ff9776] via-[#ffb866] to-[#5dd6f7] px-10 py-6 text-base font-semibold text-white shadow-[0_20px_50px_rgba(255,151,118,0.35)] transition-transform duration-300 hover:-translate-y-1 hover:shadow-[0_28px_65px_rgba(255,151,118,0.45)]"
             >
-              <Link href="/auth">Get Started</Link>
+              <Link
+                href="/auth"
+                data-analytics-id="hero_cta_click"
+                data-analytics-meta='{"location":"hero","target":"/auth"}'
+              >
+                Get Started
+              </Link>
             </Button>
           </div>
         </div>
@@ -1237,6 +1243,8 @@ function LandingFooter() {
               <div className="mt-4 flex flex-wrap gap-3">
                 <Link
                   href="/auth?view=signin"
+                  data-analytics-id="footer_cta_click"
+                  data-analytics-meta='{"location":"landing_footer","target":"/auth?view=signin"}'
                   className="rounded-full bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-900 transition hover:bg-white/90"
                 >
                   Get started

@@ -10,7 +10,7 @@ import { createServerSupabase } from "@/lib/supabase/server";
 import type { ProfileLinkRecord, UserProfileRecord } from "@/types/db";
 
 type ProfileWithLinks = UserProfileRecord & { links: ProfileLinkRecord[] };
-const DEFAULT_PROFILE_LINK_URL = "https://www.linketconect.com";
+const DEFAULT_PROFILE_LINK_URL = "https://www.linketconnect.com";
 
 function normalizeHandle(handle: string) {
   return handle.trim().toLowerCase();

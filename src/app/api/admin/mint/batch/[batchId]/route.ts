@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseReadonly } from "@/lib/supabase/server";
 import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
+import { getConfiguredSiteOrigin } from "@/lib/site-url";
 
 const LABEL_MAX = 64;
 
@@ -53,7 +54,7 @@ function formatClaimCode(value: string | null | undefined) {
 }
 
 function getSiteBase() {
-  return (process.env.NEXT_PUBLIC_SITE_URL ?? "https://linketconnect.com").replace(/\/$/, "");
+  return getConfiguredSiteOrigin().replace(/\/$/, "");
 }
 
 export async function GET(

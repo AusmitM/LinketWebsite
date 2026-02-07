@@ -9,10 +9,12 @@ import { Toaster } from "@/components/system/toaster";
 import ServiceWorkerRegister from "@/components/system/ServiceWorkerRegister";
 import DebugErrorOverlay from "@/components/system/DebugErrorOverlay";
 import GlobalErrorLogger from "@/components/system/GlobalErrorLogger";
+import AnalyticsBinder from "@/components/system/AnalyticsBinder";
 import "@/styles/theme.css";
 import Script from "next/script";
 import { CustomizationProvider } from "@/components/providers/customization-provider";
 import { brand } from "@/config/brand";
+import { getConfiguredSiteOrigin } from "@/lib/site-url";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -52,9 +54,7 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "/",
   },
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
-  ),
+  metadataBase: new URL(getConfiguredSiteOrigin()),
   openGraph: {
     title: defaultTitle,
     description: brand.blurb,
@@ -63,8 +63,8 @@ export const metadata: Metadata = {
     images: [
       {
         url: "/og.png",
-        width: 120,
-        height: 120,
+        width: 1366,
+        height: 768,
         alt: `${brand.name} logo`,
       },
     ],
@@ -72,7 +72,7 @@ export const metadata: Metadata = {
     type: "website",
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: brand.name,
     description: brand.blurb,
     images: ["/og.png"],
@@ -84,7 +84,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  const siteUrl = getConfiguredSiteOrigin();
   const productJsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -111,6 +111,7 @@ export default function RootLayout({
       >
         <ThemeProvider initial="light" storageKey={null}>
           <PrefetchRoutes />
+          <AnalyticsBinder />
           <CustomizationProvider>
             <a
               href="#main"

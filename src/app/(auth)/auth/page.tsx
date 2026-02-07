@@ -6,8 +6,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "@/components/system/toaster";
+import { getSiteOrigin } from "@/lib/site-url";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL;
 const DEFAULT_NEXT = "/dashboard/overview";
 
 export default function AuthPage() {
@@ -24,8 +24,7 @@ export default function AuthPage() {
   const oauthMessage = searchParams.get("message");
   const view = searchParams.get("view") ?? "signin";
   const supabase = useMemo(() => createClient(), []);
-  const siteUrl =
-    SITE_URL ?? (typeof window !== "undefined" ? window.location.origin : "");
+  const siteUrl = getSiteOrigin();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

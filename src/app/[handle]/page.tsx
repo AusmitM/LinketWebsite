@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getSignedAvatarUrl } from "@/lib/avatar-server";
 import { getSignedProfileHeaderUrl } from "@/lib/profile-header-server";
@@ -5,6 +6,7 @@ import { getSignedProfileLogoUrl } from "@/lib/profile-logo-server";
 import { normalizeLeadFormConfig } from "@/lib/lead-form";
 import { getActiveProfileForPublicHandle } from "@/lib/profile-service";
 import { createServerSupabaseReadonly } from "@/lib/supabase/server";
+import { getConfiguredSiteOrigin } from "@/lib/site-url";
 import { isDarkTheme } from "@/lib/themes";
 import type { ProfileLinkRecord } from "@/types/db";
 import type { LeadFormConfig } from "@/types/lead-form";
@@ -19,6 +21,64 @@ export const revalidate = 60;
 type Props = {
   params: Promise<{ handle: string }>;
 };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { handle: rawHandle } = await params;
+  const handle = rawHandle?.trim().toLowerCase();
+
+  if (!handle) {
+    return {
+      title: `Profile Not Found | Linket Connect`,
+      robots: { index: false, follow: false },
+    };
+  }
+
+  const payload = await getActiveProfileForPublicHandle(handle);
+  if (!payload) {
+    return {
+      title: `Profile Not Found | Linket Connect`,
+      robots: { index: false, follow: false },
+    };
+  }
+
+  const { account, profile } = payload;
+  const publicHandle = profile.handle || account.username || handle;
+  const displayName = profile.name || account.display_name || publicHandle;
+  const description =
+    profile.headline?.trim() ||
+    `View ${displayName}'s Linket profile, links, and contact details.`;
+  const siteOrigin = getConfiguredSiteOrigin();
+  const profilePath = `/${encodeURIComponent(publicHandle)}`;
+  const absoluteProfileUrl = `${siteOrigin}${profilePath}`;
+
+  return {
+    title: `${displayName} (@${publicHandle}) | Linket Connect`,
+    description,
+    alternates: {
+      canonical: absoluteProfileUrl,
+    },
+    openGraph: {
+      title: `${displayName} on Linket Connect`,
+      description,
+      url: absoluteProfileUrl,
+      type: "profile",
+      images: [
+        {
+          url: "/og.png",
+          width: 1366,
+          height: 768,
+          alt: "Linket Connect profile preview",
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${displayName} on Linket Connect`,
+      description,
+      images: ["/og.png"],
+    },
+  };
+}
 
 function sortLinks(links: ProfileLinkRecord[] | null | undefined) {
   return (links ?? [])

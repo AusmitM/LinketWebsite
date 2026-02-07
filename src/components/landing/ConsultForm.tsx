@@ -4,17 +4,20 @@ import { useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/system/toaster";
+import { trackEvent } from "@/lib/analytics";
 
 type ConsultFormState = {
   workEmail: string;
   teamSize: string;
   notes: string;
+  website: string;
 };
 
 const INITIAL_STATE: ConsultFormState = {
   workEmail: "",
   teamSize: "",
   notes: "",
+  website: "",
 };
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -38,6 +41,14 @@ export default function ConsultForm() {
     const workEmail = form.workEmail.trim();
     const teamSize = form.teamSize.trim();
     const notes = form.notes.trim();
+    const website = form.website.trim();
+
+    if (website) {
+      setSubmitted(true);
+      setForm(INITIAL_STATE);
+      await trackEvent("consult_submit_honeypot", { source: "landing_consult" });
+      return;
+    }
 
     if (!workEmail || !EMAIL_RE.test(workEmail)) {
       setError("Please enter a valid work email.");
@@ -53,6 +64,10 @@ export default function ConsultForm() {
     }
 
     setSubmitting(true);
+    void trackEvent("consult_submit_attempt", {
+      source: "landing_consult",
+      hasNotes: notes.length > 0,
+    });
     try {
       const response = await fetch("/api/consult", {
         method: "POST",
@@ -79,11 +94,19 @@ export default function ConsultForm() {
       });
       setSubmitted(true);
       setForm(INITIAL_STATE);
+      await trackEvent("consult_submit_success", {
+        source: "landing_consult",
+        teamSize,
+      });
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Unable to send request.";
       setError(message);
       toast({ title: "Something went wrong", description: message });
+      await trackEvent("consult_submit_failed", {
+        source: "landing_consult",
+        message: message.slice(0, 160),
+      });
     } finally {
       setSubmitting(false);
     }
@@ -91,6 +114,21 @@ export default function ConsultForm() {
 
   return (
     <form className="mt-6 space-y-5" onSubmit={handleSubmit}>
+      <div>
+        <label htmlFor="custom-website" className="sr-only">
+          Website
+        </label>
+        <input
+          id="custom-website"
+          type="text"
+          value={form.website}
+          onChange={updateField("website")}
+          autoComplete="off"
+          tabIndex={-1}
+          aria-hidden="true"
+          className="hidden"
+        />
+      </div>
       <div>
         <label
           htmlFor="custom-email"
@@ -149,6 +187,8 @@ export default function ConsultForm() {
       <Button
         type="submit"
         disabled={submitting || submitted}
+        data-analytics-id="consult_submit_click"
+        data-analytics-meta='{"source":"landing_consult"}'
         className="w-full rounded-2xl bg-gradient-to-r from-[#ff9776] via-[#ffb866] to-[#5dd6f7] text-base font-semibold text-slate-900 shadow-[0_15px_45px_rgba(255,151,118,0.35)] disabled:opacity-70"
       >
         {submitted ? "Request sent" : "Book your consult"}

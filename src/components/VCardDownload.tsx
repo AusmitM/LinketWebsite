@@ -1,6 +1,7 @@
 "use client";
 import * as React from "react";
 import { Button } from "@/components/ui/button";
+import { trackEvent } from "@/lib/analytics";
 
 type ButtonVariant = React.ComponentProps<typeof Button>["variant"];
 
@@ -23,12 +24,14 @@ export default function VCardDownload({
   const [downloading, setDownloading] = React.useState(false);
 
   async function download() {
+    void trackEvent("vcard_download_click", { handle });
     try {
       setDownloading(true);
       // iOS Safari doesn't support the download attribute reliably. Open URL directly.
       const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
       const isIOS = /iP(hone|od|ad)/.test(ua);
       if (isIOS) {
+        void trackEvent("vcard_download_success", { handle, mode: "ios_redirect" });
         window.location.assign(href);
         return;
       }
@@ -36,6 +39,7 @@ export default function VCardDownload({
       const res = await fetch(href, { cache: "no-store" });
       if (!res.ok) {
         // fallback navigation if headers blocked by CSP
+        void trackEvent("vcard_download_success", { handle, mode: "redirect_fallback" });
         window.location.assign(href);
         return;
       }
@@ -48,6 +52,12 @@ export default function VCardDownload({
       a.click();
       a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
+      void trackEvent("vcard_download_success", { handle, mode: "blob" });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message.slice(0, 160) : "unknown";
+      void trackEvent("vcard_download_failed", { handle, message });
+      window.location.assign(href);
     } finally {
       setDownloading(false);
     }

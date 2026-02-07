@@ -87,6 +87,12 @@ function CreativePricing({
             </ul>
 
             <Button
+              data-analytics-id="pricing_cta_click"
+              data-analytics-meta={JSON.stringify({
+                section: "landing_pricing",
+                tier: tier.name,
+                price: tier.price,
+              })}
               className={cn(
                 "w-full rounded-2xl border border-[#ffd7c0] bg-white text-base font-semibold text-[#0f172a] transition hover:-translate-y-0.5",
                 tier.popular &&

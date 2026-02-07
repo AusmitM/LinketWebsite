@@ -27,6 +27,7 @@ import { brand } from "@/config/brand";
 import { AdaptiveNavPill } from "@/components/ui/3d-adaptive-navigation-bar";
 import { isPublicProfilePathname } from "@/lib/routing";
 import { toast } from "@/components/system/toaster";
+import { getSiteOrigin } from "@/lib/site-url";
 
 type UserLite = { id: string; email: string | null; fullName?: string | null } | null;
 
@@ -519,7 +520,7 @@ export function Navbar() {
           ? "bg-white text-slate-900 shadow-[0_18px_35px_rgba(15,23,42,0.25)] hover:bg-white/90"
           : "bg-white text-[#0b1220] shadow-[0_12px_30px_rgba(15,23,42,0.12)] hover:bg-white/95"
       )}
-      aria-label={`Log in to ${brand.name}`}
+      aria-label="Sign in"
     >
       <Link href="/auth?view=signin">Sign in</Link>
     </Button>
@@ -1093,13 +1094,7 @@ function usePopoverPosition(
 }
 
 function buildPublicProfileUrl(handle: string) {
-  const envBase = process.env.NEXT_PUBLIC_SITE_URL;
-  const base =
-    envBase && envBase.length > 0
-      ? envBase
-      : typeof window !== "undefined"
-      ? window.location.origin
-      : "https://linketconnect.com";
+  const base = getSiteOrigin();
   return `${base.replace(/\/$/, "")}/${encodeURIComponent(handle)}`;
 }
 
