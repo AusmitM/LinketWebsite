@@ -1941,12 +1941,12 @@ function LinkListItem({
           <img
             src={favicon}
             alt=""
-            className="h-7 w-7 rounded"
+            className="h-10 w-10 rounded-md"
             aria-hidden
           />
         ) : (
-          <span className="flex h-8 w-8 items-center justify-center rounded-full border border-border/60 bg-background/70 text-muted-foreground">
-            <Icon className="h-4 w-4" />
+          <span className="flex h-10 w-10 items-center justify-center rounded-full border border-border/60 bg-background/70 text-muted-foreground">
+            <Icon className="h-5 w-5" />
           </span>
         )}
         <div className="min-w-0">
