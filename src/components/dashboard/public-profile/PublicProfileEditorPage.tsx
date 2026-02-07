@@ -9,6 +9,26 @@ import {
   type FocusEvent,
 } from "react";
 import {
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  restrictToParentElement,
+  restrictToVerticalAxis,
+} from "@dnd-kit/modifiers";
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import {
   Eye,
   EyeOff,
   Globe,
@@ -949,17 +969,7 @@ export default function PublicProfileEditorPage() {
                   links={draft?.links ?? []}
                   leadFormPreview={leadFormPreview}
                   onReorderLeadField={reorderLeadFormFields}
-                  onEditLink={openEditLink}
-                  onToggleLink={(linkId) =>
-                    updateLink(linkId, {
-                      visible: !draft?.links.find((link) => link.id === linkId)?.visible,
-                    })
-                  }
-                  onRemoveLink={removeLink}
-                  onAddLink={addLink}
                   onReorderLink={reorderLinks}
-                  draggingLinkId={draggingLinkId}
-                  setDraggingLinkId={setDraggingLinkId}
                 />
               }
               onLeadFormPreview={setLeadFormPreview}
@@ -1078,17 +1088,7 @@ export default function PublicProfileEditorPage() {
                 links={draft?.links ?? []}
                 leadFormPreview={leadFormPreview}
                 onReorderLeadField={reorderLeadFormFields}
-                onEditLink={openEditLink}
-                onToggleLink={(linkId) =>
-                  updateLink(linkId, {
-                    visible: !draft?.links.find((link) => link.id === linkId)?.visible,
-                  })
-                }
-                onRemoveLink={removeLink}
-                onAddLink={addLink}
                 onReorderLink={reorderLinks}
-                draggingLinkId={draggingLinkId}
-                setDraggingLinkId={setDraggingLinkId}
               />
               </div>
             </div>
@@ -1525,13 +1525,7 @@ function PhonePreviewCard({
   links,
   leadFormPreview,
   onReorderLeadField,
-  onEditLink,
-  onToggleLink,
-  onRemoveLink,
-  onAddLink,
   onReorderLink,
-  draggingLinkId,
-  setDraggingLinkId,
 }: {
   profile: { name: string; tagline: string };
   avatarUrl: string | null;
@@ -1546,25 +1540,51 @@ function PhonePreviewCard({
   links: LinkItem[];
   leadFormPreview: LeadFormConfig | null;
   onReorderLeadField?: (sourceId: string, targetId: string) => void;
-  onEditLink: (linkId: string) => void;
-  onToggleLink: (linkId: string) => void;
-  onRemoveLink: (linkId: string) => void;
-  onAddLink: () => void;
   onReorderLink: (sourceId: string, targetId: string) => void;
-  draggingLinkId: string | null;
-  setDraggingLinkId: (id: string | null) => void;
 }) {
-  const visibleLinks = links.filter((link) => link.visible);
-  const logoBadgeClass = logoBackgroundWhite ? "bg-white" : "bg-background";
-  const previewFields = leadFormPreview
-    ? leadFormPreview.settings.shuffleQuestionOrder
-      ? shuffleFields(leadFormPreview.fields)
-      : leadFormPreview.fields
-    : [];
-  const submitLabel = "Submit";
-  const [draggingLeadFieldId, setDraggingLeadFieldId] = useState<string | null>(
-    null
+  const visibleLinks = useMemo(
+    () => links.filter((link) => link.visible),
+    [links]
   );
+  const logoBadgeClass = logoBackgroundWhite ? "bg-white" : "bg-background";
+  const previewFields = useMemo(() => {
+    if (!leadFormPreview) return [];
+    return leadFormPreview.settings.shuffleQuestionOrder
+      ? shuffleFields(leadFormPreview.fields)
+      : leadFormPreview.fields;
+  }, [leadFormPreview]);
+  const previewLinkIds = useMemo(() => visibleLinks.map((link) => link.id), [visibleLinks]);
+  const previewLeadFieldIds = useMemo(
+    () =>
+      previewFields
+        .filter((field) => field.type !== "section")
+        .map((field) => field.id),
+    [previewFields]
+  );
+  const previewSensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+  const handlePreviewLinkDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event;
+      if (!over || active.id === over.id) return;
+      onReorderLink(String(active.id), String(over.id));
+    },
+    [onReorderLink]
+  );
+  const handlePreviewLeadFieldDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      if (!onReorderLeadField) return;
+      const { active, over } = event;
+      if (!over || active.id === over.id) return;
+      onReorderLeadField(String(active.id), String(over.id));
+    },
+    [onReorderLeadField]
+  );
+  const submitLabel = "Submit";
   const resolvedTheme = themeName;
   const isBurntOrange = resolvedTheme === "burnt-orange";
 
@@ -1654,26 +1674,24 @@ function PhonePreviewCard({
           >
             Links
           </div>
-          <div className="mt-3 space-y-3">
-            {visibleLinks.map((link) => (
-              <LinkListItem
-                key={link.id}
-                link={link}
-                onEdit={() => onEditLink(link.id)}
-                onToggle={() => onToggleLink(link.id)}
-                onRemove={() => onRemoveLink(link.id)}
-                isDragging={draggingLinkId === link.id}
-                draggable
-                onDragStart={() => setDraggingLinkId(link.id)}
-                onDragOver={(event) => event.preventDefault()}
-                onDrop={() => {
-                  if (draggingLinkId) {
-                    onReorderLink(draggingLinkId, link.id);
-                  }
-                }}
-                onDragEnd={() => setDraggingLinkId(null)}
-              />
-            ))}
+          <div className="mt-3">
+            <DndContext
+              sensors={previewSensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handlePreviewLinkDragEnd}
+              modifiers={[restrictToVerticalAxis, restrictToParentElement]}
+            >
+              <SortableContext
+                items={previewLinkIds}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="space-y-3">
+                  {visibleLinks.map((link) => (
+                    <LinkListItem key={link.id} link={link} />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
           </div>
         </div>
 
@@ -1685,58 +1703,52 @@ function PhonePreviewCard({
         >
           {leadFormPreview?.title || "Get in Touch"}
         </div>
-        <div className="mt-3 w-full space-y-2">
-          {previewFields.length ? (
-            previewFields.map((field) =>
-              field.type === "section" ? (
-                <div
-                  key={field.id}
-                  className="rounded-2xl border border-border/60 bg-muted/40 px-3 py-2 text-xs text-muted-foreground"
-                >
-                  <div className="text-[11px] font-semibold">{field.title}</div>
-                  {field.description ? (
-                    <div className="mt-1 text-[10px]">{field.description}</div>
-                  ) : null}
-                </div>
-              ) : (
-                <div
-                  key={field.id}
-                  className={cn(
-                    "preview-lead-item dashboard-drag-item rounded-2xl border border-border/60 bg-background/70 px-3 py-2 text-xs text-muted-foreground cursor-grab active:cursor-grabbing",
-                    draggingLeadFieldId === field.id && "is-dragging"
-                  )}
-                  draggable
-                  onDragStart={() => setDraggingLeadFieldId(field.id)}
-                  onDragOver={(event) => event.preventDefault()}
-                  onDrop={() => {
-                    if (draggingLeadFieldId) {
-                      onReorderLeadField?.(draggingLeadFieldId, field.id);
-                    }
-                  }}
-                  onDragEnd={() => setDraggingLeadFieldId(null)}
-                >
-                  <div className="flex items-center gap-2">
-                    <GripVertical className="h-3 w-3 text-muted-foreground" />
-                    <div className="text-[10px] uppercase tracking-[0.2em]">
-                      {field.label}
-                      {field.required ? " *" : ""}
-                    </div>
-                  </div>
-                  <PreviewLeadField field={field} />
-                </div>
-              )
-            )
-          ) : (
-            <div className="rounded-2xl border border-dashed border-border/60 px-3 py-3 text-center text-[11px] text-muted-foreground">
-              Add lead form fields to see them here.
-            </div>
-          )}
-          <button
-            type="button"
-            className="public-profile-preview-submit w-full rounded-full bg-foreground/90 px-4 py-2 text-xs font-semibold text-background"
+        <div className="mt-3 w-full">
+          <DndContext
+            sensors={previewSensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handlePreviewLeadFieldDragEnd}
+            modifiers={[restrictToVerticalAxis, restrictToParentElement]}
           >
-            {submitLabel}
-          </button>
+            <SortableContext
+              items={previewLeadFieldIds}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="space-y-2">
+                {previewFields.length ? (
+                  previewFields.map((field) =>
+                    field.type === "section" ? (
+                      <div
+                        key={field.id}
+                        className="rounded-2xl border border-border/60 bg-muted/40 px-3 py-2 text-xs text-muted-foreground"
+                      >
+                        <div className="text-[11px] font-semibold">{field.title}</div>
+                        {field.description ? (
+                          <div className="mt-1 text-[10px]">{field.description}</div>
+                        ) : null}
+                      </div>
+                    ) : (
+                      <SortableLeadFieldItem
+                        key={field.id}
+                        field={field}
+                        disabled={!onReorderLeadField}
+                      />
+                    )
+                  )
+                ) : (
+                  <div className="rounded-2xl border border-dashed border-border/60 px-3 py-3 text-center text-[11px] text-muted-foreground">
+                    Add lead form fields to see them here.
+                  </div>
+                )}
+                <button
+                  type="button"
+                  className="public-profile-preview-submit w-full rounded-full bg-foreground/90 px-4 py-2 text-xs font-semibold text-background"
+                >
+                  {submitLabel}
+                </button>
+              </div>
+            </SortableContext>
+          </DndContext>
         </div>
       </div>
     </div>
@@ -1808,44 +1820,42 @@ function faviconForUrl(url: string) {
 
 function LinkListItem({
   link,
-  onEdit,
-  onToggle,
-  onRemove,
-  isDragging,
-  draggable,
-  onDragStart,
-  onDragOver,
-  onDrop,
-  onDragEnd,
 }: {
   link: LinkItem;
-  onEdit: () => void;
-  onToggle: () => void;
-  onRemove: () => void;
-  isDragging?: boolean;
-  draggable?: boolean;
-  onDragStart?: () => void;
-  onDragOver?: (event: React.DragEvent<HTMLDivElement>) => void;
-  onDrop?: () => void;
-  onDragEnd?: () => void;
 }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: link.id });
   const Icon = ICON_OPTIONS.find((item) => item.value === link.icon)?.icon ?? Link2;
   const clicks = link.clicks ?? 0;
   const favicon = faviconForUrl(link.url);
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 50 : undefined,
+    cursor: isDragging ? "grabbing" : "grab",
+  };
   return (
     <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
       className={cn(
-        "dashboard-drag-item group relative flex items-center justify-between gap-3 rounded-2xl border border-border/60 bg-card/80 px-4 py-3 text-xs font-medium shadow-[0_12px_24px_-18px_rgba(15,23,42,0.2)] cursor-grab active:cursor-grabbing",
+        "dashboard-drag-item relative flex items-center justify-between gap-3 rounded-2xl border border-border/60 bg-card/80 px-4 py-3 text-xs font-medium shadow-[0_12px_24px_-18px_rgba(15,23,42,0.2)] active:cursor-grabbing",
         isDragging && "is-dragging"
       )}
-      draggable={draggable}
-      onDragStart={onDragStart}
-      onDragOver={onDragOver}
-      onDrop={onDrop}
-      onDragEnd={onDragEnd}
     >
       <div className="flex min-w-0 items-center gap-3">
-        <span className="text-muted-foreground">
+        <span
+          aria-hidden
+          className="rounded-full p-1 text-muted-foreground transition hover:bg-muted/60"
+        >
           <GripVertical className="h-4 w-4" />
         </span>
         {favicon ? (
@@ -1873,17 +1883,60 @@ function LinkListItem({
           </div>
         </div>
       </div>
-      <div className="absolute inset-2 hidden items-center justify-center gap-2 rounded-xl bg-background/90 text-[10px] font-semibold text-foreground shadow-[0_12px_24px_-18px_rgba(15,23,42,0.25)] group-hover:flex">
-        <button type="button" onClick={onEdit} className="rounded-full px-2 py-1 hover:bg-muted">
-          Edit
-        </button>
-        <button type="button" onClick={onToggle} className="rounded-full px-2 py-1 hover:bg-muted">
-          {link.visible ? "Hide" : "Show"}
-        </button>
-        <button type="button" onClick={onRemove} className="rounded-full px-2 py-1 hover:bg-muted">
-          Delete
-        </button>
+    </div>
+  );
+}
+
+function SortableLeadFieldItem({
+  field,
+  disabled,
+}: {
+  field: LeadFormField;
+  disabled?: boolean;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: field.id, disabled });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 50 : undefined,
+    cursor: disabled ? "not-allowed" : isDragging ? "grabbing" : "grab",
+  };
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className={cn(
+        "preview-lead-item dashboard-drag-item rounded-2xl border border-border/60 bg-background/70 px-3 py-2 text-xs text-muted-foreground",
+        disabled && "cursor-not-allowed",
+        !disabled && "active:cursor-grabbing",
+        isDragging && "is-dragging"
+      )}
+    >
+      <div className="flex items-center gap-2">
+        <span
+          aria-hidden
+          className={cn(
+            "rounded-full p-0.5 text-muted-foreground transition hover:bg-muted/60",
+            disabled && "opacity-60"
+          )}
+        >
+          <GripVertical className="h-3 w-3" />
+        </span>
+        <div className="text-[10px] uppercase tracking-[0.2em]">
+          {field.label}
+          {field.required ? " *" : ""}
+        </div>
       </div>
+      <PreviewLeadField field={field} />
     </div>
   );
 }
