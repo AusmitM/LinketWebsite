@@ -18,6 +18,7 @@ const RANGES = [
   { label: "30 days", value: 30 },
   { label: "90 days", value: 90 },
 ] as const;
+const ANALYTICS_RANGE_STORAGE_KEY = "linket:analytics:range";
 
 type TimelineDatum = {
   date: string;
@@ -32,10 +33,32 @@ type ViewState = {
   analytics: UserAnalytics | null;
 };
 
+type DeltaBadge = {
+  text: string;
+  tone: "up" | "down" | "neutral";
+};
+
 export default function AnalyticsContent() {
   const [userId, setUserId] = useState<string | null>(null);
-  const [range, setRange] = useState<number>(30);
+  const [range, setRange] = useState<number>(() => {
+    if (typeof window === "undefined") return 30;
+    const saved = Number(
+      window.localStorage.getItem(ANALYTICS_RANGE_STORAGE_KEY)
+    );
+    if (
+      Number.isFinite(saved) &&
+      RANGES.some((option) => option.value === saved)
+    ) {
+      return saved;
+    }
+    return 30;
+  });
   const [{ loading, error, analytics }, setState] = useState<ViewState>({ loading: true, error: null, analytics: null });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(ANALYTICS_RANGE_STORAGE_KEY, String(range));
+  }, [range]);
 
   useEffect(() => {
     let active = true;
@@ -120,6 +143,24 @@ export default function AnalyticsContent() {
     }));
   }, [analytics]);
 
+  const trendDeltas = useMemo(() => {
+    if (!analytics || analytics.timeline.length === 0) return null;
+    const points = analytics.timeline;
+    const windowSize = Math.max(1, Math.floor(points.length / 2));
+    const recentWindow = points.slice(-windowSize);
+    const previousWindow = points.slice(-(windowSize * 2), -windowSize);
+    if (!previousWindow.length) return null;
+
+    const recent = summarizeTimelineWindow(recentWindow);
+    const previous = summarizeTimelineWindow(previousWindow);
+
+    return {
+      scans: formatPercentDelta(recent.scans, previous.scans),
+      leads: formatPercentDelta(recent.leads, previous.leads),
+      conversion: formatRateDelta(recent.conversion, previous.conversion),
+    };
+  }, [analytics]);
+
   const handleExport = useCallback(() => {
     if (!analytics) return;
     const rows = ["date,scans,leads"].concat(
@@ -184,22 +225,25 @@ export default function AnalyticsContent() {
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           label="Scans in range"
-          value={analytics ? numberFormatter.format(rangeTotals.scans) : loading ? "—" : "0"}
+          value={analytics ? numberFormatter.format(rangeTotals.scans) : loading ? "--" : "0"}
           helper={`Last ${range} days`}
+          delta={trendDeltas?.scans}
         />
         <StatCard
           label="Leads in range"
-          value={analytics ? numberFormatter.format(rangeTotals.leads) : loading ? "—" : "0"}
+          value={analytics ? numberFormatter.format(rangeTotals.leads) : loading ? "--" : "0"}
           helper={`Last ${range} days`}
+          delta={trendDeltas?.leads}
         />
         <StatCard
           label="Conversion"
-          value={analytics ? `${(rangeTotals.conversion * 100).toFixed(1)}%` : loading ? "—" : "0%"}
-          helper="Leads ÷ scans"
+          value={analytics ? `${(rangeTotals.conversion * 100).toFixed(1)}%` : loading ? "--" : "0%"}
+          helper="Leads / scans"
+          delta={trendDeltas?.conversion}
         />
         <StatCard
           label="Active Linkets"
-          value={totals ? numberFormatter.format(totals.activeTags) : loading ? "—" : "0"}
+          value={totals ? numberFormatter.format(totals.activeTags) : loading ? "--" : "0"}
           helper="Tags with at least one scan"
         />
       </section>
@@ -319,13 +363,26 @@ type StatCardProps = {
   label: string;
   value: string;
   helper?: string;
+  delta?: DeltaBadge;
 };
 
-function StatCard({ label, value, helper }: StatCardProps) {
+function StatCard({ label, value, helper, delta }: StatCardProps) {
   return (
     <Card className="dashboard-analytics-card rounded-3xl border bg-card/80 shadow-sm">
-      <CardHeader>
+      <CardHeader className="flex-row items-start justify-between gap-3 space-y-0">
         <CardTitle className="text-sm text-muted-foreground">{label}</CardTitle>
+        {delta ? (
+          <span
+            className={cn(
+              "rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wide",
+              delta.tone === "up" && "bg-emerald-500/10 text-emerald-300",
+              delta.tone === "down" && "bg-amber-500/10 text-amber-300",
+              delta.tone === "neutral" && "bg-muted text-muted-foreground"
+            )}
+          >
+            {delta.text}
+          </span>
+        ) : null}
       </CardHeader>
       <CardContent className="space-y-1">
         <div className="text-3xl font-semibold text-foreground">{value}</div>
@@ -382,3 +439,41 @@ function ConversionTooltip({ active, payload, label }: ConversionTooltipProps) {
 function EmptyState({ message }: { message: string }) {
   return <p className="rounded-2xl border border-dashed px-3 py-8 text-center text-sm text-muted-foreground">{message}</p>;
 }
+
+function summarizeTimelineWindow(points: UserAnalytics["timeline"]) {
+  const scans = points.reduce((acc, point) => acc + point.scans, 0);
+  const leads = points.reduce((acc, point) => acc + point.leads, 0);
+  const conversion = scans > 0 ? leads / scans : 0;
+  return { scans, leads, conversion };
+}
+
+function formatPercentDelta(current: number, previous: number): DeltaBadge {
+  if (previous === 0 && current === 0) {
+    return { text: "No change", tone: "neutral" };
+  }
+  if (previous === 0) {
+    return { text: "New activity", tone: "up" };
+  }
+  const delta = ((current - previous) / previous) * 100;
+  if (Math.abs(delta) < 0.1) {
+    return { text: "No change", tone: "neutral" };
+  }
+  const precision = Math.abs(delta) >= 10 ? 0 : 1;
+  const text = `${delta > 0 ? "+" : ""}${delta.toFixed(precision)}% vs prev`;
+  return {
+    text,
+    tone: delta > 0 ? "up" : "down",
+  };
+}
+
+function formatRateDelta(current: number, previous: number): DeltaBadge {
+  const delta = (current - previous) * 100;
+  if (Math.abs(delta) < 0.1) {
+    return { text: "No change", tone: "neutral" };
+  }
+  return {
+    text: `${delta > 0 ? "+" : ""}${delta.toFixed(1)}pp vs prev`,
+    tone: delta > 0 ? "up" : "down",
+  };
+}
+

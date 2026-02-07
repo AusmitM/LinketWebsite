@@ -149,13 +149,24 @@ const MOBILE_PROFILE_SECTIONS: Array<{ id: SectionId; label: string }> = [
   { id: "lead", label: "Lead Form" },
   { id: "preview", label: "Preview" },
 ];
+const ACTIVE_PROFILE_SECTION_STORAGE_KEY = "linket:profile-editor:active-section";
 
 export default function PublicProfileEditorPage() {
   const dashboardUser = useDashboardUser();
   const { theme } = useThemeOptional();
   const supabase = useMemo(() => createClient(), []);
   const [userId, setUserId] = useState<string | null>(dashboardUser?.id ?? null);
-  const [activeSection, setActiveSection] = useState<SectionId>("profile");
+  const [activeSection, setActiveSection] = useState<SectionId>(() => {
+    if (typeof window === "undefined") return "profile";
+    const saved = window.localStorage.getItem(ACTIVE_PROFILE_SECTION_STORAGE_KEY);
+    if (
+      saved &&
+      MOBILE_PROFILE_SECTIONS.some((section) => section.id === saved)
+    ) {
+      return saved as SectionId;
+    }
+    return "profile";
+  });
   const [draft, setDraft] = useState<ProfileDraft | null>(null);
   const [savedProfile, setSavedProfile] = useState<ProfileDraft | null>(null);
   const [loading, setLoading] = useState(true);
@@ -925,6 +936,32 @@ export default function PublicProfileEditorPage() {
     : saving || vcardSnapshot.status === "saving"
     ? "saving"
     : "saved";
+  const saveStatusMeta = useMemo(() => {
+    if (saveState === "failed") {
+      return {
+        label: "Save failed",
+        className:
+          "border-destructive/40 bg-destructive/10 text-destructive",
+      };
+    }
+    if (saveState === "saving" || sidebarSavePulse) {
+      return {
+        label: "Saving changes",
+        className:
+          "border-foreground/20 bg-foreground/10 text-foreground dashboard-saving-indicator",
+      };
+    }
+    if (isDirty) {
+      return {
+        label: "Unsaved changes",
+        className: "border-amber-500/40 bg-amber-500/10 text-amber-700",
+      };
+    }
+    return {
+      label: "All changes saved",
+      className: "border-emerald-500/40 bg-emerald-500/10 text-emerald-700",
+    };
+  }, [isDirty, saveState, sidebarSavePulse]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -940,6 +977,14 @@ export default function PublicProfileEditorPage() {
       }).__linketProfileEditorState;
     };
   }, [isDirty, vcardSnapshot.isDirty, saveError, vcardSnapshot.status]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(
+      ACTIVE_PROFILE_SECTION_STORAGE_KEY,
+      activeSection
+    );
+  }, [activeSection]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -1122,20 +1167,25 @@ export default function PublicProfileEditorPage() {
           {activeSection !== "preview" ? (
           <div className="hidden justify-end self-start pt-0 lg:flex">
             <div className="flex w-full max-w-[340px] flex-col items-center gap-3">
-              <div className="w-full text-center text-xs text-muted-foreground">
+              <div
+                className="w-full text-center text-xs text-muted-foreground"
+                aria-live="polite"
+              >
                 <div className="flex flex-wrap items-center justify-center gap-2">
                 <span className="font-medium text-foreground">
                   {isPublished ? "Published" : "Draft"}
                 </span>
+                <span
+                  className={cn(
+                    "rounded-full border px-2 py-1 text-[11px] font-semibold",
+                    saveStatusMeta.className
+                  )}
+                >
+                  {saveStatusMeta.label}
+                </span>
                 <span>
                   Last saved: {lastSavedAt ? formatShortDate(lastSavedAt) : "Just now"}
                 </span>
-                {(saveState === "saving" || sidebarSavePulse) && (
-                  <span className="dashboard-saving-indicator text-foreground">
-                    Saving...
-                  </span>
-                )}
-                {isDirty && <span className="text-amber-600">Unsaved changes</span>}
                 {saveState === "failed" ? (
                   <Button variant="outline" size="sm" onClick={() => void handleSave()}>
                     Retry save
@@ -1272,6 +1322,47 @@ function EditorPanel({
     },
     [onVCardStatus]
   );
+  const [linkSearchQuery, setLinkSearchQuery] = useState("");
+  const [linkSortMode, setLinkSortMode] = useState<"manual" | "label" | "clicks">(
+    "manual"
+  );
+  const sortedFilteredLinks = useMemo(() => {
+    const base = draft?.links ?? [];
+    const query = linkSearchQuery.trim().toLowerCase();
+    const filtered = query
+      ? base.filter(
+          (link) =>
+            link.label.toLowerCase().includes(query) ||
+            link.url.toLowerCase().includes(query)
+        )
+      : base;
+    if (linkSortMode === "manual") return filtered;
+    if (linkSortMode === "label") {
+      return [...filtered].sort((a, b) => a.label.localeCompare(b.label));
+    }
+    return [...filtered].sort((a, b) => (b.clicks ?? 0) - (a.clicks ?? 0));
+  }, [draft?.links, linkSearchQuery, linkSortMode]);
+  const canReorderLinks =
+    linkSortMode === "manual" && linkSearchQuery.trim().length === 0;
+  const hasLinkMatches = sortedFilteredLinks.length > 0;
+
+  if (loading && activeSection !== "preview") {
+    return (
+      <Card className="dashboard-skeleton rounded-2xl border border-border/60 bg-card/80 shadow-sm">
+        <CardHeader>
+          <CardTitle className="text-sm font-semibold">
+            Loading editor...
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="h-10 w-3/4 rounded-xl bg-muted/60" data-skeleton />
+          <div className="h-10 w-full rounded-xl bg-muted/60" data-skeleton />
+          <div className="h-20 w-full rounded-xl bg-muted/60" data-skeleton />
+          <div className="h-12 w-1/2 rounded-full bg-muted/60" data-skeleton />
+        </CardContent>
+      </Card>
+    );
+  }
   if (activeSection === "preview") {
     return <div className="flex justify-center">{previewNode}</div>;
   }
@@ -1419,7 +1510,11 @@ function EditorPanel({
             </div>
             {handleError ? (
               <p className="text-xs text-destructive">{handleError}</p>
-            ) : null}
+            ) : (
+              <p className="text-[11px] text-muted-foreground">
+                Changes auto-save. Your handle is public only after publish.
+              </p>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -1454,27 +1549,62 @@ function EditorPanel({
             </div>
           </CardHeader>
         <CardContent className="space-y-3">
-          {draft?.links.map((link, index) => (
+          <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_160px]">
+            <Input
+              value={linkSearchQuery}
+              onChange={(event) => setLinkSearchQuery(event.target.value)}
+              placeholder="Search by label or URL"
+              className="h-9 text-sm"
+            />
+            <select
+              className="h-9 rounded-md border border-border/60 bg-background px-3 text-sm"
+              value={linkSortMode}
+              onChange={(event) =>
+                setLinkSortMode(event.target.value as "manual" | "label" | "clicks")
+              }
+            >
+              <option value="manual">Manual order</option>
+              <option value="label">Sort by label</option>
+              <option value="clicks">Sort by clicks</option>
+            </select>
+          </div>
+          {!canReorderLinks && hasLinkMatches ? (
+            <p className="text-xs text-muted-foreground">
+              Reordering is available in manual mode with an empty search.
+            </p>
+          ) : null}
+          {sortedFilteredLinks.map((link) => (
             <div
               key={link.id}
               className={cn(
-                "dashboard-drag-item group rounded-xl border border-border/60 bg-background/70 p-3",
+                "dashboard-drag-item group rounded-xl border border-border/60 bg-background/70 p-3 focus-within:ring-2 focus-within:ring-ring/35",
+                canReorderLinks ? "cursor-grab active:cursor-grabbing" : "cursor-default",
                 draggingLinkId === link.id && "is-dragging opacity-70"
               )}
-              draggable
-              onDragStart={() => setDraggingLinkId(link.id)}
-              onDragOver={(event) => event.preventDefault()}
+              draggable={canReorderLinks}
+              onDragStart={() => {
+                if (!canReorderLinks) return;
+                setDraggingLinkId(link.id);
+              }}
+              onDragOver={(event) => {
+                if (!canReorderLinks) return;
+                event.preventDefault();
+              }}
               onDrop={() => {
+                if (!canReorderLinks) return;
                 if (draggingLinkId) {
                   onReorderLink(draggingLinkId, link.id);
                 }
               }}
-              onDragEnd={() => setDraggingLinkId(null)}
+              onDragEnd={() => {
+                if (!canReorderLinks) return;
+                setDraggingLinkId(null);
+              }}
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="flex-1 space-y-2">
                     <Input
-                      id={`link-label-${index}`}
+                      id={`link-label-${link.id}`}
                       value={link.label}
                       placeholder="Label"
                       onChange={(event) =>
@@ -1540,11 +1670,34 @@ function EditorPanel({
               </div>
             </div>
           ))}
-          {!draft?.links.length && (
-            <div className="rounded-xl border border-dashed border-border/60 px-3 py-4 text-center text-xs text-muted-foreground">
-              No links yet.
+          {!draft?.links.length ? (
+            <div className="rounded-xl border border-dashed border-border/60 px-3 py-5 text-center text-xs text-muted-foreground">
+              <p>No links yet. Add one to make your profile actionable.</p>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="mt-3 rounded-full"
+                onClick={onAddLink}
+              >
+                Add your first link
+              </Button>
             </div>
-          )}
+          ) : null}
+          {draft?.links.length && !hasLinkMatches ? (
+            <div className="rounded-xl border border-dashed border-border/60 px-3 py-5 text-center text-xs text-muted-foreground">
+              <p>No links match that search.</p>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                className="mt-2 rounded-full"
+                onClick={() => setLinkSearchQuery("")}
+              >
+                Clear search
+              </Button>
+            </div>
+          ) : null}
         </CardContent>
       </Card>
     );

@@ -697,7 +697,7 @@ export function Navbar() {
                               );
                             }}
                             className={cn(
-                              "flex min-w-0 flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold transition cursor-pointer",
+                              "dashboard-profile-section-pill flex min-w-0 flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold transition cursor-pointer",
                               isActive
                                 ? "bg-muted text-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]"
                                 : "text-muted-foreground"

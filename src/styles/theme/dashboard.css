@@ -10,6 +10,8 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
 #dashboard-theme-scope {
   font-feature-settings: "ss01", "ss02", "liga";
   text-rendering: optimizeLegibility;
+  --dashboard-interaction-duration: 180ms;
+  --dashboard-interaction-ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 #dashboard-theme-scope h1,
@@ -26,6 +28,17 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
 
 #dashboard-theme-scope .text-muted-foreground {
   letter-spacing: 0.01em;
+}
+
+/* Consistent interactive timing + focus affordance */
+#dashboard-theme-scope :is(a[href], button, [role="button"], summary) {
+  transition-duration: var(--dashboard-interaction-duration);
+  transition-timing-function: var(--dashboard-interaction-ease);
+}
+
+#dashboard-theme-scope :is(a[href], button, [role="button"], summary):focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--ring) 70%, transparent);
+  outline-offset: 2px;
 }
 
 /* Profile details: subtle button outline for separation */
@@ -46,8 +59,8 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
 
 /* Component polish */
 [data-slot=card] { box-shadow: var(--shadow-ambient); }
-[data-slot=button] { transition: all var(--duration-base) var(--ease-smooth); }
-[data-slot=input] { transition: color var(--duration-base) var(--ease-smooth), box-shadow var(--duration-base) var(--ease-smooth); }
+[data-slot=button] { transition: all var(--dashboard-interaction-duration) var(--dashboard-interaction-ease); }
+[data-slot=input] { transition: color var(--dashboard-interaction-duration) var(--dashboard-interaction-ease), box-shadow var(--dashboard-interaction-duration) var(--dashboard-interaction-ease); }
 
 /* Motion + micro-interactions */
 #dashboard-theme-scope [data-slot=card] {
@@ -135,6 +148,22 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
   to { opacity: 0; }
 }
 
+@keyframes dashboard-navbar-enter {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes dashboard-navbar-item-enter {
+  from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes dashboard-navbar-sheen {
+  0% { transform: translateX(-120%); opacity: 0; }
+  30% { opacity: 0.3; }
+  100% { transform: translateX(120%); opacity: 0; }
+}
+
 /* Premium dashboard surface treatment */
 #dashboard-theme-scope {
   background: var(--premium-gradient);
@@ -148,8 +177,42 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
   backdrop-filter: blur(12px);
 }
 
+#dashboard-theme-scope .dashboard-navbar {
+  position: relative;
+  overflow: hidden;
+  animation: dashboard-navbar-enter 520ms var(--ease-smooth) both;
+}
+
+#dashboard-theme-scope .dashboard-navbar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    110deg,
+    transparent 0%,
+    color-mix(in srgb, var(--premium-hairline) 55%, transparent) 46%,
+    transparent 68%
+  );
+  transform: translateX(-120%);
+  animation: dashboard-navbar-sheen 950ms var(--ease-smooth) 120ms both;
+}
+
 #dashboard-theme-scope .dashboard-navbar-inner {
   gap: 1rem;
+}
+
+#dashboard-theme-scope .dashboard-navbar-left,
+#dashboard-theme-scope .dashboard-navbar-right {
+  animation: dashboard-navbar-item-enter 440ms var(--ease-smooth) both;
+}
+
+#dashboard-theme-scope .dashboard-navbar-left {
+  animation-delay: 120ms;
+}
+
+#dashboard-theme-scope .dashboard-navbar-right {
+  animation-delay: 180ms;
 }
 
 #dashboard-theme-scope .dashboard-brand {
@@ -158,6 +221,12 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
   border: 1px solid color-mix(in srgb, var(--premium-border) 70%, transparent);
   background: color-mix(in srgb, var(--card) 80%, transparent);
   box-shadow: var(--premium-inset);
+  transition: transform var(--duration-base) var(--ease-smooth), box-shadow var(--duration-base) var(--ease-smooth);
+}
+
+#dashboard-theme-scope .dashboard-brand:hover {
+  transform: translateY(-1px) scale(1.01);
+  box-shadow: 0 14px 28px -20px rgba(15, 23, 42, 0.35), var(--premium-inset);
 }
 
 #dashboard-theme-scope .dashboard-logo-fallback {
@@ -218,6 +287,14 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
   background: color-mix(in srgb, var(--card) 92%, transparent);
 }
 
+#dashboard-theme-scope .dashboard-navbar-right > * {
+  transition: transform var(--duration-base) var(--ease-smooth), box-shadow var(--duration-base) var(--ease-smooth);
+}
+
+#dashboard-theme-scope .dashboard-navbar-right > *:hover {
+  transform: translateY(-1px);
+}
+
 #dashboard-theme-scope .dashboard-new-linket-button {
   background: linear-gradient(
     135deg,
@@ -237,6 +314,22 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
   background: color-mix(in srgb, var(--card) 80%, transparent);
   border-color: var(--premium-border);
   box-shadow: var(--premium-inset);
+}
+
+#dashboard-theme-scope .dashboard-mobile-toggle svg {
+  transition: transform var(--duration-base) var(--ease-smooth);
+}
+
+#dashboard-theme-scope .dashboard-mobile-toggle[aria-expanded="true"] svg {
+  transform: rotate(90deg) scale(1.03);
+}
+
+#dashboard-theme-scope .dashboard-profile-section-pill {
+  transition: transform var(--duration-base) var(--ease-smooth), background-color var(--duration-base) var(--ease-smooth), box-shadow var(--duration-base) var(--ease-smooth);
+}
+
+#dashboard-theme-scope .dashboard-profile-section-pill:hover {
+  transform: translateY(-1px);
 }
 
 #dashboard-theme-scope .dashboard-sidebar {
@@ -501,10 +594,127 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
   will-change: transform;
 }
 
+/* Desktop-only richer interactions */
+@media (min-width: 1025px) {
+  #dashboard-theme-scope .dashboard-navbar {
+    backdrop-filter: blur(14px) saturate(1.1);
+  }
+
+  #dashboard-theme-scope .dashboard-navbar-inner {
+    transition: transform var(--duration-base) var(--ease-smooth);
+  }
+
+  #dashboard-theme-scope .dashboard-navbar:hover .dashboard-navbar-inner {
+    transform: translateY(-1px);
+  }
+
+  #dashboard-theme-scope .dashboard-nav-link {
+    overflow: hidden;
+  }
+
+  #dashboard-theme-scope .dashboard-nav-link::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background: linear-gradient(
+      100deg,
+      transparent 0%,
+      color-mix(in srgb, var(--ring) 22%, transparent) 48%,
+      transparent 70%
+    );
+    transform: translateX(-120%);
+    transition: transform 560ms var(--ease-smooth);
+  }
+
+  #dashboard-theme-scope .dashboard-nav-link:hover::after {
+    transform: translateX(120%);
+  }
+
+  #dashboard-theme-scope .dashboard-new-linket-button {
+    transition: transform var(--duration-base) var(--ease-smooth),
+      box-shadow var(--duration-base) var(--ease-smooth),
+      filter var(--duration-base) var(--ease-smooth);
+  }
+
+  #dashboard-theme-scope .dashboard-new-linket-button:hover {
+    transform: translateY(-2px) scale(1.015);
+    box-shadow: 0 24px 44px -28px rgba(0, 0, 0, 0.62), 0 0 0 1px color-mix(in srgb, var(--primary) 40%, transparent), var(--premium-inset);
+  }
+
+  #dashboard-theme-scope .dashboard-navbar-right > *:active {
+    transform: translateY(0) scale(0.98);
+  }
+
+  #dashboard-theme-scope .dashboard-profile-section-pill {
+    transition: transform var(--duration-base) var(--ease-smooth),
+      box-shadow var(--duration-base) var(--ease-smooth),
+      background-color var(--duration-base) var(--ease-smooth);
+  }
+
+  #dashboard-theme-scope .dashboard-profile-section-pill:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 22px -18px rgba(15, 23, 42, 0.5);
+  }
+
+  #dashboard-theme-scope .dashboard-profile-section-pill svg {
+    transition: transform var(--duration-base) var(--ease-smooth);
+  }
+
+  #dashboard-theme-scope .dashboard-profile-section-pill:hover svg {
+    transform: translateY(-1px) scale(1.05);
+  }
+
+  #dashboard-theme-scope [data-slot=card] {
+    transition: transform var(--duration-base) var(--ease-smooth),
+      box-shadow var(--duration-base) var(--ease-smooth),
+      border-color var(--duration-base) var(--ease-smooth);
+  }
+
+  #dashboard-theme-scope [data-slot=card]:hover {
+    transform: translateY(-4px) scale(1.005);
+    border-color: color-mix(in srgb, var(--premium-border) 72%, transparent);
+    box-shadow: 0 26px 52px -34px rgba(15, 23, 42, 0.45), var(--premium-inset);
+  }
+
+  #dashboard-theme-scope .dashboard-drag-item:hover {
+    transform: translateY(-3px) scale(1.004);
+    box-shadow: 0 24px 40px -30px rgba(15, 23, 42, 0.42);
+  }
+
+  #dashboard-theme-scope .dashboard-analytics-tile:hover,
+  #dashboard-theme-scope .dashboard-metric-row:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 18px 32px -26px rgba(15, 23, 42, 0.42);
+  }
+}
+
+@media (max-width: 1024px) {
+  #dashboard-theme-scope .dashboard-navbar:hover .dashboard-navbar-inner,
+  #dashboard-theme-scope .dashboard-nav-link:hover,
+  #dashboard-theme-scope .dashboard-profile-section-pill:hover,
+  #dashboard-theme-scope .dashboard-drag-item:hover,
+  #dashboard-theme-scope .dashboard-analytics-tile:hover,
+  #dashboard-theme-scope .dashboard-metric-row:hover,
+  #dashboard-theme-scope [data-slot=card]:hover {
+    transform: none;
+  }
+
+  #dashboard-theme-scope .dashboard-navbar::after {
+    animation-duration: 760ms;
+    opacity: 0.7;
+  }
+}
+
 /* Accessibility: remove motion for reduced motion settings */
 @media (prefers-reduced-motion: reduce) {
   #dashboard-theme-scope .dashboard-content > *,
   #dashboard-theme-scope [data-slot=card],
+  #dashboard-theme-scope .dashboard-navbar,
+  #dashboard-theme-scope .dashboard-navbar::after,
+  #dashboard-theme-scope .dashboard-navbar-left,
+  #dashboard-theme-scope .dashboard-navbar-right,
   #dashboard-theme-scope .dashboard-skeleton [data-skeleton]::after,
   #dashboard-theme-scope .dashboard-saving-indicator,
   #dashboard-theme-scope [data-slot=dialog-overlay],
