@@ -92,7 +92,7 @@ export default async function AdminMintPage() {
   const latestBatch = batches[0] ?? null;
 
   return (
-    <div className="space-y-8">
+    <div className="dashboard-mint-page space-y-8">
       <header className="space-y-3">
         <p className="text-xs font-semibold uppercase tracking-[0.35em] text-muted-foreground">
           Admin console
@@ -127,23 +127,23 @@ export default async function AdminMintPage() {
           <section className="rounded-3xl border border-border/60 bg-card/80 p-5 shadow-sm">
             <h2 className="text-sm font-semibold text-foreground">Batch overview</h2>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <div className="rounded-2xl border border-border/60 bg-background/60 p-4">
-                <div className="text-xs uppercase tracking-wide text-muted-foreground">Total batches</div>
-                <div className="mt-2 text-2xl font-semibold text-foreground">{totalBatches}</div>
+              <div className="dashboard-mint-surface rounded-2xl border border-border/60 bg-background/60 p-4">
+                <div className="dashboard-mint-muted text-xs uppercase tracking-wide text-muted-foreground">Total batches</div>
+                <div className="dashboard-mint-title mt-2 text-2xl font-semibold text-foreground">{totalBatches}</div>
               </div>
-              <div className="rounded-2xl border border-border/60 bg-background/60 p-4">
-                <div className="text-xs uppercase tracking-wide text-muted-foreground">Total tags</div>
-                <div className="mt-2 text-2xl font-semibold text-foreground">
+              <div className="dashboard-mint-surface rounded-2xl border border-border/60 bg-background/60 p-4">
+                <div className="dashboard-mint-muted text-xs uppercase tracking-wide text-muted-foreground">Total tags</div>
+                <div className="dashboard-mint-title mt-2 text-2xl font-semibold text-foreground">
                   {totalTags.toLocaleString()}
                 </div>
               </div>
             </div>
-            <div className="mt-4 rounded-2xl border border-border/60 bg-background/60 p-4">
-              <div className="text-xs uppercase tracking-wide text-muted-foreground">Latest batch</div>
-              <div className="mt-2 text-base font-semibold text-foreground">
+            <div className="dashboard-mint-surface mt-4 rounded-2xl border border-border/60 bg-background/60 p-4">
+              <div className="dashboard-mint-muted text-xs uppercase tracking-wide text-muted-foreground">Latest batch</div>
+              <div className="dashboard-mint-title mt-2 text-base font-semibold text-foreground">
                 {latestBatch?.label?.trim() || "No batches yet"}
               </div>
-              <div className="mt-1 text-xs text-muted-foreground">
+              <div className="dashboard-mint-muted mt-1 text-xs text-muted-foreground">
                 {latestBatch ? formatTimestamp(latestBatch.createdAt) : "Create your first batch above."}
               </div>
             </div>
@@ -156,10 +156,10 @@ export default async function AdminMintPage() {
           <h2 className="text-lg font-semibold text-foreground">Recent batches</h2>
           <p className="text-xs text-muted-foreground">Last 25 batches minted from this console.</p>
         </div>
-        <div className="mt-4 flex flex-col gap-4 rounded-2xl border border-border/60 bg-background/60 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="dashboard-mint-surface mt-4 flex flex-col gap-4 rounded-2xl border border-border/60 bg-background/60 p-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <div className="text-sm font-semibold text-foreground">Master log</div>
-            <p className="mt-1 text-xs text-muted-foreground">
+            <div className="dashboard-mint-title text-sm font-semibold text-foreground">Master log</div>
+            <p className="dashboard-mint-muted mt-1 text-xs text-muted-foreground">
               Single CSV with every Linket ever minted across all batches.
             </p>
           </div>
@@ -182,22 +182,22 @@ export default async function AdminMintPage() {
                 <Link
                   key={batch.id}
                   href={downloadHref}
-                  className="group flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border/60 bg-background/60 px-4 py-3 transition-colors hover:border-foreground/30 hover:bg-background/80"
+                  className="dashboard-mint-surface dashboard-mint-row group flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border/60 bg-background/60 px-4 py-3 transition-colors hover:border-foreground/30 hover:bg-background/80"
                   aria-label={`Download CSV for ${label}`}
                   prefetch={false}
                 >
                   <div className="min-w-0">
-                    <div className="truncate text-sm font-semibold text-foreground">{label}</div>
-                    <div className="text-xs text-muted-foreground">
+                    <div className="dashboard-mint-title truncate text-sm font-semibold text-foreground">{label}</div>
+                    <div className="dashboard-mint-muted text-xs text-muted-foreground">
                       {formatTimestamp(batch.createdAt)}
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-xs uppercase tracking-wide text-muted-foreground">Tags</div>
-                    <div className="text-base font-semibold text-foreground">
+                    <div className="dashboard-mint-muted text-xs uppercase tracking-wide text-muted-foreground">Tags</div>
+                    <div className="dashboard-mint-title text-base font-semibold text-foreground">
                       {batch.totalTags.toLocaleString()}
                     </div>
-                    <div className="mt-1 text-xs font-medium text-muted-foreground group-hover:text-foreground">
+                    <div className="dashboard-mint-muted mt-1 text-xs font-medium text-muted-foreground group-hover:text-foreground">
                       Download CSV
                     </div>
                   </div>

@@ -55,11 +55,15 @@ export function ThemeProvider({
   const getSnapshot = useCallback(() => {
     if (!persist) return initial || "light";
     if (typeof window === "undefined") return initial || "light";
-    return (
-      (localStorage.getItem(storage) as ThemeName | null) ||
-      initial ||
-      "light"
-    );
+    try {
+      return (
+        (localStorage.getItem(storage) as ThemeName | null) ||
+        initial ||
+        "light"
+      );
+    } catch {
+      return initial || "light";
+    }
   }, [initial, persist, storage]);
 
   const subscribe = useCallback(
@@ -93,7 +97,13 @@ export function ThemeProvider({
 
   const setTheme = useCallback(
     (t: ThemeName) => {
-      if (persist && typeof localStorage !== "undefined") localStorage.setItem(storage, t);
+      if (persist && typeof localStorage !== "undefined") {
+        try {
+          localStorage.setItem(storage, t);
+        } catch {
+          // Ignore storage failures (private browsing / restricted storage).
+        }
+      }
       const scope = scopeSelector ? (typeof document !== "undefined" ? document.querySelector(scopeSelector) : null) : undefined;
       applyThemeClass(t, scope ?? undefined);
       if (typeof window !== "undefined") {

@@ -706,6 +706,13 @@
   color: var(--card-foreground);
 }
 
+/* Aggie: sidebar hover text should turn white for clearer contrast */
+#dashboard-theme-scope.theme-maroon .dashboard-sidebar .dashboard-sidebar-link[data-active="false"]:hover,
+#dashboard-theme-scope.theme-maroon .dashboard-sidebar .dashboard-sidebar-link[data-active="false"]:hover span,
+#dashboard-theme-scope.theme-maroon .dashboard-sidebar .dashboard-sidebar-link[data-active="false"]:hover svg {
+  color: #fff1f1;
+}
+
 /* Aggie: white copy-link buttons + white outline for New Linket */
 .theme-maroon .dashboard-navbar .dashboard-copy-link-button {
   background: #ffffff;
@@ -830,6 +837,25 @@
 
 #dashboard-theme-scope.theme-maroon .dashboard-leads-card article dd {
   color: rgba(255, 241, 241, 0.8);
+}
+
+/* Aggie: improve mint page row/card readability on maroon surfaces */
+#dashboard-theme-scope.theme-maroon .dashboard-mint-page .dashboard-mint-surface {
+  background: rgba(80, 0, 0, 0.72);
+  border-color: rgba(255, 214, 214, 0.45);
+}
+
+#dashboard-theme-scope.theme-maroon .dashboard-mint-page .dashboard-mint-title {
+  color: #fff1f1 !important;
+}
+
+#dashboard-theme-scope.theme-maroon .dashboard-mint-page .dashboard-mint-muted {
+  color: rgba(255, 241, 241, 0.9) !important;
+}
+
+#dashboard-theme-scope.theme-maroon .dashboard-mint-page .dashboard-mint-row:hover .dashboard-mint-muted,
+#dashboard-theme-scope.theme-maroon .dashboard-mint-page .dashboard-mint-row:hover .group-hover\:text-foreground {
+  color: #fff1f1 !important;
 }
 
 #dashboard-theme-scope.theme-maroon .dashboard-leads-card article * {

@@ -30,29 +30,50 @@ type PendingThemePayload = {
 
 function readPendingTheme(): PendingThemePayload | null {
   if (typeof localStorage === "undefined") return null;
-  const raw = localStorage.getItem(PENDING_THEME_KEY);
+  let raw: string | null = null;
+  try {
+    raw = localStorage.getItem(PENDING_THEME_KEY);
+  } catch {
+    return null;
+  }
   if (!raw) return null;
   try {
     const parsed = JSON.parse(raw) as PendingThemePayload;
     if (!parsed || typeof parsed.theme !== "string" || typeof parsed.at !== "number") {
-      localStorage.removeItem(PENDING_THEME_KEY);
+      try {
+        localStorage.removeItem(PENDING_THEME_KEY);
+      } catch {
+        // Ignore storage failures (private browsing / restricted storage).
+      }
       return null;
     }
     const age = Date.now() - parsed.at;
     if (age > PENDING_TTL_MS) {
-      localStorage.removeItem(PENDING_THEME_KEY);
+      try {
+        localStorage.removeItem(PENDING_THEME_KEY);
+      } catch {
+        // Ignore storage failures (private browsing / restricted storage).
+      }
       return null;
     }
     return parsed;
   } catch {
-    localStorage.removeItem(PENDING_THEME_KEY);
+    try {
+      localStorage.removeItem(PENDING_THEME_KEY);
+    } catch {
+      // Ignore storage failures (private browsing / restricted storage).
+    }
     return null;
   }
 }
 
 function clearPendingTheme() {
   if (typeof localStorage === "undefined") return;
-  localStorage.removeItem(PENDING_THEME_KEY);
+  try {
+    localStorage.removeItem(PENDING_THEME_KEY);
+  } catch {
+    // Ignore storage failures (private browsing / restricted storage).
+  }
 }
 
 function coerceTheme(value: unknown): ThemeName | null {

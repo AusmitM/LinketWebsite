@@ -33,6 +33,24 @@ const BASE_NAV = [
 
 const STORAGE_KEY = "dash:sidebar-collapsed";
 
+function readSidebarCollapsed() {
+  if (typeof window === "undefined") return false;
+  try {
+    return localStorage.getItem(STORAGE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function writeSidebarCollapsed(collapsed: boolean) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(STORAGE_KEY, collapsed ? "1" : "0");
+  } catch {
+    // Ignore storage failures (private browsing / restricted storage).
+  }
+}
+
 export default function Sidebar({
   className,
   variant = "desktop",
@@ -45,9 +63,8 @@ export default function Sidebar({
   const pathname = usePathname();
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(() => {
-    if (typeof window === "undefined") return false;
     if (variant === "mobile") return false;
-    return localStorage.getItem(STORAGE_KEY) === "1";
+    return readSidebarCollapsed();
   });
   const [isAdmin, setIsAdmin] = useState(false);
   const supabase = useMemo(() => createClient(), []);
@@ -58,7 +75,7 @@ export default function Sidebar({
 
   useEffect(() => {
     if (isMobile) return;
-    localStorage.setItem(STORAGE_KEY, collapsed ? "1" : "0");
+    writeSidebarCollapsed(collapsed);
   }, [collapsed, isMobile]);
 
   useEffect(() => {
@@ -153,8 +170,9 @@ export default function Sidebar({
                 key={item.href}
                 href={item.href}
                 title={item.label}
+                data-active={active ? "true" : "false"}
                 className={cn(
-                  "group relative flex items-center gap-3 rounded-xl px-2.5 py-2 text-sm outline-none transition",
+                  "dashboard-sidebar-link group relative flex items-center gap-3 rounded-xl px-2.5 py-2 text-sm outline-none transition",
                   isCollapsed && !isMobile && "justify-center",
                   active
                     ? "bg-gradient-to-r from-[var(--primary)]/20 to-[var(--accent)]/20 text-foreground ring-1 ring-[var(--ring)]/40 shadow-[var(--shadow-ambient)]"

@@ -90,12 +90,20 @@ type PendingThemePayload = {
 function writePendingTheme(theme: ThemeName) {
   if (typeof localStorage === "undefined") return;
   const payload: PendingThemePayload = { theme, at: Date.now() };
-  localStorage.setItem(PENDING_THEME_KEY, JSON.stringify(payload));
+  try {
+    localStorage.setItem(PENDING_THEME_KEY, JSON.stringify(payload));
+  } catch {
+    // Ignore storage failures (private browsing / restricted storage).
+  }
 }
 
 function clearPendingTheme() {
   if (typeof localStorage === "undefined") return;
-  localStorage.removeItem(PENDING_THEME_KEY);
+  try {
+    localStorage.removeItem(PENDING_THEME_KEY);
+  } catch {
+    // Ignore storage failures (private browsing / restricted storage).
+  }
 }
 
 export default function ThemeToggle({ showLabel = false }: { showLabel?: boolean }) {
