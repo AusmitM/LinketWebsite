@@ -236,6 +236,9 @@ export default function PublicProfileEditorPage() {
   const leadFormLoadRef = useRef(0);
   const draftRef = useRef<ProfileDraft | null>(null);
   const reorderSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const leadFormReorderSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
   const themeSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastThemeRef = useRef<ThemeName | null>(null);
   const logoShapeSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -649,10 +652,53 @@ export default function PublicProfileEditorPage() {
     }, 3000);
   }, [handleSave, isDirty, saving, userId]);
 
+  const scheduleLeadFormReorderSave = useCallback(
+    (nextForm: LeadFormConfig) => {
+      const handle = draft?.handle || accountHandle;
+      if (!userId || !handle) return;
+      if (leadFormReorderSaveTimer.current) {
+        clearTimeout(leadFormReorderSaveTimer.current);
+      }
+      leadFormReorderSaveTimer.current = setTimeout(() => {
+        leadFormReorderSaveTimer.current = null;
+        void (async () => {
+          try {
+            const response = await fetch("/api/lead-forms", {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                userId,
+                handle,
+                profileId: draft?.id ?? null,
+                config: nextForm,
+              }),
+            });
+            if (!response.ok) {
+              const info = await response.json().catch(() => ({}));
+              throw new Error(info?.error || "Unable to save form");
+            }
+          } catch (error) {
+            const message =
+              error instanceof Error ? error.message : "Unable to save form";
+            toast({
+              title: "Lead form save failed",
+              description: message,
+              variant: "destructive",
+            });
+          }
+        })();
+      }, 500);
+    },
+    [accountHandle, draft?.handle, draft?.id, userId]
+  );
+
   useEffect(() => {
     return () => {
       if (reorderSaveTimer.current) {
         clearTimeout(reorderSaveTimer.current);
+      }
+      if (leadFormReorderSaveTimer.current) {
+        clearTimeout(leadFormReorderSaveTimer.current);
       }
     };
   }, []);
@@ -778,24 +824,34 @@ export default function PublicProfileEditorPage() {
     });
   }, []);
 
-  const reorderLinks = useCallback((sourceId: string, targetId: string) => {
-    if (sourceId === targetId) return;
-    setDraft((prev) => {
-      if (!prev) return prev;
-      const links = [...prev.links];
-      const sourceIndex = links.findIndex((link) => link.id === sourceId);
-      const targetIndex = links.findIndex((link) => link.id === targetId);
-      if (sourceIndex === -1 || targetIndex === -1) return prev;
-      const [moved] = links.splice(sourceIndex, 1);
-      links.splice(targetIndex, 0, moved);
-      return { ...prev, links, updatedAt: new Date().toISOString() };
-    });
-    scheduleReorderSave();
-  }, [scheduleReorderSave]);
+  const reorderLinks = useCallback(
+    (sourceId: string, targetId: string, fromPreview = false) => {
+      if (sourceId === targetId) return;
+      let nextDraft: ProfileDraft | null = null;
+      setDraft((prev) => {
+        if (!prev) return prev;
+        const links = [...prev.links];
+        const sourceIndex = links.findIndex((link) => link.id === sourceId);
+        const targetIndex = links.findIndex((link) => link.id === targetId);
+        if (sourceIndex === -1 || targetIndex === -1) return prev;
+        const [moved] = links.splice(sourceIndex, 1);
+        links.splice(targetIndex, 0, moved);
+        nextDraft = { ...prev, links, updatedAt: new Date().toISOString() };
+        return nextDraft;
+      });
+      if (fromPreview && nextDraft) {
+        void handleSave(nextDraft);
+        return;
+      }
+      scheduleReorderSave();
+    },
+    [handleSave, scheduleReorderSave]
+  );
 
   const reorderLeadFormFields = useCallback(
     (sourceId: string, targetId: string) => {
       if (sourceId === targetId) return;
+      let nextForm: LeadFormConfig | null = null;
       setLeadFormPreview((prev) => {
         if (!prev) return prev;
         const fields = [...prev.fields];
@@ -804,11 +860,25 @@ export default function PublicProfileEditorPage() {
         if (sourceIndex === -1 || targetIndex === -1) return prev;
         const [moved] = fields.splice(sourceIndex, 1);
         fields.splice(targetIndex, 0, moved);
-        return { ...prev, fields };
+        nextForm = {
+          ...prev,
+          fields,
+          meta: {
+            ...prev.meta,
+            updatedAt: new Date().toISOString(),
+            version: (prev.meta?.version ?? 0) + 1,
+          },
+        };
+        return nextForm;
       });
-      leadFormReorderRef.current?.(sourceId, targetId);
+      if (!nextForm) return;
+      if (activeSection === "lead") {
+        leadFormReorderRef.current?.(sourceId, targetId);
+        return;
+      }
+      scheduleLeadFormReorderSave(nextForm);
     },
-    []
+    [activeSection, scheduleLeadFormReorderSave]
   );
 
   const openEditLink = useCallback(
@@ -1161,7 +1231,11 @@ function EditorPanel({
   onRemoveLink: (linkId: string) => void;
   logoPreviewUrl: string | null;
   onToggleLink: (linkId: string) => void;
-  onReorderLink: (sourceId: string, targetId: string) => void;
+  onReorderLink: (
+    sourceId: string,
+    targetId: string,
+    fromPreview?: boolean
+  ) => void;
   draggingLinkId: string | null;
   setDraggingLinkId: (id: string | null) => void;
   onVCardFields: (fields: {
@@ -1540,7 +1614,11 @@ function PhonePreviewCard({
   links: LinkItem[];
   leadFormPreview: LeadFormConfig | null;
   onReorderLeadField?: (sourceId: string, targetId: string) => void;
-  onReorderLink: (sourceId: string, targetId: string) => void;
+  onReorderLink: (
+    sourceId: string,
+    targetId: string,
+    fromPreview?: boolean
+  ) => void;
 }) {
   const visibleLinks = useMemo(
     () => links.filter((link) => link.visible),
@@ -1571,7 +1649,7 @@ function PhonePreviewCard({
     (event: DragEndEvent) => {
       const { active, over } = event;
       if (!over || active.id === over.id) return;
-      onReorderLink(String(active.id), String(over.id));
+      onReorderLink(String(active.id), String(over.id), true);
     },
     [onReorderLink]
   );
