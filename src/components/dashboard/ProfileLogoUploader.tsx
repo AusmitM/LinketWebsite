@@ -14,15 +14,26 @@ import { Button } from "@/components/ui/button";
 import { uploadProfileLogoImage } from "@/lib/supabase-storage";
 import { supabase } from "@/lib/supabase";
 import { appendVersion } from "@/lib/avatar-utils";
+import {
+  forgetOriginalUploadFileName,
+  readOriginalUploadFileName,
+  rememberOriginalUploadFileName,
+} from "@/lib/upload-filename-cache";
 import { cn } from "@/lib/utils";
 
 type Props = {
   userId: string;
   profileId: string;
   logoUrl: string | null;
+  logoOriginalFileName?: string | null;
   logoShape: "circle" | "rect";
   logoBackgroundWhite?: boolean;
-  onUploaded: (payload: { path: string; version: string; publicUrl: string }) => void;
+  onUploaded: (payload: {
+    path: string;
+    version: string;
+    publicUrl: string;
+    originalFileName?: string | null;
+  }) => void;
   variant?: "default" | "compact";
   inputId?: string;
   controls?: ReactNode;
@@ -38,6 +49,7 @@ export default function ProfileLogoUploader({
   userId,
   profileId,
   logoUrl,
+  logoOriginalFileName = null,
   logoShape,
   logoBackgroundWhite = false,
   onUploaded,
@@ -66,6 +78,9 @@ export default function ProfileLogoUploader({
 
   const [sourceFile, setSourceFile] = useState<File | null>(null);
   const [inputFileName, setInputFileName] = useState<string | null>(null);
+  const [persistedFileName, setPersistedFileName] = useState<string | null>(
+    logoOriginalFileName ?? null
+  );
   const [sourceUrl, setSourceUrl] = useState<string | null>(null);
   const [imageMeta, setImageMeta] = useState<{ width: number; height: number } | null>(null);
   const [previewReady, setPreviewReady] = useState(false);
@@ -85,6 +100,23 @@ export default function ProfileLogoUploader({
   useEffect(() => {
     setLatestLogoUrl(logoUrl ?? null);
   }, [logoUrl]);
+
+  useEffect(() => {
+    if (!latestLogoUrl) {
+      setPersistedFileName(null);
+      return;
+    }
+    const storedName = readOriginalUploadFileName(latestLogoUrl);
+    if (storedName) {
+      setPersistedFileName(storedName);
+      return;
+    }
+    if (logoOriginalFileName?.trim()) {
+      const originalName = logoOriginalFileName.trim();
+      setPersistedFileName(originalName);
+      rememberOriginalUploadFileName(latestLogoUrl, originalName);
+    }
+  }, [latestLogoUrl, logoOriginalFileName]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -113,7 +145,9 @@ export default function ProfileLogoUploader({
         return;
       }
       setError(null);
-      setInputFileName(file.name || null);
+      const selectedName = file.name || null;
+      setInputFileName(selectedName);
+      setPersistedFileName(selectedName);
       setSourceFile(file);
       setSourceUrl(URL.createObjectURL(file));
     },
@@ -127,8 +161,13 @@ export default function ProfileLogoUploader({
       const response = await fetch(latestLogoUrl);
       if (!response.ok) throw new Error("Unable to load logo");
       const blob = await response.blob();
+      const originalName =
+        inputFileName ??
+        persistedFileName ??
+        readOriginalUploadFileName(latestLogoUrl) ??
+        "selected-image.webp";
       handleFile(
-        new File([blob], inputFileName ?? "selected-image.webp", {
+        new File([blob], originalName, {
           type: blob.type || "image/webp",
         })
       );
@@ -136,7 +175,7 @@ export default function ProfileLogoUploader({
       const message = err instanceof Error ? err.message : "Unable to load logo";
       setError(message);
     }
-  }, [latestLogoUrl, loading, handleFile, inputFileName]);
+  }, [latestLogoUrl, loading, handleFile, inputFileName, persistedFileName]);
 
   const handleDrop = useCallback(
     (event: DragEvent<HTMLDivElement>) => {
@@ -228,19 +267,36 @@ export default function ProfileLogoUploader({
         userId,
         profileId
       );
+      const originalFileName =
+        inputFileName ??
+        sourceFile.name ??
+        persistedFileName ??
+        logoOriginalFileName ??
+        null;
       const { error: updErr } = await supabase
         .from("user_profiles")
         .update({
           logo_url: path,
           logo_updated_at: version,
+          logo_original_file_name: originalFileName,
           updated_at: version,
         })
         .eq("id", profileId)
         .eq("user_id", userId);
       if (updErr) throw new Error(updErr.message ?? "Failed to save logo");
       const versionedUrl = appendVersion(publicUrl ?? null, version) ?? path;
+      if (originalFileName) {
+        rememberOriginalUploadFileName(path, originalFileName);
+        rememberOriginalUploadFileName(versionedUrl, originalFileName);
+        setPersistedFileName(originalFileName);
+      }
       setLatestLogoUrl(versionedUrl);
-      onUploaded({ path, version, publicUrl: versionedUrl });
+      onUploaded({
+        path,
+        version,
+        publicUrl: versionedUrl,
+        originalFileName: originalFileName ?? null,
+      });
       resetEditor();
     } catch (err) {
       const message =
@@ -257,12 +313,15 @@ export default function ProfileLogoUploader({
     sourceFile,
     sourceUrl,
     imageMeta,
+    inputFileName,
+    persistedFileName,
     cropSize,
     baseScale,
     zoom,
     offset,
     userId,
     profileId,
+    logoOriginalFileName,
     onUploaded,
     resetEditor,
   ]);
@@ -291,11 +350,13 @@ export default function ProfileLogoUploader({
         .update({
           logo_url: null,
           logo_updated_at: null,
+          logo_original_file_name: null,
           updated_at: version,
         })
         .eq("id", profileId)
         .eq("user_id", userId);
       if (updErr) throw new Error(updErr.message ?? "Failed to remove logo");
+      forgetOriginalUploadFileName(latestLogoUrl);
       setLatestLogoUrl(null);
       resetEditor();
       if (fileInputRef.current) {
@@ -303,7 +364,8 @@ export default function ProfileLogoUploader({
       }
       setSourceFile(null);
       setInputFileName(null);
-      onUploaded({ path: "", version, publicUrl: "" });
+      setPersistedFileName(null);
+      onUploaded({ path: "", version, publicUrl: "", originalFileName: null });
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Unable to remove logo";
@@ -322,7 +384,7 @@ export default function ProfileLogoUploader({
   const logoFrameBgClassName = logoBackgroundWhite ? "bg-white" : "bg-background/80";
 
   const displayUrl = sourceUrl || latestLogoUrl;
-  const visibleFileName = inputFileName;
+  const visibleFileName = inputFileName ?? persistedFileName;
   const inputTargetId = inputId ?? "profile-logo-upload";
 
   if (variant === "compact") {

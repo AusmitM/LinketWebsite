@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 
-import type { ThemeName } from "@/lib/themes";
+import { coerceThemeName, type ThemeName } from "@/lib/themes";
 import { useThemeOptional } from "@/components/theme/theme-provider";
 import { useDashboardUser } from "@/components/dashboard/DashboardSessionContext";
 
@@ -78,8 +78,10 @@ function clearPendingTheme() {
 
 function coerceTheme(value: unknown): ThemeName | null {
   if (typeof value !== "string") return null;
-  const lowered = value.toLowerCase();
-  return (THEMES as string[]).includes(lowered) ? (lowered as ThemeName) : null;
+  const normalized = coerceThemeName(value);
+  return normalized && (THEMES as string[]).includes(normalized)
+    ? normalized
+    : null;
 }
 
 async function fetchActiveProfileTheme(userId: string, signal: AbortSignal) {

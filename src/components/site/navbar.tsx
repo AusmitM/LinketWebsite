@@ -103,6 +103,7 @@ export function Navbar() {
   const [activeProfileSection, setActiveProfileSection] = useState<
     (typeof PROFILE_SECTIONS)[number]["id"] | null
   >(null);
+  const [dashboardNavOffset, setDashboardNavOffset] = useState(0);
 
   useEffect(() => {
     lockedSectionRef.current = lockedSection;
@@ -378,6 +379,76 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [isPublic]);
 
+  useEffect(() => {
+    if (!isDashboard || typeof window === "undefined") {
+      setDashboardNavOffset(0);
+      return;
+    }
+
+    const MAX_OFFSET_PX = 18;
+    const FULL_OFFSET_SCROLL_PX = 220;
+    let rafId: number | null = null;
+    let scrollHost: HTMLElement | null = null;
+
+    const readScrollTop = () => {
+      if (scrollHost) return scrollHost.scrollTop;
+      const host = document.querySelector<HTMLElement>(".dashboard-scroll-area");
+      if (host) {
+        scrollHost = host;
+        return host.scrollTop;
+      }
+      return window.scrollY || document.documentElement.scrollTop || 0;
+    };
+
+    const applyOffset = () => {
+      rafId = null;
+      const scrollTop = readScrollTop();
+      const ratio = Math.min(1, Math.max(0, scrollTop / FULL_OFFSET_SCROLL_PX));
+      const next = Math.round(ratio * MAX_OFFSET_PX);
+      setDashboardNavOffset((prev) => (prev === next ? prev : next));
+    };
+
+    const requestApplyOffset = () => {
+      if (rafId !== null) return;
+      rafId = window.requestAnimationFrame(applyOffset);
+    };
+
+    const connectScrollHost = () => {
+      const nextHost = document.querySelector<HTMLElement>(".dashboard-scroll-area");
+      if (nextHost === scrollHost) return;
+      if (scrollHost) {
+        scrollHost.removeEventListener("scroll", requestApplyOffset);
+      }
+      scrollHost = nextHost;
+      if (scrollHost) {
+        scrollHost.addEventListener("scroll", requestApplyOffset, {
+          passive: true,
+        });
+      }
+    };
+
+    connectScrollHost();
+    requestApplyOffset();
+    window.addEventListener("scroll", requestApplyOffset, {
+      passive: true,
+      capture: true,
+    });
+    window.addEventListener("resize", requestApplyOffset, { passive: true });
+    const reconnectTimer = window.setInterval(connectScrollHost, 500);
+
+    return () => {
+      if (rafId !== null) {
+        window.cancelAnimationFrame(rafId);
+      }
+      if (scrollHost) {
+        scrollHost.removeEventListener("scroll", requestApplyOffset);
+      }
+      window.removeEventListener("scroll", requestApplyOffset, true);
+      window.removeEventListener("resize", requestApplyOffset);
+      window.clearInterval(reconnectTimer);
+    };
+  }, [isDashboard]);
+
   if (isPublicProfile) {
     return null;
   }
@@ -650,7 +721,10 @@ export function Navbar() {
     };
 
     return (
-      <header className="dashboard-navbar sticky top-0 z-50 w-full border-b border-border/60 bg-background/90 text-foreground backdrop-blur supports-[backdrop-filter]:bg-background/70">
+      <header
+        className="dashboard-navbar sticky top-0 z-50 w-full border-b border-border/60 bg-background/90 text-foreground backdrop-blur supports-[backdrop-filter]:bg-background/70"
+        style={{ top: `${dashboardNavOffset}px` }}
+      >
         <nav
           className="dashboard-navbar-inner mx-auto flex max-w-6xl items-center justify-between px-2 py-3 text-foreground sm:px-3 md:px-6"
           aria-label="Dashboard"

@@ -47,7 +47,9 @@ export async function GET(request: Request) {
       try {
         const { data, error } = await supabaseAdmin
           .from("profiles")
-          .select("user_id, username, display_name, avatar_url, updated_at")
+          .select(
+            "user_id, username, display_name, avatar_url, updated_at, avatar_original_file_name"
+          )
           .eq("user_id", userId)
           .maybeSingle();
 
@@ -63,6 +65,7 @@ export async function GET(request: Request) {
           handle,
           avatarPath: data?.avatar_url ?? null,
           avatarUpdatedAt: data?.updated_at ?? null,
+          avatarOriginalFileName: data?.avatar_original_file_name ?? null,
           displayName: data?.display_name ?? null,
         });
       } catch (adminError) {
@@ -72,7 +75,9 @@ export async function GET(request: Request) {
 
     const { data, error } = await supabase
       .from("profiles")
-      .select("user_id, username, display_name, avatar_url, updated_at")
+      .select(
+        "user_id, username, display_name, avatar_url, updated_at, avatar_original_file_name"
+      )
       .eq("user_id", userId)
       .maybeSingle();
     if (error && error.code !== "PGRST116") {
@@ -85,6 +90,7 @@ export async function GET(request: Request) {
       handle,
       avatarPath: data?.avatar_url ?? null,
       avatarUpdatedAt: data?.updated_at ?? null,
+      avatarOriginalFileName: data?.avatar_original_file_name ?? null,
       displayName: data?.display_name ?? null,
     });
   } catch (error) {

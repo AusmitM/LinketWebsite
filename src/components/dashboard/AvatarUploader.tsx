@@ -15,13 +15,24 @@ import { Button } from "@/components/ui/button";
 import { uploadAvatar } from "@/lib/supabase-storage";
 import { supabase } from "@/lib/supabase";
 import { appendVersion } from "@/lib/avatar-utils";
+import {
+  forgetOriginalUploadFileName,
+  readOriginalUploadFileName,
+  rememberOriginalUploadFileName,
+} from "@/lib/upload-filename-cache";
 import { cn } from "@/lib/utils";
 
 type Props = {
   userId: string;
   userEmail?: string | null;
   avatarUrl: string | null;
-  onUploaded: (payload: { path: string; version: string; publicUrl: string }) => void;
+  avatarOriginalFileName?: string | null;
+  onUploaded: (payload: {
+    path: string;
+    version: string;
+    publicUrl: string;
+    originalFileName?: string | null;
+  }) => void;
   variant?: "default" | "compact";
   inputId?: string;
 };
@@ -35,6 +46,7 @@ export default function AvatarUploader({
   userId,
   userEmail = null,
   avatarUrl,
+  avatarOriginalFileName = null,
   onUploaded,
   variant = "default",
   inputId,
@@ -62,6 +74,9 @@ export default function AvatarUploader({
 
   const [sourceFile, setSourceFile] = useState<File | null>(null);
   const [inputFileName, setInputFileName] = useState<string | null>(null);
+  const [persistedFileName, setPersistedFileName] = useState<string | null>(
+    avatarOriginalFileName ?? null
+  );
   const [sourceUrl, setSourceUrl] = useState<string | null>(null);
   const [imageMeta, setImageMeta] = useState<{ width: number; height: number } | null>(null);
   const [previewReady, setPreviewReady] = useState(false);
@@ -112,7 +127,9 @@ export default function AvatarUploader({
     (file: File | null) => {
       resetEditor();
       if (!file) return;
-      setInputFileName(file.name || null);
+      const selectedName = file.name || null;
+      setInputFileName(selectedName);
+      setPersistedFileName(selectedName);
       setSourceFile(file);
       setSourceUrl(URL.createObjectURL(file));
     },
@@ -126,8 +143,13 @@ export default function AvatarUploader({
       const response = await fetch(latestAvatarUrl);
       if (!response.ok) throw new Error("Unable to load avatar");
       const blob = await response.blob();
+      const originalName =
+        inputFileName ??
+        persistedFileName ??
+        readOriginalUploadFileName(latestAvatarUrl) ??
+        "selected-image.webp";
       handleFile(
-        new File([blob], inputFileName ?? "selected-image.webp", {
+        new File([blob], originalName, {
           type: blob.type || "image/webp",
         })
       );
@@ -136,13 +158,30 @@ export default function AvatarUploader({
         err instanceof Error ? err.message : "Unable to load avatar";
       setError(message);
     }
-  }, [latestAvatarUrl, loading, handleFile, inputFileName]);
+  }, [latestAvatarUrl, loading, handleFile, inputFileName, persistedFileName]);
 
   useEffect(() => {
     if (avatarUrl !== latestAvatarUrl) {
       setLatestAvatarUrl(avatarUrl ?? null);
     }
   }, [avatarUrl, latestAvatarUrl]);
+
+  useEffect(() => {
+    if (!latestAvatarUrl) {
+      setPersistedFileName(null);
+      return;
+    }
+    const storedName = readOriginalUploadFileName(latestAvatarUrl);
+    if (storedName) {
+      setPersistedFileName(storedName);
+      return;
+    }
+    if (avatarOriginalFileName?.trim()) {
+      const originalName = avatarOriginalFileName.trim();
+      setPersistedFileName(originalName);
+      rememberOriginalUploadFileName(latestAvatarUrl, originalName);
+    }
+  }, [latestAvatarUrl, avatarOriginalFileName]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -251,16 +290,38 @@ export default function AvatarUploader({
       if (!username) {
         throw new Error("Unable to confirm account email");
       }
+      const originalFileName =
+        inputFileName ??
+        sourceFile.name ??
+        persistedFileName ??
+        avatarOriginalFileName ??
+        null;
       const { error: updErr } = await supabase
         .from("profiles")
         .upsert(
-          { user_id: userId, username, avatar_url: path, updated_at: version },
+          {
+            user_id: userId,
+            username,
+            avatar_url: path,
+            avatar_original_file_name: originalFileName,
+            updated_at: version,
+          },
           { onConflict: "user_id" }
         );
       if (updErr) throw new Error(updErr.message ?? "Failed to save avatar");
       const versionedUrl = appendVersion(publicUrl ?? null, version) ?? path;
+      if (originalFileName) {
+        rememberOriginalUploadFileName(path, originalFileName);
+        rememberOriginalUploadFileName(versionedUrl, originalFileName);
+        setPersistedFileName(originalFileName);
+      }
       setLatestAvatarUrl(versionedUrl);
-      onUploaded({ path, version, publicUrl: versionedUrl });
+      onUploaded({
+        path,
+        version,
+        publicUrl: versionedUrl,
+        originalFileName: originalFileName ?? null,
+      });
       resetEditor();
     } catch (err) {
       const message =
@@ -277,12 +338,15 @@ export default function AvatarUploader({
     sourceFile,
     sourceUrl,
     imageMeta,
+    inputFileName,
+    persistedFileName,
     cropSize,
     cropCorner,
     baseScale,
     zoom,
     offset,
     userId,
+    avatarOriginalFileName,
     onUploaded,
     resetEditor,
     resolveUsername,
@@ -314,10 +378,17 @@ export default function AvatarUploader({
       const { error: updErr } = await supabase
         .from("profiles")
         .upsert(
-          { user_id: userId, username, avatar_url: null, updated_at: version },
+          {
+            user_id: userId,
+            username,
+            avatar_url: null,
+            avatar_original_file_name: null,
+            updated_at: version,
+          },
           { onConflict: "user_id" }
         );
       if (updErr) throw new Error(updErr.message ?? "Failed to remove avatar");
+      forgetOriginalUploadFileName(latestAvatarUrl);
       setLatestAvatarUrl(null);
       resetEditor();
       if (fileInputRef.current) {
@@ -325,7 +396,8 @@ export default function AvatarUploader({
       }
       setSourceFile(null);
       setInputFileName(null);
-      onUploaded({ path: "", version, publicUrl: "" });
+      setPersistedFileName(null);
+      onUploaded({ path: "", version, publicUrl: "", originalFileName: null });
     } catch (err) {
       const message =
         err instanceof Error
@@ -382,7 +454,7 @@ export default function AvatarUploader({
 
   if (variant === "compact") {
     const displayUrl = sourceUrl || latestAvatarUrl;
-    const visibleFileName = inputFileName;
+    const visibleFileName = inputFileName ?? persistedFileName;
     const inputTargetId = inputId ?? "profile-avatar-upload";
     return (
       <section className="flex flex-col gap-4 rounded-2xl border border-dashed border-muted/70 p-4">

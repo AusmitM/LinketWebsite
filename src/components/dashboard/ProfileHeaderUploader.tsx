@@ -15,13 +15,24 @@ import { Button } from "@/components/ui/button";
 import { uploadProfileHeaderImage } from "@/lib/supabase-storage";
 import { supabase } from "@/lib/supabase";
 import { appendVersion } from "@/lib/avatar-utils";
+import {
+  forgetOriginalUploadFileName,
+  readOriginalUploadFileName,
+  rememberOriginalUploadFileName,
+} from "@/lib/upload-filename-cache";
 import { cn } from "@/lib/utils";
 
 type Props = {
   userId: string;
   profileId: string;
   headerUrl: string | null;
-  onUploaded: (payload: { path: string; version: string; publicUrl: string }) => void;
+  headerOriginalFileName?: string | null;
+  onUploaded: (payload: {
+    path: string;
+    version: string;
+    publicUrl: string;
+    originalFileName?: string | null;
+  }) => void;
   variant?: "default" | "compact";
   inputId?: string;
 };
@@ -36,6 +47,7 @@ export default function ProfileHeaderUploader({
   userId,
   profileId,
   headerUrl,
+  headerOriginalFileName = null,
   onUploaded,
   variant = "compact",
   inputId,
@@ -77,6 +89,9 @@ export default function ProfileHeaderUploader({
 
   const [sourceFile, setSourceFile] = useState<File | null>(null);
   const [inputFileName, setInputFileName] = useState<string | null>(null);
+  const [persistedFileName, setPersistedFileName] = useState<string | null>(
+    headerOriginalFileName ?? null
+  );
   const [sourceUrl, setSourceUrl] = useState<string | null>(null);
   const [imageMeta, setImageMeta] = useState<{ width: number; height: number } | null>(null);
   const [previewReady, setPreviewReady] = useState(false);
@@ -127,7 +142,9 @@ export default function ProfileHeaderUploader({
     (file: File | null) => {
       resetEditor();
       if (!file) return;
-      setInputFileName(file.name || null);
+      const selectedName = file.name || null;
+      setInputFileName(selectedName);
+      setPersistedFileName(selectedName);
       setSourceFile(file);
       setSourceUrl(URL.createObjectURL(file));
     },
@@ -141,8 +158,13 @@ export default function ProfileHeaderUploader({
       const response = await fetch(latestHeaderUrl);
       if (!response.ok) throw new Error("Unable to load header image");
       const blob = await response.blob();
+      const originalName =
+        inputFileName ??
+        persistedFileName ??
+        readOriginalUploadFileName(latestHeaderUrl) ??
+        "selected-image.webp";
       handleFile(
-        new File([blob], inputFileName ?? "selected-image.webp", {
+        new File([blob], originalName, {
           type: blob.type || "image/webp",
         })
       );
@@ -151,13 +173,30 @@ export default function ProfileHeaderUploader({
         err instanceof Error ? err.message : "Unable to load header image";
       setError(message);
     }
-  }, [latestHeaderUrl, loading, handleFile, inputFileName]);
+  }, [latestHeaderUrl, loading, handleFile, inputFileName, persistedFileName]);
 
   useEffect(() => {
     if (headerUrl !== latestHeaderUrl) {
       setLatestHeaderUrl(headerUrl ?? null);
     }
   }, [headerUrl, latestHeaderUrl]);
+
+  useEffect(() => {
+    if (!latestHeaderUrl) {
+      setPersistedFileName(null);
+      return;
+    }
+    const storedName = readOriginalUploadFileName(latestHeaderUrl);
+    if (storedName) {
+      setPersistedFileName(storedName);
+      return;
+    }
+    if (headerOriginalFileName?.trim()) {
+      const originalName = headerOriginalFileName.trim();
+      setPersistedFileName(originalName);
+      rememberOriginalUploadFileName(latestHeaderUrl, originalName);
+    }
+  }, [latestHeaderUrl, headerOriginalFileName]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -259,19 +298,36 @@ export default function ProfileHeaderUploader({
         userId,
         profileId
       );
+      const originalFileName =
+        inputFileName ??
+        sourceFile.name ??
+        persistedFileName ??
+        headerOriginalFileName ??
+        null;
       const { error: updErr } = await supabase
         .from("user_profiles")
         .update({
           header_image_url: path,
           header_image_updated_at: version,
+          header_image_original_file_name: originalFileName,
           updated_at: version,
         })
         .eq("id", profileId)
         .eq("user_id", userId);
       if (updErr) throw new Error(updErr.message ?? "Failed to save header image");
       const versionedUrl = appendVersion(publicUrl ?? null, version) ?? path;
+      if (originalFileName) {
+        rememberOriginalUploadFileName(path, originalFileName);
+        rememberOriginalUploadFileName(versionedUrl, originalFileName);
+        setPersistedFileName(originalFileName);
+      }
       setLatestHeaderUrl(versionedUrl);
-      onUploaded({ path, version, publicUrl: versionedUrl });
+      onUploaded({
+        path,
+        version,
+        publicUrl: versionedUrl,
+        originalFileName: originalFileName ?? null,
+      });
       resetEditor();
     } catch (err) {
       const message =
@@ -288,6 +344,8 @@ export default function ProfileHeaderUploader({
     sourceFile,
     sourceUrl,
     imageMeta,
+    inputFileName,
+    persistedFileName,
     cropWidth,
     cropHeight,
     baseScale,
@@ -295,6 +353,7 @@ export default function ProfileHeaderUploader({
     offset,
     userId,
     profileId,
+    headerOriginalFileName,
     onUploaded,
     resetEditor,
   ]);
@@ -323,11 +382,13 @@ export default function ProfileHeaderUploader({
         .update({
           header_image_url: null,
           header_image_updated_at: null,
+          header_image_original_file_name: null,
           updated_at: version,
         })
         .eq("id", profileId)
         .eq("user_id", userId);
       if (updErr) throw new Error(updErr.message ?? "Failed to remove header image");
+      forgetOriginalUploadFileName(latestHeaderUrl);
       setLatestHeaderUrl(null);
       resetEditor();
       if (fileInputRef.current) {
@@ -335,7 +396,8 @@ export default function ProfileHeaderUploader({
       }
       setSourceFile(null);
       setInputFileName(null);
-      onUploaded({ path: "", version, publicUrl: "" });
+      setPersistedFileName(null);
+      onUploaded({ path: "", version, publicUrl: "", originalFileName: null });
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Unable to remove header image";
@@ -359,7 +421,7 @@ export default function ProfileHeaderUploader({
 
   if (variant === "compact") {
     const displayUrl = sourceUrl || latestHeaderUrl;
-    const visibleFileName = inputFileName;
+    const visibleFileName = inputFileName ?? persistedFileName;
     const inputTargetId = inputId ?? "profile-header-upload";
     return (
       <section className="flex flex-col gap-4 rounded-2xl border border-dashed border-muted/70 p-4">

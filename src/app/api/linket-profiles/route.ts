@@ -5,6 +5,7 @@ import {
   isHandleConflictError,
   type ProfilePayload,
 } from "@/lib/profile-service";
+import { normalizeThemeName } from "@/lib/themes";
 import { isSupabaseAdminAvailable } from "@/lib/supabase-admin";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { recordConversionEvent } from "@/lib/server-conversion-events";
@@ -215,6 +216,7 @@ export async function POST(request: NextRequest) {
 
     const name = profile.name?.trim();
     const handle = normalizeHandle(profile.handle ?? "");
+    const theme = normalizeThemeName(profile.theme, "autumn");
     if (!name) {
       return NextResponse.json(
         { error: "Profile name is required" },
@@ -276,11 +278,14 @@ export async function POST(request: NextRequest) {
           headline: profile.headline?.trim() || null,
           header_image_url: profile.headerImageUrl ?? null,
           header_image_updated_at: profile.headerImageUpdatedAt ?? null,
+          header_image_original_file_name:
+            profile.headerImageOriginalFileName ?? null,
           logo_url: profile.logoUrl ?? null,
           logo_updated_at: profile.logoUpdatedAt ?? null,
+          logo_original_file_name: profile.logoOriginalFileName ?? null,
           logo_shape: profile.logoShape ?? "circle",
           logo_bg_white: profile.logoBackgroundWhite ?? false,
-          theme: profile.theme,
+          theme,
           is_active: false,
         })
         .select("*")
@@ -292,7 +297,7 @@ export async function POST(request: NextRequest) {
         name,
         handle,
         headline: profile.headline?.trim() || null,
-        theme: profile.theme,
+        theme,
         updated_at: new Date().toISOString(),
       };
       if (profile.headerImageUrl !== undefined) {
@@ -301,11 +306,18 @@ export async function POST(request: NextRequest) {
       if (profile.headerImageUpdatedAt !== undefined) {
         updatePayload.header_image_updated_at = profile.headerImageUpdatedAt;
       }
+      if (profile.headerImageOriginalFileName !== undefined) {
+        updatePayload.header_image_original_file_name =
+          profile.headerImageOriginalFileName;
+      }
       if (profile.logoUrl !== undefined) {
         updatePayload.logo_url = profile.logoUrl;
       }
       if (profile.logoUpdatedAt !== undefined) {
         updatePayload.logo_updated_at = profile.logoUpdatedAt;
+      }
+      if (profile.logoOriginalFileName !== undefined) {
+        updatePayload.logo_original_file_name = profile.logoOriginalFileName;
       }
       if (profile.logoShape !== undefined) {
         updatePayload.logo_shape = profile.logoShape;

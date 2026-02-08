@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { getSignedAvatarUrl } from "@/lib/avatar-client";
 import { getSignedProfileHeaderUrl } from "@/lib/profile-header-client";
 import { getSignedProfileLogoUrl } from "@/lib/profile-logo-client";
-import { isDarkTheme } from "@/lib/themes";
+import { isDarkTheme, normalizeThemeName } from "@/lib/themes";
 import type { ThemeName } from "@/lib/themes";
 import type { ProfileWithLinks } from "@/lib/profile-service";
 import type { LeadFormConfig } from "@/types/lead-form";
@@ -56,7 +56,7 @@ export default function PublicProfilePreview({
   } | null>(null);
   const publicHandle = account.handle || profile.handle || handle;
   const displayName = profile.name || account.displayName || publicHandle;
-  const resolvedTheme = themeOverride ?? profile.theme;
+  const resolvedTheme = normalizeThemeName(themeOverride ?? profile.theme, "autumn");
   const isDark = isDarkTheme(resolvedTheme);
   const themeClass = `theme-${resolvedTheme} ${isDark ? "dark" : ""}`;
   const headline = profile.headline?.trim() ?? "";

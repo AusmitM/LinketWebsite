@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 import { readLocalStorage, writeLocalStorage } from "@/lib/browser-storage";
+import { ANALYTICS_BROADCAST_KEY, ANALYTICS_EVENT_NAME } from "@/lib/analytics";
 import type { UserAnalytics } from "@/lib/analytics-service";
 import { ResponsiveContainer, LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, Legend } from "recharts";
 import { Download } from "lucide-react";
@@ -111,6 +112,43 @@ export default function AnalyticsContent() {
       cancelled = true;
     };
   }, [userId, range, reloadToken]);
+
+  useEffect(() => {
+    if (!userId || typeof window === "undefined") return;
+
+    let settleTimer: number | null = null;
+
+    const requestRefresh = () => {
+      setReloadToken((value) => value + 1);
+      if (settleTimer !== null) {
+        window.clearTimeout(settleTimer);
+      }
+      // Follow-up refresh catches writes that land slightly after the first request.
+      settleTimer = window.setTimeout(() => {
+        setReloadToken((value) => value + 1);
+      }, 1200);
+    };
+
+    const handleAnalyticsEvent = (_event: Event) => {
+      requestRefresh();
+    };
+
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key !== ANALYTICS_BROADCAST_KEY || !event.newValue) return;
+      requestRefresh();
+    };
+
+    window.addEventListener(ANALYTICS_EVENT_NAME, handleAnalyticsEvent);
+    window.addEventListener("storage", handleStorage);
+
+    return () => {
+      window.removeEventListener(ANALYTICS_EVENT_NAME, handleAnalyticsEvent);
+      window.removeEventListener("storage", handleStorage);
+      if (settleTimer !== null) {
+        window.clearTimeout(settleTimer);
+      }
+    };
+  }, [userId]);
 
   const totals = analytics?.totals;
   const funnel = analytics?.funnel;

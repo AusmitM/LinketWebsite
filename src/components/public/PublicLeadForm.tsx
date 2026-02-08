@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/system/toaster";
+import { emitAnalyticsEvent } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 import {
   shuffleFields,
@@ -304,6 +305,14 @@ export default function PublicLeadForm({
         }
         setResponseId(nextResponseId);
       }
+      emitAnalyticsEvent({
+        id: shouldEdit ? "lead_form_response_updated" : "lead_form_response_submitted",
+        meta: {
+          formId,
+          handle,
+          mode: shouldEdit ? "edit" : "create",
+        },
+      });
       setEditingResponse(false);
       setSubmitted(true);
     } catch (error) {

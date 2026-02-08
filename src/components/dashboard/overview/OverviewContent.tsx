@@ -17,6 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useDashboardUser } from "@/components/dashboard/DashboardSessionContext";
 import { useThemeOptional } from "@/components/theme/theme-provider";
 import PublicProfilePreview from "@/components/public/PublicProfilePreview";
+import { ANALYTICS_BROADCAST_KEY, ANALYTICS_EVENT_NAME } from "@/lib/analytics";
 import type { UserAnalytics } from "@/lib/analytics-service";
 import type { ProfileWithLinks } from "@/lib/profile-service";
 
@@ -48,6 +49,7 @@ type ViewState = {
 export default function OverviewContent() {
   const dashboardUser = useDashboardUser();
   const userId = dashboardUser?.id ?? null;
+  const [reloadToken, setReloadToken] = useState(0);
   const [{ loading, error, analytics }, setState] = useState<ViewState>({
     loading: true,
     error: null,
@@ -110,6 +112,43 @@ export default function OverviewContent() {
     void load();
     return () => {
       cancelled = true;
+    };
+  }, [userId, reloadToken]);
+
+  useEffect(() => {
+    if (!userId || typeof window === "undefined") return;
+
+    let settleTimer: number | null = null;
+
+    const requestRefresh = () => {
+      setReloadToken((value) => value + 1);
+      if (settleTimer !== null) {
+        window.clearTimeout(settleTimer);
+      }
+      // Follow-up refresh catches writes that land slightly after the first request.
+      settleTimer = window.setTimeout(() => {
+        setReloadToken((value) => value + 1);
+      }, 1200);
+    };
+
+    const handleAnalyticsEvent = (_event: Event) => {
+      requestRefresh();
+    };
+
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key !== ANALYTICS_BROADCAST_KEY || !event.newValue) return;
+      requestRefresh();
+    };
+
+    window.addEventListener(ANALYTICS_EVENT_NAME, handleAnalyticsEvent);
+    window.addEventListener("storage", handleStorage);
+
+    return () => {
+      window.removeEventListener(ANALYTICS_EVENT_NAME, handleAnalyticsEvent);
+      window.removeEventListener("storage", handleStorage);
+      if (settleTimer !== null) {
+        window.clearTimeout(settleTimer);
+      }
     };
   }, [userId]);
 
@@ -391,7 +430,7 @@ function ChecklistItemRow({
   completed: boolean;
 }) {
   return (
-    <div className="flex items-start justify-between gap-3 rounded-2xl border border-border/60 bg-background/70 px-4 py-3">
+    <div className="dashboard-overview-checklist-item flex items-start justify-between gap-3 rounded-2xl border border-border/60 bg-background/70 px-4 py-3">
       <div className="flex items-start gap-3">
         <span className="mt-0.5 text-primary" aria-hidden>
           {completed ? (
@@ -401,11 +440,11 @@ function ChecklistItemRow({
           )}
         </span>
         <div>
-          <p className="text-sm font-medium text-foreground">{label}</p>
-          <p className="text-xs text-muted-foreground">{detail}</p>
+          <p className="dashboard-overview-checklist-label text-sm font-medium text-foreground">{label}</p>
+          <p className="dashboard-overview-checklist-detail text-xs text-muted-foreground">{detail}</p>
         </div>
       </div>
-      <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+      <span className="dashboard-overview-checklist-status text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         {completed ? "Done" : "Pending"}
       </span>
     </div>

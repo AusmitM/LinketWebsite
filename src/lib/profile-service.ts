@@ -12,8 +12,10 @@ create table if not exists public.user_profiles (
   headline text,
   header_image_url text,
   header_image_updated_at timestamptz,
+  header_image_original_file_name text,
   logo_url text,
   logo_updated_at timestamptz,
+  logo_original_file_name text,
   logo_shape text,
   logo_bg_white boolean default false,
   theme text not null default 'autumn',
@@ -90,7 +92,7 @@ grant select on table public.profile_links to anon;
 
 import { supabaseAdmin, isSupabaseAdminAvailable } from "@/lib/supabase-admin";
 import { createClient } from "@supabase/supabase-js";
-import type { ThemeName } from "@/lib/themes";
+import { normalizeThemeName, type ThemeName } from "@/lib/themes";
 import type { ProfileLinkRecord, UserProfileRecord } from "@/types/db";
 
 const SUPABASE_ENABLED = isSupabaseAdminAvailable;
@@ -141,8 +143,10 @@ export type ProfilePayload = {
   headline?: string | null;
   headerImageUrl?: string | null;
   headerImageUpdatedAt?: string | null;
+  headerImageOriginalFileName?: string | null;
   logoUrl?: string | null;
   logoUpdatedAt?: string | null;
+  logoOriginalFileName?: string | null;
   logoShape?: "circle" | "rect" | null;
   logoBackgroundWhite?: boolean | null;
   theme: ThemeName;
@@ -157,21 +161,7 @@ function normaliseHandle(handle: string) {
 function normaliseTheme(
   theme: string | ThemeName | null | undefined
 ): ThemeName {
-  const allowed: ThemeName[] = [
-    "light",
-    "dark",
-    "midnight",
-    "dream",
-    "forest",
-    "gilded",
-    "rose",
-    "autumn",
-    "honey",
-    "burnt-orange",
-    "maroon",
-  ];
-  const value = (theme ?? "autumn").toLowerCase();
-  return allowed.includes(value as ThemeName) ? (value as ThemeName) : "light";
+  return normalizeThemeName(theme, "autumn");
 }
 
 const memoryProfiles = new Map<string, ProfileWithLinks[]>();
@@ -345,7 +335,7 @@ function ensureMemoryProfiles(userId: string): ProfileWithLinks[] {
 function memoryFetchProfileById(profileId: string): ProfileWithLinks | null {
   for (const profiles of memoryProfiles.values()) {
     const match = profiles.find((profile) => profile.id === profileId);
-    if (match) return cloneDeep(match);
+    if (match) return normaliseProfileTheme(cloneDeep(match));
   }
   return null;
 }
@@ -355,7 +345,7 @@ function memoryGetProfiles(userId: string): ProfileWithLinks[] {
   return profiles
     .slice()
     .sort((a, b) => a.created_at.localeCompare(b.created_at))
-    .map((profile) => cloneDeep(profile));
+    .map((profile) => normaliseProfileTheme(cloneDeep(profile)));
 }
 
 function memoryEnsureSingleActiveProfile(
@@ -395,8 +385,10 @@ function memorySaveProfileForUser(
   const headline = payload.headline?.trim() || null;
   const headerImageUrl = payload.headerImageUrl ?? null;
   const headerImageUpdatedAt = payload.headerImageUpdatedAt ?? null;
+  const headerImageOriginalFileName = payload.headerImageOriginalFileName ?? null;
   const logoUrl = payload.logoUrl ?? null;
   const logoUpdatedAt = payload.logoUpdatedAt ?? null;
+  const logoOriginalFileName = payload.logoOriginalFileName ?? null;
   const logoShape = payload.logoShape ?? "circle";
   const logoBackgroundWhite = payload.logoBackgroundWhite ?? false;
   const links =
@@ -432,8 +424,11 @@ function memorySaveProfileForUser(
       headline,
       header_image_url: payload.headerImageUrl ?? null,
       header_image_updated_at: payload.headerImageUpdatedAt ?? null,
+      header_image_original_file_name:
+        payload.headerImageOriginalFileName ?? null,
       logo_url: logoUrl,
       logo_updated_at: logoUpdatedAt,
+      logo_original_file_name: logoOriginalFileName,
       logo_shape: logoShape,
       logo_bg_white: logoBackgroundWhite,
       theme,
@@ -454,11 +449,18 @@ function memorySaveProfileForUser(
     if (payload.headerImageUpdatedAt !== undefined) {
       profile.header_image_updated_at = payload.headerImageUpdatedAt;
     }
+    if (payload.headerImageOriginalFileName !== undefined) {
+      profile.header_image_original_file_name =
+        payload.headerImageOriginalFileName ?? null;
+    }
     if (payload.logoUrl !== undefined) {
       profile.logo_url = payload.logoUrl ?? null;
     }
     if (payload.logoUpdatedAt !== undefined) {
       profile.logo_updated_at = payload.logoUpdatedAt ?? null;
+    }
+    if (payload.logoOriginalFileName !== undefined) {
+      profile.logo_original_file_name = payload.logoOriginalFileName ?? null;
     }
     if (payload.logoShape !== undefined) {
       profile.logo_shape = payload.logoShape ?? "circle";
@@ -499,7 +501,7 @@ function memorySaveProfileForUser(
   }
 
   memoryEnsureHasActiveProfile(userId);
-  return cloneDeep(profile);
+  return normaliseProfileTheme(cloneDeep(profile));
 }
 
 function memoryDeleteProfileForUser(userId: string, profileId: string) {
@@ -517,14 +519,14 @@ function memorySetActiveProfileForUser(
   memoryEnsureSingleActiveProfile(userId, profileId);
   const profile = ensureMemoryProfiles(userId).find((p) => p.id === profileId);
   if (!profile) throw new Error("Profile not found");
-  return cloneDeep(profile);
+  return normaliseProfileTheme(cloneDeep(profile));
 }
 
 function memoryGetProfileByHandle(handle: string): ProfileWithLinks | null {
   const target = normaliseHandle(handle);
   for (const profiles of memoryProfiles.values()) {
     const match = profiles.find((profile) => profile.handle === target);
-    if (match) return cloneDeep(match);
+    if (match) return normaliseProfileTheme(cloneDeep(match));
   }
   return null;
 }
@@ -534,7 +536,7 @@ function memoryGetActiveProfileForUser(
 ): ProfileWithLinks | null {
   const profiles = ensureMemoryProfiles(userId);
   const match = profiles.find((profile) => profile.is_active);
-  return match ? cloneDeep(match) : null;
+  return match ? normaliseProfileTheme(cloneDeep(match)) : null;
 }
 
 function memoryGetGlobalActiveProfile(): ProfileWithLinks | null {
@@ -551,7 +553,7 @@ function memoryGetGlobalActiveProfile(): ProfileWithLinks | null {
       }
     }
   }
-  return candidate ? cloneDeep(candidate) : null;
+  return candidate ? normaliseProfileTheme(cloneDeep(candidate)) : null;
 }
 
 async function fetchProfileWithLinksById(
@@ -571,7 +573,7 @@ async function fetchProfileWithLinksById(
   const profile = data as unknown as UserProfileRecord & {
     links: ProfileLinkRecord[];
   };
-  return { ...profile, links: (profile.links ?? []).sort(byOrder) };
+  return toProfileWithLinks(profile);
 }
 
 function byOrder(a: ProfileLinkRecord, b: ProfileLinkRecord) {
@@ -579,6 +581,22 @@ function byOrder(a: ProfileLinkRecord, b: ProfileLinkRecord) {
     (a.order_index ?? 0) - (b.order_index ?? 0) ||
     a.created_at.localeCompare(b.created_at)
   );
+}
+
+function normaliseProfileTheme(profile: ProfileWithLinks): ProfileWithLinks {
+  return {
+    ...profile,
+    theme: normaliseTheme(profile.theme),
+  };
+}
+
+function toProfileWithLinks(
+  profile: UserProfileRecord & { links: ProfileLinkRecord[] | null | undefined }
+): ProfileWithLinks {
+  return normaliseProfileTheme({
+    ...(profile as UserProfileRecord),
+    links: (profile.links ?? []).sort(byOrder),
+  });
 }
 
 export async function getProfilesForUser(
@@ -597,10 +615,7 @@ export async function getProfilesForUser(
   const records = (data ?? []) as Array<
     UserProfileRecord & { links: ProfileLinkRecord[] }
   >;
-  return records.map((profile) => ({
-    ...profile,
-    links: (profile.links ?? []).sort(byOrder),
-  }));
+  return records.map((profile) => toProfileWithLinks(profile));
 }
 
 async function ensureSingleActiveProfile(
@@ -663,8 +678,10 @@ export async function saveProfileForUser(
   const headline = payload.headline?.trim() || null;
   const headerImageUrl = payload.headerImageUrl ?? null;
   const headerImageUpdatedAt = payload.headerImageUpdatedAt ?? null;
+  const headerImageOriginalFileName = payload.headerImageOriginalFileName ?? null;
   const logoUrl = payload.logoUrl ?? null;
   const logoUpdatedAt = payload.logoUpdatedAt ?? null;
+  const logoOriginalFileName = payload.logoOriginalFileName ?? null;
   const logoShape = payload.logoShape ?? "circle";
   const logoBackgroundWhite = payload.logoBackgroundWhite ?? false;
   let profileId = payload.id ?? null;
@@ -688,8 +705,10 @@ export async function saveProfileForUser(
         headline,
         header_image_url: headerImageUrl,
         header_image_updated_at: headerImageUpdatedAt,
+        header_image_original_file_name: headerImageOriginalFileName,
         logo_url: logoUrl,
         logo_updated_at: logoUpdatedAt,
+        logo_original_file_name: logoOriginalFileName,
         logo_shape: logoShape,
         logo_bg_white: logoBackgroundWhite,
         theme,
@@ -713,11 +732,18 @@ export async function saveProfileForUser(
     if (payload.headerImageUpdatedAt !== undefined) {
       updatePayload.header_image_updated_at = payload.headerImageUpdatedAt;
     }
+    if (payload.headerImageOriginalFileName !== undefined) {
+      updatePayload.header_image_original_file_name =
+        payload.headerImageOriginalFileName;
+    }
     if (payload.logoUrl !== undefined) {
       updatePayload.logo_url = payload.logoUrl;
     }
     if (payload.logoUpdatedAt !== undefined) {
       updatePayload.logo_updated_at = payload.logoUpdatedAt;
+    }
+    if (payload.logoOriginalFileName !== undefined) {
+      updatePayload.logo_original_file_name = payload.logoOriginalFileName;
     }
     if (payload.logoShape !== undefined) {
       updatePayload.logo_shape = payload.logoShape;
@@ -856,7 +882,7 @@ export async function getProfileByHandle(
       const record = data as unknown as UserProfileRecord & {
         links: ProfileLinkRecord[];
       };
-      return { ...record, links: (record.links ?? []).sort(byOrder) };
+      return toProfileWithLinks(record);
     }
   } catch (error) {
     console.error("Profile handle admin lookup failed:", error);
@@ -882,7 +908,7 @@ async function getProfileByHandlePublic(
   const record = data as unknown as UserProfileRecord & {
     links: ProfileLinkRecord[];
   };
-  return { ...record, links: (record.links ?? []).sort(byOrder) };
+  return toProfileWithLinks(record);
 }
 
 export async function getActiveProfileForUser(
@@ -903,7 +929,7 @@ export async function getActiveProfileForUser(
   const record = data as unknown as UserProfileRecord & {
     links: ProfileLinkRecord[];
   };
-  return { ...record, links: (record.links ?? []).sort(byOrder) };
+  return toProfileWithLinks(record);
 }
 
 export async function getGlobalActiveProfile(): Promise<ProfileWithLinks | null> {
@@ -922,7 +948,7 @@ export async function getGlobalActiveProfile(): Promise<ProfileWithLinks | null>
   const record = data as unknown as UserProfileRecord & {
     links: ProfileLinkRecord[];
   };
-  return { ...record, links: (record.links ?? []).sort(byOrder) };
+  return toProfileWithLinks(record);
 }
 
 export async function getAccountHandleForUser(

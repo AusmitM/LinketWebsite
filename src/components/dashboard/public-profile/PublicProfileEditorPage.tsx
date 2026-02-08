@@ -78,7 +78,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type { ThemeName } from "@/lib/themes";
+import { normalizeThemeName, type ThemeName } from "@/lib/themes";
 import type { ProfileWithLinks } from "@/lib/profile-service";
 import type { LeadFormConfig, LeadFormField } from "@/types/lead-form";
 
@@ -103,8 +103,10 @@ type ProfileDraft = {
   headline: string;
   headerImageUrl: string | null;
   headerImageUpdatedAt: string | null;
+  headerImageOriginalFileName: string | null;
   logoUrl: string | null;
   logoUpdatedAt: string | null;
+  logoOriginalFileName: string | null;
   logoShape: "circle" | "rect";
   logoBackgroundWhite: boolean;
   links: LinkItem[];
@@ -177,6 +179,7 @@ export default function PublicProfileEditorPage() {
   const [handleError, setHandleError] = useState<string | null>(null);
   const [accountHandle, setAccountHandle] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [avatarOriginalFileName, setAvatarOriginalFileName] = useState<string | null>(null);
   const [headerImageUrl, setHeaderImageUrl] = useState<string | null>(null);
   const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null);
   const [linkModalOpen, setLinkModalOpen] = useState(false);
@@ -345,16 +348,21 @@ export default function PublicProfileEditorPage() {
           handle?: string | null;
           avatarPath?: string | null;
           avatarUpdatedAt?: string | null;
+          avatarOriginalFileName?: string | null;
         };
         if (!active) return;
         setAccountHandle(payload.handle ?? null);
+        setAvatarOriginalFileName(payload.avatarOriginalFileName ?? null);
         const signed = await getSignedAvatarUrl(
           payload.avatarPath ?? null,
           payload.avatarUpdatedAt ?? null
         );
         setAvatarUrl(signed);
       } catch {
-        if (active) setAccountHandle(null);
+        if (active) {
+          setAccountHandle(null);
+          setAvatarOriginalFileName(null);
+        }
       }
     })();
     return () => {
@@ -514,8 +522,10 @@ export default function PublicProfileEditorPage() {
         headline: draftSnapshot.headline,
         headerImageUrl: draftSnapshot.headerImageUrl,
         headerImageUpdatedAt: draftSnapshot.headerImageUpdatedAt,
+        headerImageOriginalFileName: draftSnapshot.headerImageOriginalFileName,
         logoUrl: draftSnapshot.logoUrl,
         logoUpdatedAt: draftSnapshot.logoUpdatedAt,
+        logoOriginalFileName: draftSnapshot.logoOriginalFileName,
         logoShape: draftSnapshot.logoShape,
         logoBackgroundWhite: draftSnapshot.logoBackgroundWhite,
         theme: draftSnapshot.theme,
@@ -1067,6 +1077,7 @@ export default function PublicProfileEditorPage() {
               userId={userId}
               userEmail={dashboardUser?.email ?? null}
               avatarUrl={avatarUrl}
+              avatarOriginalFileName={avatarOriginalFileName}
               accountHandle={accountHandle}
               headerImageUrl={headerImageUrl}
               previewNode={
@@ -1091,10 +1102,14 @@ export default function PublicProfileEditorPage() {
               onRegisterLeadFormReorder={(reorder) => {
                 leadFormReorderRef.current = reorder;
               }}
-              onAvatarUpdate={setAvatarUrl}
+              onAvatarUpdate={(url, originalFileName) => {
+                setAvatarUrl(url);
+                setAvatarOriginalFileName(originalFileName ?? null);
+              }}
               onHeaderImageUpdate={(payload) => {
               const nextPath = payload.path || null;
               const nextUpdatedAt = payload.path ? payload.version : null;
+              const nextOriginalFileName = payload.originalFileName ?? null;
               setHeaderImageUrl(payload.publicUrl || null);
               setLastSavedAt(payload.version);
               setDraft((prev) =>
@@ -1103,6 +1118,7 @@ export default function PublicProfileEditorPage() {
                       ...prev,
                       headerImageUrl: nextPath,
                       headerImageUpdatedAt: nextUpdatedAt,
+                      headerImageOriginalFileName: nextOriginalFileName,
                       updatedAt: payload.version,
                     }
                   : prev
@@ -1113,6 +1129,7 @@ export default function PublicProfileEditorPage() {
                       ...prev,
                       headerImageUrl: nextPath,
                       headerImageUpdatedAt: nextUpdatedAt,
+                      headerImageOriginalFileName: nextOriginalFileName,
                       updatedAt: payload.version,
                     }
                   : prev
@@ -1121,6 +1138,7 @@ export default function PublicProfileEditorPage() {
               onLogoUpdate={(payload) => {
               const nextPath = payload.path || null;
               const nextUpdatedAt = payload.path ? payload.version : null;
+              const nextOriginalFileName = payload.originalFileName ?? null;
               setLogoPreviewUrl(payload.publicUrl || null);
               setLastSavedAt(payload.version);
               setDraft((prev) =>
@@ -1129,6 +1147,7 @@ export default function PublicProfileEditorPage() {
                       ...prev,
                       logoUrl: nextPath,
                       logoUpdatedAt: nextUpdatedAt,
+                      logoOriginalFileName: nextOriginalFileName,
                       updatedAt: payload.version,
                     }
                   : prev
@@ -1139,6 +1158,7 @@ export default function PublicProfileEditorPage() {
                       ...prev,
                       logoUrl: nextPath,
                       logoUpdatedAt: nextUpdatedAt,
+                      logoOriginalFileName: nextOriginalFileName,
                       updatedAt: payload.version,
                     }
                   : prev
@@ -1235,6 +1255,7 @@ function EditorPanel({
   userId,
   userEmail,
   avatarUrl,
+  avatarOriginalFileName,
   accountHandle,
   headerImageUrl,
   previewNode,
@@ -1264,12 +1285,23 @@ function EditorPanel({
   userId: string | null;
   userEmail: string | null;
   avatarUrl: string | null;
+  avatarOriginalFileName: string | null;
   accountHandle: string | null;
     headerImageUrl: string | null;
     previewNode: React.ReactNode;
-    onAvatarUpdate: (url: string) => void;
-  onHeaderImageUpdate: (payload: { path: string; version: string; publicUrl: string }) => void;
-  onLogoUpdate: (payload: { path: string; version: string; publicUrl: string }) => void;
+    onAvatarUpdate: (url: string, originalFileName?: string | null) => void;
+  onHeaderImageUpdate: (payload: {
+    path: string;
+    version: string;
+    publicUrl: string;
+    originalFileName?: string | null;
+  }) => void;
+  onLogoUpdate: (payload: {
+    path: string;
+    version: string;
+    publicUrl: string;
+    originalFileName?: string | null;
+  }) => void;
   onLeadFormPreview: (preview: LeadFormConfig | null) => void;
   onRegisterLeadFormReorder: (
     reorder: ((sourceId: string, targetId: string) => void) | null
@@ -1378,7 +1410,10 @@ function EditorPanel({
               userId={userId}
               userEmail={userEmail}
               avatarUrl={avatarUrl}
-              onUploaded={({ publicUrl }) => onAvatarUpdate(publicUrl)}
+              avatarOriginalFileName={avatarOriginalFileName}
+              onUploaded={({ publicUrl, originalFileName }) =>
+                onAvatarUpdate(publicUrl, originalFileName ?? null)
+              }
               variant="compact"
               inputId="profile-avatar-upload"
             />
@@ -1390,6 +1425,7 @@ function EditorPanel({
               userId={userId}
               profileId={draft.id}
               headerUrl={headerImageUrl}
+              headerOriginalFileName={draft?.headerImageOriginalFileName ?? null}
               onUploaded={onHeaderImageUpdate}
               variant="compact"
               inputId="profile-header-upload"
@@ -1402,6 +1438,7 @@ function EditorPanel({
               userId={userId}
               profileId={draft.id}
               logoUrl={logoPreviewUrl}
+              logoOriginalFileName={draft?.logoOriginalFileName ?? null}
               logoShape={draft?.logoShape ?? "circle"}
               logoBackgroundWhite={draft?.logoBackgroundWhite ?? false}
               onUploaded={onLogoUpdate}
@@ -2275,8 +2312,10 @@ function buildFallbackDraft(
     headline: "",
     headerImageUrl: null,
     headerImageUpdatedAt: null,
+    headerImageOriginalFileName: null,
     logoUrl: null,
     logoUpdatedAt: null,
+    logoOriginalFileName: null,
     logoShape: "circle",
     logoBackgroundWhite: false,
     links: [createLink()],
@@ -2330,12 +2369,14 @@ function mapProfile(record: ProfileWithLinks): ProfileDraft {
     headline: record.headline ?? "",
     headerImageUrl: record.header_image_url ?? null,
     headerImageUpdatedAt: record.header_image_updated_at ?? null,
+    headerImageOriginalFileName: record.header_image_original_file_name ?? null,
     logoUrl: record.logo_url ?? null,
     logoUpdatedAt: record.logo_updated_at ?? null,
+    logoOriginalFileName: record.logo_original_file_name ?? null,
     logoShape: record.logo_shape === "rect" ? "rect" : "circle",
     logoBackgroundWhite: record.logo_bg_white ?? false,
     links,
-    theme: record.theme as ThemeName,
+    theme: normalizeThemeName(record.theme, "autumn"),
     active: record.is_active,
     updatedAt: record.updated_at,
   };
@@ -2366,8 +2407,10 @@ function normalizeDraftForCompare(draft: ProfileDraft) {
     headline: draft.headline,
     headerImageUrl: draft.headerImageUrl,
     headerImageUpdatedAt: draft.headerImageUpdatedAt,
+    headerImageOriginalFileName: draft.headerImageOriginalFileName,
     logoUrl: draft.logoUrl,
     logoUpdatedAt: draft.logoUpdatedAt,
+    logoOriginalFileName: draft.logoOriginalFileName,
     logoShape: draft.logoShape,
     logoBackgroundWhite: draft.logoBackgroundWhite,
     theme: draft.theme,

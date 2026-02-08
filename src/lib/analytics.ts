@@ -7,6 +7,9 @@ export type AnalyticsPayload = {
   timestamp: string;
 };
 
+export const ANALYTICS_EVENT_NAME = "analytics:event";
+export const ANALYTICS_BROADCAST_KEY = "linket:analytics:last-event";
+
 function parseMeta(raw: string | null) {
   if (!raw) return undefined;
   try {
@@ -46,6 +49,43 @@ async function postAnalytics(payload: AnalyticsPayload) {
   }
 }
 
+export function emitAnalyticsEvent(
+  payload: Pick<AnalyticsPayload, "id"> & Partial<AnalyticsPayload>
+) {
+  if (typeof window === "undefined") return;
+
+  const id = payload.id.trim();
+  if (!id) return;
+
+  const eventPayload: AnalyticsPayload = {
+    id,
+    meta: payload.meta,
+    path: payload.path ?? window.location.pathname,
+    href: payload.href ?? window.location.href,
+    referrer:
+      payload.referrer ??
+      (typeof document !== "undefined" ? document.referrer || null : null),
+    timestamp: payload.timestamp ?? new Date().toISOString(),
+  };
+
+  window.dispatchEvent(
+    new CustomEvent(ANALYTICS_EVENT_NAME, { detail: eventPayload })
+  );
+
+  try {
+    localStorage.setItem(
+      ANALYTICS_BROADCAST_KEY,
+      JSON.stringify({
+        id: eventPayload.id,
+        timestamp: eventPayload.timestamp,
+        nonce: Math.random().toString(36).slice(2),
+      })
+    );
+  } catch {
+    // Ignore storage failures (private browsing / restricted storage).
+  }
+}
+
 export function track(el: HTMLElement) {
   const id = el.getAttribute("data-analytics-id");
   if (!id) return;
@@ -59,9 +99,7 @@ export async function trackEvent(
 ): Promise<void> {
   if (!id.trim()) return;
   const payload = buildPayload(id.trim(), meta);
-  if (typeof window !== "undefined") {
-    window.dispatchEvent(new CustomEvent("analytics:event", { detail: payload }));
-  }
+  emitAnalyticsEvent(payload);
   await postAnalytics(payload);
 }
 

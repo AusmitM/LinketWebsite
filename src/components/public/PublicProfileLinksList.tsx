@@ -2,6 +2,7 @@
 
 import { useCallback } from "react";
 import { ArrowUpRight } from "lucide-react";
+import { emitAnalyticsEvent } from "@/lib/analytics";
 import type { ProfileLinkRecord } from "@/types/db";
 
 function faviconForUrl(url: string) {
@@ -24,6 +25,10 @@ export default function PublicProfileLinksList({
   const trackClick = useCallback(
     (linkId: string) => {
       if (!trackClicks) return;
+      emitAnalyticsEvent({
+        id: "profile_link_click",
+        meta: { linkId, source: "public_profile_link" },
+      });
       const payload = JSON.stringify({ linkId });
       if (typeof navigator !== "undefined" && "sendBeacon" in navigator) {
         const blob = new Blob([payload], { type: "application/json" });

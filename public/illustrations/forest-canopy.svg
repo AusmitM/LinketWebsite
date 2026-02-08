@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="520" viewBox="0 0 840 520" fill="none">
+  <defs>
+    <linearGradient id="forestVineStroke" x1="0" y1="0" x2="840" y2="520" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#b7cd9f" stop-opacity="0.24" />
+      <stop offset="1" stop-color="#7b9d72" stop-opacity="0.18" />
+    </linearGradient>
+    <linearGradient id="forestLeafTone" x1="120" y1="80" x2="740" y2="430" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#cadcb4" stop-opacity="0.2" />
+      <stop offset="1" stop-color="#8cab7d" stop-opacity="0.16" />
+    </linearGradient>
+  </defs>
+  <g stroke="url(#forestVineStroke)" stroke-width="2.4" stroke-linecap="round">
+    <path d="M-120 86C122 12 268 98 408 190C554 284 702 300 960 220" />
+    <path d="M-96 364C132 290 278 310 412 388C552 468 694 478 948 404" />
+    <path d="M170 -92C124 34 146 168 204 272C248 352 264 426 240 620" />
+    <path d="M428 -88C386 36 406 166 460 266C500 342 514 422 492 614" />
+    <path d="M686 -90C646 34 664 164 716 264C754 336 766 414 744 608" />
+  </g>
+  <g stroke="#9db691" stroke-opacity="0.14" stroke-width="1.35" stroke-linecap="round">
+    <path d="M132 142C164 126 196 128 226 150" />
+    <path d="M308 206C338 188 372 192 404 214" />
+    <path d="M488 174C518 156 552 160 582 182" />
+    <path d="M210 332C238 316 272 318 300 342" />
+    <path d="M556 334C584 318 618 320 648 344" />
+  </g>
+  <g fill="url(#forestLeafTone)">
+    <ellipse cx="174" cy="146" rx="8.2" ry="4.6" transform="rotate(16 174 146)" />
+    <ellipse cx="356" cy="208" rx="8.4" ry="4.8" transform="rotate(-12 356 208)" />
+    <ellipse cx="534" cy="178" rx="8.2" ry="4.6" transform="rotate(14 534 178)" />
+    <ellipse cx="258" cy="336" rx="8.2" ry="4.6" transform="rotate(-10 258 336)" />
+    <ellipse cx="604" cy="336" rx="8.2" ry="4.6" transform="rotate(12 604 336)" />
+  </g>
+</svg>

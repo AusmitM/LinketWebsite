@@ -9,8 +9,10 @@ export type UserProfileRecord = {
   headline: string | null;
   header_image_url: string | null;
   header_image_updated_at: string | null;
+  header_image_original_file_name: string | null;
   logo_url: string | null;
   logo_updated_at: string | null;
+  logo_original_file_name: string | null;
   logo_shape: "circle" | "rect" | null;
   logo_bg_white: boolean | null;
   theme: ThemeName;

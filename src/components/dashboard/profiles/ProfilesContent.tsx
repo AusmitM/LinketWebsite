@@ -18,7 +18,7 @@ import { toast } from "@/components/system/toaster";
 import { supabase } from "@/lib/supabase";
 import AvatarUploader from "@/components/dashboard/AvatarUploader";
 import { getSignedAvatarUrl } from "@/lib/avatar-client";
-import type { ThemeName } from "@/lib/themes";
+import { normalizeThemeName, type ThemeName } from "@/lib/themes";
 import type { ProfileWithLinks } from "@/lib/profile-service";
 import { useDashboardUser } from "@/components/dashboard/DashboardSessionContext";
 import { getSiteOrigin } from "@/lib/site-url";
@@ -152,6 +152,7 @@ export default function ProfilesContent() {
   const [accountLoading, setAccountLoading] = useState(true);
   const [accountError, setAccountError] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [avatarOriginalFileName, setAvatarOriginalFileName] = useState<string | null>(null);
   const [accountHandle, setAccountHandle] = useState<string | null>(null);
   const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const autosavePending = useRef(false);
@@ -279,6 +280,7 @@ export default function ProfilesContent() {
   useEffect(() => {
     if (!userId) {
       setAvatarUrl(null);
+      setAvatarOriginalFileName(null);
       setAccountHandle(null);
       setAccountError(null);
       setAccountLoading(false);
@@ -306,6 +308,7 @@ export default function ProfilesContent() {
           handle?: string | null;
           avatarPath?: string | null;
           avatarUpdatedAt?: string | null;
+          avatarOriginalFileName?: string | null;
         };
         if (cancelled) return;
         const signed = await getSignedAvatarUrl(
@@ -313,12 +316,14 @@ export default function ProfilesContent() {
           payload.avatarUpdatedAt ?? null
         );
         setAvatarUrl(signed);
+        setAvatarOriginalFileName(payload.avatarOriginalFileName ?? null);
         setAccountHandle(payload.handle ?? null);
         setAccountError(null);
       } catch (error) {
         if (cancelled) return;
         const message =
           error instanceof Error ? error.message : "Unable to load account";
+        setAvatarOriginalFileName(null);
         setAccountError(message);
       } finally {
         if (!cancelled) {
@@ -1016,8 +1021,10 @@ export default function ProfilesContent() {
                     userId={userId}
                     userEmail={dashboardUser?.email ?? null}
                     avatarUrl={avatarUrl}
-                    onUploaded={({ publicUrl }) => {
+                    avatarOriginalFileName={avatarOriginalFileName}
+                    onUploaded={({ publicUrl, originalFileName }) => {
                       setAvatarUrl(publicUrl);
+                      setAvatarOriginalFileName(originalFileName ?? null);
                       setAccountError(null);
                     }}
                   />
@@ -1368,7 +1375,7 @@ function mapProfile(record: ProfileWithLinks): LinketProfile {
     handle: record.handle,
     headline: record.headline ?? "",
     links,
-    theme: (record.theme as ThemeName) ?? DEFAULT_THEME,
+    theme: normalizeThemeName(record.theme, DEFAULT_THEME),
     active: record.is_active,
     updatedAt: record.updated_at,
   };

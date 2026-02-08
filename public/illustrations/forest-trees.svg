@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="460" viewBox="0 0 960 460" fill="none">
+  <g fill="#11241c" fill-opacity="0.3">
+    <path d="M-120 430L10 190L140 430H-120Z" />
+    <path d="M64 430L198 164L332 430H64Z" />
+    <path d="M252 430L386 198L520 430H252Z" />
+    <path d="M444 430L580 154L716 430H444Z" />
+    <path d="M640 430L774 186L908 430H640Z" />
+    <path d="M812 430L946 158L1080 430H812Z" />
+  </g>
+  <g fill="#0b1813" fill-opacity="0.44">
+    <path d="M-120 460L40 176L200 460H-120Z" />
+    <path d="M108 460L286 124L464 460H108Z" />
+    <path d="M340 460L522 96L704 460H340Z" />
+    <path d="M586 460L760 142L934 460H586Z" />
+    <path d="M804 460L976 170L1148 460H804Z" />
+  </g>
+</svg>
