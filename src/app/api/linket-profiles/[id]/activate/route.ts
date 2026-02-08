@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { setActiveProfileForUser } from "@/lib/profile-service";
 import { isSupabaseAdminAvailable } from "@/lib/supabase-admin";
 import { createServerSupabase } from "@/lib/supabase/server";
+import { recordConversionEvent } from "@/lib/server-conversion-events";
 import type { ProfileLinkRecord, UserProfileRecord } from "@/types/db";
 
 type ProfileWithLinks = UserProfileRecord & { links: ProfileLinkRecord[] };
@@ -51,6 +52,12 @@ export async function POST(
     if (isSupabaseAdminAvailable) {
       try {
         const profile = await setActiveProfileForUser(userId, id);
+        await recordConversionEvent({
+          eventId: "profile_published",
+          userId,
+          eventSource: "server",
+          meta: { profileId: id, source: "activate-route" },
+        });
         return NextResponse.json(profile, {
           headers: {
             "Cache-Control": "no-store, max-age=0",
@@ -84,6 +91,13 @@ export async function POST(
 
     const payload = profile as ProfileWithLinks;
     payload.links = sortLinks(payload.links);
+
+    await recordConversionEvent({
+      eventId: "profile_published",
+      userId,
+      eventSource: "server",
+      meta: { profileId: id, source: "activate-route" },
+    });
 
     return NextResponse.json(payload, {
       headers: {

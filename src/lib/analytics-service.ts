@@ -37,11 +37,55 @@ export type AnalyticsTotals = {
   lastScanAt: string | null;
 };
 
+export type AnalyticsFunnelStepKey =
+  | "landing_cta_click"
+  | "signup_start"
+  | "signup_complete"
+  | "first_profile_publish"
+  | "first_lead";
+
+export type AnalyticsFunnelStep = {
+  key: AnalyticsFunnelStepKey;
+  label: string;
+  eventCount: number;
+  firstAt: string | null;
+  completed: boolean;
+  conversionFromPrevious: number | null;
+};
+
+export type AnalyticsFunnel = {
+  steps: AnalyticsFunnelStep[];
+  completedSteps: number;
+  totalSteps: number;
+  completionRate: number;
+};
+
+export type OnboardingChecklistItem = {
+  id:
+    | "set_handle"
+    | "publish_profile"
+    | "add_three_links"
+    | "test_share"
+    | "publish_lead_form";
+  label: string;
+  completed: boolean;
+  detail: string;
+};
+
+export type OnboardingChecklist = {
+  items: OnboardingChecklistItem[];
+  completedCount: number;
+  totalCount: number;
+  progress: number;
+};
+
 export type UserAnalytics = {
   totals: AnalyticsTotals;
   timeline: AnalyticsTimelinePoint[];
   topProfiles: AnalyticsTopProfile[];
   recentLeads: AnalyticsLead[];
+  funnel: AnalyticsFunnel;
+  onboarding: OnboardingChecklist;
   meta: {
     days: number;
     generatedAt: string;
@@ -59,6 +103,26 @@ const DEFAULT_OPTIONS: Required<AnalyticsOptions> = {
   recentLeadCount: 10,
 };
 
+const LANDING_CTA_EVENT_IDS = [
+  "hero_cta_click",
+  "pricing_cta_click",
+  "footer_cta_click",
+] as const;
+
+const SHARE_TEST_EVENT_IDS = [
+  "vcard_download_success",
+  "share_contact_success",
+] as const;
+
+const FUNNEL_EVENT_IDS = [
+  ...LANDING_CTA_EVENT_IDS,
+  "signup_start",
+  "signup_complete",
+  "profile_published",
+  "lead_captured",
+  ...SHARE_TEST_EVENT_IDS,
+] as const;
+
 export async function getUserAnalytics(
   userId: string,
   options: AnalyticsOptions = {}
@@ -67,6 +131,13 @@ export async function getUserAnalytics(
   const days = Math.max(1, Math.min(resolved.days, 90));
 
   if (!isSupabaseAdminAvailable) {
+    const funnel = buildFunnel([]);
+    const onboarding = buildOnboardingChecklist({
+      profiles: [],
+      linksByProfile: new Map<string, number>(),
+      hasPublishedLeadForm: false,
+      shareTestCount: 0,
+    });
     return {
       totals: {
         scansToday: 0,
@@ -80,6 +151,8 @@ export async function getUserAnalytics(
       timeline: buildEmptyTimeline(days),
       topProfiles: [],
       recentLeads: [],
+      funnel,
+      onboarding,
       meta: {
         days,
         generatedAt: new Date().toISOString(),
@@ -107,9 +180,18 @@ export async function getUserAnalytics(
   const todayKey = dayKey(now);
   const timelineMap = initialiseTimelineMap(start, days);
 
-  const [assignments, profileRows] = await Promise.all([
+  const [
+    assignments,
+    profileRows,
+    linksByProfile,
+    hasPublishedLeadForm,
+    conversionRows,
+  ] = await Promise.all([
     fetchAssignments(userId),
     fetchProfilesForUser(userId),
+    fetchActiveLinkCountsByProfile(userId),
+    fetchPublishedLeadFormState(userId),
+    fetchConversionEventsForUser(userId, [...FUNNEL_EVENT_IDS]),
   ]);
 
   const tagIds = assignments.map((assignment) => assignment.tag_id);
@@ -272,6 +354,15 @@ export async function getUserAnalytics(
       leads: item.leads,
     }));
 
+  const funnel = buildFunnel(conversionRows);
+  const shareTestCount = countEventsByIds(conversionRows, [...SHARE_TEST_EVENT_IDS]);
+  const onboarding = buildOnboardingChecklist({
+    profiles: profileRows,
+    linksByProfile,
+    hasPublishedLeadForm,
+    shareTestCount,
+  });
+
   return {
     totals: {
       scansToday,
@@ -295,6 +386,8 @@ export async function getUserAnalytics(
       handle: lead.handle ?? null,
       created_at: lead.created_at,
     })),
+    funnel,
+    onboarding,
     meta: {
       days,
       generatedAt: new Date().toISOString(),
@@ -317,6 +410,7 @@ type UserProfileRow = {
   id: string;
   name: string | null;
   handle: string | null;
+  is_active: boolean;
 };
 
 type AssignmentProfile = {
@@ -340,6 +434,12 @@ type ScanRow = {
   tag_id: string | null;
   occurred_at: string | null;
   metadata: Record<string, unknown> | null;
+};
+
+type ConversionEventRow = {
+  event_id: string;
+  created_at: string;
+  timestamp: string | null;
 };
 
 function buildEmptyTimeline(days: number): AnalyticsTimelinePoint[] {
@@ -388,10 +488,214 @@ async function fetchAssignments(userId: string): Promise<AssignmentRow[]> {
 async function fetchProfilesForUser(userId: string): Promise<UserProfileRow[]> {
   const { data, error } = await supabaseAdmin
     .from("user_profiles")
-    .select("id, name, handle")
+    .select("id, name, handle, is_active")
     .eq("user_id", userId);
   if (error) throw new Error("Failed to load profiles: " + error.message);
   return (data ?? []) as UserProfileRow[];
+}
+
+async function fetchActiveLinkCountsByProfile(userId: string) {
+  const { data, error } = await supabaseAdmin
+    .from("profile_links")
+    .select("profile_id, is_active")
+    .eq("user_id", userId)
+    .eq("is_active", true);
+  if (error) throw new Error("Failed to load profile links: " + error.message);
+  const counts = new Map<string, number>();
+  for (const row of (data ?? []) as Array<{ profile_id: string }>) {
+    counts.set(row.profile_id, (counts.get(row.profile_id) ?? 0) + 1);
+  }
+  return counts;
+}
+
+async function fetchPublishedLeadFormState(userId: string) {
+  const { data, error } = await supabaseAdmin
+    .from("lead_forms")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("status", "published")
+    .limit(1);
+  if (error) throw new Error("Failed to load lead forms: " + error.message);
+  return Boolean(data?.length);
+}
+
+async function fetchConversionEventsForUser(userId: string, eventIds: string[]) {
+  const { data, error } = await supabaseAdmin
+    .from("conversion_events")
+    .select("event_id, created_at, timestamp")
+    .eq("user_id", userId)
+    .in("event_id", eventIds)
+    .order("created_at", { ascending: true });
+  if (error) {
+    if (error.message.toLowerCase().includes('relation "conversion_events" does not exist')) {
+      return [] as ConversionEventRow[];
+    }
+    throw new Error("Failed to load conversion events: " + error.message);
+  }
+  return ((data ?? []) as ConversionEventRow[]).filter((row) => Boolean(row.event_id));
+}
+
+function countEventsByIds(rows: ConversionEventRow[], eventIds: string[]) {
+  const ids = new Set(eventIds);
+  return rows.reduce(
+    (total, row) => (ids.has(row.event_id) ? total + 1 : total),
+    0
+  );
+}
+
+function buildFunnel(rows: ConversionEventRow[]): AnalyticsFunnel {
+  const stepConfig: Array<{
+    key: AnalyticsFunnelStepKey;
+    label: string;
+    eventIds: string[];
+  }> = [
+    {
+      key: "landing_cta_click",
+      label: "Landing CTA click",
+      eventIds: [...LANDING_CTA_EVENT_IDS],
+    },
+    {
+      key: "signup_start",
+      label: "Signup start",
+      eventIds: ["signup_start"],
+    },
+    {
+      key: "signup_complete",
+      label: "Signup complete",
+      eventIds: ["signup_complete"],
+    },
+    {
+      key: "first_profile_publish",
+      label: "First profile publish",
+      eventIds: ["profile_published"],
+    },
+    {
+      key: "first_lead",
+      label: "First lead",
+      eventIds: ["lead_captured"],
+    },
+  ];
+
+  const counts = new Map<AnalyticsFunnelStepKey, number>();
+  const firstAt = new Map<AnalyticsFunnelStepKey, string>();
+
+  for (const row of rows) {
+    const occurredAt = row.timestamp || row.created_at;
+    for (const step of stepConfig) {
+      if (!step.eventIds.includes(row.event_id)) continue;
+      counts.set(step.key, (counts.get(step.key) ?? 0) + 1);
+      const earliest = firstAt.get(step.key);
+      if (!earliest || new Date(occurredAt) < new Date(earliest)) {
+        firstAt.set(step.key, occurredAt);
+      }
+    }
+  }
+
+  const steps: AnalyticsFunnelStep[] = stepConfig.map((step, index) => {
+    const eventCount = counts.get(step.key) ?? 0;
+    const previousCount =
+      index > 0 ? counts.get(stepConfig[index - 1].key) ?? 0 : 0;
+    return {
+      key: step.key,
+      label: step.label,
+      eventCount,
+      firstAt: firstAt.get(step.key) ?? null,
+      completed: eventCount > 0,
+      conversionFromPrevious:
+        index === 0 || previousCount <= 0
+          ? null
+          : Math.min(eventCount / previousCount, 1),
+    };
+  });
+
+  const completedSteps = steps.reduce(
+    (total, step) => (step.completed ? total + 1 : total),
+    0
+  );
+
+  return {
+    steps,
+    completedSteps,
+    totalSteps: steps.length,
+    completionRate: steps.length > 0 ? completedSteps / steps.length : 0,
+  };
+}
+
+function buildOnboardingChecklist(input: {
+  profiles: UserProfileRow[];
+  linksByProfile: Map<string, number>;
+  hasPublishedLeadForm: boolean;
+  shareTestCount: number;
+}): OnboardingChecklist {
+  const { profiles, linksByProfile, hasPublishedLeadForm, shareTestCount } = input;
+  const activeProfile = profiles.find((profile) => profile.is_active) ?? profiles[0];
+
+  const hasCustomHandle = profiles.some((profile) => {
+    const handle = profile.handle?.trim().toLowerCase() ?? "";
+    if (!handle) return false;
+    return !/^user-[0-9a-f]{8}$/i.test(handle);
+  });
+  const hasPublishedProfile = profiles.some((profile) => profile.is_active);
+  const activeLinkCount = activeProfile
+    ? linksByProfile.get(activeProfile.id) ?? 0
+    : 0;
+  const hasThreeLinks = activeLinkCount >= 3;
+  const hasShareTest = shareTestCount > 0;
+
+  const items: OnboardingChecklistItem[] = [
+    {
+      id: "set_handle",
+      label: "Set handle",
+      completed: hasCustomHandle,
+      detail: hasCustomHandle
+        ? "Public handle is configured."
+        : "Choose a custom public handle.",
+    },
+    {
+      id: "publish_profile",
+      label: "Publish profile",
+      completed: hasPublishedProfile,
+      detail: hasPublishedProfile
+        ? "An active profile is live."
+        : "Activate one public profile.",
+    },
+    {
+      id: "add_three_links",
+      label: "Add 3 links",
+      completed: hasThreeLinks,
+      detail: hasThreeLinks
+        ? `${activeLinkCount} links are live.`
+        : `${activeLinkCount}/3 links published.`,
+    },
+    {
+      id: "test_share",
+      label: "Test share",
+      completed: hasShareTest,
+      detail: hasShareTest
+        ? "Share or vCard flow has been tested."
+        : "Use Share Contact or Save Contact once.",
+    },
+    {
+      id: "publish_lead_form",
+      label: "Publish lead form",
+      completed: hasPublishedLeadForm,
+      detail: hasPublishedLeadForm
+        ? "Lead form is published."
+        : "Publish your lead form to collect contacts.",
+    },
+  ];
+
+  const completedCount = items.reduce(
+    (total, item) => (item.completed ? total + 1 : total),
+    0
+  );
+
+  return {
+    items,
+    completedCount,
+    totalCount: items.length,
+    progress: items.length > 0 ? completedCount / items.length : 0,
+  };
 }
 
 async function fetchScanRowsForUser(options: {

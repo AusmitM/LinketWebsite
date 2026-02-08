@@ -1,5 +1,6 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import Script from "next/script";
 import type { LucideIcon } from "lucide-react";
 
@@ -925,8 +926,13 @@ function ExperienceSection() {
         {/* Contact form card. */}
         <div className="landing-fade-up landing-delay-2 w-full max-w-md rounded-3xl border border-white/10 bg-white/5 p-8 shadow-[0_30px_80px_rgba(5,5,20,0.45)] backdrop-blur transition-transform duration-500 hover:-translate-y-2">
           <div className="flex items-center gap-3">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={brand.logomark} alt="Linket mark" className="h-14 w-14" />
+            <Image
+              src={brand.logomark}
+              alt="Linket mark"
+              width={56}
+              height={56}
+              className="h-14 w-14"
+            />
             <div>
               <p className="text-lg font-semibold text-white">Get in touch</p>
               <p className="text-xs text-white/60">
@@ -1169,8 +1175,13 @@ function LandingFooter() {
           <div className="space-y-8">
             <div className="flex items-center gap-3 text-lg font-semibold">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={brand.logomark} alt={`${brand.name} mark`} className="h-8 w-8" />
+                <Image
+                  src={brand.logomark}
+                  alt={`${brand.name} mark`}
+                  width={32}
+                  height={32}
+                  className="h-8 w-8"
+                />
               </div>
               <div>
                 <p className="text-sm uppercase tracking-[0.4em] text-white/70">
@@ -1286,6 +1297,7 @@ function LandingFooter() {
     </footer>
   );
 }
+
 
 
 

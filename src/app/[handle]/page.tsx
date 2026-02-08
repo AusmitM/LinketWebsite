@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getSignedAvatarUrl } from "@/lib/avatar-server";
 import { getSignedProfileHeaderUrl } from "@/lib/profile-header-server";
@@ -179,13 +180,13 @@ export default async function PublicProfilePage({ params }: Props) {
                     }}
                   >
                     {headerImage ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
+                      <Image
                         src={headerImage}
                         alt=""
+                        fill
+                        unoptimized
                         loading="lazy"
-                        decoding="async"
-                        fetchPriority="low"
+                        sizes="(max-width: 768px) 100vw, 768px"
                         className="public-profile-header-image h-full w-full object-cover"
                       />
                     ) : null}
@@ -202,25 +203,38 @@ export default async function PublicProfilePage({ params }: Props) {
                       <div className="flex flex-col items-center">
                         <div className="relative h-28 w-28 rounded-3xl shadow-sm z-10 bg-muted/40 overflow-visible">
                           <div className="h-full w-full overflow-hidden rounded-3xl ring-4 ring-[var(--avatar-border)]">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
+                            <Image
                               src={avatar}
                               alt={`${displayName} avatar`}
-                              decoding="async"
+                              width={112}
+                              height={112}
+                              unoptimized
                               className="h-full w-full object-cover"
                             />
                           </div>
                           {logoUrl && logoShape === "circle" ? (
                             <span className={`absolute -bottom-2 -right-2 h-12 w-12 overflow-hidden rounded-full border-2 border-[var(--avatar-border)] shadow-md ${logoBadgeClass}`}>
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img src={logoUrl} alt="" className="h-full w-full object-cover" />
+                              <Image
+                                src={logoUrl}
+                                alt=""
+                                width={48}
+                                height={48}
+                                unoptimized
+                                className="h-full w-full object-cover"
+                              />
                             </span>
                           ) : null}
                         </div>
                         {logoUrl && logoShape === "rect" ? (
                           <span className={`mt-2 h-8 w-20 overflow-hidden rounded-md border border-[var(--avatar-border)] shadow-sm ${logoBadgeClass}`}>
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={logoUrl} alt="" className="h-full w-full object-cover" />
+                            <Image
+                              src={logoUrl}
+                              alt=""
+                              width={80}
+                              height={32}
+                              unoptimized
+                              className="h-full w-full object-cover"
+                            />
                           </span>
                         ) : null}
                       </div>
@@ -249,25 +263,38 @@ export default async function PublicProfilePage({ params }: Props) {
                   <div className="flex flex-col items-center">
                     <div className="relative h-20 w-20 rounded-3xl bg-muted/40 overflow-visible">
                       <div className="h-full w-full overflow-hidden rounded-3xl ring-4 ring-[var(--avatar-border)]">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
+                        <Image
                           src={avatar}
                           alt={`${displayName} avatar`}
-                          decoding="async"
+                          width={80}
+                          height={80}
+                          unoptimized
                           className="h-full w-full object-cover"
                         />
                       </div>
                       {logoUrl && logoShape === "circle" ? (
                         <span className={`absolute -bottom-1.5 -right-1.5 h-8 w-8 overflow-hidden rounded-full border-2 border-[var(--avatar-border)] shadow-md ${logoBadgeClass}`}>
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={logoUrl} alt="" className="h-full w-full object-cover" />
+                          <Image
+                            src={logoUrl}
+                            alt=""
+                            width={32}
+                            height={32}
+                            unoptimized
+                            className="h-full w-full object-cover"
+                          />
                         </span>
                       ) : null}
                     </div>
                     {logoUrl && logoShape === "rect" ? (
                       <span className={`mt-2 h-6 w-16 overflow-hidden rounded-md border border-[var(--avatar-border)] shadow-sm ${logoBadgeClass}`}>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={logoUrl} alt="" className="h-full w-full object-cover" />
+                        <Image
+                          src={logoUrl}
+                          alt=""
+                          width={64}
+                          height={24}
+                          unoptimized
+                          className="h-full w-full object-cover"
+                        />
                       </span>
                     ) : null}
                   </div>

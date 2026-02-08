@@ -7,6 +7,7 @@ import {
 } from "@/lib/profile-service";
 import { isSupabaseAdminAvailable } from "@/lib/supabase-admin";
 import { createServerSupabase } from "@/lib/supabase/server";
+import { recordConversionEvent } from "@/lib/server-conversion-events";
 import type { ProfileLinkRecord, UserProfileRecord } from "@/types/db";
 
 type ProfileWithLinks = UserProfileRecord & { links: ProfileLinkRecord[] };
@@ -391,6 +392,15 @@ export async function POST(request: NextRequest) {
         .eq("id", profileId)
         .eq("user_id", userId);
       if (activateError) throw new Error(activateError.message);
+      await recordConversionEvent({
+        eventId: "profile_published",
+        userId,
+        eventSource: "server",
+        meta: {
+          profileId,
+          source: "profile-save",
+        },
+      });
     } else {
       await ensureHasActiveProfile(supabase, userId, profileId);
     }

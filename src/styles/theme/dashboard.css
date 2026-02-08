@@ -789,6 +789,37 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
     linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, transparent 55%);
 }
 
+/* Honey atmosphere overlay */
+#dashboard-theme-scope.theme-honey::before {
+  opacity: 0.24;
+  background-image:
+    var(--honey-hex-fill),
+    var(--honey-hex-fill),
+    var(--honey-hex-outline),
+    var(--honey-hex-outline);
+  background-size:
+    var(--honey-hex-size-x) var(--honey-hex-size-y),
+    var(--honey-hex-size-x) var(--honey-hex-size-y),
+    var(--honey-hex-size-x) var(--honey-hex-size-y),
+    var(--honey-hex-size-x) var(--honey-hex-size-y);
+  background-position:
+    0 0,
+    var(--honey-hex-offset-x) var(--honey-hex-offset-y),
+    0 0,
+    var(--honey-hex-offset-x) var(--honey-hex-offset-y);
+}
+
+#dashboard-theme-scope.theme-honey::after {
+  opacity: 0.78;
+  transform: translateY(0);
+  background:
+    radial-gradient(180px 140px at 10% 0%, rgba(255, 246, 218, 0.56) 0%, transparent 72%),
+    radial-gradient(220px 140px at 90% 0%, rgba(244, 194, 90, 0.34) 0%, transparent 72%),
+    radial-gradient(130px 130px at 24% -6%, rgba(223, 98, 6, 0.24) 0%, transparent 70%),
+    radial-gradient(140px 140px at 62% -10%, rgba(223, 98, 6, 0.18) 0%, transparent 70%),
+    linear-gradient(180deg, rgba(255, 211, 126, 0.24) 0%, transparent 48%);
+}
+
 /* Dream theme: pastel pink new linket button */
 #dashboard-theme-scope.theme-dream .dashboard-new-linket-button,
 .theme-dream .dashboard-new-linket-button {

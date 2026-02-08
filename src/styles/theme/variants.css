@@ -379,6 +379,12 @@
   --premium-glow: 0 0 0 1px rgba(255, 242, 217, 0.85);
   --premium-hairline: rgba(255, 255, 255, 0.6);
   --premium-inset: 0 1px 0 rgba(255, 255, 255, 0.5) inset;
+  --honey-hex-outline: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='83.14' height='96' viewBox='0 0 83.14 96'%3E%3Cpolygon points='41.57,0 83.14,24 83.14,72 41.57,96 0,72 0,24' fill='none' stroke='%23cf6b10' stroke-width='1.2' stroke-opacity='0.14'/%3E%3C/svg%3E");
+  --honey-hex-fill: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='83.14' height='96' viewBox='0 0 83.14 96'%3E%3Cpolygon points='41.57,0 83.14,24 83.14,72 41.57,96 0,72 0,24' fill='%23f8dfad' fill-opacity='0.06'/%3E%3C/svg%3E");
+  --honey-hex-size-x: 83.14px;
+  --honey-hex-size-y: 144px;
+  --honey-hex-offset-x: 41.57px;
+  --honey-hex-offset-y: 72px;
 }
 
 /* Theme-specific honey highlight for top bars */
@@ -413,6 +419,30 @@
 .theme-honey .dashboard-logo-fallback {
   background: rgba(255, 248, 235, 0.9);
   box-shadow: 0 0 14px rgba(255, 214, 140, 0.65), 0 0 28px rgba(223, 98, 6, 0.22);
+}
+
+.theme-honey .public-profile-preview {
+  background-image:
+    radial-gradient(120% 80% at 50% 0%, rgba(255, 246, 218, 0.26) 0%, transparent 70%),
+    var(--honey-hex-fill),
+    var(--honey-hex-fill),
+    var(--honey-hex-outline),
+    var(--honey-hex-outline),
+    linear-gradient(180deg, #fff2db 0%, #f6dcab 100%);
+  background-size:
+    auto,
+    var(--honey-hex-size-x) var(--honey-hex-size-y),
+    var(--honey-hex-size-x) var(--honey-hex-size-y),
+    var(--honey-hex-size-x) var(--honey-hex-size-y),
+    var(--honey-hex-size-x) var(--honey-hex-size-y),
+    100% 100%;
+  background-position:
+    center top,
+    0 0,
+    var(--honey-hex-offset-x) var(--honey-hex-offset-y),
+    0 0,
+    var(--honey-hex-offset-x) var(--honey-hex-offset-y),
+    center;
 }
 
 /* Burnt Orange theme token mapping (UT Austin) 192 86 0*/

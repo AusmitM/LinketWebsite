@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase/server";
+import { recordConversionEvent } from "@/lib/server-conversion-events";
 
 const FIRST_LOGIN_REDIRECT = "/dashboard/linkets";
 const RETURNING_LOGIN_REDIRECT = "/dashboard/overview";
@@ -13,8 +14,20 @@ async function resolveRedirectPath(
   const metadata = (user.user_metadata ?? {}) as Record<string, unknown>;
   const hasOnboarded = Boolean(metadata.linket_onboarded);
   if (!hasOnboarded) {
+    await recordConversionEvent({
+      eventId: "signup_start",
+      userId: user.id,
+      eventSource: "server",
+      meta: { source: "auth_callback_inferred" },
+    });
     await supabase.auth.updateUser({
       data: { ...metadata, linket_onboarded: true },
+    });
+    await recordConversionEvent({
+      eventId: "signup_complete",
+      userId: user.id,
+      eventSource: "server",
+      meta: { source: "auth_callback" },
     });
     return FIRST_LOGIN_REDIRECT;
   }

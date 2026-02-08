@@ -113,6 +113,7 @@ export default function AnalyticsContent() {
   }, [userId, range, reloadToken]);
 
   const totals = analytics?.totals;
+  const funnel = analytics?.funnel;
 
   const chartData: TimelineDatum[] = useMemo(() => {
     if (!analytics) return [];
@@ -255,6 +256,74 @@ export default function AnalyticsContent() {
           helper="Tags with at least one scan"
         />
       </section>
+
+      <Card className="dashboard-analytics-card rounded-3xl border bg-card/80 shadow-sm">
+        <CardHeader>
+          <CardTitle className="text-lg font-semibold">Onboarding funnel</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Landing CTA click - signup start - signup complete - first profile publish - first lead.
+          </p>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="space-y-3">
+              <div className="dashboard-skeleton h-4 w-44 animate-pulse rounded bg-muted" data-skeleton />
+              <div className="dashboard-skeleton h-2 w-full animate-pulse rounded bg-muted" data-skeleton />
+              <div className="dashboard-skeleton h-10 w-full animate-pulse rounded-2xl bg-muted" data-skeleton />
+              <div className="dashboard-skeleton h-10 w-full animate-pulse rounded-2xl bg-muted" data-skeleton />
+              <div className="dashboard-skeleton h-10 w-full animate-pulse rounded-2xl bg-muted" data-skeleton />
+            </div>
+          ) : !funnel || funnel.steps.length === 0 ? (
+            <EmptyState message="No funnel data yet." />
+          ) : (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-xs uppercase tracking-wide text-muted-foreground">
+                  Progress
+                </span>
+                <span className="text-sm font-semibold text-foreground">
+                  {funnel.completedSteps}/{funnel.totalSteps} steps
+                </span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-muted">
+                <div
+                  className="h-full rounded-full bg-primary transition-all"
+                  style={{ width: `${Math.round(funnel.completionRate * 100)}%` }}
+                />
+              </div>
+              <div className="space-y-2">
+                {funnel.steps.map((step) => (
+                  <div
+                    key={step.key}
+                    className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border px-3 py-2"
+                  >
+                    <div>
+                      <div className="text-sm font-medium text-foreground">
+                        {step.label}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {step.firstAt
+                          ? `First seen ${longDate.format(new Date(step.firstAt))}`
+                          : "Not completed yet"}
+                      </p>
+                    </div>
+                    <div className="text-right text-xs text-muted-foreground">
+                      <div className="font-semibold text-foreground">
+                        {numberFormatter.format(step.eventCount)} events
+                      </div>
+                      {step.conversionFromPrevious !== null ? (
+                        <div>
+                          {(step.conversionFromPrevious * 100).toFixed(0)}% from prev
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <Card className="dashboard-analytics-card rounded-3xl border bg-card/80 shadow-sm">
         <CardHeader>

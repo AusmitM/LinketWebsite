@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "@/components/system/toaster";
+import { trackEvent } from "@/lib/analytics";
 import { getSiteOrigin } from "@/lib/site-url";
 
 const DEFAULT_NEXT = "/dashboard/overview";
@@ -93,6 +94,7 @@ export default function AuthPage() {
         return;
       }
 
+      void trackEvent("signup_start", { method: "email" });
       setPending(true);
       setError(null);
 
@@ -194,6 +196,9 @@ export default function AuthPage() {
 
   const handleOAuth = useCallback(
     async (provider: "google") => {
+      if (view === "signup") {
+        void trackEvent("signup_start", { method: provider });
+      }
       setPending(true);
       setError(null);
 
@@ -211,7 +216,7 @@ export default function AuthPage() {
         setPending(false);
       }
     },
-    [supabase, next, siteUrl]
+    [supabase, next, siteUrl, view]
   );
 
   const isSignUp = view === "signup";

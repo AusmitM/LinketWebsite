@@ -18,6 +18,96 @@ function buildEmptyTimeline(days: number) {
   return points;
 }
 
+function buildEmptyFunnel() {
+  return {
+    steps: [
+      {
+        key: "landing_cta_click",
+        label: "Landing CTA click",
+        eventCount: 0,
+        firstAt: null,
+        completed: false,
+        conversionFromPrevious: null,
+      },
+      {
+        key: "signup_start",
+        label: "Signup start",
+        eventCount: 0,
+        firstAt: null,
+        completed: false,
+        conversionFromPrevious: null,
+      },
+      {
+        key: "signup_complete",
+        label: "Signup complete",
+        eventCount: 0,
+        firstAt: null,
+        completed: false,
+        conversionFromPrevious: null,
+      },
+      {
+        key: "first_profile_publish",
+        label: "First profile publish",
+        eventCount: 0,
+        firstAt: null,
+        completed: false,
+        conversionFromPrevious: null,
+      },
+      {
+        key: "first_lead",
+        label: "First lead",
+        eventCount: 0,
+        firstAt: null,
+        completed: false,
+        conversionFromPrevious: null,
+      },
+    ],
+    completedSteps: 0,
+    totalSteps: 5,
+    completionRate: 0,
+  };
+}
+
+function buildEmptyOnboarding() {
+  return {
+    items: [
+      {
+        id: "set_handle",
+        label: "Set handle",
+        completed: false,
+        detail: "Choose a custom public handle.",
+      },
+      {
+        id: "publish_profile",
+        label: "Publish profile",
+        completed: false,
+        detail: "Activate one public profile.",
+      },
+      {
+        id: "add_three_links",
+        label: "Add 3 links",
+        completed: false,
+        detail: "0/3 links published.",
+      },
+      {
+        id: "test_share",
+        label: "Test share",
+        completed: false,
+        detail: "Use Share Contact or Save Contact once.",
+      },
+      {
+        id: "publish_lead_form",
+        label: "Publish lead form",
+        completed: false,
+        detail: "Publish your lead form to collect contacts.",
+      },
+    ],
+    completedCount: 0,
+    totalCount: 5,
+    progress: 0,
+  };
+}
+
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const parsedDays = parseInt(searchParams.get("days") || "30", 10);
@@ -85,6 +175,8 @@ export async function GET(request: NextRequest) {
         message: lead.message ?? null,
         created_at: lead.created_at,
       })),
+      funnel: buildEmptyFunnel(),
+      onboarding: buildEmptyOnboarding(),
     };
 
     return NextResponse.json(analytics, {

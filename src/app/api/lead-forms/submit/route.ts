@@ -3,6 +3,7 @@ import { createServerSupabase } from "@/lib/supabase/server";
 import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
 import { validateSubmission } from "@/lib/lead-form";
 import { limitRequest } from "@/lib/rate-limit";
+import { recordConversionEvent } from "@/lib/server-conversion-events";
 import type { LeadFormConfig, LeadFormSubmission } from "@/types/lead-form";
 
 type LeadFormRow = {
@@ -182,6 +183,16 @@ export async function POST(request: NextRequest) {
         });
       if (leadError) {
         console.warn("Lead insert failed:", leadError.message);
+      } else {
+        await recordConversionEvent({
+          eventId: "lead_captured",
+          userId: formPayload.user_id,
+          eventSource: "server",
+          meta: {
+            formId,
+            handle: formPayload.handle,
+          },
+        });
       }
     }
 

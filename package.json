@@ -8,7 +8,8 @@
     "build": "next build --turbopack",
     "build:plain": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "check:a11y": "node scripts/check-accessibility.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

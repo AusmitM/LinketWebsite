@@ -5,6 +5,8 @@ import Link from "next/link";
 import {
   BarChart3,
   Calendar,
+  CheckCircle2,
+  Circle,
   MessageSquare,
   Sparkles,
   Users,
@@ -112,6 +114,7 @@ export default function OverviewContent() {
   }, [userId]);
 
   const totals = analytics?.totals;
+  const onboarding = analytics?.onboarding;
   const leads = analytics?.recentLeads ?? [];
   const recentLeads = leads.slice(0, 5);
   const recentLeadsLoading = loading && !analytics;
@@ -198,6 +201,56 @@ export default function OverviewContent() {
                   loading={loading && !analytics}
                 />
               ))}
+            </CardContent>
+          </Card>
+
+          <Card className="dashboard-overview-section-card rounded-3xl border border-border/70 bg-card/90 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
+            <CardHeader className="space-y-2">
+              <CardTitle className="text-lg font-semibold text-foreground">
+                First-run checklist
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Complete these steps to launch your profile and start capturing leads.
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {loading && !analytics ? (
+                <div className="space-y-2">
+                  <div className="dashboard-skeleton h-2 w-full animate-pulse rounded bg-muted" data-skeleton />
+                  <div className="dashboard-skeleton h-10 w-full animate-pulse rounded-2xl bg-muted" data-skeleton />
+                  <div className="dashboard-skeleton h-10 w-full animate-pulse rounded-2xl bg-muted" data-skeleton />
+                  <div className="dashboard-skeleton h-10 w-full animate-pulse rounded-2xl bg-muted" data-skeleton />
+                </div>
+              ) : onboarding ? (
+                <>
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                      Progress
+                    </p>
+                    <p className="text-sm font-semibold text-foreground">
+                      {onboarding.completedCount}/{onboarding.totalCount}
+                    </p>
+                  </div>
+                  <div className="h-2 overflow-hidden rounded-full bg-muted">
+                    <div
+                      className="h-full rounded-full bg-primary transition-all"
+                      style={{ width: `${Math.round(onboarding.progress * 100)}%` }}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    {onboarding.items.map((item) => (
+                      <ChecklistItemRow
+                        key={item.id}
+                        label={item.label}
+                        detail={item.detail}
+                        completed={item.completed}
+                      />
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <EmptyState message="Checklist unavailable right now." />
+              )}
             </CardContent>
           </Card>
 
@@ -306,6 +359,37 @@ function MetricRow({
       </div>
       <span className="dashboard-metric-value text-sm font-semibold text-foreground">
         {loading ? <span className="text-muted-foreground">--</span> : value}
+      </span>
+    </div>
+  );
+}
+
+function ChecklistItemRow({
+  label,
+  detail,
+  completed,
+}: {
+  label: string;
+  detail: string;
+  completed: boolean;
+}) {
+  return (
+    <div className="flex items-start justify-between gap-3 rounded-2xl border border-border/60 bg-background/70 px-4 py-3">
+      <div className="flex items-start gap-3">
+        <span className="mt-0.5 text-primary" aria-hidden>
+          {completed ? (
+            <CheckCircle2 className="h-4 w-4" />
+          ) : (
+            <Circle className="h-4 w-4 text-muted-foreground" />
+          )}
+        </span>
+        <div>
+          <p className="text-sm font-medium text-foreground">{label}</p>
+          <p className="text-xs text-muted-foreground">{detail}</p>
+        </div>
+      </div>
+      <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        {completed ? "Done" : "Pending"}
       </span>
     </div>
   );
