@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getSignedAvatarUrl } from "@/lib/avatar-server";
 import { getSignedProfileHeaderUrl } from "@/lib/profile-header-server";
@@ -14,6 +13,7 @@ import type { LeadFormConfig } from "@/types/lead-form";
 import PublicProfileLinksList from "@/components/public/PublicProfileLinksList";
 import PublicProfileLiteMode from "@/components/public/PublicProfileLiteMode";
 import PublicLeadForm from "@/components/public/PublicLeadForm";
+import PublicProfileImage from "@/components/public/PublicProfileImage";
 import VCardDownload from "@/components/VCardDownload";
 import ShareContactButton from "@/components/ShareContactButton";
 
@@ -149,17 +149,17 @@ export default async function PublicProfilePage({ params }: Props) {
     <div className={`public-profile-shell min-h-screen text-foreground ${themeClass}`}>
       <PublicProfileLiteMode />
       <div className="relative overflow-hidden">
-        <div className="pointer-events-none absolute inset-0 -z-10 public-profile-heavy">
+        <div className="pointer-events-none absolute inset-0 -z-10 public-profile-backdrop-entrance public-profile-heavy">
           <div
-            className="absolute -left-32 top-[-140px] h-[360px] w-[360px] rounded-full blur-[120px] opacity-20"
+            className="public-profile-backdrop-orb-left absolute -left-32 top-[-140px] h-[360px] w-[360px] rounded-full blur-[120px] opacity-20"
             style={{ backgroundColor: "var(--ring)" }}
           />
           <div
-            className="absolute right-[-200px] top-[160px] h-[420px] w-[420px] rounded-full blur-[140px] opacity-15"
+            className="public-profile-backdrop-orb-right absolute right-[-200px] top-[160px] h-[420px] w-[420px] rounded-full blur-[140px] opacity-15"
             style={{ backgroundColor: "var(--primary)" }}
           />
           <div
-            className="absolute inset-0 opacity-[0.16]"
+            className="public-profile-backdrop-grid absolute inset-0"
             style={{
               backgroundImage:
                 "linear-gradient(90deg, var(--border) 1px, transparent 1px), linear-gradient(180deg, var(--border) 1px, transparent 1px)",
@@ -172,7 +172,7 @@ export default async function PublicProfilePage({ params }: Props) {
           <section className="grid gap-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
             <div className="space-y-6">
               <div className="sm:hidden">
-                <div className="public-profile-card overflow-hidden rounded-3xl border border-border/60 bg-card/70">
+                <div className="public-profile-card public-profile-load public-profile-load-2 overflow-hidden rounded-3xl border border-border/60 bg-card/70">
                   <div
                     className="relative h-32"
                     style={{
@@ -181,12 +181,12 @@ export default async function PublicProfilePage({ params }: Props) {
                     }}
                   >
                     {headerImage ? (
-                      <Image
+                      <PublicProfileImage
                         src={headerImage}
                         alt=""
                         fill
                         unoptimized
-                        loading="lazy"
+                        loading="eager"
                         sizes="(max-width: 768px) 100vw, 768px"
                         className="public-profile-header-image h-full w-full object-cover"
                       />
@@ -204,18 +204,19 @@ export default async function PublicProfilePage({ params }: Props) {
                       <div className="flex flex-col items-center">
                         <div className="relative h-28 w-28 rounded-3xl shadow-sm z-10 bg-muted/40 overflow-visible">
                           <div className="h-full w-full overflow-hidden rounded-3xl ring-4 ring-[var(--avatar-border)]">
-                            <Image
+                            <PublicProfileImage
                               src={avatar}
                               alt={`${displayName} avatar`}
                               width={112}
                               height={112}
                               unoptimized
+                              loading="eager"
                               className="h-full w-full object-cover"
                             />
                           </div>
                           {logoUrl && logoShape === "circle" ? (
                             <span className={`absolute -bottom-2 -right-2 h-12 w-12 overflow-hidden rounded-full border-2 border-[var(--avatar-border)] shadow-md ${logoBadgeClass}`}>
-                              <Image
+                              <PublicProfileImage
                                 src={logoUrl}
                                 alt=""
                                 width={48}
@@ -228,7 +229,7 @@ export default async function PublicProfilePage({ params }: Props) {
                         </div>
                         {logoUrl && logoShape === "rect" ? (
                           <span className={`mt-2 h-8 w-20 overflow-hidden rounded-md border border-[var(--avatar-border)] shadow-sm ${logoBadgeClass}`}>
-                            <Image
+                            <PublicProfileImage
                               src={logoUrl}
                               alt=""
                               width={80}
@@ -259,23 +260,24 @@ export default async function PublicProfilePage({ params }: Props) {
                   </div>
                 </div>
               </div>
-              <div className="public-profile-desktop-header hidden flex-wrap items-center gap-4 sm:flex">
+              <div className="public-profile-desktop-header public-profile-load public-profile-load-2 hidden flex-wrap items-center gap-4 sm:flex">
                 {avatar ? (
                   <div className="flex flex-col items-center">
                     <div className="relative h-20 w-20 rounded-3xl bg-muted/40 overflow-visible">
                       <div className="h-full w-full overflow-hidden rounded-3xl ring-4 ring-[var(--avatar-border)]">
-                        <Image
+                        <PublicProfileImage
                           src={avatar}
                           alt={`${displayName} avatar`}
                           width={80}
                           height={80}
                           unoptimized
+                          loading="eager"
                           className="h-full w-full object-cover"
                         />
                       </div>
                       {logoUrl && logoShape === "circle" ? (
                         <span className={`absolute -bottom-1.5 -right-1.5 h-8 w-8 overflow-hidden rounded-full border-2 border-[var(--avatar-border)] shadow-md ${logoBadgeClass}`}>
-                          <Image
+                          <PublicProfileImage
                             src={logoUrl}
                             alt=""
                             width={32}
@@ -288,7 +290,7 @@ export default async function PublicProfilePage({ params }: Props) {
                     </div>
                     {logoUrl && logoShape === "rect" ? (
                       <span className={`mt-2 h-6 w-16 overflow-hidden rounded-md border border-[var(--avatar-border)] shadow-sm ${logoBadgeClass}`}>
-                        <Image
+                        <PublicProfileImage
                           src={logoUrl}
                           alt=""
                           width={64}
@@ -328,7 +330,7 @@ export default async function PublicProfilePage({ params }: Props) {
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3 public-profile-load public-profile-load-3">
                 <VCardDownload
                   handle={publicHandle}
                   label="Save Contact Information"
@@ -342,20 +344,20 @@ export default async function PublicProfilePage({ params }: Props) {
                 />
               </div>
 
-                {hasLinks ? (
-                  <div className="space-y-3">
-                    <h2 className="public-profile-links-label text-sm font-semibold uppercase tracking-[0.3em] text-muted-foreground">
-                      Links
-                    </h2>
-                    <PublicProfileLinksList links={links} trackClicks />
-                  </div>
-                ) : null}
+              {hasLinks ? (
+                <div className="space-y-3 public-profile-load public-profile-load-4">
+                  <h2 className="public-profile-links-label text-sm font-semibold uppercase tracking-[0.3em] text-muted-foreground">
+                    Links
+                  </h2>
+                  <PublicProfileLinksList links={links} trackClicks />
+                </div>
+              ) : null}
             </div>
 
             {hasLeadForm ? (
               <div
                 id="public-lead-form"
-                className="public-profile-card rounded-[28px] border border-border/60 bg-card/80 p-6 shadow-[0_24px_60px_-40px_rgba(15,23,42,0.7)]"
+                className="public-profile-card public-profile-load public-profile-load-5 rounded-[28px] border border-border/60 bg-card/80 p-6 shadow-[0_24px_60px_-40px_rgba(15,23,42,0.7)]"
               >
                 <div className="space-y-2">
                   <h2 className="text-lg font-semibold text-foreground">

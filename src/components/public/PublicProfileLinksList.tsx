@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, type CSSProperties } from "react";
 import { ArrowUpRight } from "lucide-react";
 import { emitAnalyticsEvent } from "@/lib/analytics";
 import type { ProfileLinkRecord } from "@/types/db";
@@ -47,14 +47,15 @@ export default function PublicProfileLinksList({
 
   return (
     <div className="grid gap-3">
-      {links.map((link) => (
+      {links.map((link, index) => (
         <a
           key={link.id}
           href={link.url}
           target="_blank"
           rel="noreferrer"
           onClick={() => trackClick(link.id)}
-          className="public-profile-link group flex min-w-0 items-center justify-between gap-4 overflow-hidden rounded-2xl border border-border/60 bg-card/80 px-4 py-3 transition hover:border-[color:var(--ring)] hover:shadow-[0_18px_45px_-35px_var(--ring)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]"
+          style={{ "--public-profile-delay": `${430 + index * 70}ms` } as CSSProperties}
+          className="public-profile-link public-profile-link-entrance group flex min-w-0 items-center justify-between gap-4 overflow-hidden rounded-2xl border border-border/60 bg-card/80 px-4 py-3 transition hover:border-[color:var(--ring)] hover:shadow-[0_18px_45px_-35px_var(--ring)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]"
         >
           <div className="flex min-w-0 flex-1 items-center gap-3">
             {faviconForUrl(link.url) ? (

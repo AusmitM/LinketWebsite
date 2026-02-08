@@ -24,7 +24,200 @@
 
 /* Public profile polish */
 .public-profile-shell {
+  --public-profile-load-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --public-profile-load-duration: 760ms;
   background: var(--background);
+}
+
+.public-profile-backdrop-entrance {
+  opacity: 0;
+  animation: public-profile-fade-in 920ms var(--public-profile-load-ease) 40ms forwards;
+}
+
+.public-profile-backdrop-grid {
+  --public-profile-grid-opacity: 0.16;
+  opacity: 0;
+  animation: public-profile-grid-fade-in 1100ms var(--public-profile-load-ease) 220ms forwards;
+}
+
+.public-profile-backdrop-orb-left {
+  animation: public-profile-orb-drift-left 18s ease-in-out 1100ms infinite;
+  will-change: transform;
+}
+
+.public-profile-backdrop-orb-right {
+  animation: public-profile-orb-drift-right 22s ease-in-out 1250ms infinite;
+  will-change: transform;
+}
+
+.public-profile-load {
+  opacity: 0;
+  transform: translate3d(0, 16px, 0) scale(0.995);
+  animation: public-profile-rise var(--public-profile-load-duration) var(--public-profile-load-ease) forwards;
+  animation-delay: var(--public-profile-delay, 0ms);
+  will-change: transform, opacity;
+}
+
+.public-profile-load-2 {
+  --public-profile-delay: 120ms;
+}
+
+.public-profile-load-3 {
+  --public-profile-delay: 220ms;
+}
+
+.public-profile-load-4 {
+  --public-profile-delay: 320ms;
+}
+
+.public-profile-load-5 {
+  --public-profile-delay: 400ms;
+}
+
+.public-profile-link-entrance {
+  opacity: 0;
+  transform: translate3d(0, 12px, 0);
+  animation: public-profile-rise 620ms var(--public-profile-load-ease) forwards;
+  animation-delay: var(--public-profile-delay, 430ms);
+  will-change: transform, opacity;
+}
+
+.public-profile-image-transition {
+  transition:
+    opacity 560ms var(--public-profile-load-ease),
+    transform 760ms var(--public-profile-load-ease),
+    filter 760ms var(--public-profile-load-ease);
+  will-change: opacity, transform, filter;
+}
+
+.public-profile-image-pending {
+  opacity: 0;
+  transform: scale(1.03);
+  filter: blur(10px) saturate(0.94);
+}
+
+.public-profile-image-ready {
+  opacity: 1;
+  transform: scale(1);
+  filter: blur(0) saturate(1);
+}
+
+@keyframes public-profile-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes public-profile-grid-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: var(--public-profile-grid-opacity, 0.16);
+  }
+}
+
+@keyframes public-profile-rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 16px, 0) scale(0.992);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes public-profile-orb-drift-left {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  50% {
+    transform: translate3d(14px, -10px, 0) scale(1.03);
+  }
+}
+
+@keyframes public-profile-orb-drift-right {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  50% {
+    transform: translate3d(-16px, 12px, 0) scale(1.02);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .public-profile-backdrop-entrance,
+  .public-profile-load,
+  .public-profile-link-entrance {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .public-profile-backdrop-grid {
+    animation: none !important;
+    opacity: var(--public-profile-grid-opacity, 0.16) !important;
+    transform: none !important;
+  }
+
+  .public-profile-backdrop-orb-left,
+  .public-profile-backdrop-orb-right {
+    animation: none !important;
+    transform: none !important;
+  }
+
+  .public-profile-image-transition {
+    transition: none !important;
+  }
+
+  .public-profile-image-pending,
+  .public-profile-image-ready {
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+  }
+}
+
+:root[data-lite="true"] .public-profile-backdrop-entrance,
+:root[data-lite="true"] .public-profile-load,
+:root[data-lite="true"] .public-profile-link-entrance {
+  animation: none !important;
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+:root[data-lite="true"] .public-profile-backdrop-grid {
+  animation: none !important;
+  opacity: var(--public-profile-grid-opacity, 0.16) !important;
+  transform: none !important;
+}
+
+:root[data-lite="true"] .public-profile-backdrop-orb-left,
+:root[data-lite="true"] .public-profile-backdrop-orb-right {
+  animation: none !important;
+  transform: none !important;
+}
+
+:root[data-lite="true"] .public-profile-image-transition {
+  transition: none !important;
+}
+
+:root[data-lite="true"] .public-profile-image-pending,
+:root[data-lite="true"] .public-profile-image-ready {
+  opacity: 1 !important;
+  transform: none !important;
+  filter: none !important;
 }
 
 /* Hook 'Em theme: gradient only */
