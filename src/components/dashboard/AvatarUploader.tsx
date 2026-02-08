@@ -10,7 +10,6 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { uploadAvatar } from "@/lib/supabase-storage";
@@ -62,6 +61,7 @@ export default function AvatarUploader({
   const pointerPosition = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
   const [sourceFile, setSourceFile] = useState<File | null>(null);
+  const [inputFileName, setInputFileName] = useState<string | null>(null);
   const [sourceUrl, setSourceUrl] = useState<string | null>(null);
   const [imageMeta, setImageMeta] = useState<{ width: number; height: number } | null>(null);
   const [previewReady, setPreviewReady] = useState(false);
@@ -112,6 +112,7 @@ export default function AvatarUploader({
     (file: File | null) => {
       resetEditor();
       if (!file) return;
+      setInputFileName(file.name || null);
       setSourceFile(file);
       setSourceUrl(URL.createObjectURL(file));
     },
@@ -126,7 +127,7 @@ export default function AvatarUploader({
       if (!response.ok) throw new Error("Unable to load avatar");
       const blob = await response.blob();
       handleFile(
-        new File([blob], "avatar.webp", {
+        new File([blob], inputFileName ?? "selected-image.webp", {
           type: blob.type || "image/webp",
         })
       );
@@ -135,7 +136,7 @@ export default function AvatarUploader({
         err instanceof Error ? err.message : "Unable to load avatar";
       setError(message);
     }
-  }, [latestAvatarUrl, loading, handleFile]);
+  }, [latestAvatarUrl, loading, handleFile, inputFileName]);
 
   useEffect(() => {
     if (avatarUrl !== latestAvatarUrl) {
@@ -323,6 +324,7 @@ export default function AvatarUploader({
         fileInputRef.current.value = "";
       }
       setSourceFile(null);
+      setInputFileName(null);
       onUploaded({ path: "", version, publicUrl: "" });
     } catch (err) {
       const message =
@@ -380,7 +382,7 @@ export default function AvatarUploader({
 
   if (variant === "compact") {
     const displayUrl = sourceUrl || latestAvatarUrl;
-    const visibleFileName = sourceFile?.name ?? extractFileNameFromUrl(latestAvatarUrl);
+    const visibleFileName = inputFileName;
     const inputTargetId = inputId ?? "profile-avatar-upload";
     return (
       <section className="flex flex-col gap-4 rounded-2xl border border-dashed border-muted/70 p-4">
@@ -397,19 +399,38 @@ export default function AvatarUploader({
               )}
             </div>
           </div>
-          <div className="flex-1 space-y-2">
+          <div className="min-w-0 flex-1 space-y-2">
             <Label htmlFor={inputTargetId}>Profile photo</Label>
-            <Input
+            <input
               ref={fileInputRef}
               id={inputTargetId}
               type="file"
               accept="image/png,image/jpeg,image/webp"
+              className="sr-only"
               onChange={(event) => handleFile(event.target.files?.[0] ?? null)}
               disabled={loading}
             />
+            <div className="flex w-full min-w-0 items-center gap-2 overflow-hidden rounded-xl border border-input bg-background/70 px-3 py-2">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="shrink-0 rounded-full"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={loading}
+              >
+                Choose file
+              </Button>
+              <span
+                className="min-w-0 flex-1 truncate whitespace-nowrap text-sm text-muted-foreground"
+                title={visibleFileName ?? "No image selected"}
+              >
+                {visibleFileName ?? "No image selected"}
+              </span>
+            </div>
             <div className="flex flex-wrap items-center justify-end gap-[2px] text-xs text-muted-foreground sm:justify-start sm:gap-3">
               {visibleFileName ? (
-                <span className="truncate" title={visibleFileName}>
+                <span className="w-full min-w-0 truncate sm:w-auto sm:max-w-[20rem]" title={visibleFileName}>
                   File: {visibleFileName}
                 </span>
               ) : (
@@ -830,15 +851,4 @@ function loadImage(src: string): Promise<HTMLImageElement> {
     img.onerror = reject;
     img.src = src;
   });
-}
-
-function extractFileNameFromUrl(url: string | null): string | null {
-  if (!url) return null;
-  try {
-    const pathname = new URL(url, "https://linket.local").pathname;
-    const segment = pathname.split("/").filter(Boolean).pop();
-    return segment ? decodeURIComponent(segment) : null;
-  } catch {
-    return null;
-  }
 }

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { recordConversionEvent } from "@/lib/server-conversion-events";
 
-const FIRST_LOGIN_REDIRECT = "/dashboard/linkets";
+const FIRST_LOGIN_REDIRECT = "/dashboard/linkets?tour=welcome";
 const RETURNING_LOGIN_REDIRECT = "/dashboard/overview";
 
 async function resolveRedirectPath(

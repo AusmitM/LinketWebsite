@@ -178,7 +178,7 @@ export default function AnalyticsContent() {
   }, [analytics, range]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-tour="analytics-overview">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold text-foreground">Analytics</h1>

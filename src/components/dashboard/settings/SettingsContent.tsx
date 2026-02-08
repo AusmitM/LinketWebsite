@@ -187,7 +187,7 @@ export default function SettingsContent() {
 
   return (
     <div className="space-y-6">
-      <Card className="rounded-3xl border bg-card/80 shadow-sm">
+      <Card className="rounded-3xl border bg-card/80 shadow-sm" data-tour="settings-account">
         <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <CardTitle className="text-2xl font-semibold">Settings</CardTitle>

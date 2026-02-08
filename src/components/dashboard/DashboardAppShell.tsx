@@ -4,6 +4,7 @@ import type { CSSProperties } from "react";
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import Sidebar from "@/components/dashboard/Sidebar";
+import DashboardOnboardingTour from "@/components/dashboard/DashboardOnboardingTour";
 import { cn } from "@/lib/utils";
 
 export default function DashboardAppShell({
@@ -101,6 +102,7 @@ export default function DashboardAppShell({
           />
         </div>
       </div>
+      <DashboardOnboardingTour />
     </div>
   );
 }

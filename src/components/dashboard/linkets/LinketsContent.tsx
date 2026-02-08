@@ -178,7 +178,7 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
   const emptyState = !loading && linkets.length === 0;
 
   return (
-    <section className={cn("space-y-6", isEmbedded && "space-y-4")}>
+    <section className={cn("space-y-6", isEmbedded && "space-y-4")} data-tour="linkets-root">
       <Card
         className={cn(
           "border border-border/60 bg-card/80 shadow-sm",
@@ -210,6 +210,7 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
         </CardHeader>
         <CardContent className="space-y-6">
           <form
+            data-tour="linkets-claim"
             className="grid gap-3 rounded-2xl border border-dashed border-primary/40 bg-primary/5 p-4 md:grid-cols-[minmax(0,260px)_auto]"
             onSubmit={(event) => {
               event.preventDefault();
@@ -261,7 +262,8 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
             </div>
           )}
 
-          {loading ? (
+          <div data-tour="linkets-list">
+            {loading ? (
             <div className="flex items-center justify-center gap-2 rounded-xl border border-border/60 bg-muted/40 px-4 py-6 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" /> Loading your Linkets...
             </div>
@@ -340,7 +342,8 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
                 );
               })}
             </div>
-          )}
+            )}
+          </div>
         </CardContent>
       </Card>
 

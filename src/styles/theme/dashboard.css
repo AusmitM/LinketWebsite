@@ -1679,3 +1679,308 @@ body.theme-forest .dashboard-forest-pin {
     font-size: 0.55rem;
   }
 }
+
+/* Guided onboarding walkthrough */
+#dashboard-theme-scope .dashboard-onboarding-tour {
+  isolation: isolate;
+}
+
+@keyframes dashboard-tour-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes dashboard-tour-focus-pulse {
+  0%, 100% {
+    box-shadow:
+      0 0 0 9999px rgba(2, 6, 23, 0.68),
+      0 0 0 2px color-mix(in srgb, var(--ring) 48%, transparent),
+      0 24px 50px -28px rgba(2, 6, 23, 0.9);
+  }
+  50% {
+    box-shadow:
+      0 0 0 9999px rgba(2, 6, 23, 0.68),
+      0 0 0 2px color-mix(in srgb, var(--ring) 64%, transparent),
+      0 28px 56px -28px rgba(2, 6, 23, 0.95);
+  }
+}
+
+@keyframes dashboard-tour-progress-glint {
+  0% {
+    transform: translateX(-120%);
+    opacity: 0;
+  }
+  35% {
+    opacity: 0.45;
+  }
+  100% {
+    transform: translateX(130%);
+    opacity: 0;
+  }
+}
+
+#dashboard-theme-scope .dashboard-onboarding-tour-hitarea {
+  background:
+    radial-gradient(circle at 70% 18%, rgba(255, 255, 255, 0.08), transparent 30%),
+    radial-gradient(circle at 12% 82%, rgba(255, 255, 255, 0.06), transparent 28%),
+    transparent;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+#dashboard-theme-scope .dashboard-onboarding-tour-backdrop {
+  background: rgba(2, 6, 23, 0.7);
+  backdrop-filter: blur(2.4px);
+  pointer-events: none;
+}
+
+#dashboard-theme-scope .dashboard-onboarding-tour-focus {
+  border-radius: 20px;
+  border: 1px solid color-mix(in srgb, var(--ring) 70%, white 30%);
+  box-shadow:
+    0 0 0 9999px rgba(2, 6, 23, 0.68),
+    0 0 0 2px color-mix(in srgb, var(--ring) 50%, transparent),
+    0 24px 50px -28px rgba(2, 6, 23, 0.9);
+  pointer-events: none;
+  transition: top 220ms var(--ease-smooth), left 220ms var(--ease-smooth), width 220ms var(--ease-smooth), height 220ms var(--ease-smooth);
+  animation: dashboard-tour-focus-pulse 2.2s ease-in-out infinite;
+}
+
+#dashboard-theme-scope .dashboard-onboarding-tour-panel {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid transparent;
+  background:
+    linear-gradient(
+      150deg,
+      color-mix(in srgb, var(--card) 93%, rgba(15, 23, 42, 0.2)),
+      color-mix(in srgb, var(--card) 84%, rgba(15, 23, 42, 0.32))
+    ) padding-box,
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--ring) 30%, rgba(255, 255, 255, 0.3)),
+      color-mix(in srgb, var(--border) 70%, transparent)
+    ) border-box;
+  box-shadow:
+    0 34px 65px -34px rgba(2, 6, 23, 0.86),
+    0 8px 18px -12px rgba(2, 6, 23, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(11px);
+  border-radius: 22px;
+  padding: 1rem 1rem 0.95rem;
+  color: var(--foreground);
+  display: grid;
+  gap: 0.7rem;
+  animation: dashboard-tour-panel-in 260ms var(--ease-smooth);
+}
+
+#dashboard-theme-scope .dashboard-onboarding-tour-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    115deg,
+    rgba(255, 255, 255, 0.12),
+    transparent 46%,
+    rgba(255, 255, 255, 0.07) 72%,
+    transparent
+  );
+  opacity: 0.5;
+}
+
+#dashboard-theme-scope .dashboard-onboarding-tour-headline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding-right: 2.2rem;
+}
+
+#dashboard-theme-scope .dashboard-onboarding-tour-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--ring) 35%, transparent);
+  background: color-mix(in srgb, var(--primary) 14%, transparent);
+  color: color-mix(in srgb, var(--foreground) 85%, transparent);
+  padding: 0.24rem 0.56rem;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+#dashboard-theme-scope .dashboard-onboarding-tour-path {
+  border-radius: 999px;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.7rem;
+  color: var(--muted-foreground);
+  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  background: color-mix(in srgb, var(--card) 80%, transparent);
+}
+
+#dashboard-theme-scope .dashboard-onboarding-tour-close {
+  position: absolute;
+  top: 0.62rem;
+  right: 0.62rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  background: color-mix(in srgb, var(--card) 88%, transparent);
+  padding: 0.32rem;
+  color: var(--muted-foreground);
+  transition: background-color var(--duration-fast) var(--ease-smooth), color var(--duration-fast) var(--ease-smooth), transform var(--duration-fast) var(--ease-smooth);
+}
+
+#dashboard-theme-scope .dashboard-onboarding-tour-close:hover {
+  background: color-mix(in srgb, var(--card) 90%, transparent);
+  color: var(--foreground);
+  transform: translateY(-1px);
+}
+
+#dashboard-theme-scope .dashboard-onboarding-tour-step {
+  font-size: 0.67rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  font-weight: 700;
+}
+
+#dashboard-theme-scope .dashboard-onboarding-tour-progress {
+  position: relative;
+  overflow: hidden;
+  height: 0.36rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--muted) 90%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border) 68%, transparent);
+}
+
+#dashboard-theme-scope .dashboard-onboarding-tour-progress-fill {
+  display: block;
+  position: relative;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--primary) 88%, white 12%),
+    color-mix(in srgb, var(--ring) 76%, var(--accent) 24%)
+  );
+  transition: width 220ms var(--ease-smooth);
+}
+
+#dashboard-theme-scope .dashboard-onboarding-tour-progress-fill::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 0%, rgba(255, 255, 255, 0.54) 48%, transparent 88%);
+  animation: dashboard-tour-progress-glint 1.8s var(--ease-smooth) infinite;
+}
+
+#dashboard-theme-scope .dashboard-onboarding-tour-title {
+  font-size: 1.1rem;
+  line-height: 1.28;
+  font-weight: 700;
+  margin: 0;
+}
+
+#dashboard-theme-scope .dashboard-onboarding-tour-description {
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.5;
+  color: var(--muted-foreground);
+}
+
+#dashboard-theme-scope .dashboard-onboarding-tour-dots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.34rem;
+  align-items: center;
+}
+
+#dashboard-theme-scope .dashboard-onboarding-tour-dot {
+  height: 0.34rem;
+  width: 0.34rem;
+  border-radius: 999px;
+  border: 0;
+  background: color-mix(in srgb, var(--muted-foreground) 35%, transparent);
+  cursor: pointer;
+  transition: transform var(--duration-fast) var(--ease-smooth), background-color var(--duration-fast) var(--ease-smooth), width var(--duration-fast) var(--ease-smooth);
+}
+
+#dashboard-theme-scope .dashboard-onboarding-tour-dot[data-visited="true"] {
+  background: color-mix(in srgb, var(--primary) 55%, transparent);
+}
+
+#dashboard-theme-scope .dashboard-onboarding-tour-dot[data-active="true"] {
+  width: 1.5rem;
+  background: color-mix(in srgb, var(--primary) 86%, white 14%);
+}
+
+#dashboard-theme-scope .dashboard-onboarding-tour-dot:hover {
+  transform: translateY(-1px);
+}
+
+#dashboard-theme-scope .dashboard-onboarding-tour-helper {
+  margin: 0;
+  font-size: 0.72rem;
+  color: var(--muted-foreground);
+  text-align: right;
+}
+
+#dashboard-theme-scope .dashboard-onboarding-tour-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.55rem;
+}
+
+@media (max-width: 640px) {
+  #dashboard-theme-scope .dashboard-onboarding-tour-panel {
+    border-radius: 19px;
+    padding: 0.85rem 0.85rem 0.8rem;
+    gap: 0.6rem;
+  }
+
+  #dashboard-theme-scope .dashboard-onboarding-tour-headline {
+    padding-right: 2rem;
+  }
+
+  #dashboard-theme-scope .dashboard-onboarding-tour-kicker {
+    font-size: 0.62rem;
+  }
+
+  #dashboard-theme-scope .dashboard-onboarding-tour-path {
+    display: none;
+  }
+
+  #dashboard-theme-scope .dashboard-onboarding-tour-title {
+    font-size: 1rem;
+  }
+
+  #dashboard-theme-scope .dashboard-onboarding-tour-description {
+    font-size: 0.8rem;
+  }
+
+  #dashboard-theme-scope .dashboard-onboarding-tour-actions {
+    align-items: stretch;
+  }
+
+  #dashboard-theme-scope .dashboard-onboarding-tour-actions [data-slot=button] {
+    height: 2rem;
+    font-size: 0.75rem;
+  }
+
+  #dashboard-theme-scope .dashboard-onboarding-tour-helper {
+    text-align: left;
+    font-size: 0.68rem;
+  }
+}

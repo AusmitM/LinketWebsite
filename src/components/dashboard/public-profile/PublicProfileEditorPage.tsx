@@ -1032,7 +1032,10 @@ export default function PublicProfileEditorPage() {
           value={activeSection}
           onValueChange={(value) => setActiveSection(value as SectionId)}
         >
-          <SelectTrigger className="h-11 w-full max-w-[260px] rounded-full border-border/30 bg-gradient-to-r from-background/60 via-card/80 to-background/60 px-5 text-sm font-semibold text-foreground shadow-[0_18px_40px_-26px_rgba(15,23,42,0.65)] ring-1 ring-border/30 backdrop-blur">
+          <SelectTrigger
+            data-tour="profile-section-select"
+            className="h-11 w-full max-w-[260px] rounded-full border-border/30 bg-gradient-to-r from-background/60 via-card/80 to-background/60 px-5 text-sm font-semibold text-foreground shadow-[0_18px_40px_-26px_rgba(15,23,42,0.65)] ring-1 ring-border/30 backdrop-blur"
+          >
             <SelectValue placeholder="Section" />
           </SelectTrigger>
           <SelectContent className="rounded-2xl border-border/40 bg-card/95 p-1 shadow-[0_18px_40px_-28px_rgba(15,23,42,0.6)] backdrop-blur">
@@ -1053,7 +1056,7 @@ export default function PublicProfileEditorPage() {
           Keep the live preview column on desktop/tablet.
         */}
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="min-w-0 space-y-4">
+          <div className="min-w-0 space-y-4" data-tour="profile-editor-panel">
             {/*
               Keep a single preview instance for reuse.
             */}
@@ -1701,26 +1704,30 @@ function EditorPanel({
   }
 
   if (activeSection === "lead") {
-      return userId ? (
-        <LeadFormBuilder
-          userId={userId}
-          handle={accountHandle || draft?.handle || null}
-          profileId={draft?.id ?? null}
-          onPreviewChange={onLeadFormPreview}
-          showPreview={false}
-          layout="side"
-          columns={2}
-          onRegisterReorder={(reorder) => {
-            onRegisterLeadFormReorder(reorder);
-          }}
-        />
-    ) : (
-      <Card className="rounded-2xl border border-border/60 bg-card/80 shadow-sm">
-        <CardContent className="py-6 text-sm text-muted-foreground">
-          Sign in to edit the lead form.
-        </CardContent>
-      </Card>
-    );
+      return (
+        <div data-tour="profile-lead-form-builder">
+          {userId ? (
+            <LeadFormBuilder
+              userId={userId}
+              handle={accountHandle || draft?.handle || null}
+              profileId={draft?.id ?? null}
+              onPreviewChange={onLeadFormPreview}
+              showPreview={false}
+              layout="side"
+              columns={2}
+              onRegisterReorder={(reorder) => {
+                onRegisterLeadFormReorder(reorder);
+              }}
+            />
+          ) : (
+            <Card className="rounded-2xl border border-border/60 bg-card/80 shadow-sm">
+              <CardContent className="py-6 text-sm text-muted-foreground">
+                Sign in to edit the lead form.
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      );
   }
 
   return (

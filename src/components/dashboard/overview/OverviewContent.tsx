@@ -204,11 +204,28 @@ export default function OverviewContent() {
             </CardContent>
           </Card>
 
-          <Card className="dashboard-overview-section-card rounded-3xl border border-border/70 bg-card/90 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
+          <Card
+            className="dashboard-overview-section-card rounded-3xl border border-border/70 bg-card/90 shadow-[0_18px_45px_rgba(15,23,42,0.08)]"
+            data-tour="overview-checklist"
+          >
             <CardHeader className="space-y-2">
-              <CardTitle className="text-lg font-semibold text-foreground">
-                First-run checklist
-              </CardTitle>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                <CardTitle className="text-lg font-semibold text-foreground">
+                  First-run checklist
+                </CardTitle>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="w-full rounded-full sm:w-auto"
+                  onClick={() => {
+                    if (typeof window === "undefined") return;
+                    window.dispatchEvent(new CustomEvent("linket:onboarding-tour:start"));
+                  }}
+                >
+                  Start walkthrough
+                </Button>
+              </div>
               <p className="text-sm text-muted-foreground">
                 Complete these steps to launch your profile and start capturing leads.
               </p>
