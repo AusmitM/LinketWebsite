@@ -810,14 +810,13 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
 }
 
 #dashboard-theme-scope.theme-honey::after {
-  opacity: 0.78;
+  opacity: 0.64;
   transform: translateY(0);
   background:
-    radial-gradient(180px 140px at 10% 0%, rgba(255, 246, 218, 0.56) 0%, transparent 72%),
-    radial-gradient(220px 140px at 90% 0%, rgba(244, 194, 90, 0.34) 0%, transparent 72%),
-    radial-gradient(130px 130px at 24% -6%, rgba(223, 98, 6, 0.24) 0%, transparent 70%),
-    radial-gradient(140px 140px at 62% -10%, rgba(223, 98, 6, 0.18) 0%, transparent 70%),
-    linear-gradient(180deg, rgba(255, 211, 126, 0.24) 0%, transparent 48%);
+    radial-gradient(220px 160px at 8% -4%, rgba(255, 250, 235, 0.58) 0%, transparent 70%),
+    radial-gradient(260px 170px at 92% -8%, rgba(255, 204, 113, 0.3) 0%, transparent 72%),
+    linear-gradient(116deg, rgba(255, 255, 255, 0.2) 12%, transparent 44%, rgba(225, 156, 43, 0.14) 72%, transparent 100%),
+    linear-gradient(180deg, rgba(255, 218, 147, 0.2) 0%, transparent 52%);
 }
 
 /* Dream theme: pastel pink new linket button */

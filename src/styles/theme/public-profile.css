@@ -67,6 +67,67 @@
     center;
 }
 
+.theme-honey .public-profile-backdrop {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, #fff8ea 94%, transparent),
+    color-mix(in srgb, #f2d196 92%, transparent)
+  );
+}
+
+.theme-honey .public-profile-card {
+  background: linear-gradient(162deg, rgba(255, 251, 242, 0.94) 0%, rgba(255, 239, 205, 0.88) 58%, rgba(247, 220, 166, 0.82) 100%);
+  border-color: rgba(176, 110, 32, 0.32);
+  box-shadow: 0 30px 56px -38px rgba(94, 50, 14, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.62);
+  backdrop-filter: blur(10px);
+}
+
+.theme-honey .public-profile-link {
+  background: linear-gradient(160deg, rgba(255, 250, 239, 0.94) 0%, rgba(255, 238, 202, 0.87) 56%, rgba(246, 218, 162, 0.8) 100%);
+  border-color: rgba(176, 110, 32, 0.32);
+  box-shadow: 0 22px 44px -36px rgba(94, 50, 14, 0.46), inset 0 1px 0 rgba(255, 255, 255, 0.58);
+}
+
+.theme-honey .public-profile-link-action {
+  background: linear-gradient(180deg, rgba(255, 249, 235, 0.94) 0%, rgba(255, 233, 184, 0.86) 100%);
+  border-color: rgba(176, 110, 32, 0.35);
+  color: #7a3f12;
+}
+
+.theme-honey .public-profile-link-action:hover,
+.theme-honey .public-profile-link:hover .public-profile-link-action {
+  background: linear-gradient(180deg, rgba(255, 252, 244, 0.96) 0%, rgba(255, 240, 206, 0.92) 100%);
+  color: #5f2d08;
+}
+
+.theme-honey .public-profile-actions [data-slot=button] {
+  background: linear-gradient(180deg, rgba(255, 251, 241, 0.96) 0%, rgba(255, 238, 202, 0.9) 100%);
+  color: #6d350d;
+  border: 1px solid rgba(176, 110, 32, 0.35);
+  box-shadow: 0 16px 32px -24px rgba(92, 48, 13, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.64);
+}
+
+.theme-honey .public-profile-actions [data-slot=button]:hover {
+  background: linear-gradient(180deg, rgba(255, 253, 246, 0.98) 0%, rgba(255, 242, 211, 0.94) 100%);
+  color: #5a2908;
+}
+
+.theme-honey .public-profile-cta-primary {
+  background: linear-gradient(135deg, #b86a17 0%, #d98b2e 46%, #efb552 100%) !important;
+  color: #fff8ea !important;
+  border: 1px solid rgba(255, 220, 154, 0.56);
+  box-shadow: 0 20px 40px -26px rgba(102, 56, 16, 0.62);
+}
+
+.theme-honey .public-profile-cta-primary:hover {
+  background: linear-gradient(135deg, #c2741f 0%, #de9436 48%, #f2bd60 100%) !important;
+}
+
+.theme-honey .public-profile-links h2,
+.theme-honey .public-profile-links-label {
+  color: #7a3f12;
+}
+
 .public-profile-backdrop {
   background: linear-gradient(
     180deg,

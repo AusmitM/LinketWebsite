@@ -369,16 +369,16 @@
   --sidebar-border: #f4c25a;
   --sidebar-ring: #df6206;
   --avatar-border: var(--ring);
-  --premium-gradient: radial-gradient(120% 120% at 20% 0%, rgba(223, 98, 6, 0.2) 0%, transparent 60%),
-    radial-gradient(120% 120% at 80% 0%, rgba(244, 194, 90, 0.22) 0%, transparent 55%),
-    linear-gradient(180deg, #fff2db 0%, #f6dcab 100%);
-  --premium-card-gradient: linear-gradient(180deg, rgba(255, 242, 217, 0.98) 0%, rgba(250, 232, 192, 0.96) 100%);
-  --premium-topbar-gradient: linear-gradient(90deg, rgba(255, 242, 217, 0.96) 0%, rgba(251, 227, 186, 0.94) 100%);
-  --premium-border: rgba(63, 31, 12, 0.12);
-  --premium-shadow: 0 18px 45px -30px rgba(111, 58, 28, 0.35);
-  --premium-glow: 0 0 0 1px rgba(255, 242, 217, 0.85);
-  --premium-hairline: rgba(255, 255, 255, 0.6);
-  --premium-inset: 0 1px 0 rgba(255, 255, 255, 0.5) inset;
+  --premium-gradient: radial-gradient(130% 120% at 12% 0%, rgba(255, 231, 166, 0.5) 0%, transparent 52%),
+    radial-gradient(125% 120% at 88% -4%, rgba(191, 113, 25, 0.22) 0%, transparent 56%),
+    linear-gradient(180deg, #fff8ea 0%, #f6ddb1 62%, #efcd8d 100%);
+  --premium-card-gradient: linear-gradient(165deg, rgba(255, 250, 240, 0.97) 0%, rgba(255, 239, 205, 0.93) 54%, rgba(247, 220, 166, 0.9) 100%);
+  --premium-topbar-gradient: linear-gradient(100deg, rgba(248, 219, 150, 0.96) 0%, rgba(242, 189, 90, 0.95) 44%, rgba(223, 145, 42, 0.94) 100%);
+  --premium-border: rgba(89, 48, 14, 0.18);
+  --premium-shadow: 0 24px 55px -34px rgba(84, 43, 11, 0.42);
+  --premium-glow: 0 0 0 1px rgba(255, 246, 223, 0.82);
+  --premium-hairline: rgba(255, 246, 216, 0.76);
+  --premium-inset: 0 1px 0 rgba(255, 247, 227, 0.68) inset;
   --honey-hex-outline: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='83.14' height='96' viewBox='0 0 83.14 96'%3E%3Cpolygon points='41.57,0 83.14,24 83.14,72 41.57,96 0,72 0,24' fill='none' stroke='%23cf6b10' stroke-width='1.2' stroke-opacity='0.14'/%3E%3C/svg%3E");
   --honey-hex-fill: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='83.14' height='96' viewBox='0 0 83.14 96'%3E%3Cpolygon points='41.57,0 83.14,24 83.14,72 41.57,96 0,72 0,24' fill='%23f8dfad' fill-opacity='0.06'/%3E%3C/svg%3E");
   --honey-hex-size-x: 83.14px;
@@ -390,8 +390,36 @@
 /* Theme-specific honey highlight for top bars */
 .theme-honey .dashboard-topbar,
 .theme-honey .dashboard-navbar {
-  background: linear-gradient(90deg, #f17b26 0%, #f3c25b 55%, #fddb9c 100%);
-  border-color: rgba(223, 98, 6, 0.4);
+  background: linear-gradient(100deg, rgba(248, 219, 150, 0.96) 0%, rgba(242, 189, 90, 0.95) 44%, rgba(223, 145, 42, 0.94) 100%);
+  border-color: rgba(153, 92, 24, 0.34);
+}
+
+.theme-honey .dashboard-nav-links {
+  background: linear-gradient(180deg, rgba(255, 247, 229, 0.88) 0%, rgba(255, 236, 198, 0.82) 100%);
+  border-color: rgba(166, 102, 29, 0.3);
+  box-shadow: 0 14px 28px -22px rgba(92, 48, 13, 0.35), var(--premium-inset);
+}
+
+.theme-honey .dashboard-navbar .dashboard-copy-link-button,
+.theme-honey .dashboard-navbar .dashboard-view-profile-button {
+  background: linear-gradient(180deg, rgba(255, 251, 241, 0.96) 0%, rgba(255, 238, 202, 0.9) 100%);
+  color: #7a3f12;
+  border-color: rgba(176, 110, 32, 0.36);
+  box-shadow: 0 14px 26px -22px rgba(89, 46, 12, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.66);
+}
+
+.theme-honey .dashboard-navbar .dashboard-copy-link-button:hover,
+.theme-honey .dashboard-navbar .dashboard-view-profile-button:hover {
+  background: linear-gradient(180deg, rgba(255, 253, 246, 0.98) 0%, rgba(255, 242, 211, 0.94) 100%);
+  color: #6b320b;
+}
+
+#dashboard-theme-scope.theme-honey [data-slot=card],
+#dashboard-theme-scope.theme-honey .dashboard-metric-row,
+#dashboard-theme-scope.theme-honey .dashboard-analytics-tile {
+  background: linear-gradient(162deg, rgba(255, 250, 239, 0.96) 0%, rgba(255, 238, 202, 0.92) 58%, rgba(247, 220, 166, 0.88) 100%);
+  border-color: rgba(178, 112, 33, 0.26);
+  box-shadow: 0 24px 48px -34px rgba(101, 55, 16, 0.46), 0 0 0 1px rgba(255, 250, 239, 0.45), var(--premium-inset);
 }
 
 /* Honey theme: give the dashboard logo a light pill + glow for contrast */
@@ -423,13 +451,15 @@
 
 .theme-honey .public-profile-preview {
   background-image:
-    radial-gradient(120% 80% at 50% 0%, rgba(255, 246, 218, 0.26) 0%, transparent 70%),
+    radial-gradient(120% 80% at 50% 0%, rgba(255, 246, 218, 0.3) 0%, transparent 70%),
+    linear-gradient(116deg, rgba(255, 255, 255, 0.24) 8%, transparent 45%, rgba(236, 175, 64, 0.12) 72%, transparent 100%),
     var(--honey-hex-fill),
     var(--honey-hex-fill),
     var(--honey-hex-outline),
     var(--honey-hex-outline),
     linear-gradient(180deg, #fff2db 0%, #f6dcab 100%);
   background-size:
+    auto,
     auto,
     var(--honey-hex-size-x) var(--honey-hex-size-y),
     var(--honey-hex-size-x) var(--honey-hex-size-y),
@@ -438,11 +468,14 @@
     100% 100%;
   background-position:
     center top,
+    center,
     0 0,
     var(--honey-hex-offset-x) var(--honey-hex-offset-y),
     0 0,
     var(--honey-hex-offset-x) var(--honey-hex-offset-y),
     center;
+  border-color: rgba(170, 105, 30, 0.32);
+  box-shadow: 0 26px 50px -34px rgba(100, 54, 16, 0.5), 0 0 0 1px rgba(255, 247, 229, 0.6);
 }
 
 /* Burnt Orange theme token mapping (UT Austin) 192 86 0*/
