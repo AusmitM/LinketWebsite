@@ -1,4 +1,4 @@
-const VERSION = "v1";
+const VERSION = "v2";
 const PAGE_CACHE = `linket-pages-${VERSION}`;
 const ASSET_CACHE = `linket-assets-${VERSION}`;
 const CACHE_ALLOWLIST = [PAGE_CACHE, ASSET_CACHE];
@@ -30,6 +30,12 @@ self.addEventListener("activate", (event) => {
       await self.clients.claim();
     })()
   );
+});
+
+self.addEventListener("message", (event) => {
+  if (event.data?.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
 });
 
 function isPublicProfilePath(url) {
@@ -89,10 +95,14 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  if (url.pathname.startsWith("/_next/")) {
+    event.respondWith(networkFirst(event.request, ASSET_CACHE));
+    return;
+  }
+
   if (
-    url.pathname.startsWith("/_next/") ||
     url.pathname.startsWith("/mockups/") ||
-    ["style", "script", "font", "image"].includes(event.request.destination)
+    ["style", "font", "image"].includes(event.request.destination)
   ) {
     event.respondWith(cacheFirst(event.request, ASSET_CACHE));
   }

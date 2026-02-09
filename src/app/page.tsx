@@ -3,6 +3,8 @@ import Link from "next/link";
 import Image from "next/image";
 import Script from "next/script";
 import type { LucideIcon } from "lucide-react";
+import { stat } from "node:fs/promises";
+import { join } from "node:path";
 
 import {
   Accordion,
@@ -43,6 +45,9 @@ export const metadata: Metadata = {
   title: "Linket Connect",
   description:
     "Linket keychains share your digital profile with a single tap. Customize the hardware, control every link, and see analytics from the very first introduction.",
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
     title: "Linket -- Stay Connected",
     description:
@@ -143,6 +148,34 @@ const RECENT_SALES = [
 
 // Use a stable site URL for mock assets in environments without a public URL.
 const PUBLIC_SITE_URL = getConfiguredSiteOrigin();
+const LANDING_DEMO_VIDEO_PATH = "/mockups/demo.mp4";
+const LANDING_DEMO_POSTER_PATH = "/mockups/video-poster.jpg";
+
+type LandingDemoMedia = {
+  videoSrc: string | null;
+  posterSrc: string | null;
+};
+
+async function hasUsablePublicAsset(path: string, minBytes = 1) {
+  const relativePath = path.replace(/^\/+/, "");
+  try {
+    const file = await stat(join(process.cwd(), "public", relativePath));
+    return file.isFile() && file.size >= minBytes;
+  } catch {
+    return false;
+  }
+}
+
+async function resolveLandingDemoMedia(): Promise<LandingDemoMedia> {
+  const [hasVideo, hasPoster] = await Promise.all([
+    hasUsablePublicAsset(LANDING_DEMO_VIDEO_PATH, 1024),
+    hasUsablePublicAsset(LANDING_DEMO_POSTER_PATH, 1024),
+  ]);
+  return {
+    videoSrc: hasVideo ? LANDING_DEMO_VIDEO_PATH : null,
+    posterSrc: hasPoster ? LANDING_DEMO_POSTER_PATH : null,
+  };
+}
 
 // Links rendered inside the public profile preview mock.
 const PUBLIC_PROFILE_PREVIEW_LINKS = [
@@ -203,12 +236,12 @@ const MOCK_PUBLIC_PROFILE: ProfileWithLinks = {
   name: "Punit Kothakonda",
   handle: "punit",
   headline: "Engineer | Founder | Digital Media",
-  header_image_url: `${PUBLIC_SITE_URL}/mockups/profile-header.jpg`,
+  header_image_url: `${PUBLIC_SITE_URL}/mockups/phone.svg`,
   header_image_updated_at: "2026-01-01T00:00:00.000Z",
-  header_image_original_file_name: "profile-header.jpg",
-  logo_url: `${PUBLIC_SITE_URL}/mockups/profile-logo.png`,
+  header_image_original_file_name: "phone.svg",
+  logo_url: `${PUBLIC_SITE_URL}/logos/logo-1.svg`,
   logo_updated_at: "2026-01-01T00:00:00.000Z",
-  logo_original_file_name: "profile-logo.png",
+  logo_original_file_name: "logo-1.svg",
   logo_shape: "circle",
   logo_bg_white: false,
   theme: "dark",
@@ -222,7 +255,7 @@ const MOCK_PUBLIC_PROFILE: ProfileWithLinks = {
 const MOCK_PUBLIC_ACCOUNT = {
   handle: "punit",
   displayName: "Punit Kothakonda",
-  avatarPath: `${PUBLIC_SITE_URL}/mockups/profile-avatar.jpg`,
+  avatarPath: `${PUBLIC_SITE_URL}/logos/avatar-1.svg`,
   avatarUpdatedAt: "2026-01-01T00:00:00.000Z",
 };
 
@@ -476,6 +509,7 @@ const FAQ = [
 export default async function Home() {
   // Resolve the site URL for structured data and assets.
   const siteUrl = getConfiguredSiteOrigin();
+  const demoMedia = await resolveLandingDemoMedia();
   // Load the public profile preview (live if possible, mock if not).
   const publicPreview = await loadPublicProfilePreview();
 
@@ -531,7 +565,7 @@ export default async function Home() {
           <div className="absolute inset-0 bg-[#fff7ed]" />
         </div>
         {/* Live demo + profile preview + pricing + FAQ. */}
-        <LiveDemoSection />
+        <LiveDemoSection media={demoMedia} />
         <PublicProfilePreviewSection
           profile={publicPreview.profile}
           account={publicPreview.account}
@@ -950,7 +984,7 @@ function ExperienceSection() {
 }
 
 // Video demo section that shows the product flow.
-function LiveDemoSection() {
+function LiveDemoSection({ media }: { media: LandingDemoMedia }) {
   return (
     <section id="demo" className="landing-alt-font relative py-24">
       <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
@@ -971,22 +1005,32 @@ function LiveDemoSection() {
 
         <div className="relative mx-auto mt-12 max-w-5xl">
           <div className="landing-fade-up landing-delay-2 relative overflow-hidden rounded-[32px] border border-slate-200 bg-[#111317] shadow-[0_45px_120px_rgba(15,23,42,0.25)] transition-transform duration-500 hover:-translate-y-1">
-            {/* Product demo video. */}
-            <video
-              className="aspect-video w-full"
-              controls
-              playsInline
-              preload="metadata"
-              poster="/mockups/video-poster.jpg"
-            >
-              <source src="/mockups/demo.mp4" type="video/mp4" />
-              Your browser does not support the video tag.
-            </video>
+            {media.videoSrc ? (
+              <video
+                className="aspect-video w-full"
+                controls
+                playsInline
+                preload="metadata"
+                poster={media.posterSrc ?? undefined}
+              >
+                <source src={media.videoSrc} type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
+            ) : (
+              <div className="aspect-video grid place-content-center px-6 text-center">
+                <p className="text-lg font-semibold text-white">
+                  Demo video is being updated
+                </p>
+                <p className="mt-2 text-sm text-slate-300">
+                  Use the live public profile preview below to test the flow.
+                </p>
+              </div>
+            )}
           </div>
           {/* Quick feature chips. */}
           <div className="mt-5 flex flex-wrap items-center justify-center gap-3 text-xs text-slate-500">
             <span className="rounded-full border border-slate-200 bg-white/80 px-3 py-1 transition-transform duration-300 hover:-translate-y-0.5">
-              0:30 walkthrough
+              {media.videoSrc ? "0:30 walkthrough" : "Interactive preview available"}
             </span>
             <span className="rounded-full border border-slate-200 bg-white/80 px-3 py-1 transition-transform duration-300 hover:-translate-y-0.5">
               Public profile + lead capture

@@ -51,9 +51,6 @@ export const metadata: Metadata = {
     ],
     apple: "/apple-touch-icon.png",
   },
-  alternates: {
-    canonical: "/",
-  },
   metadataBase: new URL(getConfiguredSiteOrigin()),
   openGraph: {
     title: defaultTitle,

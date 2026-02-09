@@ -78,7 +78,9 @@ export default function LeadsList({ userId }: { userId: string }) {
         variant: "destructive",
       });
     } else {
-      const rows = (data as Lead[]) || [];
+      const rows = Array.isArray(data)
+        ? data.map((row) => sanitizeLeadRow(row, userId))
+        : [];
       if (reset) setLeads(rows);
       else setLeads((prev) => dedupeById([...prev, ...rows]));
       setHasMore(rows.length === pageSize);
@@ -146,7 +148,10 @@ export default function LeadsList({ userId }: { userId: string }) {
         const normalized = normalizeLeadFormConfig(row.config, handle);
         if (!next[handle]) next[handle] = {};
         normalized.fields.forEach((field) => {
-          next[handle][field.id] = { label: field.label, type: field.type };
+          next[handle][field.id] = {
+            label: toTextValue(field.label),
+            type: field.type,
+          };
         });
       }
       setFieldLabels((prev) => ({ ...prev, ...next }));
@@ -171,14 +176,21 @@ export default function LeadsList({ userId }: { userId: string }) {
         },
         (payload: RealtimePostgresChangesPayload<Lead>) => {
           if (payload.eventType === "INSERT") {
-            const row = payload.new as Lead;
+            const row = sanitizeLeadRow(payload.new, userId);
             setLeads((prev) => dedupeById([row, ...prev]));
           } else if (payload.eventType === "UPDATE") {
-            const row = payload.new as Lead;
+            const row = sanitizeLeadRow(payload.new, userId);
             setLeads((prev) => prev.map((x) => (x.id === row.id ? row : x)));
           } else if (payload.eventType === "DELETE") {
-            const row = payload.old as Lead;
-            setLeads((prev) => prev.filter((x) => x.id !== row.id));
+            const id = sanitizeLeadId(payload.old);
+            if (!id) return;
+            setLeads((prev) => prev.filter((x) => x.id !== id));
+            setSelectedIds((prev) => {
+              if (!prev.has(id)) return prev;
+              const next = new Set(prev);
+              next.delete(id);
+              return next;
+            });
           }
         }
       )
@@ -781,4 +793,80 @@ function toReadableLabel(value: string) {
     .replace(/\s+/g, " ")
     .trim()
     .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function sanitizeLeadRow(row: unknown, fallbackUserId: string): Lead {
+  const source = isRecord(row) ? row : {};
+  return {
+    id: toNonEmptyText(source.id, `lead_${randomId()}`),
+    user_id: toNonEmptyText(source.user_id, fallbackUserId),
+    handle: toTextValue(source.handle),
+    name: toTextValue(source.name),
+    email: toTextValue(source.email),
+    phone: toNullableTextValue(source.phone),
+    company: toNullableTextValue(source.company),
+    message: toNullableTextValue(source.message),
+    custom_fields: sanitizeCustomFields(source.custom_fields),
+    source_url: toNullableTextValue(source.source_url),
+    created_at: toNonEmptyText(source.created_at, new Date().toISOString()),
+  };
+}
+
+function sanitizeLeadId(row: unknown): string | null {
+  if (!isRecord(row)) return null;
+  const id = toNonEmptyText(row.id, "");
+  return id || null;
+}
+
+function sanitizeCustomFields(
+  value: unknown
+): Record<string, string | boolean | null> | null {
+  if (!isRecord(value)) return null;
+  const next: Record<string, string | boolean | null> = {};
+  Object.entries(value).forEach(([rawKey, rawValue]) => {
+    const key = toNonEmptyText(rawKey, "");
+    if (!key) return;
+    if (rawValue == null) {
+      next[key] = null;
+      return;
+    }
+    if (typeof rawValue === "boolean") {
+      next[key] = rawValue;
+      return;
+    }
+    if (typeof rawValue === "string") {
+      next[key] = rawValue;
+      return;
+    }
+    if (typeof rawValue === "number" && Number.isFinite(rawValue)) {
+      next[key] = String(rawValue);
+    }
+  });
+  return Object.keys(next).length > 0 ? next : null;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function toTextValue(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (typeof value === "number" && Number.isFinite(value)) return String(value);
+  if (typeof value === "boolean") return value ? "true" : "false";
+  return "";
+}
+
+function toNullableTextValue(value: unknown): string | null {
+  if (value == null) return null;
+  const text = toTextValue(value);
+  return text.length > 0 ? text : null;
+}
+
+function toNonEmptyText(value: unknown, fallback: string): string {
+  const text = toTextValue(value).trim();
+  return text || fallback;
+}
+
+function randomId() {
+  return Math.random().toString(36).slice(2, 10);
 }

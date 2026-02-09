@@ -812,7 +812,9 @@ export function Navbar() {
               size="sm"
               className="dashboard-new-linket-button rounded-full lg:hidden"
             >
-              <Link href="/dashboard/linkets">New Linket</Link>
+              <Link href="/dashboard/linkets" aria-label="Create new Linket">
+                New Linket
+              </Link>
             </Button>
             {dashboardAvatar}
             <button

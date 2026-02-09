@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import LeadsList from "@/components/dashboard/LeadsList";
 import LeadFormBuilder from "@/components/dashboard/LeadFormBuilder";
 import { useDashboardUser } from "@/components/dashboard/DashboardSessionContext";
+import ErrorBoundary from "@/components/system/ErrorBoundary";
 import { Card, CardContent } from "@/components/ui/card";
 
 export default function LeadsPage() {
@@ -63,16 +64,20 @@ export default function LeadsPage() {
   return (
     <div className="space-y-6">
       <div data-tour="leads-inbox">
-        <LeadsList userId={userId} />
+        <ErrorBoundary title="Leads inbox failed to load">
+          <LeadsList userId={userId} />
+        </ErrorBoundary>
       </div>
       <div data-tour="leads-form-builder">
-        <LeadFormBuilder
-          userId={userId}
-          handle={handle}
-          showPreview
-          layout="side"
-          columns={3}
-        />
+        <ErrorBoundary title="Lead form builder failed to load">
+          <LeadFormBuilder
+            userId={userId}
+            handle={handle}
+            showPreview
+            layout="side"
+            columns={3}
+          />
+        </ErrorBoundary>
       </div>
     </div>
   );

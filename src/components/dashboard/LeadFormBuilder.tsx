@@ -928,13 +928,15 @@ function PreviewField({ field }: { field: LeadFormField }) {
 function GridPreview({ field }: { field: LeadFormField }) {
   if (field.type !== "multiple_choice_grid" && field.type !== "checkbox_grid")
     return null;
+  const columns = getSafeOptionEntries(field.columns, "col");
+  const rows = getSafeOptionEntries(field.rows, "row");
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-xs">
         <thead>
           <tr>
             <th className="p-2 text-left" />
-            {field.columns.map((col) => (
+            {columns.map((col) => (
               <th key={col.id} className="p-2 text-left font-medium">
                 {col.label}
               </th>
@@ -942,10 +944,10 @@ function GridPreview({ field }: { field: LeadFormField }) {
           </tr>
         </thead>
         <tbody>
-          {field.rows.map((row) => (
+          {rows.map((row) => (
             <tr key={row.id}>
               <td className="p-2 font-medium">{row.label}</td>
-              {field.columns.map((col) => (
+              {columns.map((col) => (
                 <td key={col.id} className="p-2">
                   <input
                     type={
@@ -1107,13 +1109,14 @@ function FieldTypeEditor({
           </div>
         </div>
       );
-    case "file_upload":
+    case "file_upload": {
+      const acceptedTypes = getSafeStringList(field.acceptedTypes);
       return (
         <div className="space-y-3">
           <div className="space-y-2">
             <Label>Accepted types</Label>
             <Input
-              value={field.acceptedTypes.join(", ")}
+              value={acceptedTypes.join(", ")}
               onChange={(event) =>
                 onChange({
                   acceptedTypes: event.target.value
@@ -1148,6 +1151,7 @@ function FieldTypeEditor({
           </div>
         </div>
       );
+    }
     case "multiple_choice_grid":
     case "checkbox_grid":
       return <GridEditor field={field} onChange={onChange} />;
@@ -1270,18 +1274,21 @@ function GridEditor({
 }) {
   if (field.type !== "multiple_choice_grid" && field.type !== "checkbox_grid")
     return null;
+  const rows = getSafeOptionEntries(field.rows, "row");
+  const columns = getSafeOptionEntries(field.columns, "col");
+  const gridRules = getSafeGridRules(field.gridRules);
   const updateRows = (rows: LeadFormOption[]) => onChange({ rows });
   const updateColumns = (columns: LeadFormOption[]) => onChange({ columns });
   return (
     <div className="space-y-4">
       <div className="space-y-2">
         <Label>Rows</Label>
-        {field.rows.map((row, index) => (
+        {rows.map((row, index) => (
           <div key={row.id} className="flex items-center gap-2">
             <Input
               value={row.label}
               onChange={(event) => {
-                const next = [...field.rows];
+                const next = [...rows];
                 next[index] = { ...row, label: event.target.value };
                 updateRows(next);
               }}
@@ -1290,7 +1297,7 @@ function GridEditor({
               variant="ghost"
               size="icon"
               onClick={() =>
-                updateRows(field.rows.filter((item) => item.id !== row.id))
+                updateRows(rows.filter((item) => item.id !== row.id))
               }
               aria-label="Remove row"
             >
@@ -1303,8 +1310,8 @@ function GridEditor({
           size="sm"
           onClick={() =>
             updateRows([
-              ...field.rows,
-              { id: `row_${randomId()}`, label: `Row ${field.rows.length + 1}` },
+              ...rows,
+              { id: `row_${randomId()}`, label: `Row ${rows.length + 1}` },
             ])
           }
         >
@@ -1313,12 +1320,12 @@ function GridEditor({
       </div>
       <div className="space-y-2">
         <Label>Columns</Label>
-        {field.columns.map((col, index) => (
+        {columns.map((col, index) => (
           <div key={col.id} className="flex items-center gap-2">
             <Input
               value={col.label}
               onChange={(event) => {
-                const next = [...field.columns];
+                const next = [...columns];
                 next[index] = { ...col, label: event.target.value };
                 updateColumns(next);
               }}
@@ -1327,7 +1334,7 @@ function GridEditor({
               variant="ghost"
               size="icon"
               onClick={() =>
-                updateColumns(field.columns.filter((item) => item.id !== col.id))
+                updateColumns(columns.filter((item) => item.id !== col.id))
               }
               aria-label="Remove column"
             >
@@ -1340,10 +1347,10 @@ function GridEditor({
           size="sm"
           onClick={() =>
             updateColumns([
-              ...field.columns,
+              ...columns,
               {
                 id: `col_${randomId()}`,
-                label: `Column ${field.columns.length + 1}`,
+                label: `Column ${columns.length + 1}`,
               },
             ])
           }
@@ -1353,11 +1360,11 @@ function GridEditor({
       </div>
       <label className="flex items-center gap-2 text-sm text-muted-foreground">
         <Switch
-          checked={field.gridRules.requireResponsePerRow}
+          checked={gridRules.requireResponsePerRow}
           onCheckedChange={(value) =>
             onChange({
               gridRules: {
-                ...field.gridRules,
+                ...gridRules,
                 requireResponsePerRow: Boolean(value),
               },
             })
@@ -1367,11 +1374,11 @@ function GridEditor({
       </label>
       <label className="flex items-center gap-2 text-sm text-muted-foreground">
         <Switch
-          checked={field.gridRules.limitOneResponsePerColumn}
+          checked={gridRules.limitOneResponsePerColumn}
           onCheckedChange={(value) =>
             onChange({
               gridRules: {
-                ...field.gridRules,
+                ...gridRules,
                 limitOneResponsePerColumn: Boolean(value),
               },
             })
@@ -1588,7 +1595,7 @@ function getOptions(field: LeadFormField): LeadFormOption[] {
     field.type !== "dropdown"
   )
     return [];
-  const options = field.options || [];
+  const options = getSafeOptionEntries(field.options, "opt");
   return field.presentation?.shuffleOptions ? shuffleOptions(options) : options;
 }
 
@@ -1605,7 +1612,7 @@ function ratingIcon(icon: "star" | "heart" | "thumbs") {
 function isEmailField(field: LeadFormField) {
   if (field.type !== "short_text") return false;
   if (field.validation?.rule === "email") return true;
-  return field.label.toLowerCase().includes("email");
+  return String(field.label ?? "").toLowerCase().includes("email");
 }
 function formatShortDate(value: string) {
   const date = new Date(value);
@@ -1626,4 +1633,43 @@ function randomId() {
     );
   }
   return Math.random().toString(36).slice(2, 10);
+}
+
+function getSafeStringList(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((entry) => String(entry ?? "").trim())
+    .filter(Boolean);
+}
+
+function getSafeOptionEntries(value: unknown, prefix: string): LeadFormOption[] {
+  if (!Array.isArray(value)) return [];
+  const seen = new Set<string>();
+  const out: LeadFormOption[] = [];
+  value.forEach((entry) => {
+    if (!entry || typeof entry !== "object") return;
+    const option = entry as Partial<LeadFormOption>;
+    const id = String(option.id ?? "").trim() || `${prefix}_${randomId()}`;
+    if (seen.has(id)) return;
+    seen.add(id);
+    out.push({
+      id,
+      label: String(option.label ?? ""),
+    });
+  });
+  return out;
+}
+
+function getSafeGridRules(value: unknown) {
+  if (!value || typeof value !== "object") {
+    return { requireResponsePerRow: false, limitOneResponsePerColumn: false };
+  }
+  const rules = value as {
+    requireResponsePerRow?: unknown;
+    limitOneResponsePerColumn?: unknown;
+  };
+  return {
+    requireResponsePerRow: Boolean(rules.requireResponsePerRow),
+    limitOneResponsePerColumn: Boolean(rules.limitOneResponsePerColumn),
+  };
 }

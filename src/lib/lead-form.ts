@@ -2,10 +2,13 @@ import type {
   LeadFormConfig,
   LeadFormField,
   LeadFormFieldType,
+  LeadFormGridRule,
   LeadFormMultipleChoiceGridField,
   LeadFormCheckboxGridField,
   LeadFormOption,
+  LeadFormSettings,
   LeadFormSubmission,
+  LeadFormValidation,
 } from "@/types/lead-form";
 
 type ValidationError = { fieldId: string; message: string };
@@ -51,24 +54,32 @@ export function normalizeLeadFormConfig(
   raw: Partial<LeadFormConfig> | null | undefined,
   fallbackId: string
 ): LeadFormConfig {
-  const base = createDefaultLeadFormConfig(raw?.id || fallbackId);
+  const base = createDefaultLeadFormConfig(
+    toNonEmptyString(raw?.id, fallbackId)
+  );
   if (!raw) return base;
+
+  const meta = isRecord(raw.meta)
+    ? (raw.meta as Partial<LeadFormConfig["meta"]>)
+    : null;
+
   const merged: LeadFormConfig = {
     ...base,
-    ...raw,
-    settings: { ...base.settings, ...(raw.settings ?? {}) },
+    id: toNonEmptyString(raw.id, base.id),
+    title: toTextString(raw.title, base.title),
+    description: toTextString(raw.description, base.description),
+    status: "published",
+    settings: normalizeSettings(raw.settings, base.settings),
     fields: Array.isArray(raw.fields)
       ? raw.fields.map((field) => normalizeField(field))
       : base.fields,
     meta: {
-      ...base.meta,
-      ...(raw.meta ?? {}),
-      updatedAt: raw.meta?.updatedAt || base.meta.updatedAt,
-      createdAt: raw.meta?.createdAt || base.meta.createdAt,
-      version: raw.meta?.version ?? base.meta.version,
+      createdAt: toNonEmptyString(meta?.createdAt, base.meta.createdAt),
+      updatedAt: toNonEmptyString(meta?.updatedAt, base.meta.updatedAt),
+      version: toPositiveInteger(meta?.version, base.meta.version),
     },
   };
-  merged.status = "published";
+
   return merged;
 }
 
@@ -169,9 +180,293 @@ export function createField(
   }
 }
 
-export function normalizeField(field: LeadFormField): LeadFormField {
-  const base = createField(field.type, field.label || "Field", field);
-  return { ...base, ...field } as LeadFormField;
+export function normalizeField(
+  rawField: Partial<LeadFormField> | null | undefined
+): LeadFormField {
+  const source: Record<string, unknown> = isRecord(rawField) ? rawField : {};
+  const nextType = isLeadFormFieldType(source.type)
+    ? source.type
+    : "short_text";
+  const nextLabel = toTextString(source.label, "Field");
+  const base = createField(nextType, nextLabel);
+  const common = {
+    ...base,
+    id: toNonEmptyString(source.id, base.id),
+    type: nextType,
+    label: nextLabel,
+    helpText: toTextString(source.helpText, base.helpText),
+    required: Boolean(source.required),
+    validation: normalizeValidation(
+      source.validation as LeadFormValidation | null | undefined,
+      base.validation
+    ),
+  };
+
+  switch (nextType) {
+    case "short_text":
+    case "long_text":
+      return common as LeadFormField;
+    case "multiple_choice":
+    case "checkboxes":
+    case "dropdown": {
+      const typedBase = base as Extract<
+        LeadFormField,
+        { type: "multiple_choice" | "checkboxes" | "dropdown" }
+      >;
+      const presentation = normalizePresentation(source.presentation);
+      return {
+        ...common,
+        options: normalizeOptionList(source.options, typedBase.options, "opt"),
+        allowOther: Boolean(source.allowOther),
+        otherLabel: toNonEmptyString(source.otherLabel, typedBase.otherLabel),
+        presentation: {
+          shuffleOptions: Boolean(presentation?.shuffleOptions),
+        },
+      } as LeadFormField;
+    }
+    case "linear_scale": {
+      const typedBase = base as Extract<LeadFormField, { type: "linear_scale" }>;
+      const min = toPositiveInteger(source.min, typedBase.min);
+      const max = Math.max(
+        min + 1,
+        toPositiveInteger(source.max, typedBase.max)
+      );
+      return {
+        ...common,
+        min,
+        max,
+        minLabel: toTextString(source.minLabel, typedBase.minLabel),
+        maxLabel: toTextString(source.maxLabel, typedBase.maxLabel),
+      } as LeadFormField;
+    }
+    case "rating": {
+      const typedBase = base as Extract<LeadFormField, { type: "rating" }>;
+      const icon =
+        source.icon === "heart" || source.icon === "thumbs" || source.icon === "star"
+          ? source.icon
+          : typedBase.icon;
+      return {
+        ...common,
+        icon,
+        scale: Math.min(
+          10,
+          Math.max(3, toPositiveInteger(source.scale, typedBase.scale))
+        ),
+      } as LeadFormField;
+    }
+    case "date": {
+      const typedBase = base as Extract<LeadFormField, { type: "date" }>;
+      return {
+        ...common,
+        includeYear:
+          typeof source.includeYear === "boolean"
+            ? source.includeYear
+            : typedBase.includeYear,
+        includeTime:
+          typeof source.includeTime === "boolean"
+            ? source.includeTime
+            : typedBase.includeTime,
+      } as LeadFormField;
+    }
+    case "time": {
+      const typedBase = base as Extract<LeadFormField, { type: "time" }>;
+      return {
+        ...common,
+        mode: source.mode === "duration" ? "duration" : "time_of_day",
+        stepMinutes: toPositiveInteger(source.stepMinutes, typedBase.stepMinutes),
+      } as LeadFormField;
+    }
+    case "file_upload": {
+      const typedBase = base as Extract<LeadFormField, { type: "file_upload" }>;
+      return {
+        ...common,
+        acceptedTypes: normalizeStringArray(source.acceptedTypes, typedBase.acceptedTypes),
+        maxFiles: toPositiveInteger(source.maxFiles, typedBase.maxFiles),
+        maxSizeMB: toPositiveInteger(source.maxSizeMB, typedBase.maxSizeMB),
+      } as LeadFormField;
+    }
+    case "multiple_choice_grid":
+    case "checkbox_grid": {
+      const typedBase = base as Extract<
+        LeadFormField,
+        { type: "multiple_choice_grid" | "checkbox_grid" }
+      >;
+      return {
+        ...common,
+        rows: normalizeOptionList(source.rows, typedBase.rows, "row"),
+        columns: normalizeOptionList(source.columns, typedBase.columns, "col"),
+        gridRules: normalizeGridRule(source.gridRules, typedBase.gridRules),
+      } as LeadFormField;
+    }
+    case "section": {
+      const typedBase = base as Extract<LeadFormField, { type: "section" }>;
+      return {
+        ...common,
+        title: toTextString(source.title, typedBase.title),
+        description: toTextString(source.description, typedBase.description),
+      } as LeadFormField;
+    }
+    default:
+      return common as LeadFormField;
+  }
+}
+
+function normalizeSettings(
+  raw: Partial<LeadFormSettings> | null | undefined,
+  fallback: LeadFormSettings
+): LeadFormSettings {
+  const source: Record<string, unknown> = isRecord(raw) ? raw : {};
+  const collectEmail =
+    source.collectEmail === "off" ||
+    source.collectEmail === "verified" ||
+    source.collectEmail === "user_input"
+      ? source.collectEmail
+      : fallback.collectEmail;
+  const limitOneResponse =
+    source.limitOneResponse === "off" || source.limitOneResponse === "on"
+      ? source.limitOneResponse
+      : fallback.limitOneResponse;
+
+  return {
+    collectEmail,
+    allowEditAfterSubmit:
+      typeof source.allowEditAfterSubmit === "boolean"
+        ? source.allowEditAfterSubmit
+        : fallback.allowEditAfterSubmit,
+    limitOneResponse,
+    showProgressBar:
+      typeof source.showProgressBar === "boolean"
+        ? source.showProgressBar
+        : fallback.showProgressBar,
+    shuffleQuestionOrder:
+      typeof source.shuffleQuestionOrder === "boolean"
+        ? source.shuffleQuestionOrder
+        : fallback.shuffleQuestionOrder,
+    confirmationMessage: toTextString(
+      source.confirmationMessage,
+      fallback.confirmationMessage
+    ),
+  };
+}
+
+function normalizeValidation(
+  raw: LeadFormValidation | null | undefined,
+  fallback: LeadFormValidation
+): LeadFormValidation {
+  const source: Record<string, unknown> = isRecord(raw) ? raw : {};
+  const next: LeadFormValidation = {
+    rule: toNonEmptyString(source.rule, fallback.rule),
+  };
+  if ("value" in source) {
+    next.value = source.value;
+  } else if ("value" in fallback) {
+    next.value = fallback.value;
+  }
+  if (typeof source.message === "string") {
+    next.message = source.message;
+  } else if (typeof fallback.message === "string") {
+    next.message = fallback.message;
+  }
+  return next;
+}
+
+function normalizePresentation(raw: unknown) {
+  if (!isRecord(raw)) return undefined;
+  if (typeof raw.shuffleOptions !== "boolean") return undefined;
+  return { shuffleOptions: raw.shuffleOptions };
+}
+
+function normalizeOptionList(
+  raw: unknown,
+  fallback: LeadFormOption[],
+  prefix: string
+): LeadFormOption[] {
+  if (!Array.isArray(raw)) return fallback.map((option) => ({ ...option }));
+  const seen = new Set<string>();
+  const out: LeadFormOption[] = [];
+
+  raw.forEach((entry) => {
+    if (!isRecord(entry)) return;
+    const id = toNonEmptyString(entry.id, `${prefix}_${randomId()}`);
+    if (seen.has(id)) return;
+    seen.add(id);
+    out.push({
+      id,
+      label: toTextString(entry.label, ""),
+    });
+  });
+
+  if (out.length === 0) {
+    return fallback.map((option) => ({ ...option }));
+  }
+
+  return out;
+}
+
+function normalizeStringArray(raw: unknown, fallback: string[]): string[] {
+  if (!Array.isArray(raw)) return fallback.slice();
+  const values = Array.from(
+    new Set(raw.map((entry) => toNonEmptyString(entry, "")).filter(Boolean))
+  );
+  return values.length > 0 ? values : fallback.slice();
+}
+
+function normalizeGridRule(
+  raw: unknown,
+  fallback: LeadFormGridRule
+): LeadFormGridRule {
+  if (!isRecord(raw)) return { ...fallback };
+  return {
+    requireResponsePerRow:
+      typeof raw.requireResponsePerRow === "boolean"
+        ? raw.requireResponsePerRow
+        : fallback.requireResponsePerRow,
+    limitOneResponsePerColumn:
+      typeof raw.limitOneResponsePerColumn === "boolean"
+        ? raw.limitOneResponsePerColumn
+        : fallback.limitOneResponsePerColumn,
+  };
+}
+
+function isLeadFormFieldType(value: unknown): value is LeadFormFieldType {
+  return (
+    value === "short_text" ||
+    value === "long_text" ||
+    value === "multiple_choice" ||
+    value === "checkboxes" ||
+    value === "dropdown" ||
+    value === "linear_scale" ||
+    value === "rating" ||
+    value === "date" ||
+    value === "time" ||
+    value === "file_upload" ||
+    value === "multiple_choice_grid" ||
+    value === "checkbox_grid" ||
+    value === "section"
+  );
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function toTextString(value: unknown, fallback = ""): string {
+  if (typeof value === "string") return value;
+  if (typeof value === "number" && Number.isFinite(value)) return String(value);
+  if (typeof value === "boolean") return value ? "true" : "false";
+  return fallback;
+}
+
+function toNonEmptyString(value: unknown, fallback: string): string {
+  const text = toTextString(value, "").trim();
+  return text || fallback;
+}
+
+function toPositiveInteger(value: unknown, fallback: number): number {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return fallback;
+  const rounded = Math.floor(parsed);
+  return rounded > 0 ? rounded : fallback;
 }
 
 export function validateSubmission(

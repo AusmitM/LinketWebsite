@@ -281,6 +281,7 @@ export default function PublicLeadForm({
           responseId: shouldEdit ? responseId : undefined,
           answers,
           responderEmail: shouldCaptureResponderEmail ? emailValue || null : null,
+          pageUrl: typeof window !== "undefined" ? window.location.href : null,
         }),
       });
       if (!response.ok) {

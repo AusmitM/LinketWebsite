@@ -1281,9 +1281,25 @@ body.theme-forest .dashboard-forest-pin {
     overflow-x: hidden;
   }
 
-  #dashboard-theme-scope .dashboard-navbar nav {
+  #dashboard-theme-scope .dashboard-navbar nav,
+  .dashboard-navbar nav {
     padding-left: 0.75rem;
     padding-right: 0.75rem;
+  }
+
+  #dashboard-theme-scope .dashboard-navbar-inner,
+  .dashboard-navbar-inner {
+    gap: 0.5rem;
+  }
+
+  #dashboard-theme-scope .dashboard-brand,
+  .dashboard-brand {
+    padding: 0.22rem 0.3rem;
+  }
+
+  #dashboard-theme-scope .dashboard-navbar-right,
+  .dashboard-navbar-right {
+    gap: 0.4rem;
   }
 
   #dashboard-theme-scope .dashboard-scroll-area {
@@ -1465,7 +1481,8 @@ body.theme-forest .dashboard-forest-pin {
     gap: 0.5rem;
   }
 
-  #dashboard-theme-scope .dashboard-view-profile-button {
+  #dashboard-theme-scope .dashboard-view-profile-button,
+  .dashboard-view-profile-button {
     padding-left: 0.75rem;
     padding-right: 0.75rem;
     font-size: 0.75rem;
@@ -1473,14 +1490,35 @@ body.theme-forest .dashboard-forest-pin {
   }
 
   #dashboard-theme-scope .dashboard-new-linket-button,
-  #dashboard-theme-scope .dashboard-avatar-button {
+  .dashboard-new-linket-button {
     height: 2.25rem;
-    width: 2.25rem;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.01em;
   }
 
-  #dashboard-theme-scope .dashboard-logo {
-    width: 7.5rem;
-    height: 2.75rem;
+  #dashboard-theme-scope .dashboard-avatar-button,
+  .dashboard-avatar-button {
+    height: 2.25rem;
+    width: 2.25rem;
+    min-width: 2.25rem;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  #dashboard-theme-scope .dashboard-mobile-toggle,
+  .dashboard-mobile-toggle {
+    height: 2.25rem;
+    width: 2.25rem;
+    min-width: 2.25rem;
+    padding: 0.42rem;
+  }
+
+  #dashboard-theme-scope .dashboard-logo,
+  .dashboard-logo {
+    width: 6.6rem;
+    height: 2.45rem;
   }
 
   #dashboard-theme-scope .dashboard-topbar {
@@ -1500,9 +1538,25 @@ body.theme-forest .dashboard-forest-pin {
 
 /* Phone compact layout */
 @media (max-width: 375px) {
-  #dashboard-theme-scope .dashboard-navbar nav {
+  #dashboard-theme-scope .dashboard-navbar nav,
+  .dashboard-navbar nav {
     padding-left: 0.5rem;
     padding-right: 0.5rem;
+  }
+
+  #dashboard-theme-scope .dashboard-navbar-inner,
+  .dashboard-navbar-inner {
+    gap: 0.4rem;
+  }
+
+  #dashboard-theme-scope .dashboard-brand,
+  .dashboard-brand {
+    padding: 0.2rem 0.28rem;
+  }
+
+  #dashboard-theme-scope .dashboard-navbar-right,
+  .dashboard-navbar-right {
+    gap: 0.32rem;
   }
 
   #dashboard-theme-scope .dashboard-scroll-area {
@@ -1586,20 +1640,41 @@ body.theme-forest .dashboard-forest-pin {
     font-size: 0.68rem;
   }
 
-  #dashboard-theme-scope .dashboard-view-profile-button {
+  #dashboard-theme-scope .dashboard-view-profile-button,
+  .dashboard-view-profile-button {
     padding-left: 0.65rem;
     padding-right: 0.65rem;
   }
 
   #dashboard-theme-scope .dashboard-new-linket-button,
-  #dashboard-theme-scope .dashboard-avatar-button {
-    height: 2.125rem;
-    width: 2.125rem;
+  .dashboard-new-linket-button {
+    height: 2.05rem;
+    padding-left: 0.6rem;
+    padding-right: 0.6rem;
+    font-size: 0.68rem;
   }
 
-  #dashboard-theme-scope .dashboard-logo {
-    width: 7rem;
-    height: 2.5rem;
+  #dashboard-theme-scope .dashboard-avatar-button,
+  .dashboard-avatar-button {
+    height: 2.05rem;
+    width: 2.05rem;
+    min-width: 2.05rem;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  #dashboard-theme-scope .dashboard-mobile-toggle,
+  .dashboard-mobile-toggle {
+    height: 2.05rem;
+    width: 2.05rem;
+    min-width: 2.05rem;
+    padding: 0.35rem;
+  }
+
+  #dashboard-theme-scope .dashboard-logo,
+  .dashboard-logo {
+    width: 5.9rem;
+    height: 2.2rem;
   }
 
   #dashboard-theme-scope .dashboard-topbar {
@@ -1622,6 +1697,22 @@ body.theme-forest .dashboard-forest-pin {
 
 /* Micro-phone layout */
 @media (max-width: 320px) {
+  #dashboard-theme-scope .dashboard-navbar nav,
+  .dashboard-navbar nav {
+    padding-left: 0.4rem;
+    padding-right: 0.4rem;
+  }
+
+  #dashboard-theme-scope .dashboard-brand,
+  .dashboard-brand {
+    padding: 0.18rem 0.24rem;
+  }
+
+  #dashboard-theme-scope .dashboard-navbar-right,
+  .dashboard-navbar-right {
+    gap: 0.28rem;
+  }
+
   #dashboard-theme-scope .dashboard-nav-actions {
     gap: 0.4rem;
   }
@@ -1690,7 +1781,8 @@ body.theme-forest .dashboard-forest-pin {
     font-size: 0.65rem;
   }
 
-  #dashboard-theme-scope .dashboard-view-profile-button {
+  #dashboard-theme-scope .dashboard-view-profile-button,
+  .dashboard-view-profile-button {
     padding-left: 0.5rem;
     padding-right: 0.5rem;
     font-size: 0.7rem;
@@ -1702,14 +1794,34 @@ body.theme-forest .dashboard-forest-pin {
   }
 
   #dashboard-theme-scope .dashboard-new-linket-button,
-  #dashboard-theme-scope .dashboard-avatar-button {
+  .dashboard-new-linket-button {
     height: 2rem;
-    width: 2rem;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    font-size: 0.65rem;
   }
 
-  #dashboard-theme-scope .dashboard-logo {
-    width: 6.5rem;
-    height: 2.35rem;
+  #dashboard-theme-scope .dashboard-avatar-button,
+  .dashboard-avatar-button {
+    height: 2rem;
+    width: 2rem;
+    min-width: 2rem;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  #dashboard-theme-scope .dashboard-mobile-toggle,
+  .dashboard-mobile-toggle {
+    height: 2rem;
+    width: 2rem;
+    min-width: 2rem;
+    padding: 0.32rem;
+  }
+
+  #dashboard-theme-scope .dashboard-logo,
+  .dashboard-logo {
+    width: 5.35rem;
+    height: 2.05rem;
   }
 
   #dashboard-theme-scope .dashboard-topbar {

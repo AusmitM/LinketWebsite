@@ -82,6 +82,24 @@ function inferLeadFields(
   };
 }
 
+function normaliseSourceUrl(value: unknown, fallback: string | null) {
+  for (const candidate of [value, fallback]) {
+    if (typeof candidate !== "string") continue;
+    const trimmed = candidate.trim();
+    if (!trimmed) continue;
+    try {
+      const parsed = new URL(trimmed);
+      if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+        continue;
+      }
+      return parsed.toString().slice(0, 2048);
+    } catch {
+      // Ignore invalid URLs.
+    }
+  }
+  return null;
+}
+
 export async function POST(request: NextRequest) {
   try {
     if (await limitRequest(request, "lead-form-submit", 20, 60_000)) {
@@ -97,11 +115,13 @@ export async function POST(request: NextRequest) {
       responseId,
       answers,
       responderEmail,
+      pageUrl,
     } = body as {
       formId?: string;
       responseId?: string;
       answers?: LeadFormSubmission["answers"];
       responderEmail?: string | null;
+      pageUrl?: string | null;
     };
 
     if (!formId || !answers) {
@@ -167,6 +187,7 @@ export async function POST(request: NextRequest) {
 
     const leadValues = inferLeadFields(answers, config);
     const emailValue = leadValues.email || responderEmail || null;
+    const sourceUrl = normaliseSourceUrl(pageUrl, request.headers.get("referer"));
     if (leadValues.name && emailValue) {
       const { error: leadError } = await supabase
         .from("leads")
@@ -178,7 +199,7 @@ export async function POST(request: NextRequest) {
           phone: leadValues.phone,
           company: leadValues.company,
           message: leadValues.message,
-          source_url: null,
+          source_url: sourceUrl,
           custom_fields: mapLeadFields(answers, config),
         });
       if (leadError) {
