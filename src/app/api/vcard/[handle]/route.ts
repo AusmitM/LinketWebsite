@@ -4,6 +4,9 @@ import { getActiveProfileForPublicHandle } from "@/lib/profile-service";
 import type { ContactProfile } from "@/lib/profile.store";
 import { createClient } from "@supabase/supabase-js";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 type VCardRecord = {
   full_name: string | null;
   title: string | null;
@@ -154,6 +157,9 @@ export async function GET(
         "Content-Type": "text/vcard; charset=utf-8",
         "Content-Disposition": `attachment; filename=\"${handle}.vcf\"`,
         "Cache-Control": "no-store, max-age=0",
+        Pragma: "no-cache",
+        Expires: "0",
+        "Surrogate-Control": "no-store",
       },
     });
   } catch (error) {

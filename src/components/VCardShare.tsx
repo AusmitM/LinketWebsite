@@ -16,9 +16,13 @@ export default function VCardShare({
   className?: string;
   variant?: ButtonVariant;
 }) {
-  const href = `/api/vcard/${encodeURIComponent(handle)}`;
+  const hrefBase = `/api/vcard/${encodeURIComponent(handle)}`;
   const [sharing, setSharing] = React.useState(false);
   const [supported, setSupported] = React.useState(false);
+
+  function buildFreshHref() {
+    return `${hrefBase}?download=${Date.now()}`;
+  }
 
   React.useEffect(() => {
     setSupported(
@@ -28,6 +32,7 @@ export default function VCardShare({
 
   async function share() {
     if (typeof navigator === "undefined" || !navigator.share) return;
+    const href = buildFreshHref();
     try {
       setSharing(true);
       const res = await fetch(href, { cache: "no-store" });

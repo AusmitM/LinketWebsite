@@ -62,28 +62,56 @@ function normalizeUrl(raw: string): string | null {
   return `https://${trimmed.replace(/^\/+/, "")}`;
 }
 
+function normalizePhoneDigits(value: string): string {
+  return value.replace(/\D/g, "");
+}
+
+function phoneDigitsMatch(candidate: string, known: string): boolean {
+  if (!candidate || !known) return false;
+  if (candidate === known) return true;
+  const normalizedCandidate =
+    candidate.length > 10 ? candidate.slice(-10) : candidate;
+  const normalizedKnown = known.length > 10 ? known.slice(-10) : known;
+  return normalizedCandidate === normalizedKnown;
+}
+
+function lineIsPhoneOnly(line: string, knownPhones: Set<string>): boolean {
+  const digits = normalizePhoneDigits(line);
+  if (digits.length < 7) return false;
+  if (/^\+?[\d().\-\s]{7,}$/.test(line.trim())) return true;
+  for (const known of knownPhones) {
+    if (phoneDigitsMatch(digits, known)) return true;
+  }
+  return false;
+}
+
 function sanitizeNoteValue(
   rawNote: string | undefined,
-  _phones: Phone[] | undefined
+  phones: Phone[] | undefined
 ): string | null {
   const note = rawNote?.trim();
   if (!note) return null;
 
-  // Some older records stored values like "note: ...".
-  let sanitized = note.replace(/^\s*note\s*:\s*/i, "");
+  const knownPhones = new Set(
+    (phones ?? [])
+      .map((entry) => normalizePhoneDigits(entry.value ?? ""))
+      .filter((digits) => digits.length >= 7)
+  );
 
-  // Strip any phone-like sequence from notes.
-  sanitized = sanitized.replace(/(?:\+?\d[\d().\-\s]{5,}\d)/g, "");
+  const sanitizedLines = note
+    .replace(/\r\n/g, "\n")
+    .replace(/\\n/g, "\n")
+    .split("\n")
+    .map((line) => line.replace(/^\s*["'`-]*\s*note\s*\\?\s*:\s*/i, ""))
+    .map((line) =>
+      line.replace(/\b(?:phone(?: number)?|tel|mobile)\s*\\?\s*:\s*/gi, "")
+    )
+    .map((line) => line.replace(/(?:\+?\d[\d().\-\s]{5,}\d)/g, " "))
+    .map((line) => line.replace(/[ \t]+/g, " ").trim())
+    .map((line) => line.replace(/^(?:note|phone(?: number)?|tel|mobile)$/i, "").trim())
+    .filter((line) => Boolean(line) && !lineIsPhoneOnly(line, knownPhones));
 
-  sanitized = sanitized
-    .replace(/\b(?:phone(?: number)?|tel|mobile)\s*:\s*/gi, "")
-    .replace(/[ \t]+/g, " ")
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .join("\n")
-    .trim();
-
+  const sanitized = sanitizedLines.join("\n").trim();
   return sanitized || null;
 }
 

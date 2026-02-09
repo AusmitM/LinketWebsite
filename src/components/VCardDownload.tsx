@@ -20,10 +20,15 @@ export default function VCardDownload({
   iconSrc?: string;
   iconAlt?: string;
 }) {
-  const href = `/api/vcard/${encodeURIComponent(handle)}`;
+  const hrefBase = `/api/vcard/${encodeURIComponent(handle)}`;
   const [downloading, setDownloading] = React.useState(false);
 
+  function buildFreshHref() {
+    return `${hrefBase}?download=${Date.now()}`;
+  }
+
   async function download() {
+    const href = buildFreshHref();
     void trackEvent("vcard_download_click", { handle });
     try {
       setDownloading(true);

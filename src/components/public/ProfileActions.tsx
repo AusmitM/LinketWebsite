@@ -31,11 +31,14 @@ export function ProfileActions({ username, profileUrl, className }: Props) {
       </Button>
       <Button
         variant="outline"
-        asChild
         className="w-full rounded-2xl text-foreground hover:text-foreground dark:text-background dark:hover:text-background sm:w-auto"
         aria-label="Save vCard"
+        onClick={() => {
+          const href = `/api/vcard/${encodeURIComponent(username)}?download=${Date.now()}`;
+          window.location.assign(href);
+        }}
       >
-        <a href={`/api/vcard/${encodeURIComponent(username)}`}>Save vCard</a>
+        Save vCard
       </Button>
       <details className="group relative w-full sm:w-auto">
         <summary className="flex cursor-pointer select-none items-center justify-center gap-2 rounded-2xl border border-transparent px-4 py-2 text-sm text-[color:var(--muted-foreground)] transition hover:border-[color:var(--border)] hover:bg-[color:var(--muted)]/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]">
