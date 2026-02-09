@@ -253,22 +253,60 @@ export function Navbar() {
     window.open(profileUrl, "_blank", "noreferrer");
   };
 
+  const markProfileLinkCopied = () => {
+    setCopyLinkLabel("link copied");
+    if (copyLinkTimeout.current) {
+      window.clearTimeout(copyLinkTimeout.current);
+    }
+    copyLinkTimeout.current = window.setTimeout(() => {
+      setCopyLinkLabel("copy link");
+      copyLinkTimeout.current = null;
+    }, 2000);
+  };
+
+  const copyProfileLinkToClipboard = async () => {
+    if (!profileUrl) return;
+    await navigator.clipboard.writeText(profileUrl);
+    markProfileLinkCopied();
+  };
+
   const handleCopyProfileLink = async () => {
     if (!profileUrl) return;
     try {
-      await navigator.clipboard.writeText(profileUrl);
-      setCopyLinkLabel("link copied");
-      if (copyLinkTimeout.current) {
-        window.clearTimeout(copyLinkTimeout.current);
-      }
-      copyLinkTimeout.current = window.setTimeout(() => {
-        setCopyLinkLabel("copy link");
-        copyLinkTimeout.current = null;
-      }, 2000);
+      await copyProfileLinkToClipboard();
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Unable to copy link";
       toast({ title: "Copy failed", description: message, variant: "destructive" });
+    }
+  };
+
+  const handleShareProfileLink = async () => {
+    if (!profileUrl) return;
+    if (typeof navigator.share === "function") {
+      try {
+        await navigator.share({
+          title: `${brand.name} public profile`,
+          url: profileUrl,
+        });
+        return;
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          return;
+        }
+      }
+    }
+    try {
+      await copyProfileLinkToClipboard();
+      toast({
+        title: "Link copied",
+        description: "Public page link copied to clipboard.",
+        variant: "success",
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to share link";
+      toast({ title: "Share failed", description: message, variant: "destructive" });
     }
   };
 
@@ -800,6 +838,22 @@ export function Navbar() {
 
           <div className="dashboard-navbar-right flex shrink-0 items-center gap-3">
             {dashboardProfileActions}
+            {user ? (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="dashboard-view-profile-button dashboard-share-link-button rounded-full cursor-pointer disabled:cursor-not-allowed md:hidden"
+                onClick={handleShareProfileLink}
+                disabled={!profileUrl}
+                aria-label="Share public profile link"
+                title="Share public profile link"
+              >
+                <span className="dashboard-view-profile-icon" aria-hidden="true">
+                  <ArrowUpRight className="h-4 w-4" />
+                </span>
+              </Button>
+            ) : null}
             <Button
               asChild
               size="sm"
