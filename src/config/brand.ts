@@ -13,14 +13,14 @@ export const brand = {
   tagline: "Don't just share it... LINKET!",
   /**
    * Optional horizontal logo that includes the wordmark.
-   * Place your file at /public/brand/logo-full.svg (or adjust this path).
+   * Place your file at /public/brand/logo-full.png (or adjust this path).
    */
-  logo: "/brand/logo-full.svg",
+  logo: "/brand/logo-full.png",
   /**
    * Optional compact mark for the navbar avatar badge.
-   * Place your file at /public/brand/logo-mark.svg (or adjust this path).
+   * Place your file at /public/brand/logo-mark.png (or adjust this path).
    */
-  logomark: "/brand/logo-mark.svg",
+  logomark: "/brand/logo-mark.png",
   /**
    * Short marketing blurb reused in footer and SEO fields.
    */

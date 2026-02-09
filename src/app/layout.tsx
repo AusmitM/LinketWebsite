@@ -45,10 +45,8 @@ export const metadata: Metadata = {
   },
   description: brand.blurb,
   icons: {
-    icon: [
-      { url: "/favicon.png", type: "image/png" },
-      { url: "/linket-favicon.svg", type: "image/svg+xml" },
-    ],
+    icon: [{ url: "/favicon.png", type: "image/png" }],
+    shortcut: ["/favicon.png"],
     apple: "/apple-touch-icon.png",
   },
   metadataBase: new URL(getConfiguredSiteOrigin()),

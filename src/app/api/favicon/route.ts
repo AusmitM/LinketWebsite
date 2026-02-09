@@ -29,7 +29,7 @@ export async function GET(request: Request) {
 
   const host = target.hostname.toLowerCase();
   if (host === "linketconnect.com" || host === "www.linketconnect.com") {
-    return NextResponse.redirect(new URL("/linket-favicon.svg", request.url));
+    return NextResponse.redirect(new URL("/favicon.png", request.url));
   }
 
   const providerUrls = [
