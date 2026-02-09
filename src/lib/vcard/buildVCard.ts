@@ -62,13 +62,9 @@ function normalizeUrl(raw: string): string | null {
   return `https://${trimmed.replace(/^\/+/, "")}`;
 }
 
-function toDigits(value: string): string {
-  return value.replace(/\D/g, "");
-}
-
 function sanitizeNoteValue(
   rawNote: string | undefined,
-  phones: Phone[] | undefined
+  _phones: Phone[] | undefined
 ): string | null {
   const note = rawNote?.trim();
   if (!note) return null;
@@ -76,27 +72,11 @@ function sanitizeNoteValue(
   // Some older records stored values like "note: ...".
   let sanitized = note.replace(/^\s*note\s*:\s*/i, "");
 
-  const phoneDigits = (phones ?? [])
-    .map((phone) => toDigits(phone.value || ""))
-    .filter((digits) => digits.length >= 7);
-
-  if (phoneDigits.length > 0) {
-    sanitized = sanitized.replace(
-      /(?:\+?\d[\d().\-\s]{5,}\d)/g,
-      (candidate) => {
-        const candidateDigits = toDigits(candidate);
-        if (!candidateDigits) return candidate;
-        const matchesKnownPhone = phoneDigits.some(
-          (digits) =>
-            candidateDigits.includes(digits) || digits.includes(candidateDigits)
-        );
-        return matchesKnownPhone ? "" : candidate;
-      }
-    );
-  }
+  // Strip any phone-like sequence from notes.
+  sanitized = sanitized.replace(/(?:\+?\d[\d().\-\s]{5,}\d)/g, "");
 
   sanitized = sanitized
-    .replace(/\b(?:phone|tel|mobile)\s*:\s*$/i, "")
+    .replace(/\b(?:phone(?: number)?|tel|mobile)\s*:\s*/gi, "")
     .replace(/[ \t]+/g, " ")
     .split(/\r?\n/)
     .map((line) => line.trim())
