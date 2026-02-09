@@ -62,6 +62,63 @@ function normalizeUrl(raw: string): string | null {
   return `https://${trimmed.replace(/^\/+/, "")}`;
 }
 
+function toDigits(value: string): string {
+  return value.replace(/\D/g, "");
+}
+
+function sanitizeNoteValue(
+  rawNote: string | undefined,
+  phones: Phone[] | undefined
+): string | null {
+  const note = rawNote?.trim();
+  if (!note) return null;
+
+  // Some older records stored values like "note: ...".
+  let sanitized = note.replace(/^\s*note\s*:\s*/i, "");
+
+  const phoneDigits = (phones ?? [])
+    .map((phone) => toDigits(phone.value || ""))
+    .filter((digits) => digits.length >= 7);
+
+  if (phoneDigits.length > 0) {
+    sanitized = sanitized.replace(
+      /(?:\+?\d[\d().\-\s]{5,}\d)/g,
+      (candidate) => {
+        const candidateDigits = toDigits(candidate);
+        if (!candidateDigits) return candidate;
+        const matchesKnownPhone = phoneDigits.some(
+          (digits) =>
+            candidateDigits.includes(digits) || digits.includes(candidateDigits)
+        );
+        return matchesKnownPhone ? "" : candidate;
+      }
+    );
+  }
+
+  sanitized = sanitized
+    .replace(/\b(?:phone|tel|mobile)\s*:\s*$/i, "")
+    .replace(/[ \t]+/g, " ")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .join("\n")
+    .trim();
+
+  return sanitized || null;
+}
+
+function deriveLinkLabel(rawTitle: string | undefined, normalizedUrl: string, index: number): string {
+  const title = rawTitle?.trim();
+  if (title) return title;
+  try {
+    const hostname = new URL(normalizedUrl).hostname.replace(/^www\./i, "");
+    if (hostname) return hostname;
+  } catch {
+    // Ignore URL parsing errors and fall through to generic label.
+  }
+  return `Link ${index + 1}`;
+}
+
 export function buildVCard(profile: ContactProfile): string {
   const lines: string[] = [];
   lines.push("BEGIN:VCARD");
@@ -76,11 +133,16 @@ export function buildVCard(profile: ContactProfile): string {
   (profile.emails || []).forEach((e) => lines.push(toEmail(e)));
   const adr = toAdr(profile.address);
   if (adr) lines.push(`ADR;TYPE=work:${adr}`);
-  (profile.links || [])
-    .map((link) => normalizeUrl(link.url))
-    .filter((url): url is string => Boolean(url))
-    .forEach((url) => lines.push(`URL:${escapeText(url)}`));
-  if (profile.note) lines.push(`NOTE:${escapeText(profile.note)}`);
+  (profile.links || []).forEach((link, index) => {
+    const normalizedUrl = normalizeUrl(link.url);
+    if (!normalizedUrl) return;
+    const label = deriveLinkLabel(link.title, normalizedUrl, index);
+    const group = `item${index + 1}`;
+    lines.push(`${group}.URL:${escapeText(normalizedUrl)}`);
+    lines.push(`${group}.X-ABLabel:${escapeText(label)}`);
+  });
+  const sanitizedNote = sanitizeNoteValue(profile.note, profile.phones);
+  if (sanitizedNote) lines.push(`NOTE:${escapeText(sanitizedNote)}`);
   const photo = toPhoto(profile);
   if (photo) lines.push(photo);
   lines.push(`UID:${escapeText(profile.uid || "urn:uuid:" + profile.handle)}`);
@@ -91,4 +153,3 @@ export function buildVCard(profile: ContactProfile): string {
   const folded = lines.flatMap((l) => foldLine(l));
   return joinCRLF(folded);
 }
-
