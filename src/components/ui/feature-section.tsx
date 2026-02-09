@@ -45,18 +45,18 @@ export function FeatureSteps({
   }, [progress, features.length, autoPlayInterval]);
 
   return (
-    <div className={cn("p-8 md:p-12", className)}>
+    <div className={cn("p-4 sm:p-6 md:p-12", className)}>
       <div className="mx-auto w-full max-w-7xl">
-        <h2 className="mb-10 text-center text-3xl font-bold md:text-4xl lg:text-5xl">
+        <h2 className="mb-8 text-center text-2xl font-bold sm:mb-10 sm:text-3xl md:text-4xl lg:text-5xl">
           {title}
         </h2>
 
-        <div className="flex flex-col gap-6 md:grid md:grid-cols-2 md:gap-10">
-          <div className="order-2 space-y-8 md:order-1">
+        <div className="flex flex-col gap-5 sm:gap-6 md:grid md:grid-cols-2 md:gap-10">
+          <div className="order-2 space-y-6 sm:space-y-8 md:order-1">
             {features.map((feature, index) => (
               <motion.div
                 key={`${feature.step}-${index}`}
-                className="flex items-center gap-6 md:gap-8"
+                className="flex items-start gap-4 sm:items-center sm:gap-6 md:gap-8"
                 initial={{ opacity: 0.85 }}
                 animate={{ opacity: index === currentFeature ? 1 : 0.85 }}
                 transition={{ duration: 0.5 }}
@@ -70,17 +70,17 @@ export function FeatureSteps({
                   )}
                 >
                   {index <= currentFeature ? (
-                    <span className="text-lg font-bold">✓</span>
+                    <span className="text-base font-bold">&#10003;</span>
                   ) : (
                     <span className="text-lg font-semibold">{index + 1}</span>
                   )}
                 </motion.div>
 
-                <div className="flex-1">
-                  <h3 className="text-xl font-semibold md:text-2xl">
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-lg font-semibold sm:text-xl md:text-2xl">
                     {feature.title || feature.step}
                   </h3>
-                  <p className="text-sm text-slate-600 md:text-lg">
+                  <p className="text-sm text-slate-600 sm:text-base md:text-lg">
                     {feature.content}
                   </p>
                 </div>
@@ -90,7 +90,7 @@ export function FeatureSteps({
 
           <div
             className={cn(
-              "order-1 relative h-[200px] overflow-hidden rounded-lg md:order-2 md:h-[300px] lg:h-[400px]",
+              "order-1 relative h-[180px] overflow-hidden rounded-lg sm:h-[220px] md:order-2 md:h-[300px] lg:h-[400px]",
               imageHeight
             )}
           >

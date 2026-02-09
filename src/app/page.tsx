@@ -596,17 +596,17 @@ function HeroSection() {
       id="hero"
       className="relative isolate text-slate-900"
     >
-      <div className="relative z-10 flex min-h-screen flex-col items-center px-4 pb-2 pt-8 text-center sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-4xl py-12">
+      <div className="relative z-10 flex min-h-[calc(100svh-3.5rem)] flex-col items-center px-3 pb-2 pt-8 text-center sm:min-h-screen sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-4xl py-10 sm:py-12">
           {/* Primary headline + brand callout. */}
-          <h1 className="landing-fade-up landing-delay-1 mt-10 text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl lg:text-[4.5rem] lg:leading-[1.1]">
+          <h1 className="landing-fade-up landing-delay-1 mt-8 text-[2rem] font-semibold leading-tight tracking-tight text-slate-900 sm:mt-10 sm:text-5xl lg:text-[4.5rem] lg:leading-[1.1]">
             <span className="landing-alt-font">Don&apos;t just share it...</span>{" "}
-            <span className="block text-8xl font-black italic tracking-tight sm:text-8xl lg:text-[5.25rem] bg-[linear-gradient(100deg,_#ff9776_0%,_#ffd27f_40%,_#7dd3fc_70%,_#2f80ed_100%)] bg-clip-text text-transparent">
+            <span className="block text-6xl font-black italic leading-[0.92] tracking-tight sm:text-8xl lg:text-[5.25rem] bg-[linear-gradient(100deg,_#ff9776_0%,_#ffd27f_40%,_#7dd3fc_70%,_#2f80ed_100%)] bg-clip-text text-transparent">
               LINKET!
             </span>
           </h1>
           {/* Supporting value proposition. */}
-          <p className="landing-fade-up landing-delay-2 mx-auto mt-6 max-w-2xl text-base text-slate-600 sm:text-lg">
+          <p className="landing-fade-up landing-delay-2 mx-auto mt-6 max-w-2xl text-sm text-slate-600 sm:text-lg">
             Transform your market into leads, and your leads into sales with our comprehensive suite of
             development tools and resources. Launch faster, adapt in real time,
             and keep every interaction memorable.
@@ -616,7 +616,7 @@ function HeroSection() {
             <Button
               asChild
               size="lg"
-              className="rounded-full bg-gradient-to-r from-[#ff9776] via-[#ffb866] to-[#5dd6f7] px-10 py-6 text-base font-semibold text-white shadow-[0_20px_50px_rgba(255,151,118,0.35)] transition-transform duration-300 hover:-translate-y-1 hover:shadow-[0_28px_65px_rgba(255,151,118,0.45)]"
+              className="rounded-full bg-gradient-to-r from-[#ff9776] via-[#ffb866] to-[#5dd6f7] px-7 py-5 text-sm font-semibold text-white shadow-[0_20px_50px_rgba(255,151,118,0.35)] transition-transform duration-300 hover:-translate-y-1 hover:shadow-[0_28px_65px_rgba(255,151,118,0.45)] sm:px-10 sm:py-6 sm:text-base"
             >
               <Link
                 href="/auth"
@@ -664,24 +664,24 @@ function HeroDashboardPreview() {
   } 110 L ${trendPoints[0].x} 110 Z`;
 
   return (
-    <div className="landing-fade-up landing-delay-4 landing-float relative w-full max-w-6xl rounded-[32px] border border-[#f5d7b0]/80 bg-white/85 p-6 text-left text-slate-900 shadow-[0_45px_120px_rgba(254,215,170,0.45)] backdrop-blur transition-transform duration-500 hover:-translate-y-2">
+    <div className="landing-fade-up landing-delay-4 landing-float relative w-full max-w-6xl rounded-[24px] border border-[#f5d7b0]/80 bg-white/85 p-4 text-left text-slate-900 shadow-[0_45px_120px_rgba(254,215,170,0.45)] backdrop-blur transition-transform duration-500 hover:-translate-y-2 sm:rounded-[32px] sm:p-6">
       {/* Top bar: user badge, tabs, search, date range, and download CTA. */}
       <div className="flex flex-col gap-4 border-b border-orange-100 pb-3 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex items-center gap-3 rounded-full border border-[#ffd4c2] bg-[#fff6ef] px-4 py-2">
+        <div className="flex max-w-full items-center gap-3 rounded-full border border-[#ffd4c2] bg-[#fff6ef] px-3 py-2 sm:px-4">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#ff9776] to-[#ffd27f] text-sm font-semibold text-white">
             PK
           </div>
-          <div>
-            <p className="font-semibold text-slate-900">Punit Kothakonda</p>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-slate-900 sm:text-base">Punit Kothakonda</p>
           </div>
         </div>
-        <div className="flex w-full flex-col gap-3 lg:flex-1 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex w-full min-w-0 flex-col gap-3 lg:flex-1 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-wrap gap-2">
             {DASHBOARD_TABS.map((tab, index) => (
               <span
                 key={tab}
                 className={cn(
-                  "rounded-full border px-4 py-1.5 text-sm font-medium transition-transform duration-300 hover:-translate-y-0.5",
+                  "rounded-full border px-3 py-1.5 text-xs font-medium transition-transform duration-300 hover:-translate-y-0.5 sm:px-4 sm:text-sm",
                   index === 0
                     ? "border-[#ff9776] bg-[#ff9776] text-[#0f172a]"
                     : "border-slate-200 text-slate-700"
@@ -691,8 +691,8 @@ function HeroDashboardPreview() {
               </span>
             ))}
           </div>
-          <div className="flex flex-1 items-center justify-end gap-3">
-            <div className="relative w-full max-w-xs flex-1">
+          <div className="flex min-w-0 flex-1 items-center justify-end gap-2 sm:gap-3">
+            <div className="relative w-full max-w-full flex-1 sm:max-w-xs">
               <Search
                 className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-300"
                 aria-hidden
@@ -720,13 +720,13 @@ function HeroDashboardPreview() {
           </div>
         </div>
         {/* KPI tiles. */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
           {DASHBOARD_STATS.map((stat) => (
             <div
               key={stat.label}
               className="rounded-2xl border border-slate-200 bg-[#fff9f3] p-4 transition-transform duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(15,23,42,0.12)]"
             >
-              <p className="text-xs uppercase tracking-[0.35em] text-slate-600">
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-600 sm:tracking-[0.35em]">
                 {stat.label}
               </p>
               <p className="mt-3 text-2xl font-semibold text-slate-900">
@@ -811,7 +811,7 @@ function HeroDashboardPreview() {
               </div>
             </div>
           </div>
-          <div className="rounded-3xl border border-slate-200 bg-white p-5 transition-transform duration-500 hover:-translate-y-1">
+          <div className="rounded-3xl border border-slate-200 bg-white p-4 transition-transform duration-500 hover:-translate-y-1 sm:p-5">
             <p className="text-lg font-semibold text-slate-900">Recent leads</p>
             <p className="text-xs text-slate-600">
               You made {RECENT_SALES.length} new connections this period.
@@ -829,20 +829,20 @@ function HeroDashboardPreview() {
                 return (
                   <div
                     key={sale.email}
-                    className="flex items-center justify-between gap-3 transition-transform duration-300 hover:-translate-y-0.5"
+                    className="flex min-w-0 items-center justify-between gap-2 transition-transform duration-300 hover:-translate-y-0.5 sm:gap-3"
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex min-w-0 flex-1 items-center gap-3">
                       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#fff1db] text-base font-semibold text-slate-800">
                         {initials}
                       </div>
-                      <div>
-                        <p className="text-sm font-semibold text-slate-900">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-slate-900">
                           {sale.name}
                         </p>
-                        <p className="text-xs text-slate-600">{sale.email}</p>
+                        <p className="truncate text-xs text-slate-600">{sale.email}</p>
                       </div>
                     </div>
-                    <p className="text-sm font-semibold text-emerald-700">
+                    <p className="shrink-0 text-xs font-semibold text-emerald-700 sm:text-sm">
                       {sale.amount}
                     </p>
                   </div>
@@ -860,9 +860,9 @@ function HeroDashboardPreview() {
 function TrustedBy() {
   return (
     <section className="landing-alt-font mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
-      <div className="landing-fade-up rounded-[28px] border border-foreground/10 bg-white/80 p-6 text-center shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur">
+      <div className="landing-fade-up rounded-[28px] border border-foreground/10 bg-white/80 p-4 text-center shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur sm:p-6">
         {/* Section heading + supporting copy. */}
-        <p className="text-xs font-semibold uppercase tracking-[0.35em] text-muted-foreground">
+        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground sm:tracking-[0.35em]">
           Trusted By
         </p>
         <p className="mt-2 text-sm text-muted-foreground">
@@ -870,7 +870,7 @@ function TrustedBy() {
           keychains to turn every intro into a saved contact.
         </p>
         {/* Brand proof chips. */}
-        <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs font-semibold text-foreground/80 sm:gap-3 sm:text-sm">
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-[11px] font-semibold text-foreground/80 sm:gap-3 sm:text-sm">
           {SOCIAL_PROOF.map((name) => (
             <span
               key={name}
@@ -895,7 +895,7 @@ function JourneySection() {
     >
       {/* FeatureSteps handles the image + text carousel. */}
       <FeatureSteps
-        className="landing-fade-up mt-8 rounded-[36px] border border-foreground/5 bg-white/90 shadow-[0_35px_80px_rgba(15,23,42,0.08)]"
+        className="landing-fade-up mt-8 rounded-[28px] border border-foreground/5 bg-white/90 shadow-[0_35px_80px_rgba(15,23,42,0.08)] sm:rounded-[36px]"
         features={JOURNEY_FEATURES}
         title="How Linket flows"
         autoPlayInterval={4000}
@@ -910,7 +910,7 @@ function ExperienceSection() {
   return (
     <section
       id="customization"
-      className="landing-alt-font relative overflow-hidden bg-[#050816] py-24 text-white"
+      className="landing-alt-font relative overflow-hidden bg-[#050816] py-20 text-white sm:py-24"
     >
       {/* Ambient gradients to add depth on the dark section. */}
       <div
@@ -923,12 +923,12 @@ function ExperienceSection() {
       />
       <div className="relative mx-auto flex max-w-6xl flex-col gap-10 px-4 sm:px-6 lg:flex-row lg:items-center">
         <div className="landing-fade-up space-y-6 lg:w-3/5">
-          <p className="text-sm font-semibold uppercase tracking-[0.4em] text-white/60">
+          <p className="text-sm font-semibold uppercase tracking-[0.28em] text-white/60 sm:tracking-[0.4em]">
             Custom orders
           </p>
           {/* Section headline + explanation. */}
           <div>
-            <p className="text-3xl font-semibold sm:text-4xl">
+            <p className="text-2xl font-semibold sm:text-4xl">
               <span className="text-white/80">
                 Generate, tweak, and deploy Linket hardware{" "}
               </span>
@@ -960,7 +960,7 @@ function ExperienceSection() {
           </div>
         </div>
         {/* Contact form card. */}
-        <div className="landing-fade-up landing-delay-2 w-full max-w-md rounded-3xl border border-white/10 bg-white/5 p-8 shadow-[0_30px_80px_rgba(5,5,20,0.45)] backdrop-blur transition-transform duration-500 hover:-translate-y-2">
+        <div className="landing-fade-up landing-delay-2 w-full max-w-md rounded-3xl border border-white/10 bg-white/5 p-5 shadow-[0_30px_80px_rgba(5,5,20,0.45)] backdrop-blur transition-transform duration-500 hover:-translate-y-2 sm:p-8">
           <div className="flex items-center gap-3">
             <Image
               src={brand.logomark}
@@ -986,24 +986,24 @@ function ExperienceSection() {
 // Video demo section that shows the product flow.
 function LiveDemoSection({ media }: { media: LandingDemoMedia }) {
   return (
-    <section id="demo" className="landing-alt-font relative py-24">
+    <section id="demo" className="landing-alt-font relative py-20 sm:py-24">
       <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
         <div className="landing-fade-up mx-auto max-w-3xl text-center">
           {/* Section heading + lead-in copy. */}
-          <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-4 py-1 text-xs font-semibold uppercase tracking-[0.35em] text-slate-500 shadow-sm">
+          <span className="inline-flex max-w-full items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-500 shadow-sm sm:px-4 sm:text-xs sm:tracking-[0.35em]">
             <span className="h-2 w-2 rounded-full bg-[#ffb48a]" />
             Product demo
           </span>
-          <h2 className="mt-6 font-semibold text-3xl tracking-tight text-slate-900 sm:text-4xl">
+          <h2 className="mt-6 font-semibold text-2xl tracking-tight text-slate-900 sm:text-4xl">
             See Linket in action
           </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-base text-slate-600">
+          <p className="mx-auto mt-4 max-w-2xl text-sm text-slate-600 sm:text-base">
             Watch how a tap turns into a clean public profile, a saved contact,
             and a new lead in under 30 seconds.
           </p>
         </div>
 
-        <div className="relative mx-auto mt-12 max-w-5xl">
+        <div className="relative mx-auto mt-10 max-w-5xl sm:mt-12">
           <div className="landing-fade-up landing-delay-2 relative overflow-hidden rounded-[32px] border border-slate-200 bg-[#111317] shadow-[0_45px_120px_rgba(15,23,42,0.25)] transition-transform duration-500 hover:-translate-y-1">
             {media.videoSrc ? (
               <video
@@ -1028,14 +1028,14 @@ function LiveDemoSection({ media }: { media: LandingDemoMedia }) {
             )}
           </div>
           {/* Quick feature chips. */}
-          <div className="mt-5 flex flex-wrap items-center justify-center gap-3 text-xs text-slate-500">
-            <span className="rounded-full border border-slate-200 bg-white/80 px-3 py-1 transition-transform duration-300 hover:-translate-y-0.5">
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-2 text-[11px] text-slate-500 sm:gap-3 sm:text-xs">
+            <span className="rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-center transition-transform duration-300 hover:-translate-y-0.5">
               {media.videoSrc ? "0:30 walkthrough" : "Interactive preview available"}
             </span>
-            <span className="rounded-full border border-slate-200 bg-white/80 px-3 py-1 transition-transform duration-300 hover:-translate-y-0.5">
+            <span className="rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-center transition-transform duration-300 hover:-translate-y-0.5">
               Public profile + lead capture
             </span>
-            <span className="rounded-full border border-slate-200 bg-white/80 px-3 py-1 transition-transform duration-300 hover:-translate-y-0.5">
+            <span className="rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-center transition-transform duration-300 hover:-translate-y-0.5">
               Real-time analytics
             </span>
           </div>
@@ -1054,23 +1054,23 @@ function PublicProfilePreviewSection({
   account: PublicPreviewAccount;
 }) {
   return (
-    <section id="public-preview" className="landing-alt-font relative overflow-hidden py-24">
+    <section id="public-preview" className="landing-alt-font relative overflow-hidden py-20 sm:py-24">
       <div className="pointer-events-none absolute inset-0 -z-10">
         <div className="absolute inset-0 bg-[#fff7ed]" />
       </div>
       <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
-        <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
-          <div className="landing-fade-up space-y-8 text-slate-900">
+        <div className="grid items-center gap-8 sm:gap-12 lg:grid-cols-[1.05fr_0.95fr]">
+          <div className="landing-fade-up space-y-6 text-slate-900 sm:space-y-8">
             {/* Section label + headline. */}
-            <div className="inline-flex items-center gap-3 rounded-full border border-white/60 bg-white/70 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.35em] text-slate-500 shadow-[0_10px_25px_rgba(15,23,42,0.08)] backdrop-blur">
+            <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-white/60 bg-white/70 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-500 shadow-[0_10px_25px_rgba(15,23,42,0.08)] backdrop-blur sm:gap-3 sm:px-4 sm:text-xs sm:tracking-[0.35em]">
               <span className="h-2 w-2 rounded-full bg-[#1e3a8a]" />
               Public profile preview
             </div>
             <div className="space-y-4">
-              <h2 className="font-semibold text-3xl tracking-tight sm:text-4xl">
+              <h2 className="font-semibold text-2xl tracking-tight sm:text-4xl">
                 A premium page that looks ready for the spotlight
               </h2>
-              <p className="text-base text-slate-600">
+              <p className="text-sm text-slate-600 sm:text-base">
                 Your live profile shows the exact layout clients see - polished
                 visuals, clean links, and a frictionless contact save.
               </p>
@@ -1097,7 +1097,7 @@ function PublicProfilePreviewSection({
               ].map((item) => (
                 <div
                   key={item.title}
-                  className="rounded-3xl border border-white/70 bg-white/80 px-5 py-4 text-sm text-slate-600 shadow-[0_16px_40px_rgba(15,23,42,0.08)] backdrop-blur transition-transform duration-300 hover:-translate-y-1"
+                  className="rounded-3xl border border-white/70 bg-white/80 px-4 py-4 text-sm text-slate-600 shadow-[0_16px_40px_rgba(15,23,42,0.08)] backdrop-blur transition-transform duration-300 hover:-translate-y-1 sm:px-5"
                 >
                   <p className="text-sm font-semibold text-slate-900">
                     {item.title}
@@ -1109,7 +1109,7 @@ function PublicProfilePreviewSection({
               ))}
             </div>
             {/* Supporting capability chips. */}
-            <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
+            <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500 sm:gap-3 sm:text-xs">
               <span className="rounded-full border border-slate-200 bg-white/80 px-3 py-1">
                 Live theme sync
               </span>
@@ -1123,8 +1123,8 @@ function PublicProfilePreviewSection({
           </div>
           {/* Mobile preview shell with live data. */}
           <div className="landing-fade-up landing-delay-2 relative mx-auto w-full max-w-sm">
-            <div className="relative overflow-hidden rounded-[36px] border border-white/60 bg-white/70 shadow-[0_45px_90px_rgba(15,23,42,0.25)] backdrop-blur transition-transform duration-500 hover:-translate-y-2">
-              <div className="h-[620px] w-full overflow-y-auto bg-[#0b1220]">
+            <div className="relative overflow-hidden rounded-[28px] border border-white/60 bg-white/70 shadow-[0_45px_90px_rgba(15,23,42,0.25)] backdrop-blur transition-transform duration-500 hover:-translate-y-2 sm:rounded-[36px]">
+              <div className="h-[540px] w-full overflow-y-auto bg-[#0b1220] sm:h-[620px]">
                 <PublicProfilePreview
                   profile={profile}
                   account={account}
@@ -1134,7 +1134,7 @@ function PublicProfilePreviewSection({
                 />
               </div>
             </div>
-            <div className="mt-5 flex items-center justify-between rounded-2xl border border-white/60 bg-white/80 px-4 py-3 text-xs text-slate-600 shadow-[0_12px_30px_rgba(15,23,42,0.08)] transition-transform duration-300 hover:-translate-y-0.5">
+            <div className="mt-5 flex flex-col items-start gap-2 rounded-2xl border border-white/60 bg-white/80 px-4 py-3 text-xs text-slate-600 shadow-[0_12px_30px_rgba(15,23,42,0.08)] transition-transform duration-300 hover:-translate-y-0.5 sm:flex-row sm:items-center sm:justify-between">
               <span className="font-semibold text-slate-900">Live preview</span>
               <span className="inline-flex items-center gap-2 text-slate-500">
                 <span className="h-2 w-2 rounded-full bg-emerald-500" />
@@ -1153,7 +1153,7 @@ function PricingSection() {
   return (
     <section
       id="pricing"
-      className="landing-alt-font landing-fade-up relative mx-auto max-w-6xl px-4 py-24 sm:px-6"
+      className="landing-alt-font landing-fade-up relative mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-24"
     >
       {/* Pricing component handles tier layout and CTA styling. */}
       <CreativePricing
@@ -1171,16 +1171,16 @@ function FAQSection() {
   return (
     <section
       id="faq"
-      className="landing-alt-font landing-fade-up mx-auto max-w-4xl px-4 py-24 sm:px-6"
+      className="landing-alt-font landing-fade-up mx-auto max-w-4xl px-4 py-20 sm:px-6 sm:py-24"
     >
       <div className="text-center">
-        <span className="inline-flex items-center gap-2 rounded-full border border-foreground/10 bg-foreground/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.35em] text-muted-foreground">
+        <span className="inline-flex items-center gap-2 rounded-full border border-foreground/10 bg-foreground/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground sm:tracking-[0.35em]">
           FAQ
         </span>
-        <h2 className="mt-4 font-semibold text-3xl tracking-tight sm:text-4xl">
+        <h2 className="mt-4 font-semibold text-2xl tracking-tight sm:text-4xl">
           Answers before you tap
         </h2>
-        <p className="mt-4 text-base text-muted-foreground">
+        <p className="mt-4 text-sm text-muted-foreground sm:text-base">
           Everything you need to know about Linket hardware, profiles, and data.
         </p>
       </div>
@@ -1190,9 +1190,9 @@ function FAQSection() {
           <AccordionItem
             key={item.question}
             value={`faq-${index}`}
-            className="overflow-hidden rounded-3xl border border-foreground/10 bg-white/80 px-5 transition-transform duration-300 hover:-translate-y-0.5"
+            className="overflow-hidden rounded-3xl border border-foreground/10 bg-white/80 px-4 transition-transform duration-300 hover:-translate-y-0.5 sm:px-5"
           >
-            <AccordionTrigger className="text-left text-base font-semibold text-foreground hover:no-underline">
+            <AccordionTrigger className="text-left text-sm font-semibold text-foreground hover:no-underline sm:text-base">
               {item.question}
             </AccordionTrigger>
             <AccordionContent className="pb-5 text-sm text-muted-foreground">
@@ -1215,11 +1215,11 @@ function LandingFooter() {
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.25),_rgba(5,8,22,0))]"
         aria-hidden
       />
-      <div className="relative mx-auto max-w-6xl px-4 py-16 sm:px-6">
-        <div className="grid gap-12 lg:grid-cols-[1.3fr_1fr_1fr]">
+      <div className="relative mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
+        <div className="grid gap-8 sm:gap-12 lg:grid-cols-[1.3fr_1fr_1fr]">
           {/* Brand block + mission copy. */}
           <div className="space-y-8">
-            <div className="flex items-center gap-3 text-lg font-semibold">
+            <div className="flex flex-col items-start gap-3 text-lg font-semibold sm:flex-row sm:items-center">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10">
                 <Image
                   src={brand.logomark}
@@ -1230,10 +1230,10 @@ function LandingFooter() {
                 />
               </div>
               <div>
-                <p className="text-sm uppercase tracking-[0.4em] text-white/70">
+                <p className="text-xs uppercase tracking-[0.24em] text-white/70 sm:text-sm sm:tracking-[0.4em]">
                   {brand.name}
                 </p>
-                <p className="text-2xl font-bold text-white">
+                <p className="text-xl font-bold text-white sm:text-2xl">
                   Tap once. Stay remembered.
                 </p>
               </div>
@@ -1261,7 +1261,7 @@ function LandingFooter() {
           <div className="space-y-6">
             {FOOTER_LINK_GROUPS.map((group) => (
               <div key={group.title} className="space-y-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.35em] text-white/60">
+                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/60 sm:tracking-[0.35em]">
                   {group.title}
                 </p>
                 <ul className="space-y-2">
@@ -1282,7 +1282,7 @@ function LandingFooter() {
           {/* Contact + CTA block. */}
           <div className="space-y-6 text-sm text-white/70">
             <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-[0.35em] text-white/60">
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/60 sm:tracking-[0.35em]">
                 Contact
               </p>
               <p className="text-white/80">Contact@LinketConnect.com</p>

@@ -876,7 +876,7 @@ export function Navbar() {
               aria-label={`${brand.name} home`}
             >
               {brand.logo ? (
-                <span className="relative block h-15 w-32 md:h-18 md:w-40">
+                <span className="relative block h-[3.5rem] w-28 sm:h-[3.75rem] sm:w-32 md:h-[4.5rem] md:w-40">
                   <Image
                     src={brand.logo}
                     alt={`${brand.name} logo`}
@@ -914,10 +914,10 @@ export function Navbar() {
             aria-label={`${brand.name} home`}
           >
             {brand.logo ? (
-              <span className="relative block h-15 w-32 md:h-18 md:w-40">
-                <Image
-                  src={brand.logo}
-                  alt={`${brand.name} logo`}
+                <span className="relative block h-[3.5rem] w-28 sm:h-[3.75rem] sm:w-32 md:h-[4.5rem] md:w-40">
+                  <Image
+                    src={brand.logo}
+                    alt={`${brand.name} logo`}
                   fill
                   className="object-contain"
                   priority
@@ -944,9 +944,13 @@ export function Navbar() {
           {isMarketingPage ? marketingNav : null}
         </div>
         </div>
-        <div className="flex items-center gap-2 md:gap-4">
-          {isLandingPage || isMarketingPage ? loginButton : null}
-          {isLandingPage || isMarketingPage ? primaryCta : null}
+        <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
+          {isLandingPage || isMarketingPage ? (
+            <div className="hidden items-center gap-2 sm:flex md:gap-4">
+              {loginButton}
+              {primaryCta}
+            </div>
+          ) : null}
           {isLandingPage || isMarketingPage ? (
             <button
               type="button"
@@ -1033,34 +1037,30 @@ export function Navbar() {
               ) : null}
               <div className="grid gap-3">
                 <div className="w-full">{primaryCta}</div>
-                <div className="w-full">{loginButton}</div>
+                <div className="w-full">
+                  {user ? (
+                    <Link
+                      href="/dashboard/linkets"
+                      className="flex h-10 items-center justify-center gap-3 rounded-full bg-muted px-4 text-sm font-semibold text-foreground transition hover:bg-muted/80 md:h-12"
+                    >
+                      {avatarUrl ? (
+                        <span className={mobileAvatarFrame} aria-hidden="true">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={avatarUrl}
+                            alt="avatar"
+                            className="h-full w-full object-cover"
+                          />
+                        </span>
+                      ) : null}
+                      Dashboard
+                    </Link>
+                  ) : (
+                    loginButton
+                  )}
+                </div>
               </div>
             </nav>
-            <div className="mt-4 grid gap-3">
-              {user && avatarUrl ? (
-                <Link
-                  href="/dashboard/linkets"
-                  className="flex items-center gap-3 rounded-full bg-muted px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted/80"
-                >
-                  <span className={mobileAvatarFrame} aria-hidden="true">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={avatarUrl}
-                      alt="avatar"
-                      className="h-full w-full object-cover"
-                    />
-                  </span>
-                  Dashboard
-                </Link>
-              ) : (
-                <Link
-                  href="/auth?view=signin"
-                  className="flex items-center rounded-full bg-muted px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted/80"
-                >
-                  Sign in
-                </Link>
-              )}
-            </div>
           </div>
         </div>
       )}
