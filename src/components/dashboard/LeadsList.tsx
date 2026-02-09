@@ -14,7 +14,10 @@ import { normalizeLeadFormConfig } from "@/lib/lead-form";
 import { Download, RefreshCw, Trash2, XCircle } from "lucide-react";
 import type { Lead } from "@/types/db";
 import type { LeadFormConfig, LeadFormFieldType } from "@/types/lead-form";
-import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
+import type {
+  RealtimeChannel,
+  RealtimePostgresChangesPayload,
+} from "@supabase/supabase-js";
 
 export default function LeadsList({ userId }: { userId: string }) {
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -164,39 +167,56 @@ export default function LeadsList({ userId }: { userId: string }) {
   // Live updates via Realtime
   useEffect(() => {
     if (!userId) return;
-    const channel = supabase
-      .channel(`leads-owner-${userId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "leads",
-          filter: `user_id=eq.${userId}`,
-        },
-        (payload: RealtimePostgresChangesPayload<Lead>) => {
-          if (payload.eventType === "INSERT") {
-            const row = sanitizeLeadRow(payload.new, userId);
-            setLeads((prev) => dedupeById([row, ...prev]));
-          } else if (payload.eventType === "UPDATE") {
-            const row = sanitizeLeadRow(payload.new, userId);
-            setLeads((prev) => prev.map((x) => (x.id === row.id ? row : x)));
-          } else if (payload.eventType === "DELETE") {
-            const id = sanitizeLeadId(payload.old);
-            if (!id) return;
-            setLeads((prev) => prev.filter((x) => x.id !== id));
-            setSelectedIds((prev) => {
-              if (!prev.has(id)) return prev;
-              const next = new Set(prev);
-              next.delete(id);
-              return next;
-            });
+    if (!canUseRealtime()) return;
+
+    let channel: RealtimeChannel | null = null;
+    try {
+      channel = supabase
+        .channel(`leads-owner-${userId}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "leads",
+            filter: `user_id=eq.${userId}`,
+          },
+          (payload: RealtimePostgresChangesPayload<Lead>) => {
+            if (payload.eventType === "INSERT") {
+              const row = sanitizeLeadRow(payload.new, userId);
+              setLeads((prev) => dedupeById([row, ...prev]));
+            } else if (payload.eventType === "UPDATE") {
+              const row = sanitizeLeadRow(payload.new, userId);
+              setLeads((prev) => prev.map((x) => (x.id === row.id ? row : x)));
+            } else if (payload.eventType === "DELETE") {
+              const id = sanitizeLeadId(payload.old);
+              if (!id) return;
+              setLeads((prev) => prev.filter((x) => x.id !== id));
+              setSelectedIds((prev) => {
+                if (!prev.has(id)) return prev;
+                const next = new Set(prev);
+                next.delete(id);
+                return next;
+              });
+            }
           }
-        }
-      )
-      .subscribe();
+        )
+        .subscribe((status) => {
+          if (status === "CHANNEL_ERROR") {
+            console.warn("Realtime unavailable for leads inbox; continuing without live updates.");
+          }
+        });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : String(error ?? "Unknown realtime error");
+      console.warn(`Realtime disabled for leads inbox: ${message}`);
+      channel = null;
+    }
+
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
     };
   }, [userId]);
 
@@ -869,4 +889,18 @@ function toNonEmptyText(value: unknown, fallback: string): string {
 
 function randomId() {
   return Math.random().toString(36).slice(2, 10);
+}
+
+function canUseRealtime() {
+  if (typeof window === "undefined") return false;
+  if (typeof window.WebSocket !== "function") return false;
+  if (window.isSecureContext) return true;
+
+  const hostname = window.location.hostname.toLowerCase();
+  return (
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname === "[::1]" ||
+    hostname.endsWith(".local")
+  );
 }
