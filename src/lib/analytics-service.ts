@@ -15,6 +15,16 @@ export type AnalyticsTopProfile = {
   leads: number;
 };
 
+export type AnalyticsTopLink = {
+  id: string;
+  profileId: string | null;
+  handle: string | null;
+  profileDisplayName: string;
+  title: string;
+  url: string;
+  clicks: number;
+};
+
 export type AnalyticsLead = {
   id: string;
   name: string;
@@ -83,6 +93,7 @@ export type UserAnalytics = {
   totals: AnalyticsTotals;
   timeline: AnalyticsTimelinePoint[];
   topProfiles: AnalyticsTopProfile[];
+  topLinks: AnalyticsTopLink[];
   recentLeads: AnalyticsLead[];
   funnel: AnalyticsFunnel;
   onboarding: OnboardingChecklist;
@@ -150,6 +161,7 @@ export async function getUserAnalytics(
       },
       timeline: buildEmptyTimeline(days),
       topProfiles: [],
+      topLinks: [],
       recentLeads: [],
       funnel,
       onboarding,
@@ -184,12 +196,14 @@ export async function getUserAnalytics(
     assignments,
     profileRows,
     linksByProfile,
+    linkRows,
     hasPublishedLeadForm,
     conversionRows,
   ] = await Promise.all([
     fetchAssignments(userId),
     fetchProfilesForUser(userId),
     fetchActiveLinkCountsByProfile(userId),
+    fetchLinkPerformanceRows(userId),
     fetchPublishedLeadFormState(userId),
     fetchConversionEventsForUser(userId, [...FUNNEL_EVENT_IDS]),
   ]);
@@ -354,6 +368,25 @@ export async function getUserAnalytics(
       leads: item.leads,
     }));
 
+  const topLinks = linkRows
+    .map((row) => {
+      const profile = row.profile_id ? profileById.get(row.profile_id) : undefined;
+      return {
+        id: row.id,
+        profileId: row.profile_id ?? null,
+        handle: profile?.handle ?? null,
+        profileDisplayName:
+          profile?.displayName ||
+          profile?.nickname ||
+          row.title ||
+          "Unassigned profile",
+        title: row.title || "Untitled link",
+        url: row.url || "",
+        clicks: Number(row.click_count ?? 0),
+      };
+    })
+    .sort((a, b) => (b.clicks === a.clicks ? a.title.localeCompare(b.title) : b.clicks - a.clicks));
+
   const funnel = buildFunnel(conversionRows);
   const shareTestCount = countEventsByIds(conversionRows, [...SHARE_TEST_EVENT_IDS]);
   const onboarding = buildOnboardingChecklist({
@@ -375,6 +408,7 @@ export async function getUserAnalytics(
     },
     timeline,
     topProfiles,
+    topLinks,
     recentLeads: recentLeads.map((lead) => ({
       id: lead.id,
       name: lead.name,
@@ -440,6 +474,15 @@ type ConversionEventRow = {
   event_id: string;
   created_at: string;
   timestamp: string | null;
+};
+
+type LinkPerformanceRow = {
+  id: string;
+  profile_id: string | null;
+  title: string | null;
+  url: string | null;
+  click_count: number | null;
+  is_active: boolean;
 };
 
 function buildEmptyTimeline(days: number): AnalyticsTimelinePoint[] {
@@ -517,6 +560,16 @@ async function fetchPublishedLeadFormState(userId: string) {
     .limit(1);
   if (error) throw new Error("Failed to load lead forms: " + error.message);
   return Boolean(data?.length);
+}
+
+async function fetchLinkPerformanceRows(userId: string) {
+  const { data, error } = await supabaseAdmin
+    .from("profile_links")
+    .select("id, profile_id, title, url, click_count, is_active")
+    .eq("user_id", userId)
+    .eq("is_active", true);
+  if (error) throw new Error("Failed to load profile link performance: " + error.message);
+  return (data ?? []) as LinkPerformanceRow[];
 }
 
 async function fetchConversionEventsForUser(userId: string, eventIds: string[]) {

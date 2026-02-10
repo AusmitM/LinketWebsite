@@ -166,6 +166,7 @@ export async function GET(request: NextRequest) {
       },
       timeline: buildEmptyTimeline(days),
       topProfiles: [],
+      topLinks: [],
       recentLeads: (leads ?? []).map((lead) => ({
         id: lead.id,
         name: lead.name ?? null,

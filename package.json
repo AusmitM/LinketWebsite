@@ -37,6 +37,8 @@
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "react-hook-form": "^7.62.0",
+    "react-native-purchases": "^9.7.6",
+    "react-native-purchases-ui": "^9.7.6",
     "recharts": "^3.1.2",
     "sonner": "^2.0.7",
     "stripe": "^18.5.0",

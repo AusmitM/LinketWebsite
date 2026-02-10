@@ -150,6 +150,64 @@ export default function AnalyticsContent() {
     };
   }, [userId]);
 
+  useEffect(() => {
+    if (!userId) return;
+    if (!canUseRealtime()) return;
+
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    let refreshTimer: number | null = null;
+    let settleTimer: number | null = null;
+
+    const requestRefresh = () => {
+      if (refreshTimer !== null) window.clearTimeout(refreshTimer);
+      refreshTimer = window.setTimeout(() => {
+        setReloadToken((value) => value + 1);
+      }, 300);
+      if (settleTimer !== null) window.clearTimeout(settleTimer);
+      settleTimer = window.setTimeout(() => {
+        setReloadToken((value) => value + 1);
+      }, 1200);
+    };
+
+    try {
+      channel = supabase
+        .channel(`analytics-live-${userId}`)
+        .on(
+          "postgres_changes",
+          { event: "INSERT", schema: "public", table: "leads", filter: `user_id=eq.${userId}` },
+          requestRefresh
+        )
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "profile_links", filter: `user_id=eq.${userId}` },
+          requestRefresh
+        )
+        .on(
+          "postgres_changes",
+          { event: "UPDATE", schema: "public", table: "tag_assignments", filter: `user_id=eq.${userId}` },
+          requestRefresh
+        )
+        .subscribe((status) => {
+          if (status === "CHANNEL_ERROR") {
+            console.warn("Realtime unavailable for analytics auto-refresh; continuing without live updates.");
+          }
+        });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : String(error ?? "Unknown realtime error");
+      console.warn(`Realtime disabled for analytics: ${message}`);
+      channel = null;
+    }
+
+    return () => {
+      if (refreshTimer !== null) window.clearTimeout(refreshTimer);
+      if (settleTimer !== null) window.clearTimeout(settleTimer);
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
+    };
+  }, [userId]);
+
   const totals = analytics?.totals;
   const funnel = analytics?.funnel;
 
@@ -196,6 +254,11 @@ export default function AnalyticsContent() {
       leads: formatPercentDelta(recent.leads, previous.leads),
       conversion: formatRateDelta(recent.conversion, previous.conversion),
     };
+  }, [analytics]);
+
+  const topLinksTotalClicks = useMemo(() => {
+    if (!analytics?.topLinks?.length) return 0;
+    return analytics.topLinks.reduce((total, item) => total + item.clicks, 0);
   }, [analytics]);
 
   const handleExport = useCallback(() => {
@@ -481,6 +544,62 @@ export default function AnalyticsContent() {
           </CardContent>
         </Card>
 
+        <Card className="dashboard-analytics-card rounded-3xl border bg-card/80 shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-lg font-semibold">Link performance</CardTitle>
+            <p className="text-sm text-muted-foreground">Clicks by active profile link.</p>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="space-y-2">
+                <div className="dashboard-skeleton h-12 animate-pulse rounded-2xl bg-muted" data-skeleton />
+                <div className="dashboard-skeleton h-12 animate-pulse rounded-2xl bg-muted" data-skeleton />
+                <div className="dashboard-skeleton h-12 animate-pulse rounded-2xl bg-muted" data-skeleton />
+              </div>
+            ) : analytics?.topLinks?.length ? (
+              <div className="space-y-2">
+                {analytics.topLinks.map((link) => {
+                  const clickShare =
+                    topLinksTotalClicks > 0 ? link.clicks / topLinksTotalClicks : 0;
+                  return (
+                    <div key={link.id} className="space-y-2 rounded-2xl border px-3 py-2">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="truncate text-sm font-medium text-foreground">
+                            {link.title}
+                          </div>
+                          <p className="truncate text-xs text-muted-foreground">
+                            {link.handle ? `${link.handle} • ` : ""}
+                            {link.url}
+                          </p>
+                        </div>
+                        <div className="text-right text-xs text-muted-foreground">
+                          <div className="font-semibold text-foreground">
+                            {numberFormatter.format(link.clicks)} clicks
+                          </div>
+                          <div>{(clickShare * 100).toFixed(1)}% share</div>
+                        </div>
+                      </div>
+                      <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+                        <div
+                          className="h-full rounded-full bg-primary transition-all"
+                          style={{ width: `${Math.max(4, Math.round(clickShare * 100))}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <EmptyState
+                message="No link clicks yet."
+                actionLabel="Refresh"
+                onAction={() => setReloadToken((value) => value + 1)}
+              />
+            )}
+          </CardContent>
+        </Card>
+
       </section>
     </div>
   );
@@ -625,5 +744,19 @@ function formatRateDelta(current: number, previous: number): DeltaBadge {
     text: `${delta > 0 ? "+" : ""}${delta.toFixed(1)}pp vs prev`,
     tone: delta > 0 ? "up" : "down",
   };
+}
+
+function canUseRealtime() {
+  if (typeof window === "undefined") return false;
+  if (typeof window.WebSocket !== "function") return false;
+  if (window.isSecureContext) return true;
+
+  const hostname = window.location.hostname.toLowerCase();
+  return (
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname === "[::1]" ||
+    hostname.endsWith(".local")
+  );
 }
 
