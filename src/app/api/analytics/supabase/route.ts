@@ -72,16 +72,22 @@ function buildEmptyOnboarding() {
   return {
     items: [
       {
-        id: "set_handle",
-        label: "Set handle",
-        completed: false,
-        detail: "Choose a custom public handle.",
-      },
-      {
         id: "publish_profile",
         label: "Publish profile",
         completed: false,
         detail: "Activate one public profile.",
+      },
+      {
+        id: "publish_lead_form",
+        label: "Publish lead form",
+        completed: false,
+        detail: "Publish your lead form to collect contacts.",
+      },
+      {
+        id: "set_handle",
+        label: "Set handle",
+        completed: false,
+        detail: "Choose a custom public handle.",
       },
       {
         id: "add_three_links",
@@ -94,12 +100,6 @@ function buildEmptyOnboarding() {
         label: "Test share",
         completed: false,
         detail: "Use Share Contact or Save Contact once.",
-      },
-      {
-        id: "publish_lead_form",
-        label: "Publish lead form",
-        completed: false,
-        detail: "Publish your lead form to collect contacts.",
       },
     ],
     completedCount: 0,

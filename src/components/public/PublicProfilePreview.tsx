@@ -27,6 +27,7 @@ type Props = {
   layout?: "split" | "stacked";
   forceMobile?: boolean;
   themeOverride?: ThemeName;
+  contactEnabled?: boolean;
 };
 
 function sortLinks(links: ProfileWithLinks["links"]) {
@@ -47,6 +48,7 @@ export default function PublicProfilePreview({
   layout = "split",
   forceMobile = false,
   themeOverride,
+  contactEnabled = true,
 }: Props) {
   const [avatar, setAvatar] = useState<string | null>(null);
   const [headerImage, setHeaderImage] = useState<string | null>(null);
@@ -311,11 +313,13 @@ export default function PublicProfilePreview({
                       : "flex flex-wrap items-center justify-center gap-3 sm:justify-start"
                   }
                 >
-                  <VCardDownload
-                    handle={publicHandle}
-                    label="Save Contact Information"
-                    className="public-profile-cta-primary w-full rounded-full bg-background text-foreground hover:bg-muted/60 dark:bg-background dark:text-foreground dark:hover:text-foreground dark:hover:bg-muted/30 shadow-[0_16px_32px_-24px_rgba(15,23,42,0.6)] sm:w-auto"
-                  />
+                  {contactEnabled ? (
+                    <VCardDownload
+                      handle={publicHandle}
+                      label="Save Contact Information"
+                      className="public-profile-cta-primary w-full rounded-full bg-background text-foreground hover:bg-muted/60 dark:bg-background dark:text-foreground dark:hover:text-foreground dark:hover:bg-muted/30 shadow-[0_16px_32px_-24px_rgba(15,23,42,0.6)] sm:w-auto"
+                    />
+                  ) : null}
                   <ShareContactButton
                     handle={publicHandle}
                     label="Share contact"
@@ -500,11 +504,13 @@ export default function PublicProfilePreview({
 
                 {forceMobile ? null : (
                 <div className="flex flex-wrap items-center gap-3">
-                  <VCardDownload
-                    handle={publicHandle}
-                    label="Save Contact Information"
-                    className="public-profile-cta-primary w-full rounded-full bg-background text-foreground hover:bg-muted/60 dark:bg-background dark:text-foreground dark:hover:text-foreground dark:hover:bg-muted/30 shadow-[0_16px_32px_-24px_rgba(15,23,42,0.6)] sm:w-auto"
-                  />
+                  {contactEnabled ? (
+                    <VCardDownload
+                      handle={publicHandle}
+                      label="Save Contact Information"
+                      className="public-profile-cta-primary w-full rounded-full bg-background text-foreground hover:bg-muted/60 dark:bg-background dark:text-foreground dark:hover:text-foreground dark:hover:bg-muted/30 shadow-[0_16px_32px_-24px_rgba(15,23,42,0.6)] sm:w-auto"
+                    />
+                  ) : null}
                   <ShareContactButton
                     handle={publicHandle}
                     label="Share contact"

@@ -220,7 +220,7 @@ const PUBLIC_PROFILE_PREVIEW_LINKS = [
     profile_id: "mock-profile",
     user_id: "mock-user",
     title: "Linket Connect",
-    url: "https://www.linketconnect.com",
+    url: "https://www.LinketConnect.com",
     order_index: 3,
     is_active: true,
     click_count: 0,

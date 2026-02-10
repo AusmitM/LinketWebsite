@@ -110,7 +110,7 @@ const THEME_OPTIONS: Array<{
 ];
 
 const DEFAULT_THEME: ThemeName = "autumn";
-const DEFAULT_PROFILE_LINK_URL = "https://www.linketconnect.com";
+const DEFAULT_PROFILE_LINK_URL = "https://www.LinketConnect.com";
 
 type LinkItem = {
   id: string;

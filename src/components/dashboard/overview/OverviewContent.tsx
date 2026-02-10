@@ -456,6 +456,7 @@ function PublicProfilePreviewPanel({ userId }: { userId: string | null }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [profile, setProfile] = useState<ProfileWithLinks | null>(null);
+  const [hasContactDetails, setHasContactDetails] = useState(false);
   const [account, setAccount] = useState<{
     handle: string;
     displayName: string | null;
@@ -469,20 +470,25 @@ function PublicProfilePreviewPanel({ userId }: { userId: string | null }) {
       setError("Sign in to see your live preview.");
       setProfile(null);
       setAccount(null);
+      setHasContactDetails(false);
       return;
     }
 
     let active = true;
     setLoading(true);
     setError(null);
+    setHasContactDetails(false);
 
     (async () => {
       try {
-        const [accountRes, profilesRes] = await Promise.all([
+        const [accountRes, profilesRes, vcardRes] = await Promise.all([
           fetch(`/api/account/handle?userId=${encodeURIComponent(userId)}`, {
             cache: "no-store",
           }),
           fetch(`/api/linket-profiles?userId=${encodeURIComponent(userId)}`, {
+            cache: "no-store",
+          }),
+          fetch(`/api/vcard/profile?userId=${encodeURIComponent(userId)}`, {
             cache: "no-store",
           }),
         ]);
@@ -505,6 +511,15 @@ function PublicProfilePreviewPanel({ userId }: { userId: string | null }) {
         const profiles = (await profilesRes.json()) as ProfileWithLinks[];
         const activeProfile =
           profiles.find((item) => item.is_active) ?? profiles[0];
+        let nextHasContactDetails = false;
+        if (vcardRes.ok) {
+          const vcardPayload = (await vcardRes.json()) as {
+            fields?: { email?: string | null; phone?: string | null };
+          };
+          nextHasContactDetails = Boolean(
+            vcardPayload.fields?.email?.trim() || vcardPayload.fields?.phone?.trim()
+          );
+        }
 
         if (!activeProfile) {
           throw new Error("Create a public profile to see the preview.");
@@ -517,6 +532,7 @@ function PublicProfilePreviewPanel({ userId }: { userId: string | null }) {
           avatarPath: accountPayload?.avatarPath ?? null,
           avatarUpdatedAt: accountPayload?.avatarUpdatedAt ?? null,
         });
+        setHasContactDetails(nextHasContactDetails);
         setProfile(activeProfile);
         setLoading(false);
       } catch (err) {
@@ -524,6 +540,7 @@ function PublicProfilePreviewPanel({ userId }: { userId: string | null }) {
         setError(err instanceof Error ? err.message : "Preview unavailable.");
         setProfile(null);
         setAccount(null);
+        setHasContactDetails(false);
         setLoading(false);
       }
     })();
@@ -560,6 +577,7 @@ function PublicProfilePreviewPanel({ userId }: { userId: string | null }) {
             layout="stacked"
             forceMobile
             themeOverride={theme}
+            contactEnabled={hasContactDetails}
           />
         </div>
       </div>

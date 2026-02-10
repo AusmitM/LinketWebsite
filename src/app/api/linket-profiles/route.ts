@@ -12,7 +12,9 @@ import { recordConversionEvent } from "@/lib/server-conversion-events";
 import type { ProfileLinkRecord, UserProfileRecord } from "@/types/db";
 
 type ProfileWithLinks = UserProfileRecord & { links: ProfileLinkRecord[] };
-const DEFAULT_PROFILE_LINK_URL = "https://www.linketconnect.com";
+const DEFAULT_PROFILE_LINK_URL = "https://www.LinketConnect.com";
+const DEFAULT_PROFILE_NAME = "Linket Public Profile";
+const DEFAULT_THEME = normalizeThemeName("autumn", "autumn");
 
 function normalizeHandle(handle: string) {
   return handle.trim().toLowerCase();
@@ -26,6 +28,147 @@ function sortLinks(links: ProfileLinkRecord[] | null | undefined) {
         (a.order_index ?? 0) - (b.order_index ?? 0) ||
         a.created_at.localeCompare(b.created_at)
     );
+}
+
+async function fetchProfilesForUserViaClient(
+  supabase: Awaited<ReturnType<typeof createServerSupabase>>,
+  userId: string
+) {
+  const { data, error } = await supabase
+    .from("user_profiles")
+    .select("*, links:profile_links(*)")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: true });
+  if (error) throw new Error(error.message);
+  const profiles = (data as ProfileWithLinks[] | null | undefined) ?? [];
+  return profiles.map((profile) => ({
+    ...profile,
+    links: sortLinks(profile.links),
+  }));
+}
+
+async function resolveStarterProfileSeed(
+  supabase: Awaited<ReturnType<typeof createServerSupabase>>,
+  userId: string
+) {
+  const fallbackHandle = normalizeHandle(`user-${userId.slice(0, 8)}`);
+  let handleSeed = fallbackHandle;
+  let displayName = DEFAULT_PROFILE_NAME;
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("username, display_name")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error && error.code !== "PGRST116") {
+    return { handleSeed, displayName };
+  }
+
+  const username = (data?.username as string | null | undefined)?.trim();
+  if (username) {
+    handleSeed = normalizeHandle(username);
+  }
+
+  const accountDisplayName = (
+    data?.display_name as string | null | undefined
+  )?.trim();
+  if (accountDisplayName) {
+    displayName = accountDisplayName;
+  }
+
+  return { handleSeed, displayName };
+}
+
+async function resolveAvailableHandle(
+  supabase: Awaited<ReturnType<typeof createServerSupabase>>,
+  handleSeed: string
+) {
+  let candidate = normalizeHandle(handleSeed);
+  for (let attempt = 1; attempt <= 100; attempt += 1) {
+    const { data, error } = await supabase
+      .from("user_profiles")
+      .select("id")
+      .eq("handle", candidate)
+      .maybeSingle();
+    if (error && error.code !== "PGRST116") {
+      throw new Error(error.message);
+    }
+    if (!data) {
+      return candidate;
+    }
+    candidate = `${handleSeed}-${attempt}`;
+  }
+  return `${handleSeed}-${Date.now().toString(36)}`;
+}
+
+async function ensureStarterProfileWithDefaultLink(
+  supabase: Awaited<ReturnType<typeof createServerSupabase>>,
+  userId: string
+) {
+  const existing = await fetchProfilesForUserViaClient(supabase, userId);
+  if (existing.length > 0) {
+    const active = existing.find((profile) => profile.is_active) ?? existing[0];
+    if (active.links.length === 0) {
+      const { error: insertLinkError } = await supabase
+        .from("profile_links")
+        .insert({
+          profile_id: active.id,
+          user_id: userId,
+          title: "Website",
+          url: DEFAULT_PROFILE_LINK_URL,
+          order_index: 0,
+          is_active: true,
+        });
+      if (insertLinkError) throw new Error(insertLinkError.message);
+      const refreshed = await fetchProfilesForUserViaClient(supabase, userId);
+      return refreshed.find((profile) => profile.id === active.id) ?? refreshed[0];
+    }
+    return active;
+  }
+
+  const { handleSeed, displayName } = await resolveStarterProfileSeed(
+    supabase,
+    userId
+  );
+  const handle = await resolveAvailableHandle(supabase, handleSeed);
+
+  const { data: createdProfile, error: createProfileError } = await supabase
+    .from("user_profiles")
+    .insert({
+      user_id: userId,
+      name: displayName,
+      handle,
+      headline: null,
+      theme: DEFAULT_THEME,
+      is_active: true,
+    })
+    .select("id")
+    .single();
+
+  if (createProfileError) {
+    // Another request may have created a profile in parallel.
+    const raced = await fetchProfilesForUserViaClient(supabase, userId);
+    if (raced.length > 0) {
+      return raced.find((profile) => profile.is_active) ?? raced[0];
+    }
+    throw new Error(createProfileError.message);
+  }
+
+  const profileId = (createdProfile as { id: string }).id;
+  const { error: createLinkError } = await supabase.from("profile_links").insert({
+    profile_id: profileId,
+    user_id: userId,
+    title: "Website",
+    url: DEFAULT_PROFILE_LINK_URL,
+    order_index: 0,
+    is_active: true,
+  });
+  if (createLinkError) throw new Error(createLinkError.message);
+
+  const created = await fetchProfilesForUserViaClient(supabase, userId);
+  const starter = created.find((profile) => profile.id === profileId);
+  if (!starter) throw new Error("Starter profile missing after creation");
+  return starter;
 }
 
 function isUuid(value: string | null | undefined): value is string {
@@ -115,6 +258,29 @@ export async function GET(request: NextRequest) {
     if (isSupabaseAdminAvailable) {
       try {
         const profiles = await getProfilesForUser(userId);
+        if (profiles.length === 0) {
+          const starter = await ensureStarterProfileWithDefaultLink(
+            supabase,
+            userId
+          );
+          return NextResponse.json([starter], {
+            headers: {
+              "Cache-Control": "no-store, max-age=0",
+            },
+          });
+        }
+        const active = profiles.find((profile) => profile.is_active) ?? profiles[0];
+        if ((active?.links ?? []).length === 0) {
+          const starter = await ensureStarterProfileWithDefaultLink(
+            supabase,
+            userId
+          );
+          return NextResponse.json([starter], {
+            headers: {
+              "Cache-Control": "no-store, max-age=0",
+            },
+          });
+        }
         return NextResponse.json(profiles, {
           headers: {
             "Cache-Control": "no-store, max-age=0",
@@ -125,18 +291,24 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const { data, error: fetchError } = await supabase
-      .from("user_profiles")
-      .select("*, links:profile_links(*)")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: true });
-    if (fetchError) throw new Error(fetchError.message);
-
-    const profiles = (data as ProfileWithLinks[] | null | undefined) ?? [];
-    const mapped = profiles.map((profile) => ({
-      ...profile,
-      links: sortLinks(profile.links),
-    }));
+    const mapped = await fetchProfilesForUserViaClient(supabase, userId);
+    if (mapped.length === 0) {
+      const starter = await ensureStarterProfileWithDefaultLink(supabase, userId);
+      return NextResponse.json([starter], {
+        headers: {
+          "Cache-Control": "no-store, max-age=0",
+        },
+      });
+    }
+    const active = mapped.find((profile) => profile.is_active) ?? mapped[0];
+    if ((active?.links ?? []).length === 0) {
+      const starter = await ensureStarterProfileWithDefaultLink(supabase, userId);
+      return NextResponse.json([starter], {
+        headers: {
+          "Cache-Control": "no-store, max-age=0",
+        },
+      });
+    }
 
     return NextResponse.json(mapped, {
       headers: {

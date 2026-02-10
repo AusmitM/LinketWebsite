@@ -117,7 +117,7 @@ const supabasePublic = createClient(
 
 const PROFILE_TABLE = "user_profiles";
 const PROFILE_LINKS_TABLE = "profile_links";
-const DEFAULT_PROFILE_LINK_URL = "https://www.linketconnect.com";
+const DEFAULT_PROFILE_LINK_URL = "https://www.LinketConnect.com";
 
 export class HandleConflictError extends Error {
   suggestions: string[];

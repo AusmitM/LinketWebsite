@@ -153,7 +153,7 @@ const MOBILE_PROFILE_SECTIONS: Array<{ id: SectionId; label: string }> = [
   { id: "preview", label: "Preview" },
 ];
 const ACTIVE_PROFILE_SECTION_STORAGE_KEY = "linket:profile-editor:active-section";
-const DEFAULT_PROFILE_LINK_URL = "https://www.linketconnect.com";
+const DEFAULT_PROFILE_LINK_URL = "https://www.LinketConnect.com";
 
 export default function PublicProfileEditorPage() {
   const dashboardUser = useDashboardUser();
@@ -1032,7 +1032,7 @@ export default function PublicProfileEditorPage() {
 
   const profileDisplayName = draft?.name || "John Doe";
   const profileTagline =
-    draft?.headline || "I do things | other things & mores";
+    draft?.headline || "I do things | other things & more";
   const isPublished = true;
 
   return (

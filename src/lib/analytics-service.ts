@@ -697,20 +697,28 @@ function buildOnboardingChecklist(input: {
 
   const items: OnboardingChecklistItem[] = [
     {
-      id: "set_handle",
-      label: "Set handle",
-      completed: hasCustomHandle,
-      detail: hasCustomHandle
-        ? "Public handle is configured."
-        : "Choose a custom public handle.",
-    },
-    {
       id: "publish_profile",
       label: "Publish profile",
       completed: hasPublishedProfile,
       detail: hasPublishedProfile
         ? "An active profile is live."
         : "Activate one public profile.",
+    },
+    {
+      id: "publish_lead_form",
+      label: "Publish lead form",
+      completed: hasPublishedLeadForm,
+      detail: hasPublishedLeadForm
+        ? "Lead form is published."
+        : "Publish your lead form to collect contacts.",
+    },
+    {
+      id: "set_handle",
+      label: "Set handle",
+      completed: hasCustomHandle,
+      detail: hasCustomHandle
+        ? "Public handle is configured."
+        : "Choose a custom public handle.",
     },
     {
       id: "add_three_links",
@@ -727,14 +735,6 @@ function buildOnboardingChecklist(input: {
       detail: hasShareTest
         ? "Share or vCard flow has been tested."
         : "Use Share Contact or Save Contact once.",
-    },
-    {
-      id: "publish_lead_form",
-      label: "Publish lead form",
-      completed: hasPublishedLeadForm,
-      detail: hasPublishedLeadForm
-        ? "Lead form is published."
-        : "Publish your lead form to collect contacts.",
     },
   ];
 
