@@ -4,7 +4,11 @@ import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
 import { validateSubmission } from "@/lib/lead-form";
 import { limitRequest } from "@/lib/rate-limit";
 import { recordConversionEvent } from "@/lib/server-conversion-events";
-import type { LeadFormConfig, LeadFormSubmission } from "@/types/lead-form";
+import type {
+  LeadFormConfig,
+  LeadFormField,
+  LeadFormSubmission,
+} from "@/types/lead-form";
 
 type LeadFormRow = {
   id: string;
@@ -55,9 +59,35 @@ function mapLeadFields(
     if (!field) continue;
     const label = field.label?.trim() || fieldId;
     const safeLabel = label.replace(/::/g, " ").trim() || fieldId;
-    values[`${safeLabel}::${fieldId}`] = entry.value;
+    values[`${safeLabel}::${fieldId}`] = toLeadCustomFieldValue(
+      field,
+      entry.value
+    );
   }
   return values;
+}
+
+function toLeadCustomFieldValue(field: LeadFormField, value: unknown) {
+  if (field.type !== "file_upload") return value;
+  return summarizeUploadedFiles(value);
+}
+
+function summarizeUploadedFiles(value: unknown) {
+  if (!Array.isArray(value)) return "";
+  const entries = value
+    .map((entry) => {
+      if (typeof entry === "string") return entry.trim();
+      if (!entry || typeof entry !== "object") return "";
+      const source = entry as Record<string, unknown>;
+      const name =
+        typeof source.name === "string" ? source.name.trim() : "";
+      const url =
+        typeof source.url === "string" ? source.url.trim() : "";
+      if (name && url) return `${name} (${url})`;
+      return name || url;
+    })
+    .filter(Boolean);
+  return entries.join(", ");
 }
 
 function inferLeadFields(

@@ -694,7 +694,12 @@ function renderLeadFields(
   const custom = lead.custom_fields;
   const metaMap = labelsByHandle[lead.handle] ?? {};
 
-  const fields: Array<{ key: string; label: string; value: string }> = [];
+  const fields: Array<{
+    key: string;
+    label: string;
+    value: string;
+    fileLinks?: Array<{ name: string; url: string }>;
+  }> = [];
 
   if (lead.email) fields.push({ key: "email", label: "Email", value: lead.email });
   if (lead.phone) fields.push({ key: "phone", label: "Phone number", value: lead.phone });
@@ -711,7 +716,9 @@ function renderLeadFields(
       const meta = metaMap[parsed.id];
       const label = meta?.label || parsed.label || toReadableLabel(parsed.id);
       const type = meta?.type;
-      return { key, label, value: formatLeadValue(value), type };
+      const renderedValue = formatLeadValue(value);
+      const fileLinks = type === "file_upload" ? extractFileLinks(renderedValue) : [];
+      return { key, label, value: renderedValue, type, fileLinks };
     })
     .filter((entry) => entry.label.toLowerCase() !== "phone number");
 
@@ -726,6 +733,7 @@ function renderLeadFields(
           key: `${type}-${entry.key}`,
           label: entry.label,
           value: entry.value,
+          fileLinks: entry.fileLinks,
         });
       });
   });
@@ -740,6 +748,7 @@ function renderLeadFields(
           key: `${type}-${entry.key}`,
           label: entry.label,
           value: entry.value,
+          fileLinks: entry.fileLinks,
         });
       });
   });
@@ -752,6 +761,7 @@ function renderLeadFields(
         key: `custom-${entry.key}`,
         label: entry.label,
         value: entry.value,
+        fileLinks: entry.fileLinks,
       });
     });
 
@@ -762,7 +772,26 @@ function renderLeadFields(
       {fields.map((entry) => (
         <div key={entry.key} className="min-w-0">
           <dt className="font-medium text-foreground">{entry.label}</dt>
-          <dd className="break-words">{entry.value}</dd>
+          <dd className="space-y-1 break-words">
+            {entry.fileLinks && entry.fileLinks.length > 0 ? (
+              entry.fileLinks.map((file) => (
+                <div key={`${entry.key}-${file.url}`} className="flex flex-wrap items-center gap-2">
+                  <span className="break-words">{file.name}</span>
+                  <a
+                    href={file.url}
+                    download
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-foreground underline underline-offset-2"
+                  >
+                    Download file
+                  </a>
+                </div>
+              ))
+            ) : (
+              entry.value
+            )}
+          </dd>
         </div>
       ))}
     </dl>
@@ -791,6 +820,70 @@ function formatLeadValue(value: string | boolean | null) {
   if (value === false) return "No";
   if (value == null) return "";
   return String(value);
+}
+
+function extractFileLinks(value: string) {
+  const text = String(value ?? "").trim();
+  if (!text) return [] as Array<{ name: string; url: string }>;
+
+  const found: Array<{ name: string; url: string }> = [];
+  const wrappedUrlRegex = /\((https?:\/\/[^)\s]+)\)/g;
+  let match: RegExpExecArray | null = null;
+  let cursor = 0;
+
+  while ((match = wrappedUrlRegex.exec(text)) !== null) {
+    const url = normalizeHttpUrl(match[1]);
+    const rawName = text
+      .slice(cursor, match.index)
+      .replace(/^[,\s]+|[,\s]+$/g, "");
+    cursor = wrappedUrlRegex.lastIndex;
+    if (!url) continue;
+    const name = rawName || fileNameFromUrl(url) || "File";
+    found.push({ name, url });
+  }
+
+  if (found.length > 0) return dedupeFileLinks(found);
+
+  const plainUrlRegex = /(https?:\/\/[^\s,)]+)/g;
+  while ((match = plainUrlRegex.exec(text)) !== null) {
+    const url = normalizeHttpUrl(match[1]);
+    if (!url) continue;
+    found.push({ name: fileNameFromUrl(url) || "File", url });
+  }
+
+  return dedupeFileLinks(found);
+}
+
+function normalizeHttpUrl(value: string) {
+  try {
+    const parsed = new URL(value);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return null;
+    return parsed.toString();
+  } catch {
+    return null;
+  }
+}
+
+function fileNameFromUrl(url: string) {
+  try {
+    const parsed = new URL(url);
+    const segment = parsed.pathname.split("/").filter(Boolean).pop();
+    if (!segment) return "";
+    return decodeURIComponent(segment);
+  } catch {
+    return "";
+  }
+}
+
+function dedupeFileLinks(items: Array<{ name: string; url: string }>) {
+  const seen = new Set<string>();
+  const out: Array<{ name: string; url: string }> = [];
+  items.forEach((item) => {
+    if (!item.url || seen.has(item.url)) return;
+    seen.add(item.url);
+    out.push(item);
+  });
+  return out;
 }
 
 function isCoreFieldKey(key: string) {

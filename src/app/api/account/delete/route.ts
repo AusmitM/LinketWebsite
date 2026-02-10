@@ -48,6 +48,7 @@ export async function POST() {
       `${userId}/avatar_128.webp`,
     ]);
     await removeStorageFolder("profile-headers", `${userId}/profile-headers`);
+    await removeStorageFolder("lead-form-uploads", userId);
 
     const { error: authDeleteError } = await supabaseAdmin.auth.admin.deleteUser(
       userId

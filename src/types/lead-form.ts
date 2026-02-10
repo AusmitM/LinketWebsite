@@ -133,6 +133,14 @@ export type LeadFormFileUploadField = LeadFormFieldBase & {
   maxSizeMB: number;
 };
 
+export type LeadFormUploadedFile = {
+  name: string;
+  path: string;
+  url: string | null;
+  sizeBytes: number;
+  mimeType: string | null;
+};
+
 export type LeadFormGridRule = {
   requireResponsePerRow: boolean;
   limitOneResponsePerColumn: boolean;

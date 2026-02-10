@@ -52,6 +52,7 @@ const FIELD_PRESETS: Array<{
   type: LeadFormFieldType;
   helpText?: string;
   validation?: LeadFormValidation;
+  fieldOverrides?: Partial<LeadFormField>;
 }> = [
   {
     id: "name",
@@ -99,6 +100,38 @@ const FIELD_PRESETS: Array<{
     label: "Long Text",
     type: "long_text",
   },
+  {
+    id: "voice_memo",
+    label: "Voice Memo",
+    type: "file_upload",
+    helpText: "Upload MP3, M4A, WAV, AAC, or OGG",
+    fieldOverrides: {
+      acceptedTypes: ["mp3", "m4a", "wav", "aac", "ogg"],
+      maxFiles: 1,
+      maxSizeMB: 20,
+    },
+  },
+  {
+    id: "document_upload",
+    label: "Document/File Upload",
+    type: "file_upload",
+    helpText: "Upload a resume, document, or image",
+    fieldOverrides: {
+      acceptedTypes: [
+        "pdf",
+        "doc",
+        "docx",
+        "txt",
+        "rtf",
+        "png",
+        "jpg",
+        "jpeg",
+        "webp",
+      ],
+      maxFiles: 3,
+      maxSizeMB: 20,
+    },
+  },
 ];
 
 const ALLOWED_TYPES: Array<{ type: LeadFormFieldType; label: string }> = [
@@ -106,6 +139,7 @@ const ALLOWED_TYPES: Array<{ type: LeadFormFieldType; label: string }> = [
   { type: "long_text", label: "Long text" },
   { type: "date", label: "Date" },
   { type: "time", label: "Time" },
+  { type: "file_upload", label: "File upload" },
 ];
 
 type Props = {
@@ -308,6 +342,7 @@ export default function LeadFormBuilder({
     const newField = createField(preset.type, preset.label, {
       helpText: preset.helpText ?? "",
       validation: preset.validation ?? { rule: "none" },
+      ...(preset.fieldOverrides ?? {}),
     });
     updateForm({ fields: [...form.fields, newField] });
     setSelectedFieldId(newField.id);
