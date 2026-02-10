@@ -896,8 +896,8 @@ export function Navbar() {
             align="end"
             title="Account menu"
           >
-            <div className="space-y-2 text-sm">
-              <div className="rounded-lg border border-border/60 bg-card/80 px-3 py-2 text-xs text-muted-foreground">
+            <div className="dashboard-account-menu-content space-y-2 text-sm">
+              <div className="dashboard-account-menu-email rounded-lg border border-border/60 bg-card/80 px-3 py-2 text-xs text-muted-foreground">
                 {user?.email ?? "Not signed in"}
               </div>
               <MenuLink href="/dashboard/settings">Account settings</MenuLink>
@@ -1141,7 +1141,7 @@ function PopoverDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="w-72 translate-x-0 translate-y-0 rounded-2xl border border-border/60 bg-background p-4 shadow-lg"
+        className="dashboard-account-menu-popover w-72 translate-x-0 translate-y-0 rounded-2xl border border-border/60 bg-background p-4 shadow-lg"
         style={position}
       >
         {title ? (
@@ -1169,7 +1169,7 @@ function MenuButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="flex w-full items-center rounded-lg px-2 py-2 text-left text-sm text-foreground hover:bg-accent disabled:opacity-50"
+      className="dashboard-account-menu-item flex w-full items-center rounded-lg px-2 py-2 text-left text-sm text-foreground hover:bg-accent disabled:opacity-50"
     >
       {children}
     </button>
@@ -1180,7 +1180,7 @@ function MenuLink({ href, children }: { href: string; children: React.ReactNode 
   return (
     <a
       href={href}
-      className="flex w-full items-center rounded-lg px-2 py-2 text-left text-sm text-foreground hover:bg-accent"
+      className="dashboard-account-menu-item flex w-full items-center rounded-lg px-2 py-2 text-left text-sm text-foreground hover:bg-accent"
     >
       {children}
     </a>

@@ -1859,6 +1859,8 @@ function PhonePreviewCard({
   const submitLabel = "Submit";
   const resolvedTheme = themeName;
   const isBurntOrange = resolvedTheme === "burnt-orange";
+  const isHookEmOrAggie =
+    resolvedTheme === "burnt-orange" || resolvedTheme === "maroon";
 
   return (
     <div
@@ -1941,8 +1943,8 @@ function PhonePreviewCard({
           <div
             className={cn(
               "public-profile-preview-section-label public-profile-links-label text-xs font-semibold text-muted-foreground",
-              isBurntOrange && "text-[#fff6ed]"
             )}
+            style={isHookEmOrAggie ? { color: "#ffffff" } : undefined}
           >
             Links
           </div>

@@ -139,6 +139,8 @@ export default async function PublicProfilePage({ params }: Props) {
   const resolvedTheme = normalizeThemeName(profile.theme, "autumn");
   const isDark = isDarkTheme(resolvedTheme);
   const themeClass = `theme-${resolvedTheme} ${isDark ? "dark" : ""}`;
+  const isHookEmOrAggie =
+    resolvedTheme === "burnt-orange" || resolvedTheme === "maroon";
   const headline = profile.headline?.trim() ?? "";
   const isBurntOrange = resolvedTheme === "burnt-orange";
   const links = sortLinks(profile.links);
@@ -346,7 +348,10 @@ export default async function PublicProfilePage({ params }: Props) {
 
               {hasLinks ? (
                 <div className="space-y-3 public-profile-load public-profile-load-4">
-                  <h2 className="public-profile-links-label text-sm font-semibold uppercase tracking-[0.3em] text-muted-foreground">
+                  <h2
+                    className="public-profile-links-label text-sm font-semibold uppercase tracking-[0.3em] text-muted-foreground"
+                    style={isHookEmOrAggie ? { color: "#ffffff" } : undefined}
+                  >
                     Links
                   </h2>
                   <PublicProfileLinksList links={links} trackClicks />

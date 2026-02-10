@@ -564,72 +564,72 @@
 .theme-autumn.public-profile-shell,
 .theme-autumn .public-profile-shell {
   background-image:
-    radial-gradient(180px 140px at 12% 0%, rgba(255, 239, 168, 0.42) 0%, transparent 74%),
-    radial-gradient(220px 150px at 88% 0%, rgba(212, 86, 41, 0.28) 0%, transparent 72%),
-    radial-gradient(circle at 18% 18%, rgba(255, 219, 90, 0.24) 0%, transparent 30%),
-    radial-gradient(circle at 84% 20%, rgba(198, 66, 34, 0.2) 0%, transparent 28%),
-    linear-gradient(180deg, #fff5df 0%, #f5cc8f 100%);
+    radial-gradient(180px 140px at 12% 0%, rgba(248, 226, 160, 0.36) 0%, transparent 74%),
+    radial-gradient(220px 150px at 88% 0%, rgba(191, 95, 59, 0.23) 0%, transparent 72%),
+    radial-gradient(circle at 18% 18%, rgba(241, 193, 102, 0.21) 0%, transparent 30%),
+    radial-gradient(circle at 84% 20%, rgba(181, 78, 46, 0.16) 0%, transparent 28%),
+    linear-gradient(180deg, #fff5e4 0%, #eac896 100%);
 }
 
 .theme-autumn .public-profile-backdrop {
   background: linear-gradient(
     180deg,
-    color-mix(in srgb, #fff8e8 94%, transparent),
-    color-mix(in srgb, #efba6c 92%, transparent)
+    color-mix(in srgb, #fff7ea 94%, transparent),
+    color-mix(in srgb, #e7b470 92%, transparent)
   );
 }
 
 .theme-autumn .public-profile-card {
-  background: linear-gradient(162deg, rgba(255, 251, 241, 0.95) 0%, rgba(255, 238, 203, 0.9) 52%, rgba(238, 154, 98, 0.84) 100%);
-  border-color: rgba(154, 65, 25, 0.34);
-  box-shadow: 0 30px 56px -38px rgba(88, 34, 12, 0.46), inset 0 1px 0 rgba(255, 255, 255, 0.62);
+  background: linear-gradient(162deg, rgba(255, 252, 243, 0.95) 0%, rgba(249, 230, 198, 0.9) 52%, rgba(226, 168, 113, 0.84) 100%);
+  border-color: rgba(145, 72, 40, 0.32);
+  box-shadow: 0 30px 56px -38px rgba(86, 41, 19, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.62);
   backdrop-filter: blur(10px);
 }
 
 .theme-autumn .public-profile-link {
-  background: linear-gradient(160deg, rgba(255, 251, 241, 0.95) 0%, rgba(255, 237, 200, 0.88) 54%, rgba(236, 147, 90, 0.82) 100%);
-  border-color: rgba(154, 65, 25, 0.34);
-  box-shadow: 0 22px 44px -36px rgba(88, 34, 12, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.58);
+  background: linear-gradient(160deg, rgba(255, 252, 243, 0.95) 0%, rgba(249, 230, 198, 0.88) 54%, rgba(224, 162, 106, 0.82) 100%);
+  border-color: rgba(145, 72, 40, 0.32);
+  box-shadow: 0 22px 44px -36px rgba(86, 41, 19, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.58);
 }
 
 .theme-autumn .public-profile-link-action {
-  background: linear-gradient(180deg, rgba(255, 252, 243, 0.95) 0%, rgba(255, 236, 197, 0.87) 60%, rgba(255, 220, 177, 0.82) 100%);
-  border-color: rgba(154, 65, 25, 0.36);
-  color: #6d240a;
+  background: linear-gradient(180deg, rgba(255, 252, 244, 0.95) 0%, rgba(250, 232, 198, 0.89) 60%, rgba(240, 208, 166, 0.84) 100%);
+  border-color: rgba(145, 72, 40, 0.34);
+  color: #682c13;
 }
 
 .theme-autumn .public-profile-link-action:hover,
 .theme-autumn .public-profile-link:hover .public-profile-link-action {
-  background: linear-gradient(180deg, rgba(255, 253, 248, 0.97) 0%, rgba(255, 241, 206, 0.93) 58%, rgba(255, 227, 186, 0.88) 100%);
-  color: #581a04;
+  background: linear-gradient(180deg, rgba(255, 253, 248, 0.97) 0%, rgba(252, 239, 212, 0.93) 58%, rgba(244, 215, 179, 0.89) 100%);
+  color: #5b210b;
 }
 
 .theme-autumn .public-profile-actions [data-slot=button] {
-  background: linear-gradient(180deg, rgba(255, 252, 244, 0.96) 0%, rgba(255, 235, 195, 0.9) 56%, rgba(255, 217, 173, 0.86) 100%);
-  color: #6d240a;
-  border: 1px solid rgba(154, 65, 25, 0.36);
-  box-shadow: 0 16px 32px -24px rgba(88, 34, 12, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.64);
+  background: linear-gradient(180deg, rgba(255, 252, 245, 0.96) 0%, rgba(250, 232, 199, 0.91) 56%, rgba(239, 205, 164, 0.88) 100%);
+  color: #682c13;
+  border: 1px solid rgba(145, 72, 40, 0.34);
+  box-shadow: 0 16px 32px -24px rgba(86, 41, 19, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.64);
 }
 
 .theme-autumn .public-profile-actions [data-slot=button]:hover {
-  background: linear-gradient(180deg, rgba(255, 253, 248, 0.98) 0%, rgba(255, 241, 205, 0.94) 56%, rgba(255, 225, 184, 0.9) 100%);
-  color: #581a04;
+  background: linear-gradient(180deg, rgba(255, 253, 248, 0.98) 0%, rgba(252, 238, 213, 0.94) 56%, rgba(245, 214, 176, 0.9) 100%);
+  color: #5b210b;
 }
 
 .theme-autumn .public-profile-cta-primary {
-  background: linear-gradient(135deg, #9a341c 0%, #c55725 38%, #e29a31 72%, #f2cc4b 100%) !important;
+  background: linear-gradient(135deg, #954126 0%, #b35f34 38%, #cd883f 72%, #dfb058 100%) !important;
   color: #fff9eb !important;
-  border: 1px solid rgba(255, 215, 128, 0.62);
-  box-shadow: 0 20px 40px -26px rgba(88, 34, 12, 0.56);
+  border: 1px solid rgba(231, 179, 95, 0.56);
+  box-shadow: 0 20px 40px -26px rgba(86, 41, 19, 0.45);
 }
 
 .theme-autumn .public-profile-cta-primary:hover {
-  background: linear-gradient(135deg, #a93f21 0%, #cf642b 38%, #e9a73a 72%, #f4d358 100%) !important;
+  background: linear-gradient(135deg, #a1492b 0%, #bc6838 38%, #d69448 72%, #e6bc69 100%) !important;
 }
 
 .theme-autumn .public-profile-links h2,
 .theme-autumn .public-profile-links-label {
-  color: #6d240a;
+  color: #682c13;
 }
 
 .public-profile-backdrop {
@@ -711,19 +711,19 @@
 }
 
 .theme-burnt-orange .public-profile-links h2 {
-  color: #fff6ed;
+  color: #ffffff;
 }
 
 .theme-burnt-orange .public-profile-links-label {
-  color: #fff6ed;
+  color: #ffffff;
 }
 
 .theme-maroon .public-profile-links h2 {
-  color: #fff1f1;
+  color: #ffffff;
 }
 
 .theme-maroon .public-profile-links-label {
-  color: #fff1f1;
+  color: #ffffff;
 }
 
 .theme-burnt-orange .public-profile-actions [data-slot=button] {

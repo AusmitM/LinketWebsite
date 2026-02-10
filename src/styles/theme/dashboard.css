@@ -1066,20 +1066,20 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
 
 /* Autumn atmosphere overlay */
 #dashboard-theme-scope.theme-autumn::before {
-  opacity: 0.54;
+  opacity: 0.51;
   background-image:
-    radial-gradient(170px 90px at 12% 16%, rgba(255, 227, 120, 0.44) 0%, transparent 64%),
-    radial-gradient(200px 96px at 78% 10%, rgba(214, 82, 40, 0.34) 0%, transparent 60%),
-    radial-gradient(240px 120px at 60% 68%, rgba(255, 186, 72, 0.24) 0%, transparent 68%);
+    radial-gradient(170px 90px at 12% 16%, rgba(246, 204, 116, 0.38) 0%, transparent 64%),
+    radial-gradient(200px 96px at 78% 10%, rgba(188, 84, 49, 0.28) 0%, transparent 60%),
+    radial-gradient(240px 120px at 60% 68%, rgba(235, 172, 96, 0.22) 0%, transparent 68%);
 }
 
 #dashboard-theme-scope.theme-autumn::after {
-  opacity: 0.72;
+  opacity: 0.69;
   transform: translateY(0);
   background:
-    radial-gradient(120% 80% at 20% 0%, rgba(255, 208, 94, 0.2) 0%, transparent 70%),
-    radial-gradient(120% 80% at 80% 0%, rgba(198, 66, 33, 0.2) 0%, transparent 70%),
-    linear-gradient(180deg, rgba(255, 241, 210, 0.24) 0%, transparent 55%);
+    radial-gradient(120% 80% at 20% 0%, rgba(241, 190, 103, 0.17) 0%, transparent 70%),
+    radial-gradient(120% 80% at 80% 0%, rgba(176, 73, 42, 0.17) 0%, transparent 70%),
+    linear-gradient(180deg, rgba(252, 236, 202, 0.22) 0%, transparent 55%);
 }
 
 /* Dream theme: pastel pink new linket button */

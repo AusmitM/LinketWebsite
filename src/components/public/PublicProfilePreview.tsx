@@ -68,6 +68,8 @@ export default function PublicProfilePreview({
   const hasLinks = links.length > 0;
   const hasHeadline = Boolean(headline);
   const isBurntOrange = resolvedTheme === "burnt-orange";
+  const isHookEmOrAggie =
+    resolvedTheme === "burnt-orange" || resolvedTheme === "maroon";
   const [leadFormTitle, setLeadFormTitle] = useState("Contact");
   const [hasLeadForm, setHasLeadForm] = useState(false);
 
@@ -325,7 +327,10 @@ export default function PublicProfilePreview({
 
               {hasLinks ? (
                 <div className="space-y-3">
-                  <h2 className="public-profile-links-label text-sm font-semibold uppercase tracking-[0.3em] text-muted-foreground">
+                  <h2
+                    className="public-profile-links-label text-sm font-semibold uppercase tracking-[0.3em] text-muted-foreground"
+                    style={isHookEmOrAggie ? { color: "#ffffff" } : undefined}
+                  >
                     Links
                   </h2>
                   <PublicProfileLinksList links={links} />
@@ -511,7 +516,10 @@ export default function PublicProfilePreview({
 
                 {!forceMobile && hasLinks ? (
                   <div className="space-y-3">
-                  <h2 className="public-profile-links-label text-sm font-semibold uppercase tracking-[0.3em] text-muted-foreground">
+                  <h2
+                    className="public-profile-links-label text-sm font-semibold uppercase tracking-[0.3em] text-muted-foreground"
+                    style={isHookEmOrAggie ? { color: "#ffffff" } : undefined}
+                  >
                     Links
                   </h2>
                   <PublicProfileLinksList links={links} />
