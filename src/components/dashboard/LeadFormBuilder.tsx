@@ -101,17 +101,6 @@ const FIELD_PRESETS: Array<{
     type: "long_text",
   },
   {
-    id: "voice_memo",
-    label: "Voice Memo",
-    type: "file_upload",
-    helpText: "Upload MP3, M4A, WAV, AAC, or OGG",
-    fieldOverrides: {
-      acceptedTypes: ["mp3", "m4a", "wav", "aac", "ogg"],
-      maxFiles: 1,
-      maxSizeMB: 20,
-    },
-  },
-  {
     id: "document_upload",
     label: "Document/File Upload",
     type: "file_upload",
