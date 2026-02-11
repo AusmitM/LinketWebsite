@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { LEGAL_PAGE_ACTIONS } from "@/components/site/legal-page-actions";
 import { MarketingPage, PageSection } from "@/components/site/marketing-page";
 
 export const metadata: Metadata = {
@@ -13,7 +14,7 @@ export default function AccessibilityPage() {
       kicker="Legal"
       title="Accessibility statement"
       subtitle="We are committed to providing an accessible experience for all visitors, including people who use assistive technologies."
-      actions={[]}
+      actions={LEGAL_PAGE_ACTIONS}
     >
       <PageSection title="Our commitment">
         <div className="rounded-2xl border border-border/60 bg-card/80 p-6 text-sm text-muted-foreground">

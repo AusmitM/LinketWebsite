@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { LEGAL_PAGE_ACTIONS } from "@/components/site/legal-page-actions";
 import { MarketingPage, PageSection } from "@/components/site/marketing-page";
 
 export const metadata: Metadata = {
@@ -49,7 +50,7 @@ export default function WarrantyPage() {
       kicker="Legal"
       title="Linket warranty policy"
       subtitle="Formal coverage terms for Linket hardware and related replacement support."
-      actions={[]}
+      actions={LEGAL_PAGE_ACTIONS}
     >
       <PageSection
         title="Coverage windows"

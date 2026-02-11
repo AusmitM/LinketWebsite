@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { LEGAL_PAGE_ACTIONS } from "@/components/site/legal-page-actions";
 import { MarketingPage, PageSection } from "@/components/site/marketing-page";
 
 export const metadata: Metadata = {
@@ -37,7 +38,7 @@ export default function TermsPage() {
       kicker="Legal"
       title="Terms of service"
       subtitle="Clear expectations for using Linket hardware, profiles, and analytics."
-      actions={[]}
+      actions={LEGAL_PAGE_ACTIONS}
     >
       {TERMS.map((section) => (
         <PageSection key={section.title} title={section.title}>

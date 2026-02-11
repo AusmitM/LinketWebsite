@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { LEGAL_PAGE_ACTIONS } from "@/components/site/legal-page-actions";
 import { MarketingPage, PageSection } from "@/components/site/marketing-page";
 
 export const metadata: Metadata = {
@@ -21,7 +22,7 @@ export default function SecurityPage() {
       kicker="Legal"
       title="Security at Linket"
       subtitle="We protect every tap, scan, and lead captured through Linket."
-      actions={[]}
+      actions={LEGAL_PAGE_ACTIONS}
     >
       <PageSection title="Security practices" subtitle="Built into our infrastructure and daily operations.">
         <ul className="space-y-2 rounded-2xl border border-border/60 bg-card/80 p-6 text-sm text-muted-foreground">
