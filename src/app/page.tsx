@@ -286,6 +286,9 @@ async function loadPublicProfilePreview() {
   }
 }
 
+const PRICING_WARRANTY_PDF_PATH =
+  "/docs/linket-basic-pricing-and-warranty-feb-2026.pdf";
+
 // Footer link groups (kept minimal to match current nav).
 const FOOTER_LINK_GROUPS = [
   {
@@ -295,6 +298,7 @@ const FOOTER_LINK_GROUPS = [
       { label: "Terms", href: "/terms" },
       { label: "Security", href: "/security" },
       { label: "Accessibility", href: "/accessibility" },
+      { label: "Warranty", href: PRICING_WARRANTY_PDF_PATH },
     ],
   },
 ] as const;
@@ -304,53 +308,6 @@ const FOOTER_SOCIALS = [
   { label: "Twitter", href: "https://twitter.com/linket", icon: Twitter },
   { label: "Instagram", href: "https://instagram.com/linket", icon: Instagram },
   { label: "YouTube", href: "https://youtube.com/@linket", icon: Youtube },
-] as const;
-
-const PRICING_WARRANTY_PDF_PATH =
-  "/docs/linket-basic-pricing-and-warranty-feb-2026.pdf";
-
-type WarrantyCoverageRow = {
-  coverage: string;
-  duration: string;
-  covers: string;
-  resolution: string;
-};
-
-const WARRANTY_COVERAGE_ROWS: WarrantyCoverageRow[] = [
-  {
-    coverage: "Arrives Right",
-    duration: "30 days",
-    covers:
-      "NFC not working on arrival, wrong item, manufacturing defect.",
-    resolution: "Free replacement, Linket covers shipping.",
-  },
-  {
-    coverage: "Functionality (individuals)",
-    duration: "6 months",
-    covers:
-      "NFC chip failure under normal use, structural failure in normal keychain use.",
-    resolution: "One replacement per device.",
-  },
-  {
-    coverage: "Functionality (businesses)",
-    duration: "12 months",
-    covers: "Same as above, plus batch defect handling for affected units.",
-    resolution: "Replace affected units.",
-  },
-];
-
-const WARRANTY_EXCLUSIONS = [
-  "Lost items.",
-  "Cosmetic wear (scratches, fading, scuffs).",
-  "Water damage or prolonged immersion.",
-  "Heat damage (car dashboard, near flame, high temperature).",
-  "Crushing, prying, drilling, heavy impact, or modifications.",
-] as const;
-
-const WARRANTY_CLAIM_STEPS = [
-  "Submit order number + photo or short video of the issue.",
-  "Support confirms eligibility within 2 business days.",
-  "Replacement ships with standard shipping (expedited options available).",
 ] as const;
 
 type JourneyStep = {
@@ -1312,36 +1269,6 @@ function LandingFooter() {
                 </Link>
               </div>
             </div>
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/60">
-                Warranty summary
-              </p>
-              <ul className="mt-3 space-y-2 text-xs text-white/75">
-                {WARRANTY_COVERAGE_ROWS.map((row) => (
-                  <li key={row.coverage}>
-                    <span className="font-semibold text-white">{row.coverage}:</span>{" "}
-                    {row.duration}
-                  </li>
-                ))}
-              </ul>
-              <ul className="mt-3 list-disc space-y-1 pl-4 text-xs text-white/60">
-                {WARRANTY_EXCLUSIONS.slice(0, 3).map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-              <p className="mt-2 text-xs text-white/60">
-                Also excludes heat/water damage and misuse.
-              </p>
-              <p className="mt-2 text-xs text-white/60">
-                Claims: {WARRANTY_CLAIM_STEPS[0]}
-              </p>
-              <Link
-                href={PRICING_WARRANTY_PDF_PATH}
-                className="mt-3 inline-flex rounded-full border border-white/25 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-white/85 transition hover:text-white"
-              >
-                Full pricing + warranty PDF
-              </Link>
-            </div>
           </div>
         </div>
         {/* Footer bottom row with legal shortcuts. */}
@@ -1358,6 +1285,12 @@ function LandingFooter() {
             </Link>
             <Link href="/security" className="transition hover:text-white">
               Security
+            </Link>
+            <Link
+              href={PRICING_WARRANTY_PDF_PATH}
+              className="transition hover:text-white"
+            >
+              Warranty
             </Link>
             <Link
               href="mailto:hello@linket.com"
