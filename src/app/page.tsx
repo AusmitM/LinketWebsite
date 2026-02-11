@@ -18,18 +18,14 @@ import {
   Focus,
   Instagram,
   LineChart,
-  Pencil,
-  UserRound,
   Search,
   Sparkles,
-  Star,
   Twitter,
   Youtube,
 } from "lucide-react";
-import { CreativePricing } from "@/components/ui/creative-pricing";
-import type { PricingTier } from "@/components/ui/creative-pricing";
 import { FeatureSteps } from "@/components/landing/LandingLazySections";
 import ConsultForm from "@/components/landing/ConsultForm";
+import LinketPlansToggle from "@/components/landing/LinketPlansToggle";
 import PublicProfilePreview from "@/components/public/PublicProfilePreview";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -310,49 +306,52 @@ const FOOTER_SOCIALS = [
   { label: "YouTube", href: "https://youtube.com/@linket", icon: Youtube },
 ] as const;
 
-// Pricing tiers fed into the CreativePricing component.
-const PRICING_TIERS: PricingTier[] = [
+const PRICING_WARRANTY_PDF_PATH =
+  "/docs/linket-basic-pricing-and-warranty-feb-2026.pdf";
+
+type WarrantyCoverageRow = {
+  coverage: string;
+  duration: string;
+  covers: string;
+  resolution: string;
+};
+
+const WARRANTY_COVERAGE_ROWS: WarrantyCoverageRow[] = [
   {
-    name: "Field Starter",
-    icon: <Pencil className="h-6 w-6" />,
-    price: 39,
-    description: "Equip solo sellers with tap-to-share kits.",
-    color: "amber",
-    features: [
-      "1 Linket hardware kit",
-      "Live profile editor",
-      "Tap + QR analytics",
-      "Email support",
-    ],
+    coverage: "Arrives Right",
+    duration: "30 days",
+    covers:
+      "NFC not working on arrival, wrong item, manufacturing defect.",
+    resolution: "Free replacement, Linket covers shipping.",
   },
   {
-    name: "Team Builder",
-    icon: <Star className="h-6 w-6" />,
-    price: 119,
-    description: "Most popular plan for pods and clubs.",
-    color: "blue",
-    features: [
-      "Up to 10 kits",
-      "Brand-safe templates",
-      "Collab dashboard",
-      "Priority onboarding",
-    ],
-    popular: true,
+    coverage: "Functionality (individuals)",
+    duration: "6 months",
+    covers:
+      "NFC chip failure under normal use, structural failure in normal keychain use.",
+    resolution: "One replacement per device.",
   },
   {
-    name: "Enterprise Studio",
-    icon: <Sparkles className="h-6 w-6" />,
-    price: 279,
-    description: "Roll Linket across campuses or field teams.",
-    color: "purple",
-    features: [
-      "Unlimited kits",
-      "CRM + webhook exports",
-      "Dedicated strategist",
-      "Custom hardware runs",
-    ],
+    coverage: "Functionality (businesses)",
+    duration: "12 months",
+    covers: "Same as above, plus batch defect handling for affected units.",
+    resolution: "Replace affected units.",
   },
 ];
+
+const WARRANTY_EXCLUSIONS = [
+  "Lost items.",
+  "Cosmetic wear (scratches, fading, scuffs).",
+  "Water damage or prolonged immersion.",
+  "Heat damage (car dashboard, near flame, high temperature).",
+  "Crushing, prying, drilling, heavy impact, or modifications.",
+] as const;
+
+const WARRANTY_CLAIM_STEPS = [
+  "Submit order number + photo or short video of the issue.",
+  "Support confirms eligibility within 2 business days.",
+  "Replacement ships with standard shipping (expedited options available).",
+] as const;
 
 type JourneyStep = {
   title: string;
@@ -495,6 +494,11 @@ const FAQ = [
     question: "How fast do orders ship?",
     answer:
       "Single Linkets ship within 48 hours. Team and event kits include a dedicated concierge for rush coordination.",
+  },
+  {
+    question: "What is the best-value starter option?",
+    answer:
+      "The Web + Linket Bundle is $59 one-time and includes 12 months of Paid Web-Only (Pro). After that, keep Pro for $3/month or $30/year.",
   },
   {
     question: "Is data collection privacy-centered?",
@@ -1155,13 +1159,7 @@ function PricingSection() {
       id="pricing"
       className="landing-alt-font landing-fade-up relative mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-24"
     >
-      {/* Pricing component handles tier layout and CTA styling. */}
-      <CreativePricing
-        tag="Linket plans"
-        title="The tap-to-share stack for every crew"
-        description="Choose the plan that keeps every intro warm - from solo sellers to nationwide teams."
-        tiers={PRICING_TIERS}
-      />
+      <LinketPlansToggle />
     </section>
   );
 }
@@ -1313,6 +1311,36 @@ function LandingFooter() {
                   View demo
                 </Link>
               </div>
+            </div>
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/60">
+                Warranty summary
+              </p>
+              <ul className="mt-3 space-y-2 text-xs text-white/75">
+                {WARRANTY_COVERAGE_ROWS.map((row) => (
+                  <li key={row.coverage}>
+                    <span className="font-semibold text-white">{row.coverage}:</span>{" "}
+                    {row.duration}
+                  </li>
+                ))}
+              </ul>
+              <ul className="mt-3 list-disc space-y-1 pl-4 text-xs text-white/60">
+                {WARRANTY_EXCLUSIONS.slice(0, 3).map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+              <p className="mt-2 text-xs text-white/60">
+                Also excludes heat/water damage and misuse.
+              </p>
+              <p className="mt-2 text-xs text-white/60">
+                Claims: {WARRANTY_CLAIM_STEPS[0]}
+              </p>
+              <Link
+                href={PRICING_WARRANTY_PDF_PATH}
+                className="mt-3 inline-flex rounded-full border border-white/25 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-white/85 transition hover:text-white"
+              >
+                Full pricing + warranty PDF
+              </Link>
             </div>
           </div>
         </div>
