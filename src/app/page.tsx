@@ -286,9 +286,6 @@ async function loadPublicProfilePreview() {
   }
 }
 
-const PRICING_WARRANTY_PDF_PATH =
-  "/docs/linket-basic-pricing-and-warranty-feb-2026.pdf";
-
 // Footer link groups (kept minimal to match current nav).
 const FOOTER_LINK_GROUPS = [
   {
@@ -298,7 +295,7 @@ const FOOTER_LINK_GROUPS = [
       { label: "Terms", href: "/terms" },
       { label: "Security", href: "/security" },
       { label: "Accessibility", href: "/accessibility" },
-      { label: "Warranty", href: PRICING_WARRANTY_PDF_PATH },
+      { label: "Warranty", href: "/warranty" },
     ],
   },
 ] as const;
@@ -1287,7 +1284,7 @@ function LandingFooter() {
               Security
             </Link>
             <Link
-              href={PRICING_WARRANTY_PDF_PATH}
+              href="/warranty"
               className="transition hover:text-white"
             >
               Warranty
