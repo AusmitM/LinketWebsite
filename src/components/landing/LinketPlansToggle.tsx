@@ -123,14 +123,23 @@ export default function LinketPlansToggle() {
       title={title}
       description={description}
       controls={
-        <div className="inline-flex rounded-full border border-[#ffd7c0] bg-white p-1">
+        <div className="relative grid grid-cols-2 rounded-full border border-[#ffd7c0] bg-white p-1">
+          <span
+            className={cn(
+              "pointer-events-none absolute inset-y-1 left-1 w-[calc(50%-0.25rem)] rounded-full transition-all duration-300 ease-out",
+              audience === "individual"
+                ? "translate-x-0 bg-[#fff2e6] shadow-[0_6px_18px_rgba(180,83,9,0.18)]"
+                : "translate-x-full bg-[#ecf6ff] shadow-[0_6px_18px_rgba(29,78,216,0.2)]"
+            )}
+            aria-hidden
+          />
           <button
             type="button"
             onClick={() => setAudience("individual")}
             className={cn(
-              "rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition sm:text-sm",
+              "relative z-10 rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition-colors duration-300 sm:text-sm",
               audience === "individual"
-                ? "bg-[#fff2e6] text-[#b45309]"
+                ? "text-[#b45309]"
                 : "text-slate-600 hover:text-slate-900"
             )}
             aria-pressed={audience === "individual"}
@@ -141,9 +150,9 @@ export default function LinketPlansToggle() {
             type="button"
             onClick={() => setAudience("business")}
             className={cn(
-              "rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition sm:text-sm",
+              "relative z-10 rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition-colors duration-300 sm:text-sm",
               audience === "business"
-                ? "bg-[#ecf6ff] text-[#1d4ed8]"
+                ? "text-[#1d4ed8]"
                 : "text-slate-600 hover:text-slate-900"
             )}
             aria-pressed={audience === "business"}
