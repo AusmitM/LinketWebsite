@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
@@ -13,26 +13,39 @@ import { Download } from "lucide-react";
 
 const numberFormatter = new Intl.NumberFormat("en-US");
 const shortDate = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" });
-const longDate = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+const mobileDate = new Intl.DateTimeFormat("en-US", { month: "numeric", day: "numeric" });
 
 const RANGES = [
   { label: "7 days", value: 7 },
   { label: "30 days", value: 30 },
   { label: "90 days", value: 90 },
 ] as const;
+const DEFAULT_RANGE = 30;
 const ANALYTICS_RANGE_STORAGE_KEY = "linket:analytics:range";
+const ANALYTICS_CACHE_TTL_MS = 60_000;
 
 type TimelineDatum = {
   date: string;
   label: string;
-  scans: number;
-  leads: number;
+  scans: number | null;
+  leads: number | null;
+};
+
+type ConversionDatum = {
+  date: string;
+  label: string;
+  rate: number;
 };
 
 type ViewState = {
   loading: boolean;
   error: string | null;
   analytics: UserAnalytics | null;
+};
+
+type CachedAnalyticsEntry = {
+  fetchedAt: number;
+  payload: UserAnalytics;
 };
 
 type DeltaBadge = {
@@ -43,21 +56,42 @@ type DeltaBadge = {
 export default function AnalyticsContent() {
   const [userId, setUserId] = useState<string | null>(null);
   const [reloadToken, setReloadToken] = useState(0);
-  const [range, setRange] = useState<number>(() => {
+  const [isPhone, setIsPhone] = useState(false);
+  const [range, setRange] = useState<number>(DEFAULT_RANGE);
+  const [hasLoadedPersistedRange, setHasLoadedPersistedRange] = useState(false);
+  const analyticsCacheRef = useRef<Map<string, CachedAnalyticsEntry>>(new Map());
+  const analyticsInFlightRef = useRef<Map<string, Promise<UserAnalytics>>>(new Map());
+  const lastReloadTokenRef = useRef(0);
+
+  useEffect(() => {
     const saved = Number(readLocalStorage(ANALYTICS_RANGE_STORAGE_KEY));
     if (
       Number.isFinite(saved) &&
       RANGES.some((option) => option.value === saved)
     ) {
-      return saved;
+      setRange(saved);
     }
-    return 30;
-  });
+    setHasLoadedPersistedRange(true);
+  }, []);
   const [{ loading, error, analytics }, setState] = useState<ViewState>({ loading: true, error: null, analytics: null });
 
   useEffect(() => {
+    if (!hasLoadedPersistedRange) return;
     writeLocalStorage(ANALYTICS_RANGE_STORAGE_KEY, String(range));
-  }, [range]);
+  }, [hasLoadedPersistedRange, range]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mediaQuery = window.matchMedia("(max-width: 640px)");
+    const update = () => setIsPhone(mediaQuery.matches);
+    update();
+    if (typeof mediaQuery.addEventListener === "function") {
+      mediaQuery.addEventListener("change", update);
+      return () => mediaQuery.removeEventListener("change", update);
+    }
+    mediaQuery.addListener(update);
+    return () => mediaQuery.removeListener(update);
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -79,31 +113,95 @@ export default function AnalyticsContent() {
     };
   }, []);
 
-  useEffect(() => {
-    if (!userId) return;
-    let cancelled = false;
-    setState((prev) => ({ ...prev, loading: true, error: null }));
+  const fetchAnalyticsForRange = useCallback(
+    async (activeUserId: string, days: number, timezoneOffsetMinutes: number) => {
+      const cacheKey = `${activeUserId}:${days}:${timezoneOffsetMinutes}`;
+      const inFlight = analyticsInFlightRef.current.get(cacheKey);
+      if (inFlight) return inFlight;
 
-    async function load() {
-      try {
-        if (!userId) throw new Error("User ID is missing");
-        const analyticsUrl = `/api/analytics/supabase?userId=${encodeURIComponent(userId)}&days=${range}`;
+      const request = (async () => {
+        const analyticsUrl = `/api/analytics/supabase?userId=${encodeURIComponent(activeUserId)}&days=${days}&tzOffsetMinutes=${encodeURIComponent(String(timezoneOffsetMinutes))}`;
         const response = await fetch(analyticsUrl, { cache: "no-store" });
         if (!response.ok) {
           const info = await response.json().catch(() => ({}));
           throw new Error(info?.error || `Analytics request failed (${response.status})`);
         }
         const payload = (await response.json()) as UserAnalytics;
+        analyticsCacheRef.current.set(cacheKey, { fetchedAt: Date.now(), payload });
+        return payload;
+      })();
+
+      analyticsInFlightRef.current.set(cacheKey, request);
+      try {
+        return await request;
+      } finally {
+        analyticsInFlightRef.current.delete(cacheKey);
+      }
+    },
+    []
+  );
+
+  const prefetchOtherRanges = useCallback(
+    (activeUserId: string, activeRange: number, timezoneOffsetMinutes: number) => {
+      for (const option of RANGES) {
+        if (option.value === activeRange) continue;
+        const cacheKey = `${activeUserId}:${option.value}:${timezoneOffsetMinutes}`;
+        const cached = analyticsCacheRef.current.get(cacheKey);
+        const isFresh = cached ? Date.now() - cached.fetchedAt < ANALYTICS_CACHE_TTL_MS : false;
+        if (isFresh) continue;
+        void fetchAnalyticsForRange(activeUserId, option.value, timezoneOffsetMinutes).catch(() => undefined);
+      }
+    },
+    [fetchAnalyticsForRange]
+  );
+
+  useEffect(() => {
+    if (!userId) return;
+    let cancelled = false;
+    const timezoneOffsetMinutes = new Date().getTimezoneOffset();
+    const cacheKey = `${userId}:${range}:${timezoneOffsetMinutes}`;
+    const cached = analyticsCacheRef.current.get(cacheKey);
+    const isCacheFresh = cached ? Date.now() - cached.fetchedAt < ANALYTICS_CACHE_TTL_MS : false;
+    const hasForcedRefresh = reloadToken !== lastReloadTokenRef.current;
+    lastReloadTokenRef.current = reloadToken;
+
+    if (cached) {
+      setState({
+        loading: false,
+        error: cached.payload.meta.available ? null : "Analytics requires a configured Supabase service role key.",
+        analytics: cached.payload,
+      });
+      if (isCacheFresh && !hasForcedRefresh) {
+        prefetchOtherRanges(userId, range, timezoneOffsetMinutes);
+        return () => {
+          cancelled = true;
+        };
+      }
+    } else {
+      setState((prev) => ({ ...prev, loading: true, error: null }));
+    }
+
+    async function load() {
+      try {
+        if (!userId) throw new Error("User ID is missing");
+        const payload = await fetchAnalyticsForRange(userId, range, timezoneOffsetMinutes);
         if (!cancelled) {
           setState({
             loading: false,
             error: payload.meta.available ? null : "Analytics requires a configured Supabase service role key.",
             analytics: payload,
           });
+          prefetchOtherRanges(userId, range, timezoneOffsetMinutes);
         }
       } catch (err) {
         const message = err instanceof Error ? err.message : "Unable to load analytics";
-        if (!cancelled) setState({ loading: false, error: message, analytics: null });
+        if (!cancelled) {
+          if (cached) {
+            setState((prev) => ({ ...prev, loading: false, error: message }));
+          } else {
+            setState({ loading: false, error: message, analytics: null });
+          }
+        }
       }
     }
 
@@ -111,7 +209,7 @@ export default function AnalyticsContent() {
     return () => {
       cancelled = true;
     };
-  }, [userId, range, reloadToken]);
+  }, [fetchAnalyticsForRange, prefetchOtherRanges, reloadToken, range, userId]);
 
   useEffect(() => {
     if (!userId || typeof window === "undefined") return;
@@ -209,17 +307,18 @@ export default function AnalyticsContent() {
   }, [userId]);
 
   const totals = analytics?.totals;
-  const funnel = analytics?.funnel;
 
   const chartData: TimelineDatum[] = useMemo(() => {
     if (!analytics) return [];
     return analytics.timeline.map((point) => ({
       date: point.date,
-      label: shortDate.format(new Date(point.date)),
+      label: formatTimelineLabel(point.date),
       scans: point.scans,
       leads: point.leads,
     }));
   }, [analytics]);
+  const currentTimelineDate =
+    chartData.length > 0 ? chartData[chartData.length - 1].date : null;
 
   const rangeTotals = useMemo(() => {
     if (!analytics) return { scans: 0, leads: 0, conversion: 0 };
@@ -229,7 +328,7 @@ export default function AnalyticsContent() {
     return { scans, leads, conversion };
   }, [analytics]);
 
-  const conversionSeries = useMemo(() => {
+  const conversionSeries: ConversionDatum[] = useMemo(() => {
     if (!analytics) return [];
     return analytics.timeline.map((point) => ({
       date: point.date,
@@ -279,13 +378,13 @@ export default function AnalyticsContent() {
   }, [analytics, range]);
 
   return (
-    <div className="space-y-6" data-tour="analytics-overview">
-      <header className="flex flex-wrap items-center justify-between gap-3">
+    <div className="dashboard-analytics-page w-full space-y-6" data-tour="analytics-overview">
+      <header className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
         <div>
           <h1 className="text-xl font-semibold text-foreground">Analytics</h1>
           <p className="text-sm text-muted-foreground">Track scans, captured leads, and conversion trends.</p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="dashboard-analytics-range flex w-full flex-nowrap items-center gap-2 overflow-x-auto pb-1 sm:w-auto sm:flex-wrap sm:overflow-visible sm:pb-0">
           {RANGES.map((option) => (
             <Button
               key={option.value}
@@ -307,7 +406,7 @@ export default function AnalyticsContent() {
             type="button"
             variant="outline"
             size="sm"
-            className="rounded-full"
+            className="rounded-full shrink-0"
             onClick={handleExport}
             disabled={!analytics || analytics.timeline.length === 0}
           >
@@ -332,7 +431,7 @@ export default function AnalyticsContent() {
         </Card>
       )}
 
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="dashboard-analytics-summary-grid grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard
           label="Scans in range"
           value={analytics ? numberFormatter.format(rangeTotals.scans) : loading ? "--" : "0"}
@@ -360,103 +459,81 @@ export default function AnalyticsContent() {
 
       <Card className="dashboard-analytics-card rounded-3xl border bg-card/80 shadow-sm">
         <CardHeader>
-          <CardTitle className="text-lg font-semibold">Onboarding funnel</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Landing CTA click - signup start - signup complete - first profile publish - first lead.
-          </p>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="space-y-3">
-              <div className="dashboard-skeleton h-4 w-44 animate-pulse rounded bg-muted" data-skeleton />
-              <div className="dashboard-skeleton h-2 w-full animate-pulse rounded bg-muted" data-skeleton />
-              <div className="dashboard-skeleton h-10 w-full animate-pulse rounded-2xl bg-muted" data-skeleton />
-              <div className="dashboard-skeleton h-10 w-full animate-pulse rounded-2xl bg-muted" data-skeleton />
-              <div className="dashboard-skeleton h-10 w-full animate-pulse rounded-2xl bg-muted" data-skeleton />
-            </div>
-          ) : !funnel || funnel.steps.length === 0 ? (
-            <EmptyState message="No funnel data yet." />
-          ) : (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-xs uppercase tracking-wide text-muted-foreground">
-                  Progress
-                </span>
-                <span className="text-sm font-semibold text-foreground">
-                  {funnel.completedSteps}/{funnel.totalSteps} steps
-                </span>
-              </div>
-              <div className="h-2 overflow-hidden rounded-full bg-muted">
-                <div
-                  className="h-full rounded-full bg-primary transition-all"
-                  style={{ width: `${Math.round(funnel.completionRate * 100)}%` }}
-                />
-              </div>
-              <div className="space-y-2">
-                {funnel.steps.map((step) => (
-                  <div
-                    key={step.key}
-                    className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border px-3 py-2"
-                  >
-                    <div>
-                      <div className="text-sm font-medium text-foreground">
-                        {step.label}
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        {step.firstAt
-                          ? `First seen ${longDate.format(new Date(step.firstAt))}`
-                          : "Not completed yet"}
-                      </p>
-                    </div>
-                    <div className="text-right text-xs text-muted-foreground">
-                      <div className="font-semibold text-foreground">
-                        {numberFormatter.format(step.eventCount)} events
-                      </div>
-                      {step.conversionFromPrevious !== null ? (
-                        <div>
-                          {(step.conversionFromPrevious * 100).toFixed(0)}% from prev
-                        </div>
-                      ) : null}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card className="dashboard-analytics-card rounded-3xl border bg-card/80 shadow-sm">
-        <CardHeader>
           <CardTitle className="text-lg font-semibold">Scans and leads</CardTitle>
-          <p className="text-sm text-muted-foreground">Daily totals for the selected window.</p>
+          <p className="text-sm text-muted-foreground">Daily totals for the selected window through today.</p>
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="dashboard-skeleton h-72 w-full animate-pulse rounded-2xl bg-muted" data-skeleton />
+            <div className="dashboard-skeleton h-64 w-full animate-pulse rounded-2xl bg-muted sm:h-72" data-skeleton />
           ) : chartData.length === 0 ? (
             <EmptyState
               message="No scans recorded in this range."
               actionLabel="Refresh"
               onAction={() => setReloadToken((value) => value + 1)}
             />
+          ) : isPhone ? (
+            <PhoneScansLeadsChart data={chartData} />
           ) : (
-            <div className="dashboard-analytics-chart h-72 w-full">
+            <div className="dashboard-analytics-chart h-64 w-full sm:h-72">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData} margin={{ left: 0, right: 0, top: 12, bottom: 0 }}>
+                <LineChart
+                  data={chartData}
+                  margin={isPhone ? { left: -10, right: 14, top: 8, bottom: 0 } : { left: 0, right: 14, top: 12, bottom: 0 }}
+                >
                   <CartesianGrid vertical={false} strokeDasharray="4 4" className="stroke-muted" />
-                  <XAxis dataKey="label" tickLine={false} axisLine={false} minTickGap={22} className="text-xs text-muted-foreground" />
+                  <XAxis
+                    dataKey="label"
+                    tickLine={false}
+                    axisLine={false}
+                    minTickGap={isPhone ? 30 : 22}
+                    interval="preserveStartEnd"
+                    tickMargin={isPhone ? 6 : 8}
+                    tick={{ fontSize: isPhone ? 10 : 12 }}
+                    className="text-xs text-muted-foreground"
+                  />
                   <YAxis
                     tickFormatter={(val) => numberFormatter.format(val as number)}
                     tickLine={false}
                     axisLine={false}
-                    width={48}
+                    width={isPhone ? 36 : 48}
+                    tickCount={isPhone ? 4 : 6}
+                    allowDecimals={false}
+                    tick={{ fontSize: isPhone ? 10 : 12 }}
                     className="text-xs text-muted-foreground"
                   />
                   <Tooltip content={<SeriesTooltip />} wrapperStyle={{ outline: "none" }} />
-                  <Legend wrapperStyle={{ fontSize: "0.75rem" }} />
-                  <Line type="monotone" dataKey="scans" name="Scans" stroke="var(--primary)" strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="leads" name="Leads" stroke="var(--accent)" strokeWidth={2} dot={false} />
+                  <Legend
+                    iconSize={isPhone ? 8 : 10}
+                    wrapperStyle={{ fontSize: isPhone ? "0.68rem" : "0.75rem" }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="scans"
+                    name="Scans"
+                    stroke="var(--primary)"
+                    strokeWidth={2}
+                    dot={
+                      <CurrentTimelineDot
+                        targetDate={currentTimelineDate}
+                        color="var(--primary)"
+                      />
+                    }
+                    connectNulls={false}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="leads"
+                    name="Leads"
+                    stroke="var(--accent)"
+                    strokeWidth={2}
+                    dot={
+                      <CurrentTimelineDot
+                        targetDate={currentTimelineDate}
+                        color="var(--accent)"
+                      />
+                    }
+                    connectNulls={false}
+                  />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -471,24 +548,40 @@ export default function AnalyticsContent() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="dashboard-skeleton h-56 w-full animate-pulse rounded-2xl bg-muted" data-skeleton />
+            <div className="dashboard-skeleton h-52 w-full animate-pulse rounded-2xl bg-muted sm:h-56" data-skeleton />
           ) : conversionSeries.length === 0 ? (
             <EmptyState
               message="No data available yet."
               actionLabel="Try 90 days"
               onAction={() => setRange(90)}
             />
+          ) : isPhone ? (
+            <PhoneConversionTrend data={conversionSeries} />
           ) : (
-            <div className="dashboard-analytics-chart h-56 w-full">
+            <div className="dashboard-analytics-chart h-52 w-full sm:h-56">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={conversionSeries} margin={{ left: 0, right: 0, top: 12, bottom: 0 }}>
+                <LineChart
+                  data={conversionSeries}
+                  margin={isPhone ? { left: -8, right: 14, top: 8, bottom: 0 } : { left: 0, right: 14, top: 12, bottom: 0 }}
+                >
                   <CartesianGrid vertical={false} strokeDasharray="4 4" className="stroke-muted" />
-                  <XAxis dataKey="label" tickLine={false} axisLine={false} minTickGap={22} className="text-xs text-muted-foreground" />
+                  <XAxis
+                    dataKey="label"
+                    tickLine={false}
+                    axisLine={false}
+                    minTickGap={isPhone ? 30 : 22}
+                    interval="preserveStartEnd"
+                    tickMargin={isPhone ? 6 : 8}
+                    tick={{ fontSize: isPhone ? 10 : 12 }}
+                    className="text-xs text-muted-foreground"
+                  />
                   <YAxis
                     tickFormatter={(val) => `${(Number(val) * 100).toFixed(0)}%`}
                     tickLine={false}
                     axisLine={false}
-                    width={50}
+                    width={isPhone ? 40 : 50}
+                    tickCount={isPhone ? 4 : 6}
+                    tick={{ fontSize: isPhone ? 10 : 12 }}
                     className="text-xs text-muted-foreground"
                     domain={[0, 1]}
                   />
@@ -557,34 +650,51 @@ export default function AnalyticsContent() {
                 <div className="dashboard-skeleton h-12 animate-pulse rounded-2xl bg-muted" data-skeleton />
               </div>
             ) : analytics?.topLinks?.length ? (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {analytics.topLinks.map((link) => {
                   const clickShare =
                     topLinksTotalClicks > 0 ? link.clicks / topLinksTotalClicks : 0;
+                  const sharePercent = clickShare * 100;
+                  const barPercent =
+                    link.clicks > 0 ? Math.max(4, Math.round(sharePercent)) : 0;
+                  const displayUrl = formatLinkUrl(link.url);
                   return (
-                    <div key={link.id} className="space-y-2 rounded-2xl border px-3 py-2">
-                      <div className="flex flex-wrap items-center justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="truncate text-sm font-medium text-foreground">
+                    <div
+                      key={link.id}
+                      className="space-y-3 rounded-2xl border border-border/70 bg-background/20 px-4 py-3"
+                    >
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="min-w-0 space-y-1">
+                          <div className="truncate text-base font-semibold text-foreground">
                             {link.title}
                           </div>
-                          <p className="truncate text-xs text-muted-foreground">
-                            {link.handle ? `${link.handle} • ` : ""}
-                            {link.url}
-                          </p>
+                          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+                            {link.handle ? (
+                              <span className="rounded-full bg-muted px-2 py-0.5 font-medium text-foreground/80">
+                                {link.handle}
+                              </span>
+                            ) : null}
+                            <span className="min-w-0 truncate">{displayUrl}</span>
+                          </div>
                         </div>
-                        <div className="text-right text-xs text-muted-foreground">
-                          <div className="font-semibold text-foreground">
+                        <div className="flex items-baseline justify-between gap-3 text-xs text-muted-foreground sm:flex-col sm:items-end sm:justify-start sm:gap-0.5">
+                          <div className="text-base font-semibold text-foreground">
                             {numberFormatter.format(link.clicks)} clicks
                           </div>
-                          <div>{(clickShare * 100).toFixed(1)}% share</div>
+                          <div>{sharePercent.toFixed(1)}% share</div>
                         </div>
                       </div>
-                      <div className="h-1.5 overflow-hidden rounded-full bg-muted">
-                        <div
-                          className="h-full rounded-full bg-primary transition-all"
-                          style={{ width: `${Math.max(4, Math.round(clickShare * 100))}%` }}
-                        />
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between text-[11px] uppercase tracking-wide text-muted-foreground">
+                          <span>Share</span>
+                          <span>{sharePercent.toFixed(1)}%</span>
+                        </div>
+                        <div className="h-2 overflow-hidden rounded-full bg-muted/80">
+                          <div
+                            className="h-full rounded-full bg-primary transition-all duration-500"
+                            style={{ width: `${barPercent}%` }}
+                          />
+                        </div>
                       </div>
                     </div>
                   );
@@ -614,8 +724,8 @@ type StatCardProps = {
 
 function StatCard({ label, value, helper, delta }: StatCardProps) {
   return (
-    <Card className="dashboard-analytics-card rounded-3xl border bg-card/80 shadow-sm">
-      <CardHeader className="flex-row items-start justify-between gap-3 space-y-0">
+    <Card className="dashboard-analytics-card min-w-0 rounded-3xl border bg-card/80 shadow-sm">
+      <CardHeader className="flex-col items-center justify-center gap-2 space-y-0 text-center sm:flex-row sm:flex-wrap sm:items-start sm:justify-between sm:text-left sm:gap-3">
         <CardTitle className="text-sm text-muted-foreground">{label}</CardTitle>
         {delta ? (
           <span
@@ -630,37 +740,127 @@ function StatCard({ label, value, helper, delta }: StatCardProps) {
           </span>
         ) : null}
       </CardHeader>
-      <CardContent className="space-y-1">
-        <div className="text-3xl font-semibold text-foreground">{value}</div>
+      <CardContent className="space-y-1 text-center sm:text-left">
+        <div className="text-2xl font-semibold text-foreground sm:text-3xl">{value}</div>
         {helper && <div className="text-xs text-muted-foreground">{helper}</div>}
       </CardContent>
     </Card>
   );
 }
 
+function PhoneScansLeadsChart({ data }: { data: TimelineDatum[] }) {
+  const points = data.slice(-7);
+  const maxValue = Math.max(
+    1,
+    ...points.map((point) => Math.max(point.scans ?? 0, point.leads ?? 0))
+  );
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-3 text-[11px] font-medium text-muted-foreground">
+        <span className="inline-flex items-center gap-1.5">
+          <span className="h-2 w-2 rounded-full bg-primary" />
+          Scans
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="h-2 w-2 rounded-full bg-accent" />
+          Leads
+        </span>
+      </div>
+      <div
+        className="grid gap-2"
+        style={{ gridTemplateColumns: `repeat(${points.length}, minmax(0, 1fr))` }}
+      >
+        {points.map((point) => {
+          const scans = point.scans ?? 0;
+          const leads = point.leads ?? 0;
+          const scansHeight = scans > 0 ? Math.max(6, Math.round((scans / maxValue) * 100)) : 0;
+          const leadsHeight = leads > 0 ? Math.max(6, Math.round((leads / maxValue) * 100)) : 0;
+          return (
+            <div key={point.date} className="space-y-1">
+              <div className="flex h-28 items-end justify-center gap-1 rounded-xl border bg-muted/25 px-1.5 py-2">
+                <div
+                  className="w-2 rounded-full bg-primary/90"
+                  style={{ height: `${scansHeight}%` }}
+                  aria-label={`${scans} scans`}
+                />
+                <div
+                  className="w-2 rounded-full bg-accent/90"
+                  style={{ height: `${leadsHeight}%` }}
+                  aria-label={`${leads} leads`}
+                />
+              </div>
+              <div className="text-center text-[10px] font-medium text-muted-foreground">
+                {formatMobileDate(point.date)}
+              </div>
+              <div className="text-center text-[9px] leading-tight">
+                <span className="block font-medium text-primary">{numberFormatter.format(scans)} scans</span>
+                <span className="block font-medium text-accent">{numberFormatter.format(leads)} leads</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function PhoneConversionTrend({ data }: { data: ConversionDatum[] }) {
+  const points = data.slice(-7);
+
+  return (
+    <div className="space-y-2.5">
+      {points.map((point) => {
+        const percent = Math.max(0, Math.min(100, point.rate * 100));
+        const barWidth = percent > 0 ? Math.max(4, Math.round(percent)) : 0;
+        return (
+          <div key={point.date} className="space-y-1">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-medium text-muted-foreground">{formatMobileDate(point.date)}</span>
+              <span className="font-semibold text-foreground">{percent.toFixed(1)}%</span>
+            </div>
+            <div className="h-2 overflow-hidden rounded-full bg-muted/70">
+              <div
+                className="h-full rounded-full bg-primary transition-all duration-500"
+                style={{ width: `${barWidth}%` }}
+                aria-label={`${percent.toFixed(1)}% conversion`}
+              />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 type SeriesTooltipProps = {
   active?: boolean;
-  payload?: Array<{ name: string; value: number }>;
+  payload?: Array<{ name: string; value: number | null }>;
   label?: string;
 };
 
 function SeriesTooltip({ active, payload, label }: SeriesTooltipProps) {
   if (!active || !payload || payload.length === 0) return null;
-  const scans = payload.find((item) => item.name === "Scans")?.value ?? 0;
-  const leads = payload.find((item) => item.name === "Leads")?.value ?? 0;
+  const scans = payload.find((item) => item.name === "Scans")?.value ?? null;
+  const leads = payload.find((item) => item.name === "Leads")?.value ?? null;
+  const hasData = typeof scans === "number" || typeof leads === "number";
   return (
     <div className="rounded-md border border-border/70 bg-background/95 px-3 py-2 text-xs shadow">
       <div className="font-medium text-foreground">{label}</div>
-      <div className="mt-1 space-y-1">
-        <div className="flex items-center justify-between gap-6">
-          <span className="text-muted-foreground">Scans</span>
-          <span className="font-medium text-foreground">{numberFormatter.format(scans)}</span>
+      {hasData ? (
+        <div className="mt-1 space-y-1">
+          <div className="flex items-center justify-between gap-6">
+            <span className="text-muted-foreground">Scans</span>
+            <span className="font-medium text-foreground">{numberFormatter.format(scans ?? 0)}</span>
+          </div>
+          <div className="flex items-center justify-between gap-6">
+            <span className="text-muted-foreground">Leads</span>
+            <span className="font-medium text-foreground">{numberFormatter.format(leads ?? 0)}</span>
+          </div>
         </div>
-        <div className="flex items-center justify-between gap-6">
-          <span className="text-muted-foreground">Leads</span>
-          <span className="font-medium text-foreground">{numberFormatter.format(leads)}</span>
-        </div>
-      </div>
+      ) : (
+        <div className="mt-1 text-muted-foreground">No data yet.</div>
+      )}
     </div>
   );
 }
@@ -714,6 +914,70 @@ function summarizeTimelineWindow(points: UserAnalytics["timeline"]) {
   const leads = points.reduce((acc, point) => acc + point.leads, 0);
   const conversion = scans > 0 ? leads / scans : 0;
   return { scans, leads, conversion };
+}
+
+function formatTimelineLabel(date: string) {
+  const [year, month, day] = date.split("-").map((part) => Number(part));
+  if (!year || !month || !day) {
+    return shortDate.format(new Date(date));
+  }
+  return shortDate.format(new Date(year, month - 1, day));
+}
+
+function formatMobileDate(date: string) {
+  const [year, month, day] = date.split("-").map((part) => Number(part));
+  if (!year || !month || !day) {
+    return mobileDate.format(new Date(date));
+  }
+  return mobileDate.format(new Date(year, month - 1, day));
+}
+
+function formatLinkUrl(url: string) {
+  try {
+    const parsed = new URL(url);
+    const host = parsed.hostname.replace(/^www\./, "");
+    const path = parsed.pathname === "/" ? "" : parsed.pathname;
+    return `${host}${path}${parsed.search}`;
+  } catch {
+    return url.replace(/^https?:\/\//i, "");
+  }
+}
+
+type CurrentTimelineDotProps = {
+  cx?: number;
+  cy?: number;
+  payload?: TimelineDatum;
+  targetDate: string | null;
+  color: string;
+};
+
+function CurrentTimelineDot({
+  cx,
+  cy,
+  payload,
+  targetDate,
+  color,
+}: CurrentTimelineDotProps) {
+  if (
+    !targetDate ||
+    !payload ||
+    payload.date !== targetDate ||
+    typeof cx !== "number" ||
+    typeof cy !== "number"
+  ) {
+    return null;
+  }
+
+  return (
+    <circle
+      cx={cx}
+      cy={cy}
+      r={4}
+      fill={color}
+      stroke="var(--background)"
+      strokeWidth={2}
+    />
+  );
 }
 
 function formatPercentDelta(current: number, previous: number): DeltaBadge {

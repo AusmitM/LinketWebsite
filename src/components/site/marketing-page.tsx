@@ -14,7 +14,7 @@ type MarketingPageProps = {
   kicker?: string;
   title: string;
   subtitle: string;
-  actions?: PageAction[];
+  actions?: readonly PageAction[];
   children: ReactNode;
   className?: string;
 };

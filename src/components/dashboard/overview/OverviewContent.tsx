@@ -73,9 +73,12 @@ export default function OverviewContent() {
 
     async function load() {
       try {
+        const timezoneOffsetMinutes = new Date().getTimezoneOffset();
         const analyticsUrl = `/api/analytics/supabase?userId=${encodeURIComponent(
           resolvedUserId
-        )}&days=90`;
+        )}&days=90&tzOffsetMinutes=${encodeURIComponent(
+          String(timezoneOffsetMinutes)
+        )}`;
         const [analyticsRes] = await Promise.all([
           fetch(analyticsUrl, { cache: "no-store" }),
         ]);

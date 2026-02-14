@@ -4,18 +4,36 @@ import { getUserAnalytics } from "@/lib/analytics-service";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { isSupabaseAdminAvailable } from "@/lib/supabase-admin";
 
-function buildEmptyTimeline(days: number) {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const start = new Date(today);
-  start.setDate(today.getDate() - (days - 1));
+const MINUTE_MS = 60_000;
+const DAY_MS = 86_400_000;
+
+function buildEmptyTimeline(days: number, timezoneOffsetMinutes: number) {
+  const localNow = new Date(Date.now() - timezoneOffsetMinutes * MINUTE_MS);
+  const localTodayStartMs = Date.UTC(
+    localNow.getUTCFullYear(),
+    localNow.getUTCMonth(),
+    localNow.getUTCDate()
+  );
+  const startLocalDayMs = localTodayStartMs - (days - 1) * DAY_MS;
   const points = [];
   for (let i = 0; i < days; i += 1) {
-    const day = new Date(start);
-    day.setDate(start.getDate() + i);
-    points.push({ date: day.toISOString().slice(0, 10), scans: 0, leads: 0 });
+    const day = new Date(startLocalDayMs + i * DAY_MS);
+    points.push({ date: formatIsoDay(day), scans: 0, leads: 0 });
   }
   return points;
+}
+
+function formatIsoDay(date: Date) {
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(date.getUTCDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function normalizeTimezoneOffsetMinutes(value: string | null) {
+  const parsed = Number.parseInt(value ?? "0", 10);
+  if (!Number.isFinite(parsed)) return 0;
+  return Math.max(-840, Math.min(840, parsed));
 }
 
 function buildEmptyFunnel() {
@@ -114,6 +132,9 @@ export async function GET(request: NextRequest) {
   const days = Number.isFinite(parsedDays)
     ? Math.max(1, Math.min(parsedDays, 90))
     : 30;
+  const timezoneOffsetMinutes = normalizeTimezoneOffsetMinutes(
+    searchParams.get("tzOffsetMinutes")
+  );
 
   try {
     const userId = searchParams.get("userId");
@@ -135,7 +156,10 @@ export async function GET(request: NextRequest) {
     }
 
     if (isSupabaseAdminAvailable) {
-      const analytics = await getUserAnalytics(userId, { days });
+      const analytics = await getUserAnalytics(userId, {
+        days,
+        timezoneOffsetMinutes,
+      });
       return NextResponse.json(analytics, {
         headers: {
           "Cache-Control": "no-store, max-age=0",
@@ -164,7 +188,7 @@ export async function GET(request: NextRequest) {
         activeTags: 0,
         lastScanAt: null,
       },
-      timeline: buildEmptyTimeline(days),
+      timeline: buildEmptyTimeline(days, timezoneOffsetMinutes),
       topProfiles: [],
       topLinks: [],
       recentLeads: (leads ?? []).map((lead) => ({

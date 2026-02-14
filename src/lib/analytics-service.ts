@@ -107,11 +107,13 @@ export type UserAnalytics = {
 export type AnalyticsOptions = {
   days?: number;
   recentLeadCount?: number;
+  timezoneOffsetMinutes?: number;
 };
 
 const DEFAULT_OPTIONS: Required<AnalyticsOptions> = {
   days: 30,
   recentLeadCount: 10,
+  timezoneOffsetMinutes: 0,
 };
 
 const LANDING_CTA_EVENT_IDS = [
@@ -140,6 +142,9 @@ export async function getUserAnalytics(
 ): Promise<UserAnalytics> {
   const resolved = { ...DEFAULT_OPTIONS, ...options };
   const days = Math.max(1, Math.min(resolved.days, 90));
+  const timezoneOffsetMinutes = normalizeTimezoneOffsetMinutes(
+    resolved.timezoneOffsetMinutes
+  );
 
   if (!isSupabaseAdminAvailable) {
     const funnel = buildFunnel([]);
@@ -159,7 +164,7 @@ export async function getUserAnalytics(
         activeTags: 0,
         lastScanAt: null,
       },
-      timeline: buildEmptyTimeline(days),
+      timeline: buildEmptyTimeline(days, timezoneOffsetMinutes),
       topProfiles: [],
       topLinks: [],
       recentLeads: [],
@@ -173,24 +178,11 @@ export async function getUserAnalytics(
     };
   }
 
-  const now = new Date();
-  const start = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
-  );
-  start.setUTCDate(start.getUTCDate() - (days - 1));
-  const end = new Date(
-    Date.UTC(
-      now.getUTCFullYear(),
-      now.getUTCMonth(),
-      now.getUTCDate(),
-      23,
-      59,
-      59,
-      999
-    )
-  );
-  const todayKey = dayKey(now);
-  const timelineMap = initialiseTimelineMap(start, days);
+  const { startUtc, endUtc, startLocalDayMs, todayKey } = buildTimelineWindow({
+    days,
+    timezoneOffsetMinutes,
+  });
+  const timelineMap = initialiseTimelineMap(startLocalDayMs, days);
 
   const [
     assignments,
@@ -255,14 +247,14 @@ export async function getUserAnalytics(
 
   const scanRows = await fetchScanRowsForUser({
     userId,
-    startIso: start.toISOString(),
-    endIso: end.toISOString(),
+    startIso: startUtc.toISOString(),
+    endIso: endUtc.toISOString(),
     tagIds,
   });
 
   for (const row of scanRows) {
     if (!row.occurred_at) continue;
-    const key = dayKey(row.occurred_at);
+    const key = dayKey(row.occurred_at, timezoneOffsetMinutes);
     const entry = timelineMap.get(key);
     if (entry) entry.scans += 1;
     if (key === todayKey) scansToday += 1;
@@ -311,8 +303,8 @@ export async function getUserAnalytics(
       "id, name, email, phone, company, message, source_url, handle, created_at"
     )
     .eq("user_id", userId)
-    .gte("created_at", start.toISOString())
-    .lte("created_at", end.toISOString())
+    .gte("created_at", startUtc.toISOString())
+    .lte("created_at", endUtc.toISOString())
     .order("created_at", { ascending: false });
 
   if (leadsError) {
@@ -323,7 +315,7 @@ export async function getUserAnalytics(
 
   for (const lead of leadRows ?? []) {
     if (!lead.created_at) continue;
-    const key = dayKey(lead.created_at);
+    const key = dayKey(lead.created_at, timezoneOffsetMinutes);
     const entry = timelineMap.get(key);
     if (entry) entry.leads += 1;
     if (key === todayKey) leadsToday += 1;
@@ -485,32 +477,73 @@ type LinkPerformanceRow = {
   is_active: boolean;
 };
 
-function buildEmptyTimeline(days: number): AnalyticsTimelinePoint[] {
-  const now = new Date();
-  const start = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
-  );
-  start.setUTCDate(start.getUTCDate() - (days - 1));
-  const map = initialiseTimelineMap(start, days);
+const MINUTE_MS = 60_000;
+const DAY_MS = 86_400_000;
+
+function buildEmptyTimeline(
+  days: number,
+  timezoneOffsetMinutes: number
+): AnalyticsTimelinePoint[] {
+  const { startLocalDayMs } = buildTimelineWindow({
+    days,
+    timezoneOffsetMinutes,
+  });
+  const map = initialiseTimelineMap(startLocalDayMs, days);
   return Array.from(map.values());
 }
 
-function initialiseTimelineMap(start: Date, days: number) {
+function initialiseTimelineMap(startLocalDayMs: number, days: number) {
   const map = new Map<string, AnalyticsTimelinePoint>();
   for (let i = 0; i < days; i += 1) {
-    const day = new Date(start);
-    day.setUTCDate(start.getUTCDate() + i);
-    const key = dayKey(day);
+    const key = formatIsoDay(new Date(startLocalDayMs + i * DAY_MS));
     map.set(key, { date: key, scans: 0, leads: 0 });
   }
   return map;
 }
 
-function dayKey(input: string | Date) {
+function dayKey(input: string | Date, timezoneOffsetMinutes: number) {
   const d = typeof input === "string" ? new Date(input) : input;
-  const copy = new Date(d);
-  copy.setUTCHours(0, 0, 0, 0);
-  return copy.toISOString().slice(0, 10);
+  const shifted = new Date(d.getTime() - timezoneOffsetMinutes * MINUTE_MS);
+  return formatIsoDay(shifted);
+}
+
+function buildTimelineWindow({
+  days,
+  timezoneOffsetMinutes,
+  now = new Date(),
+}: {
+  days: number;
+  timezoneOffsetMinutes: number;
+  now?: Date;
+}) {
+  const localNow = new Date(now.getTime() - timezoneOffsetMinutes * MINUTE_MS);
+  const localTodayStartMs = Date.UTC(
+    localNow.getUTCFullYear(),
+    localNow.getUTCMonth(),
+    localNow.getUTCDate()
+  );
+  const startLocalDayMs = localTodayStartMs - (days - 1) * DAY_MS;
+  const endLocalDayMs = localTodayStartMs + DAY_MS - 1;
+
+  return {
+    startUtc: new Date(startLocalDayMs + timezoneOffsetMinutes * MINUTE_MS),
+    endUtc: new Date(endLocalDayMs + timezoneOffsetMinutes * MINUTE_MS),
+    startLocalDayMs,
+    todayKey: formatIsoDay(localNow),
+  };
+}
+
+function formatIsoDay(date: Date) {
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(date.getUTCDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function normalizeTimezoneOffsetMinutes(value: number) {
+  if (!Number.isFinite(value)) return 0;
+  const offset = Math.trunc(value);
+  return Math.max(-840, Math.min(840, offset));
 }
 
 async function fetchAssignments(userId: string): Promise<AssignmentRow[]> {
