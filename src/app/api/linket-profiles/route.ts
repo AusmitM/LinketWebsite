@@ -675,6 +675,8 @@ export async function POST(request: NextRequest) {
       linksForSave,
       existingLinkStateById
     );
+    const selectedOverrideOrderIndex =
+      normalizedLinks.find((link) => link.isOverride)?.order_index ?? null;
     const incomingIds = new Set(
       normalizedLinks.filter((link) => isUuid(link.id)).map((link) => link.id!)
     );
@@ -700,7 +702,7 @@ export async function POST(request: NextRequest) {
         url: link.url?.trim() || "https://",
         order_index: link.order_index,
         is_active: link.isActive,
-        is_override: link.isOverride,
+        is_override: false,
       }));
     if (upsertLinks.length) {
       const { error: upsertLinksError } = await supabase
@@ -718,12 +720,30 @@ export async function POST(request: NextRequest) {
         url: link.url?.trim() || "https://",
         order_index: link.order_index,
         is_active: link.isActive,
-        is_override: link.isOverride,
+        is_override: false,
       }));
       const { error: insertLinksError } = await supabase
         .from("profile_links")
         .insert(formatted);
       if (insertLinksError) throw new Error(insertLinksError.message);
+    }
+
+    const { error: clearOverrideError } = await supabase
+      .from("profile_links")
+      .update({ is_override: false })
+      .eq("profile_id", profileId)
+      .eq("user_id", userId)
+      .eq("is_override", true);
+    if (clearOverrideError) throw new Error(clearOverrideError.message);
+
+    if (selectedOverrideOrderIndex !== null) {
+      const { error: setOverrideError } = await supabase
+        .from("profile_links")
+        .update({ is_override: true, is_active: true })
+        .eq("profile_id", profileId)
+        .eq("user_id", userId)
+        .eq("order_index", selectedOverrideOrderIndex);
+      if (setOverrideError) throw new Error(setOverrideError.message);
     }
 
     if (profile.active) {

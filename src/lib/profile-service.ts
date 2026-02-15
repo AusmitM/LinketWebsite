@@ -546,6 +546,8 @@ function memorySaveProfileForUser(
     links,
     existingLinkStateById
   );
+  const selectedOverrideOrderIndex =
+    normalizedLinks.find((link) => link.isOverride)?.order_index ?? null;
   profile.links = normalizedLinks.map((link, index) => {
     const existing = link.id ? existingLinks.get(link.id) : undefined;
     const id = existing?.id || link.id || randomId();
@@ -855,6 +857,8 @@ export async function saveProfileForUser(
     links,
     existingLinkStateById
   );
+  const selectedOverrideOrderIndex =
+    normalizedLinks.find((link) => link.isOverride)?.order_index ?? null;
   const incomingIds = new Set(
     normalizedLinks.filter((link) => isUuid(link.id)).map((link) => link.id!)
   );
@@ -880,7 +884,7 @@ export async function saveProfileForUser(
       url: link.url?.trim() || "https://",
       order_index: link.order_index,
       is_active: link.isActive,
-      is_override: link.isOverride,
+      is_override: false,
     }));
 
   if (upsertLinks.length) {
@@ -899,12 +903,30 @@ export async function saveProfileForUser(
       url: link.url?.trim() || "https://",
       order_index: link.order_index,
       is_active: link.isActive,
-      is_override: link.isOverride,
+      is_override: false,
     }));
     const { error: insertErr } = await supabaseAdmin
       .from(PROFILE_LINKS_TABLE)
       .insert(formatted);
     if (insertErr) throw new Error(insertErr.message);
+  }
+
+  const { error: clearOverrideErr } = await supabaseAdmin
+    .from(PROFILE_LINKS_TABLE)
+    .update({ is_override: false })
+    .eq("profile_id", profileId)
+    .eq("user_id", userId)
+    .eq("is_override", true);
+  if (clearOverrideErr) throw new Error(clearOverrideErr.message);
+
+  if (selectedOverrideOrderIndex !== null) {
+    const { error: setOverrideErr } = await supabaseAdmin
+      .from(PROFILE_LINKS_TABLE)
+      .update({ is_override: true, is_active: true })
+      .eq("profile_id", profileId)
+      .eq("user_id", userId)
+      .eq("order_index", selectedOverrideOrderIndex);
+    if (setOverrideErr) throw new Error(setOverrideErr.message);
   }
 
   if (payload.active) {
