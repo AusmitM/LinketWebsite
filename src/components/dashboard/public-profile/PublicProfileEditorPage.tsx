@@ -1477,6 +1477,8 @@ function EditorPanel({
   const canReorderLinks =
     linkSortMode === "manual" && linkSearchQuery.trim().length === 0;
   const hasLinkMatches = sortedFilteredLinks.length > 0;
+  const isHookEmOrAggieTheme =
+    theme === "burnt-orange" || theme === "maroon";
   const activeOverrideLink = useMemo(
     () => draft?.links.find((link) => link.isOverride) ?? null,
     [draft?.links]
@@ -1694,14 +1696,31 @@ function EditorPanel({
             data-tour="profile-override-link"
             className="rounded-xl border border-primary/30 bg-primary/5 px-3 py-3"
           >
-            <p className="text-sm font-semibold text-foreground">
+            <p
+              className={cn(
+                "text-sm font-semibold",
+                isHookEmOrAggieTheme ? "text-[#500000]" : "text-foreground"
+              )}
+            >
               Linket redirect override
             </p>
-            <p className="mt-1 text-xs text-muted-foreground">
+            <p
+              className={cn(
+                "mt-1 text-xs",
+                isHookEmOrAggieTheme
+                  ? "text-[#500000]/85"
+                  : "text-muted-foreground"
+              )}
+            >
               Turn this on for one link to make your Linket URL open that
               destination directly instead of your public profile page.
             </p>
-            <p className="mt-2 text-xs text-foreground">
+            <p
+              className={cn(
+                "mt-2 text-xs",
+                isHookEmOrAggieTheme ? "text-[#500000]" : "text-foreground"
+              )}
+            >
               {activeOverrideLink
                 ? `Currently active: ${activeOverrideLink.label || "Selected link"}`
                 : "Currently active: none (Linket URL opens your public profile)."}
@@ -1800,10 +1819,22 @@ function EditorPanel({
                         aria-label={`Use ${link.label || "this link"} as Linket redirect override`}
                       />
                       <span className="space-y-0.5 text-left">
-                        <span className="block text-xs font-medium text-foreground">
+                        <span
+                          className={cn(
+                            "block text-xs font-medium",
+                            isHookEmOrAggieTheme ? "text-white" : "text-foreground"
+                          )}
+                        >
                           Use as Linket redirect override
                         </span>
-                        <span className="block text-[11px] text-muted-foreground">
+                        <span
+                          className={cn(
+                            "block text-[11px]",
+                            isHookEmOrAggieTheme
+                              ? "text-white/85"
+                              : "text-muted-foreground"
+                          )}
+                        >
                           Linket scans skip your public page and open this link directly.
                         </span>
                       </span>
