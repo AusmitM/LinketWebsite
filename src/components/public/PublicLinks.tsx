@@ -16,7 +16,12 @@ type LinksAppearance = {
 
 function apiFavicon(u: string): string | null {
   try {
-    return `/api/favicon?u=${encodeURIComponent(new URL(u).toString())}`;
+    const parsed = new URL(u);
+    const host = parsed.hostname.toLowerCase();
+    if (host === "instagr.am" || host.endsWith(".instagram.com") || host === "instagram.com") {
+      return "/icons/instagram-glyph-gradient.png";
+    }
+    return `/api/favicon?u=${encodeURIComponent(parsed.toString())}`;
   } catch {
     return null;
   }

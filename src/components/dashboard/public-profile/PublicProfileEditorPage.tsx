@@ -2085,7 +2085,11 @@ function PreviewLeadField({ field }: { field: LeadFormField }) {
 function faviconForUrl(url: string) {
   try {
     const parsed = new URL(url);
-    if (!parsed.hostname) return null;
+    const host = parsed.hostname.toLowerCase();
+    if (!host) return null;
+    if (host === "instagr.am" || host.endsWith(".instagram.com") || host === "instagram.com") {
+      return "/icons/instagram-glyph-gradient.png";
+    }
     return `/api/favicon?u=${encodeURIComponent(parsed.toString())}`;
   } catch {
     return null;

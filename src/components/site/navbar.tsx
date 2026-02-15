@@ -1161,7 +1161,7 @@ export function Navbar() {
 
     return (
       <header
-        className="dashboard-navbar sticky top-0 z-50 w-full border-b border-border/60 bg-background/90 text-foreground backdrop-blur supports-[backdrop-filter]:bg-background/70"
+        className="dashboard-navbar font-dashboard sticky top-0 z-50 w-full border-b border-border/60 bg-background/90 text-foreground backdrop-blur supports-[backdrop-filter]:bg-background/70"
         style={{ top: `${dashboardNavOffset}px` }}
       >
         {userNeedsEmailVerification && !verificationBannerDismissed ? (
