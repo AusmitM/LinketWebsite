@@ -208,6 +208,28 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
   100% { transform: translateX(130%); opacity: 0; }
 }
 
+@keyframes dashboard-checklist-pop-out {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  35% {
+    opacity: 1;
+    transform: scale(1.035);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+}
+
+#dashboard-theme-scope .dashboard-overview-checklist-card--exiting,
+.dashboard-overview-checklist-card--exiting {
+  animation: dashboard-checklist-pop-out 420ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  pointer-events: none;
+  transform-origin: center top;
+}
+
 /* Premium dashboard surface treatment */
 #dashboard-theme-scope {
   background: var(--premium-gradient);

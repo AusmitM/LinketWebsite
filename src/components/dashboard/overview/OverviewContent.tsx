@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   BarChart3,
@@ -50,6 +50,10 @@ export default function OverviewContent() {
   const dashboardUser = useDashboardUser();
   const userId = dashboardUser?.id ?? null;
   const [reloadToken, setReloadToken] = useState(0);
+  const [isChecklistDismissed, setIsChecklistDismissed] = useState(false);
+  const [isChecklistPoppingOut, setIsChecklistPoppingOut] = useState(false);
+  const checklistCompletionRef = useRef<boolean | null>(null);
+  const checklistDismissTimerRef = useRef<number | null>(null);
   const [{ loading, error, analytics }, setState] = useState<ViewState>({
     loading: true,
     error: null,
@@ -157,6 +161,11 @@ export default function OverviewContent() {
 
   const totals = analytics?.totals;
   const onboarding = analytics?.onboarding;
+  const checklistComplete = Boolean(
+    onboarding &&
+      onboarding.totalCount > 0 &&
+      onboarding.completedCount >= onboarding.totalCount
+  );
   const leads = analytics?.recentLeads ?? [];
   const recentLeads = leads.slice(0, 5);
   const recentLeadsLoading = loading && !analytics;
@@ -192,6 +201,45 @@ export default function OverviewContent() {
   useEffect(() => {
     setDateLabel(dateTimeFormatter.format(new Date()));
   }, []);
+
+  useEffect(() => {
+    return () => {
+      if (checklistDismissTimerRef.current !== null && typeof window !== "undefined") {
+        window.clearTimeout(checklistDismissTimerRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (loading || !onboarding) return;
+
+    const previousCompletion = checklistCompletionRef.current;
+
+    if (!checklistComplete) {
+      if (checklistDismissTimerRef.current !== null && typeof window !== "undefined") {
+        window.clearTimeout(checklistDismissTimerRef.current);
+        checklistDismissTimerRef.current = null;
+      }
+      setIsChecklistDismissed(false);
+      setIsChecklistPoppingOut(false);
+    } else if (previousCompletion === false) {
+      setIsChecklistPoppingOut(true);
+      if (checklistDismissTimerRef.current !== null && typeof window !== "undefined") {
+        window.clearTimeout(checklistDismissTimerRef.current);
+      }
+      checklistDismissTimerRef.current = window.setTimeout(() => {
+        setIsChecklistDismissed(true);
+        setIsChecklistPoppingOut(false);
+        checklistDismissTimerRef.current = null;
+      }, 420);
+    } else if (previousCompletion === null) {
+      // Hide immediately when everything was already complete before this session.
+      setIsChecklistDismissed(true);
+      setIsChecklistPoppingOut(false);
+    }
+
+    checklistCompletionRef.current = checklistComplete;
+  }, [checklistComplete, loading, onboarding]);
 
 
   return (
@@ -246,72 +294,74 @@ export default function OverviewContent() {
             </CardContent>
           </Card>
 
-          <Card
-            className="dashboard-overview-section-card rounded-3xl border border-border/70 bg-card/90 shadow-[0_18px_45px_rgba(15,23,42,0.08)]"
-            data-tour="overview-checklist"
-          >
-            <CardHeader className="space-y-2">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                <CardTitle className="text-lg font-semibold text-foreground">
-                  First-run checklist
-                </CardTitle>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="w-full rounded-full sm:w-auto"
-                  onClick={() => {
-                    if (typeof window === "undefined") return;
-                    window.dispatchEvent(new CustomEvent("linket:onboarding-tour:start"));
-                  }}
-                >
-                  Start walkthrough
-                </Button>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Complete these steps to launch your profile and start capturing leads.
-              </p>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {loading && !analytics ? (
-                <div className="space-y-2">
-                  <div className="dashboard-skeleton h-2 w-full animate-pulse rounded bg-muted" data-skeleton />
-                  <div className="dashboard-skeleton h-10 w-full animate-pulse rounded-2xl bg-muted" data-skeleton />
-                  <div className="dashboard-skeleton h-10 w-full animate-pulse rounded-2xl bg-muted" data-skeleton />
-                  <div className="dashboard-skeleton h-10 w-full animate-pulse rounded-2xl bg-muted" data-skeleton />
+          {isChecklistDismissed ? null : (
+            <Card
+              className={`dashboard-overview-section-card dashboard-overview-checklist-card rounded-3xl border border-border/70 bg-card/90 shadow-[0_18px_45px_rgba(15,23,42,0.08)] ${isChecklistPoppingOut ? "dashboard-overview-checklist-card--exiting" : ""}`}
+              data-tour="overview-checklist"
+            >
+              <CardHeader className="space-y-2">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                  <CardTitle className="text-lg font-semibold text-foreground">
+                    First-run checklist
+                  </CardTitle>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-full rounded-full sm:w-auto"
+                    onClick={() => {
+                      if (typeof window === "undefined") return;
+                      window.dispatchEvent(new CustomEvent("linket:onboarding-tour:start"));
+                    }}
+                  >
+                    Start walkthrough
+                  </Button>
                 </div>
-              ) : onboarding ? (
-                <>
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                      Progress
-                    </p>
-                    <p className="text-sm font-semibold text-foreground">
-                      {onboarding.completedCount}/{onboarding.totalCount}
-                    </p>
-                  </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-muted">
-                    <div
-                      className="h-full rounded-full bg-primary transition-all"
-                      style={{ width: `${Math.round(onboarding.progress * 100)}%` }}
-                    />
-                  </div>
+                <p className="text-sm text-muted-foreground">
+                  Complete these steps to launch your profile and start capturing leads.
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {loading && !analytics ? (
                   <div className="space-y-2">
-                    {onboarding.items.map((item) => (
-                      <ChecklistItemRow
-                        key={item.id}
-                        label={item.label}
-                        detail={item.detail}
-                        completed={item.completed}
-                      />
-                    ))}
+                    <div className="dashboard-skeleton h-2 w-full animate-pulse rounded bg-muted" data-skeleton />
+                    <div className="dashboard-skeleton h-10 w-full animate-pulse rounded-2xl bg-muted" data-skeleton />
+                    <div className="dashboard-skeleton h-10 w-full animate-pulse rounded-2xl bg-muted" data-skeleton />
+                    <div className="dashboard-skeleton h-10 w-full animate-pulse rounded-2xl bg-muted" data-skeleton />
                   </div>
-                </>
-              ) : (
-                <EmptyState message="Checklist unavailable right now." />
-              )}
-            </CardContent>
-          </Card>
+                ) : onboarding ? (
+                  <>
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                        Progress
+                      </p>
+                      <p className="text-sm font-semibold text-foreground">
+                        {onboarding.completedCount}/{onboarding.totalCount}
+                      </p>
+                    </div>
+                    <div className="h-2 overflow-hidden rounded-full bg-muted">
+                      <div
+                        className="h-full rounded-full bg-primary transition-all"
+                        style={{ width: `${Math.round(onboarding.progress * 100)}%` }}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      {onboarding.items.map((item) => (
+                        <ChecklistItemRow
+                          key={item.id}
+                          label={item.label}
+                          detail={item.detail}
+                          completed={item.completed}
+                        />
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <EmptyState message="Checklist unavailable right now." />
+                )}
+              </CardContent>
+            </Card>
+          )}
 
           <Card className="dashboard-overview-section-card rounded-3xl border border-border/70 bg-card/90 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
             <CardHeader className="space-y-4">
