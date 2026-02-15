@@ -45,6 +45,15 @@ function getAuthErrorCode(error: unknown): string | undefined {
   return undefined;
 }
 
+function isEmailNotConfirmedError(error: unknown) {
+  const code = getAuthErrorCode(error)?.toLowerCase();
+  if (code === "email_not_confirmed") return true;
+  if (error instanceof Error) {
+    return error.message.toLowerCase().includes("email not confirmed");
+  }
+  return false;
+}
+
 export default function AuthPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -65,6 +74,8 @@ export default function AuthPage() {
   const [password, setPassword] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [awaitingVerificationAutoSignIn, setAwaitingVerificationAutoSignIn] =
+    useState(false);
   const isSignUp = view === "signup";
 
   const passwordRequirementStatus = useMemo(
@@ -134,6 +145,7 @@ export default function AuthPage() {
       const { data } = await supabase.auth.getSession();
       if (!active) return;
       if (data.session) {
+        setAwaitingVerificationAutoSignIn(false);
         const destination = await resolveRedirect(data.session);
         if (!destination || !active) return;
         router.replace(destination);
@@ -146,6 +158,74 @@ export default function AuthPage() {
       active = false;
     };
   }, [supabase, router, resolveRedirect]);
+
+  useEffect(() => {
+    if (!awaitingVerificationAutoSignIn || !isSignUp || !email || !password) {
+      return;
+    }
+
+    let active = true;
+    let inFlight = false;
+
+    const attemptSignIn = async () => {
+      if (inFlight || !active) return;
+      inFlight = true;
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (error) {
+          if (isEmailNotConfirmedError(error)) {
+            return;
+          }
+          throw error;
+        }
+
+        if (!data.session) {
+          return;
+        }
+
+        const destination = await resolveRedirect(data.session);
+        if (!destination || !active) return;
+        setAwaitingVerificationAutoSignIn(false);
+        toast({
+          title: "Email verified",
+          description: "You're being redirected to your dashboard.",
+          variant: "success",
+        });
+        router.replace(destination);
+      } catch (err) {
+        if (!active) return;
+        setAwaitingVerificationAutoSignIn(false);
+        const message =
+          err instanceof Error
+            ? err.message
+            : "Unable to complete sign-in. Please try again.";
+        setError(friendlyAuthError(message, getAuthErrorCode(err)));
+      } finally {
+        inFlight = false;
+      }
+    };
+
+    void attemptSignIn();
+    const intervalId = window.setInterval(() => {
+      void attemptSignIn();
+    }, 5000);
+
+    return () => {
+      active = false;
+      window.clearInterval(intervalId);
+    };
+  }, [
+    awaitingVerificationAutoSignIn,
+    email,
+    isSignUp,
+    password,
+    resolveRedirect,
+    router,
+    supabase,
+  ]);
 
   const handlePasswordSignUp = useCallback(
     async (event: FormEvent<HTMLFormElement>) => {
@@ -167,6 +247,7 @@ export default function AuthPage() {
       void trackEvent("signup_start", { method: "email" });
       setPending(true);
       setError(null);
+      setAwaitingVerificationAutoSignIn(false);
 
       try {
         const { data, error } = await supabase.auth.signUp({
@@ -198,15 +279,42 @@ export default function AuthPage() {
 
           router.replace(destination);
         } else {
-          // Email confirmation required
+          const { data: signInData, error: signInError } =
+            await supabase.auth.signInWithPassword({
+              email,
+              password,
+            });
+
+          if (signInError) {
+            if (isEmailNotConfirmedError(signInError)) {
+              setAwaitingVerificationAutoSignIn(true);
+              toast({
+                title: "Account created!",
+                description:
+                  "Verify your email from your inbox. We'll sign you in automatically.",
+                variant: "success",
+              });
+              return;
+            }
+            throw signInError;
+          }
+
+          setAwaitingVerificationAutoSignIn(false);
+          const destination = signInData.session
+            ? await resolveRedirect(signInData.session)
+            : next || DEFAULT_NEXT;
+          if (!destination) {
+            throw new Error("We couldn't complete sign-in. Please try again.");
+          }
+
           toast({
             title: "Account created!",
-            description: "Please sign in with your new credentials.",
+            description:
+              "You're signed in. Please verify your email from your inbox.",
             variant: "success",
           });
 
-          // Redirect to sign-in page
-          router.push(`/auth?next=${encodeURIComponent(next)}&view=signin`);
+          router.replace(destination);
         }
       } catch (err) {
         const message =
@@ -231,6 +339,7 @@ export default function AuthPage() {
 
       setPending(true);
       setError(null);
+      setAwaitingVerificationAutoSignIn(false);
 
       try {
         const { data, error } = await supabase.auth.signInWithPassword({
@@ -275,6 +384,7 @@ export default function AuthPage() {
       }
       setPending(true);
       setError(null);
+      setAwaitingVerificationAutoSignIn(false);
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
@@ -336,6 +446,15 @@ export default function AuthPage() {
                   {displayedError}
                 </div>
               )}
+              {awaitingVerificationAutoSignIn &&
+                !error &&
+                !oauthError &&
+                !oauthMessage && (
+                  <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                    Account created. Verify your email from your inbox and we
+                    will sign you in automatically.
+                  </div>
+                )}
 
               <form
                 onSubmit={isSignUp ? handlePasswordSignUp : handlePasswordSignIn}

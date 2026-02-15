@@ -15,6 +15,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Package,
+  Megaphone,
   User,
 } from "lucide-react";
 
@@ -113,6 +114,11 @@ export default function Sidebar({
     return [
       ...BASE_NAV,
       { href: "/dashboard/admin/mint", label: "Minting", icon: Package },
+      {
+        href: "/dashboard/admin/notifications",
+        label: "Notifications",
+        icon: Megaphone,
+      },
     ];
   }, [isAdmin]);
 

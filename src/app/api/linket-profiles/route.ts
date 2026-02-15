@@ -15,6 +15,7 @@ type ProfileWithLinks = UserProfileRecord & { links: ProfileLinkRecord[] };
 const DEFAULT_PROFILE_LINK_URL = "https://www.LinketConnect.com";
 const DEFAULT_PROFILE_NAME = "Linket Public Profile";
 const DEFAULT_THEME = normalizeThemeName("autumn", "autumn");
+const DEFAULT_LINK_HOST = "linketconnect.com";
 
 function normalizeHandle(handle: string) {
   return handle.trim().toLowerCase();
@@ -28,6 +29,98 @@ function sortLinks(links: ProfileLinkRecord[] | null | undefined) {
         (a.order_index ?? 0) - (b.order_index ?? 0) ||
         a.created_at.localeCompare(b.created_at)
     );
+}
+
+function normaliseLinkUrl(url: string | null | undefined) {
+  const raw = (url ?? "").trim();
+  if (!raw) return "";
+  try {
+    const parsed = new URL(raw);
+    const host = parsed.hostname.toLowerCase().replace(/^www\./, "");
+    const path = parsed.pathname.replace(/\/+$/, "");
+    return `${host}${path || "/"}`;
+  } catch {
+    return raw
+      .toLowerCase()
+      .replace(/^https?:\/\//, "")
+      .replace(/^www\./, "")
+      .replace(/\/+$/, "");
+  }
+}
+
+function isDefaultStarterLinkUrl(url: string | null | undefined) {
+  const normalized = normaliseLinkUrl(url);
+  return (
+    normalized === DEFAULT_LINK_HOST ||
+    normalized === `${DEFAULT_LINK_HOST}/`
+  );
+}
+
+function needsStarterLinkRepair(links: ProfileLinkRecord[] | null | undefined) {
+  const sorted = sortLinks(links);
+  if (sorted.length === 0) return true;
+  const defaultLinkCount = sorted.filter((link) =>
+    isDefaultStarterLinkUrl(link.url)
+  ).length;
+  return defaultLinkCount > 1;
+}
+
+async function enforceSingleStarterDefaultLink(
+  supabase: Awaited<ReturnType<typeof createServerSupabase>>,
+  userId: string,
+  profileId: string
+) {
+  let changed = false;
+  let { data, error } = await supabase
+    .from("profile_links")
+    .select("*")
+    .eq("profile_id", profileId)
+    .eq("user_id", userId);
+  if (error) throw new Error(error.message);
+
+  let links = sortLinks((data as ProfileLinkRecord[] | null | undefined) ?? []);
+
+  if (links.length === 0) {
+    const { error: insertLinkError } = await supabase.from("profile_links").insert({
+      profile_id: profileId,
+      user_id: userId,
+      title: "Website",
+      url: DEFAULT_PROFILE_LINK_URL,
+      order_index: 0,
+      is_active: true,
+    });
+    if (insertLinkError) throw new Error(insertLinkError.message);
+    changed = true;
+
+    const { data: refreshedLinks, error: refreshedError } = await supabase
+      .from("profile_links")
+      .select("*")
+      .eq("profile_id", profileId)
+      .eq("user_id", userId);
+    if (refreshedError) throw new Error(refreshedError.message);
+    links = sortLinks(
+      (refreshedLinks as ProfileLinkRecord[] | null | undefined) ?? []
+    );
+  }
+
+  const defaultLinks = sortLinks(
+    links.filter((link) => isDefaultStarterLinkUrl(link.url))
+  );
+  if (defaultLinks.length > 1) {
+    const idsToDelete = defaultLinks.slice(1).map((link) => link.id);
+    if (idsToDelete.length > 0) {
+      const { error: deleteLinksError } = await supabase
+        .from("profile_links")
+        .delete()
+        .eq("profile_id", profileId)
+        .eq("user_id", userId)
+        .in("id", idsToDelete);
+      if (deleteLinksError) throw new Error(deleteLinksError.message);
+      changed = true;
+    }
+  }
+
+  return changed;
 }
 
 async function fetchProfilesForUserViaClient(
@@ -108,18 +201,12 @@ async function ensureStarterProfileWithDefaultLink(
   const existing = await fetchProfilesForUserViaClient(supabase, userId);
   if (existing.length > 0) {
     const active = existing.find((profile) => profile.is_active) ?? existing[0];
-    if (active.links.length === 0) {
-      const { error: insertLinkError } = await supabase
-        .from("profile_links")
-        .insert({
-          profile_id: active.id,
-          user_id: userId,
-          title: "Website",
-          url: DEFAULT_PROFILE_LINK_URL,
-          order_index: 0,
-          is_active: true,
-        });
-      if (insertLinkError) throw new Error(insertLinkError.message);
+    const changed = await enforceSingleStarterDefaultLink(
+      supabase,
+      userId,
+      active.id
+    );
+    if (changed) {
       const refreshed = await fetchProfilesForUserViaClient(supabase, userId);
       return refreshed.find((profile) => profile.id === active.id) ?? refreshed[0];
     }
@@ -149,21 +236,23 @@ async function ensureStarterProfileWithDefaultLink(
     // Another request may have created a profile in parallel.
     const raced = await fetchProfilesForUserViaClient(supabase, userId);
     if (raced.length > 0) {
-      return raced.find((profile) => profile.is_active) ?? raced[0];
+      const active = raced.find((profile) => profile.is_active) ?? raced[0];
+      const changed = await enforceSingleStarterDefaultLink(
+        supabase,
+        userId,
+        active.id
+      );
+      if (changed) {
+        const refreshed = await fetchProfilesForUserViaClient(supabase, userId);
+        return refreshed.find((profile) => profile.id === active.id) ?? refreshed[0];
+      }
+      return active;
     }
     throw new Error(createProfileError.message);
   }
 
   const profileId = (createdProfile as { id: string }).id;
-  const { error: createLinkError } = await supabase.from("profile_links").insert({
-    profile_id: profileId,
-    user_id: userId,
-    title: "Website",
-    url: DEFAULT_PROFILE_LINK_URL,
-    order_index: 0,
-    is_active: true,
-  });
-  if (createLinkError) throw new Error(createLinkError.message);
+  await enforceSingleStarterDefaultLink(supabase, userId, profileId);
 
   const created = await fetchProfilesForUserViaClient(supabase, userId);
   const starter = created.find((profile) => profile.id === profileId);
@@ -270,7 +359,7 @@ export async function GET(request: NextRequest) {
           });
         }
         const active = profiles.find((profile) => profile.is_active) ?? profiles[0];
-        if ((active?.links ?? []).length === 0) {
+        if (needsStarterLinkRepair(active?.links)) {
           const starter = await ensureStarterProfileWithDefaultLink(
             supabase,
             userId
@@ -301,7 +390,7 @@ export async function GET(request: NextRequest) {
       });
     }
     const active = mapped.find((profile) => profile.is_active) ?? mapped[0];
-    if ((active?.links ?? []).length === 0) {
+    if (needsStarterLinkRepair(active?.links)) {
       const starter = await ensureStarterProfileWithDefaultLink(supabase, userId);
       return NextResponse.json([starter], {
         headers: {
@@ -619,4 +708,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

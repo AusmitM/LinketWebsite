@@ -1,10 +1,28 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
-import { ArrowUpRight, IdCard, Link2, LogOut, Menu, MessageSquare, User, X } from "lucide-react";
+import {
+  ArrowUpRight,
+  Bell,
+  IdCard,
+  Link2,
+  LogOut,
+  MailWarning,
+  Menu,
+  MessageSquare,
+  User,
+  X,
+} from "lucide-react";
 
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
@@ -28,8 +46,14 @@ import { AdaptiveNavPill } from "@/components/ui/3d-adaptive-navigation-bar";
 import { isPublicProfilePathname } from "@/lib/routing";
 import { toast } from "@/components/system/toaster";
 import { getSiteOrigin } from "@/lib/site-url";
+import type { DashboardNotificationItem } from "@/lib/dashboard-notifications";
 
-type UserLite = { id: string; email: string | null; fullName?: string | null } | null;
+type UserLite = {
+  id: string;
+  email: string | null;
+  fullName?: string | null;
+  emailConfirmedAt?: string | null;
+} | null;
 
 const LANDING_LINKS = [
   {
@@ -82,6 +106,33 @@ const PROFILE_SECTIONS = [
   { id: "lead", label: "Lead Form", icon: MessageSquare },
 ] as const;
 
+const NOTIFICATIONS_POLL_INTERVAL_MS = 45_000;
+const DASHBOARD_VERIFICATION_ENTRY = "/dashboard/overview";
+
+function toUserLite(
+  value: {
+    id: string;
+    email?: string | null;
+    user_metadata?: { full_name?: string | null };
+    email_confirmed_at?: string | null;
+  } | null
+): UserLite {
+  if (!value) return null;
+  return {
+    id: value.id,
+    email: value.email ?? null,
+    fullName: (value.user_metadata?.full_name as string | null) ?? null,
+    emailConfirmedAt: value.email_confirmed_at ?? null,
+  };
+}
+
+const notificationTimeFormatter = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+});
+
 export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
@@ -104,6 +155,21 @@ export function Navbar() {
     (typeof PROFILE_SECTIONS)[number]["id"] | null
   >(null);
   const [dashboardNavOffset, setDashboardNavOffset] = useState(0);
+  const [verificationBannerDismissed, setVerificationBannerDismissed] =
+    useState(false);
+  const [verificationStatusRefreshing, setVerificationStatusRefreshing] =
+    useState(false);
+  const [verificationResending, setVerificationResending] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [notificationsLoading, setNotificationsLoading] = useState(false);
+  const [notificationsError, setNotificationsError] = useState<string | null>(
+    null
+  );
+  const [notifications, setNotifications] = useState<DashboardNotificationItem[]>(
+    []
+  );
+  const notificationsButtonRef = useRef<HTMLButtonElement | null>(null);
+  const siteOrigin = getSiteOrigin();
 
   useEffect(() => {
     lockedSectionRef.current = lockedSection;
@@ -126,8 +192,14 @@ export function Navbar() {
   const isAuthPage =
     pathname?.startsWith("/auth") || pathname?.startsWith("/forgot-password");
   const isProfileEditor = pathname?.startsWith("/dashboard/profiles") ?? false;
+  const isOverviewPage =
+    pathname === "/dashboard" || pathname?.startsWith("/dashboard/overview");
   const isMarketingPage =
     isPublic && !isLandingPage && !isPublicProfile && !isAuthPage;
+  const userNeedsEmailVerification =
+    Boolean(user?.email) && !Boolean(user?.emailConfirmedAt);
+  const shouldShowNotifications =
+    Boolean(isDashboard && isOverviewPage && user);
 
   useEffect(() => {
     if (!isDashboard) {
@@ -144,26 +216,11 @@ export function Navbar() {
         data: { user },
       } = await supabase.auth.getUser();
       if (!active) return;
-      if (user) {
-        setUser({
-          id: user.id,
-          email: user.email ?? null,
-          fullName: (user.user_metadata?.full_name as string | null) ?? null,
-        });
-      }
+      setUser(toUserLite(user ?? null));
     })();
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(
-        session?.user
-          ? {
-              id: session.user.id,
-              email: session.user.email ?? null,
-              fullName:
-                (session.user.user_metadata?.full_name as string | null) ?? null,
-            }
-          : null
-      );
+      setUser(toUserLite(session?.user ?? null));
     });
     unsubscribe = () => sub.subscription.unsubscribe();
 
@@ -245,6 +302,70 @@ export function Navbar() {
       window.removeEventListener("linket:dashboard-sidebar-state", handleSidebarState);
     };
   }, [isDashboard]);
+
+  useEffect(() => {
+    if (!isDashboard || !user?.id || user.emailConfirmedAt) {
+      setVerificationBannerDismissed(false);
+    }
+  }, [isDashboard, user?.emailConfirmedAt, user?.id]);
+
+  useEffect(() => {
+    setNotificationsOpen(false);
+  }, [pathname, user?.id]);
+
+  useEffect(() => {
+    if (!shouldShowNotifications || !user?.id) {
+      setNotifications([]);
+      setNotificationsLoading(false);
+      setNotificationsError(null);
+      return;
+    }
+
+    let active = true;
+
+    const loadNotifications = async (background = false) => {
+      if (!background) {
+        setNotificationsLoading(true);
+      }
+      try {
+        const response = await fetch("/api/dashboard/notifications?limit=8", {
+          cache: "no-store",
+        });
+        const payload = (await response.json().catch(() => null)) as
+          | { notifications?: DashboardNotificationItem[]; error?: string }
+          | null;
+        if (!response.ok) {
+          throw new Error(payload?.error || "Unable to load notifications.");
+        }
+        if (!active) return;
+        setNotifications(
+          Array.isArray(payload?.notifications) ? payload.notifications : []
+        );
+        setNotificationsError(null);
+      } catch (error) {
+        if (!active) return;
+        const description =
+          error instanceof Error
+            ? error.message
+            : "Unable to load notifications.";
+        setNotificationsError(description);
+      } finally {
+        if (!background && active) {
+          setNotificationsLoading(false);
+        }
+      }
+    };
+
+    void loadNotifications();
+    const poller = window.setInterval(() => {
+      void loadNotifications(true);
+    }, NOTIFICATIONS_POLL_INTERVAL_MS);
+
+    return () => {
+      active = false;
+      window.clearInterval(poller);
+    };
+  }, [shouldShowNotifications, user?.id]);
 
   const profileUrl = accountHandle ? buildPublicProfileUrl(accountHandle) : null;
 
@@ -337,6 +458,112 @@ export function Navbar() {
       setLoggingOut(false);
     }
   };
+
+  const refreshEmailVerificationStatus = useCallback(
+    async (showFeedback: boolean = true) => {
+      if (!isDashboard || !user?.id) return;
+      setVerificationStatusRefreshing(true);
+      try {
+        const {
+          data: { user: refreshedUser },
+          error,
+        } = await supabase.auth.getUser();
+        if (error) throw error;
+        if (!refreshedUser) return;
+
+        const nextUser = toUserLite(refreshedUser);
+        setUser(nextUser);
+
+        if (nextUser?.emailConfirmedAt) {
+          setVerificationBannerDismissed(false);
+          if (showFeedback) {
+            toast({
+              title: "Email verified",
+              description: "Your account is fully verified.",
+              variant: "success",
+            });
+          }
+          return;
+        }
+
+        if (showFeedback) {
+          toast({
+            title: "Still waiting on verification",
+            description: "Open your inbox and use the verification link first.",
+          });
+        }
+      } catch (error) {
+        if (showFeedback) {
+          const description =
+            error instanceof Error
+              ? error.message
+              : "Unable to refresh verification status.";
+          toast({
+            title: "Verification check failed",
+            description,
+            variant: "destructive",
+          });
+        }
+      } finally {
+        setVerificationStatusRefreshing(false);
+      }
+    },
+    [isDashboard, user?.id]
+  );
+
+  const handleResendVerificationEmail = useCallback(async () => {
+    if (!isDashboard || !user?.email) return;
+    setVerificationResending(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email: user.email,
+        options: {
+          emailRedirectTo: `${siteOrigin}/auth/callback?next=${encodeURIComponent(
+            DASHBOARD_VERIFICATION_ENTRY
+          )}`,
+        },
+      });
+      if (error) throw error;
+      toast({
+        title: "Verification email sent",
+        description: "Check your inbox for the verification link.",
+        variant: "success",
+      });
+    } catch (error) {
+      const description =
+        error instanceof Error
+          ? error.message
+          : "Unable to resend verification email.";
+      toast({
+        title: "Couldn't resend email",
+        description,
+        variant: "destructive",
+      });
+    } finally {
+      setVerificationResending(false);
+    }
+  }, [isDashboard, siteOrigin, user?.email]);
+
+  useEffect(() => {
+    if (!isDashboard || !userNeedsEmailVerification) return;
+
+    const handleFocus = () => {
+      void refreshEmailVerificationStatus(false);
+    };
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        void refreshEmailVerificationStatus(false);
+      }
+    };
+
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => {
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
+  }, [isDashboard, refreshEmailVerificationStatus, userNeedsEmailVerification]);
 
   const handleDashboardMenuToggle = () => {
     if (typeof window === "undefined") return;
@@ -720,6 +947,26 @@ export function Navbar() {
     </div>
   ) : null;
 
+  const dashboardNotificationsButton =
+    user && shouldShowNotifications ? (
+      <button
+        type="button"
+        ref={notificationsButtonRef}
+        onClick={() => setNotificationsOpen((open) => !open)}
+        className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-border/60 bg-card/80 text-foreground transition hover:bg-card"
+        aria-label="Open notifications"
+        aria-expanded={notificationsOpen}
+        aria-haspopup="dialog"
+      >
+        <Bell className="h-4 w-4" aria-hidden />
+        {notifications.length > 0 ? (
+          <span className="absolute -right-1 -top-1 inline-flex min-w-[20px] items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground">
+            {Math.min(9, notifications.length)}
+          </span>
+        ) : null}
+      </button>
+    ) : null;
+
   if (isDashboard) {
     const overviewHref = "/dashboard/overview";
     const activeDashboardHref = (() => {
@@ -763,6 +1010,48 @@ export function Navbar() {
         className="dashboard-navbar sticky top-0 z-50 w-full border-b border-border/60 bg-background/90 text-foreground backdrop-blur supports-[backdrop-filter]:bg-background/70"
         style={{ top: `${dashboardNavOffset}px` }}
       >
+        {userNeedsEmailVerification && !verificationBannerDismissed ? (
+          <div className="border-b border-amber-200/70 bg-amber-100/70 px-3 py-2">
+            <div className="mx-auto flex w-full max-w-6xl flex-col gap-2 text-amber-950 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-2 text-xs font-semibold">
+                <MailWarning className="h-4 w-4" aria-hidden />
+                <span>
+                  Verify your email address through your inbox to secure your
+                  account.
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 rounded-full border-amber-300 bg-amber-50 text-xs text-amber-900 hover:bg-amber-100"
+                  onClick={() => void refreshEmailVerificationStatus(true)}
+                  disabled={verificationStatusRefreshing}
+                >
+                  {verificationStatusRefreshing ? "Checking..." : "I've verified"}
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  className="h-8 rounded-full bg-amber-900 text-xs text-amber-50 hover:bg-amber-950"
+                  onClick={() => void handleResendVerificationEmail()}
+                  disabled={verificationResending}
+                >
+                  {verificationResending ? "Sending..." : "Resend email"}
+                </Button>
+                <button
+                  type="button"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full text-amber-900 hover:bg-amber-200/70"
+                  aria-label="Dismiss email verification reminder"
+                  onClick={() => setVerificationBannerDismissed(true)}
+                >
+                  <X className="h-4 w-4" aria-hidden />
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
         <nav
           className="dashboard-navbar-inner mx-auto flex max-w-6xl items-center justify-between px-2 py-3 text-foreground sm:px-3 md:px-6"
           aria-label="Dashboard"
@@ -838,6 +1127,7 @@ export function Navbar() {
 
           <div className="dashboard-navbar-right flex shrink-0 items-center gap-3">
             {dashboardProfileActions}
+            {dashboardNotificationsButton}
             {user ? (
               <Button
                 type="button"
@@ -912,6 +1202,49 @@ export function Navbar() {
               <MenuButton onClick={handleLogout} disabled={loggingOut}>
                 <LogOut className="mr-2 h-4 w-4" /> Logout
               </MenuButton>
+            </div>
+          </PopoverDialog>
+        )}
+        {dashboardNotificationsButton && (
+          <PopoverDialog
+            open={notificationsOpen}
+            onOpenChange={setNotificationsOpen}
+            anchorRef={notificationsButtonRef}
+            align="end"
+            title="Notifications"
+          >
+            <div className="space-y-3">
+              {notificationsLoading ? (
+                <p className="text-sm text-muted-foreground">Loading notifications...</p>
+              ) : notificationsError ? (
+                <p className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                  {notificationsError}
+                </p>
+              ) : notifications.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  No developer notifications right now.
+                </p>
+              ) : (
+                notifications.map((notification) => (
+                  <article
+                    key={notification.id}
+                    className={cn(
+                      "rounded-xl border px-3 py-2",
+                      getNotificationToneClass(notification.severity)
+                    )}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-semibold">{notification.title}</p>
+                      <span className="text-[11px] font-medium opacity-80">
+                        {formatNotificationTime(notification.createdAt)}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-xs leading-relaxed opacity-90">
+                      {notification.message}
+                    </p>
+                  </article>
+                ))
+              )}
             </div>
           </PopoverDialog>
         )}
@@ -1221,6 +1554,28 @@ function usePopoverPosition(
   }, [anchorRef, open, align]);
 
   return style;
+}
+
+function formatNotificationTime(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return notificationTimeFormatter.format(date);
+}
+
+function getNotificationToneClass(
+  severity: DashboardNotificationItem["severity"]
+) {
+  switch (severity) {
+    case "success":
+      return "border-emerald-300 bg-emerald-100/70 text-emerald-950";
+    case "warning":
+      return "border-amber-300 bg-amber-100/70 text-amber-950";
+    case "critical":
+      return "border-rose-300 bg-rose-100/70 text-rose-950";
+    case "info":
+    default:
+      return "border-sky-300 bg-sky-100/70 text-sky-950";
+  }
 }
 
 function buildPublicProfileUrl(handle: string) {

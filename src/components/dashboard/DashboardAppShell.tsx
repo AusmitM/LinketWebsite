@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import Sidebar from "@/components/dashboard/Sidebar";
 import DashboardOnboardingTour from "@/components/dashboard/DashboardOnboardingTour";
+import DashboardEmailVerificationPrompt from "@/components/dashboard/DashboardEmailVerificationPrompt";
 import { cn } from "@/lib/utils";
 
 export default function DashboardAppShell({
@@ -103,6 +104,7 @@ export default function DashboardAppShell({
         </div>
       </div>
       <DashboardOnboardingTour />
+      <DashboardEmailVerificationPrompt />
     </div>
   );
 }
