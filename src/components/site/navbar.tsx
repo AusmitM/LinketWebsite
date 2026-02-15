@@ -5,6 +5,7 @@ import {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
   type CSSProperties,
@@ -108,6 +109,8 @@ const PROFILE_SECTIONS = [
 
 const NOTIFICATIONS_POLL_INTERVAL_MS = 45_000;
 const DASHBOARD_VERIFICATION_ENTRY = "/dashboard/overview";
+const NOTIFICATIONS_LAST_READ_STORAGE_KEY_PREFIX =
+  "linket:dashboard-notifications:last-read-at";
 
 function toUserLite(
   value: {
@@ -168,6 +171,9 @@ export function Navbar() {
   const [notifications, setNotifications] = useState<DashboardNotificationItem[]>(
     []
   );
+  const [notificationsLastReadAt, setNotificationsLastReadAt] = useState<
+    number | null
+  >(null);
   const notificationsButtonRef = useRef<HTMLButtonElement | null>(null);
   const siteOrigin = getSiteOrigin();
 
@@ -200,6 +206,9 @@ export function Navbar() {
     Boolean(user?.email) && !Boolean(user?.emailConfirmedAt);
   const shouldShowNotifications =
     Boolean(isDashboard && isOverviewPage && user);
+  const notificationsReadStorageKey = user?.id
+    ? `${NOTIFICATIONS_LAST_READ_STORAGE_KEY_PREFIX}:${user.id}`
+    : null;
 
   useEffect(() => {
     if (!isDashboard) {
@@ -314,6 +323,21 @@ export function Navbar() {
   }, [pathname, user?.id]);
 
   useEffect(() => {
+    if (!shouldShowNotifications || !notificationsReadStorageKey) {
+      setNotificationsLastReadAt(null);
+      return;
+    }
+
+    const rawValue = window.localStorage.getItem(notificationsReadStorageKey);
+    if (!rawValue) {
+      setNotificationsLastReadAt(null);
+      return;
+    }
+    const parsed = Number(rawValue);
+    setNotificationsLastReadAt(Number.isFinite(parsed) ? parsed : null);
+  }, [notificationsReadStorageKey, shouldShowNotifications]);
+
+  useEffect(() => {
     if (!shouldShowNotifications || !user?.id) {
       setNotifications([]);
       setNotificationsLoading(false);
@@ -366,6 +390,57 @@ export function Navbar() {
       window.clearInterval(poller);
     };
   }, [shouldShowNotifications, user?.id]);
+
+  const markNotificationsAsRead = useCallback(() => {
+    if (!notificationsReadStorageKey) return;
+
+    const latestTimestamp = notifications.reduce((max, item) => {
+      const timestamp = Date.parse(item.createdAt);
+      if (!Number.isFinite(timestamp)) return max;
+      return Math.max(max, timestamp);
+    }, Date.now());
+
+    setNotificationsLastReadAt((previous) => {
+      const next = Math.max(previous ?? 0, latestTimestamp);
+      window.localStorage.setItem(notificationsReadStorageKey, String(next));
+      return next;
+    });
+  }, [notifications, notificationsReadStorageKey]);
+
+  const unreadNotificationsCount = useMemo(() => {
+    return notifications.reduce((count, notification) => {
+      const createdAt = Date.parse(notification.createdAt);
+      if (!Number.isFinite(createdAt)) return count;
+      if (notificationsLastReadAt === null || createdAt > notificationsLastReadAt) {
+        return count + 1;
+      }
+      return count;
+    }, 0);
+  }, [notifications, notificationsLastReadAt]);
+
+  const visibleNotificationsBadgeCount = notificationsOpen
+    ? 0
+    : unreadNotificationsCount;
+
+  const handleNotificationsOpenChange = useCallback(
+    (open: boolean) => {
+      setNotificationsOpen(open);
+      if (open) {
+        markNotificationsAsRead();
+      }
+    },
+    [markNotificationsAsRead]
+  );
+
+  const handleNotificationsToggle = useCallback(() => {
+    setNotificationsOpen((open) => {
+      const nextOpen = !open;
+      if (nextOpen) {
+        markNotificationsAsRead();
+      }
+      return nextOpen;
+    });
+  }, [markNotificationsAsRead]);
 
   const profileUrl = accountHandle ? buildPublicProfileUrl(accountHandle) : null;
 
@@ -952,16 +1027,16 @@ export function Navbar() {
       <button
         type="button"
         ref={notificationsButtonRef}
-        onClick={() => setNotificationsOpen((open) => !open)}
+        onClick={handleNotificationsToggle}
         className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-border/60 bg-card/80 text-foreground transition hover:bg-card"
         aria-label="Open notifications"
         aria-expanded={notificationsOpen}
         aria-haspopup="dialog"
       >
         <Bell className="h-4 w-4" aria-hidden />
-        {notifications.length > 0 ? (
+        {visibleNotificationsBadgeCount > 0 ? (
           <span className="absolute -right-1 -top-1 inline-flex min-w-[20px] items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground">
-            {Math.min(9, notifications.length)}
+            {Math.min(9, visibleNotificationsBadgeCount)}
           </span>
         ) : null}
       </button>
@@ -1208,7 +1283,7 @@ export function Navbar() {
         {dashboardNotificationsButton && (
           <PopoverDialog
             open={notificationsOpen}
-            onOpenChange={setNotificationsOpen}
+            onOpenChange={handleNotificationsOpenChange}
             anchorRef={notificationsButtonRef}
             align="end"
             title="Notifications"
