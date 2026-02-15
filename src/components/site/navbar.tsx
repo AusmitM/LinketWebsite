@@ -111,6 +111,9 @@ const NOTIFICATIONS_POLL_INTERVAL_MS = 45_000;
 const DASHBOARD_VERIFICATION_ENTRY = "/dashboard/overview";
 const NOTIFICATIONS_LAST_READ_STORAGE_KEY_PREFIX =
   "linket:dashboard-notifications:last-read-at";
+const NOTIFICATIONS_OPENED_AT_STORAGE_KEY_PREFIX =
+  "linket:dashboard-notifications:opened-at";
+const NOTIFICATIONS_INBOX_RETENTION_MS = 2 * 24 * 60 * 60 * 1000;
 
 function toUserLite(
   value: {
@@ -174,6 +177,9 @@ export function Navbar() {
   const [notificationsLastReadAt, setNotificationsLastReadAt] = useState<
     number | null
   >(null);
+  const [notificationsOpenedAtById, setNotificationsOpenedAtById] = useState<
+    Record<string, number>
+  >({});
   const notificationsButtonRef = useRef<HTMLButtonElement | null>(null);
   const siteOrigin = getSiteOrigin();
 
@@ -208,6 +214,9 @@ export function Navbar() {
     Boolean(isDashboard && isOverviewPage && user);
   const notificationsReadStorageKey = user?.id
     ? `${NOTIFICATIONS_LAST_READ_STORAGE_KEY_PREFIX}:${user.id}`
+    : null;
+  const notificationsOpenedStorageKey = user?.id
+    ? `${NOTIFICATIONS_OPENED_AT_STORAGE_KEY_PREFIX}:${user.id}`
     : null;
 
   useEffect(() => {
@@ -338,6 +347,32 @@ export function Navbar() {
   }, [notificationsReadStorageKey, shouldShowNotifications]);
 
   useEffect(() => {
+    if (!shouldShowNotifications || !notificationsOpenedStorageKey) {
+      setNotificationsOpenedAtById({});
+      return;
+    }
+
+    const now = Date.now();
+    const rawValue = window.localStorage.getItem(notificationsOpenedStorageKey);
+    if (!rawValue) {
+      setNotificationsOpenedAtById({});
+      return;
+    }
+
+    const parsed = safeParseNotificationOpenedAtMap(rawValue);
+    const nextEntries = Object.entries(parsed).filter(([, openedAt]) => {
+      return now - openedAt <= NOTIFICATIONS_INBOX_RETENTION_MS;
+    });
+    const nextMap = Object.fromEntries(nextEntries);
+
+    window.localStorage.setItem(
+      notificationsOpenedStorageKey,
+      JSON.stringify(nextMap)
+    );
+    setNotificationsOpenedAtById(nextMap);
+  }, [notificationsOpenedStorageKey, shouldShowNotifications]);
+
+  useEffect(() => {
     if (!shouldShowNotifications || !user?.id) {
       setNotifications([]);
       setNotificationsLoading(false);
@@ -407,6 +442,48 @@ export function Navbar() {
     });
   }, [notifications, notificationsReadStorageKey]);
 
+  const markNotificationsAsOpened = useCallback(() => {
+    if (!notificationsOpenedStorageKey || notifications.length === 0) return;
+
+    const now = Date.now();
+    setNotificationsOpenedAtById((previous) => {
+      const next: Record<string, number> = {};
+      let hasChanges = false;
+
+      for (const [id, openedAt] of Object.entries(previous)) {
+        if (now - openedAt <= NOTIFICATIONS_INBOX_RETENTION_MS) {
+          next[id] = openedAt;
+        } else {
+          hasChanges = true;
+        }
+      }
+
+      for (const notification of notifications) {
+        if (typeof next[notification.id] === "number") continue;
+        next[notification.id] = now;
+        hasChanges = true;
+      }
+
+      if (hasChanges) {
+        window.localStorage.setItem(
+          notificationsOpenedStorageKey,
+          JSON.stringify(next)
+        );
+      }
+
+      return hasChanges ? next : previous;
+    });
+  }, [notifications, notificationsOpenedStorageKey]);
+
+  const notificationsInboxItems = useMemo(() => {
+    const now = Date.now();
+    return notifications.filter((notification) => {
+      const openedAt = notificationsOpenedAtById[notification.id];
+      if (!Number.isFinite(openedAt)) return true;
+      return now - openedAt <= NOTIFICATIONS_INBOX_RETENTION_MS;
+    });
+  }, [notifications, notificationsOpenedAtById]);
+
   const unreadNotificationsCount = useMemo(() => {
     return notifications.reduce((count, notification) => {
       const createdAt = Date.parse(notification.createdAt);
@@ -426,21 +503,23 @@ export function Navbar() {
     (open: boolean) => {
       setNotificationsOpen(open);
       if (open) {
+        markNotificationsAsOpened();
         markNotificationsAsRead();
       }
     },
-    [markNotificationsAsRead]
+    [markNotificationsAsOpened, markNotificationsAsRead]
   );
 
   const handleNotificationsToggle = useCallback(() => {
     setNotificationsOpen((open) => {
       const nextOpen = !open;
       if (nextOpen) {
+        markNotificationsAsOpened();
         markNotificationsAsRead();
       }
       return nextOpen;
     });
-  }, [markNotificationsAsRead]);
+  }, [markNotificationsAsOpened, markNotificationsAsRead]);
 
   const profileUrl = accountHandle ? buildPublicProfileUrl(accountHandle) : null;
 
@@ -1295,12 +1374,12 @@ export function Navbar() {
                 <p className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
                   {notificationsError}
                 </p>
-              ) : notifications.length === 0 ? (
+              ) : notificationsInboxItems.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
                   No developer notifications right now.
                 </p>
               ) : (
-                notifications.map((notification) => (
+                notificationsInboxItems.map((notification) => (
                   <article
                     key={notification.id}
                     className={cn(
@@ -1528,6 +1607,19 @@ export function Navbar() {
       )}
     </header>
   );
+}
+
+function safeParseNotificationOpenedAtMap(value: string): Record<string, number> {
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    if (!parsed || typeof parsed !== "object") return {};
+    const entries = Object.entries(parsed as Record<string, unknown>).filter(
+      ([, timestamp]) => Number.isFinite(timestamp)
+    ) as Array<[string, number]>;
+    return Object.fromEntries(entries);
+  } catch {
+    return {};
+  }
 }
 
 function PopoverDialog({
