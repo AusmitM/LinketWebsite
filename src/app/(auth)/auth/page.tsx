@@ -4,12 +4,46 @@ import type { FormEvent } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { Check } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "@/components/system/toaster";
 import { trackEvent } from "@/lib/analytics";
 import { getSiteOrigin } from "@/lib/site-url";
+import { friendlyAuthError } from "@/lib/auth-errors";
 
 const DEFAULT_NEXT = "/dashboard/overview";
+const PASSWORD_LENGTH_ERROR = "Password must be at least 6 characters.";
+const PASSWORD_STRENGTH_ERROR =
+  "Use a stronger password: include at least 1 lowercase letter, 1 uppercase letter, 1 number, and 1 symbol.";
+
+function getPasswordRequirementStatus(value: string) {
+  return (
+    {
+      minLength: value.length >= 6,
+      lowercase: /[a-z]/.test(value),
+      uppercase: /[A-Z]/.test(value),
+      number: /\d/.test(value),
+      symbol: /[^A-Za-z0-9]/.test(value),
+    } as const
+  );
+}
+
+function hasStrongPassword(value: string) {
+  const status = getPasswordRequirementStatus(value);
+  return Object.values(status).every(Boolean);
+}
+
+function getAuthErrorCode(error: unknown): string | undefined {
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    typeof (error as { code?: unknown }).code === "string"
+  ) {
+    return (error as { code: string }).code;
+  }
+  return undefined;
+}
 
 export default function AuthPage() {
   const router = useRouter();
@@ -31,22 +65,62 @@ export default function AuthPage() {
   const [password, setPassword] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const isSignUp = view === "signup";
+
+  const passwordRequirementStatus = useMemo(
+    () => getPasswordRequirementStatus(password),
+    [password]
+  );
+  const passwordStrengthValid = Object.values(passwordRequirementStatus).every(Boolean);
+  const passwordChecklistItems = [
+    {
+      key: "minLength",
+      label: "At least 6 characters",
+      met: passwordRequirementStatus.minLength,
+    },
+    {
+      key: "lowercase",
+      label: "One lowercase letter (a-z)",
+      met: passwordRequirementStatus.lowercase,
+    },
+    {
+      key: "uppercase",
+      label: "One uppercase letter (A-Z)",
+      met: passwordRequirementStatus.uppercase,
+    },
+    {
+      key: "number",
+      label: "One number (0-9)",
+      met: passwordRequirementStatus.number,
+    },
+    {
+      key: "symbol",
+      label: "One symbol (e.g. !@#$)",
+      met: passwordRequirementStatus.symbol,
+    },
+  ] as const;
+  const showPasswordStrengthState = isSignUp && password.length > 0;
+  const passwordInputBorderClass = showPasswordStrengthState
+    ? passwordStrengthValid
+      ? "border-emerald-400 focus:border-emerald-500 focus:ring-emerald-200"
+      : "border-red-400 focus:border-red-500 focus:ring-red-200"
+    : "border-slate-200 focus:border-[#5dd6f7] focus:ring-[#5dd6f7]/30";
 
   const resolveRedirect = useCallback(
-    async (session: unknown) => {
+    async (session: unknown): Promise<string | null> => {
       try {
         const response = await fetch("/auth/callback", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ event: "SIGNED_IN", session }),
         });
-        if (!response.ok) return next || DEFAULT_NEXT;
+        if (!response.ok) return null;
         const payload = await response.json().catch(() => null);
         if (payload && typeof payload.redirectTo === "string") {
           return payload.redirectTo;
         }
       } catch {
-        return next || DEFAULT_NEXT;
+        return null;
       }
       return next || DEFAULT_NEXT;
     },
@@ -61,23 +135,15 @@ export default function AuthPage() {
       if (!active) return;
       if (data.session) {
         const destination = await resolveRedirect(data.session);
+        if (!destination || !active) return;
         router.replace(destination);
-        router.refresh();
       }
     };
 
-    syncSession();
-
-    const { data } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (!session) return;
-      const destination = await resolveRedirect(session);
-      router.replace(destination);
-      router.refresh();
-    });
+    void syncSession();
 
     return () => {
       active = false;
-      data.subscription.unsubscribe();
     };
   }, [supabase, router, resolveRedirect]);
 
@@ -90,7 +156,11 @@ export default function AuthPage() {
       }
 
       if (password.length < 6) {
-        setError("Password must be at least 6 characters.");
+        setError(PASSWORD_LENGTH_ERROR);
+        return;
+      }
+      if (!hasStrongPassword(password)) {
+        setError(PASSWORD_STRENGTH_ERROR);
         return;
       }
 
@@ -116,6 +186,9 @@ export default function AuthPage() {
         if (data.session) {
           // User is immediately signed in
           const destination = await resolveRedirect(data.session);
+          if (!destination) {
+            throw new Error("We couldn't complete sign-in. Please try again.");
+          }
 
           toast({
             title: "Account created!",
@@ -124,7 +197,6 @@ export default function AuthPage() {
           });
 
           router.replace(destination);
-          router.refresh();
         } else {
           // Email confirmation required
           toast({
@@ -141,7 +213,7 @@ export default function AuthPage() {
           err instanceof Error
             ? err.message
             : "Unable to create account. Please try again.";
-        setError(message);
+        setError(friendlyAuthError(message, getAuthErrorCode(err)));
       } finally {
         setPending(false);
       }
@@ -172,6 +244,9 @@ export default function AuthPage() {
         const destination = data.session
           ? await resolveRedirect(data.session)
           : next || DEFAULT_NEXT;
+        if (!destination) {
+          throw new Error("We couldn't complete sign-in. Please try again.");
+        }
 
         toast({
           title: "Welcome back!",
@@ -180,13 +255,12 @@ export default function AuthPage() {
         });
 
         router.replace(destination);
-        router.refresh();
       } catch (err) {
         const message =
           err instanceof Error
             ? err.message
             : "Unable to sign in. Please try again.";
-        setError(message);
+        setError(friendlyAuthError(message, getAuthErrorCode(err)));
       } finally {
         setPending(false);
       }
@@ -212,14 +286,18 @@ export default function AuthPage() {
       });
 
       if (error) {
-        setError(error.message);
+        setError(friendlyAuthError(error.message, getAuthErrorCode(error)));
         setPending(false);
       }
     },
     [supabase, next, siteUrl, view]
   );
 
-  const isSignUp = view === "signup";
+  const displayedError = error
+    ? friendlyAuthError(error)
+    : oauthMessage
+    ? friendlyAuthError(oauthMessage, oauthError ?? undefined)
+    : "Authentication failed. Please try again.";
 
   return (
     <div className="min-h-screen bg-[#fff7ed] text-slate-900">
@@ -253,9 +331,9 @@ export default function AuthPage() {
                 </p>
               </header>
 
-              {(error || oauthError) && (
+              {(error || oauthError || oauthMessage) && (
                 <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
-                  {error ?? oauthMessage ?? "Authentication failed. Please try again."}
+                  {displayedError}
                 </div>
               )}
 
@@ -288,8 +366,18 @@ export default function AuthPage() {
                     type="password"
                     value={password}
                     autoComplete={isSignUp ? "new-password" : "current-password"}
-                    onChange={(event) => setPassword(event.target.value)}
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#5dd6f7] focus:outline-none focus:ring-2 focus:ring-[#5dd6f7]/30"
+                    onChange={(event) => {
+                      const nextPassword = event.target.value;
+                      setPassword(nextPassword);
+                      if (
+                        isSignUp &&
+                        (error === PASSWORD_STRENGTH_ERROR ||
+                          error === PASSWORD_LENGTH_ERROR)
+                      ) {
+                        setError(null);
+                      }
+                    }}
+                    className={`w-full rounded-2xl border bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 ${passwordInputBorderClass}`}
                     placeholder={
                       isSignUp
                         ? "Create a password (6+ characters)"
@@ -297,6 +385,28 @@ export default function AuthPage() {
                     }
                     required
                   />
+                  {isSignUp && (
+                    <ul className="mt-3 space-y-2 rounded-2xl border border-slate-200 bg-slate-50/70 px-3 py-3">
+                      {passwordChecklistItems.map((item) => (
+                        <li
+                          key={item.key}
+                          className={`flex items-center gap-2 text-xs ${item.met ? "text-emerald-700" : "text-slate-500"}`}
+                        >
+                          <span
+                            className={`flex h-4 w-4 items-center justify-center rounded-full border ${item.met ? "border-emerald-500 bg-emerald-500 text-white" : "border-slate-300 text-transparent"}`}
+                            aria-hidden="true"
+                          >
+                            <Check className="h-3 w-3" />
+                          </span>
+                          <span
+                            className={item.met ? "line-through decoration-emerald-500/70" : ""}
+                          >
+                            {item.label}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
 
                 <button
