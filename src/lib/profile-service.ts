@@ -33,6 +33,7 @@ create table if not exists public.profile_links (
   url text not null,
   order_index int not null default 0,
   is_active boolean not null default true,
+  is_override boolean not null default false,
   click_count int not null default 0,
   created_at timestamptz not null default now(),
   updated_at timestamptz default now()
@@ -150,7 +151,13 @@ export type ProfilePayload = {
   logoShape?: "circle" | "rect" | null;
   logoBackgroundWhite?: boolean | null;
   theme: ThemeName;
-  links: Array<{ id?: string; title: string; url: string }>;
+  links: Array<{
+    id?: string;
+    title: string;
+    url: string;
+    isActive?: boolean;
+    isOverride?: boolean;
+  }>;
   active?: boolean;
 };
 
@@ -269,6 +276,60 @@ function isUuid(value: string | null | undefined): value is string {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
     value
   );
+}
+
+type ExistingLinkState = {
+  is_active: boolean;
+  is_override: boolean;
+};
+
+type NormalizedLinkForSave = {
+  id?: string;
+  title: string;
+  url: string;
+  order_index: number;
+  isActive: boolean;
+  isOverride: boolean;
+};
+
+function normalizeIncomingLinksForSave(
+  links: ProfilePayload["links"],
+  existingById: Map<string, ExistingLinkState>
+): NormalizedLinkForSave[] {
+  const indexed = links.map((link, index) => ({
+    ...link,
+    order_index: index,
+  }));
+  const hasExplicitOverride = indexed.some(
+    (link) => typeof link.isOverride === "boolean"
+  );
+  let overrideIndex = -1;
+  if (hasExplicitOverride) {
+    overrideIndex = indexed.findIndex((link) => link.isOverride === true);
+  } else {
+    overrideIndex = indexed.findIndex(
+      (link) => isUuid(link.id) && existingById.get(link.id)?.is_override === true
+    );
+  }
+
+  return indexed.map((link, index) => {
+    const existing = isUuid(link.id) ? existingById.get(link.id) : undefined;
+    const isOverride = index === overrideIndex;
+    const hasExplicitActive = typeof link.isActive === "boolean";
+    const isActive = isOverride
+      ? true
+      : hasExplicitActive
+      ? Boolean(link.isActive)
+      : existing?.is_active ?? true;
+    return {
+      id: link.id,
+      title: link.title,
+      url: link.url,
+      order_index: index,
+      isActive,
+      isOverride,
+    };
+  });
 }
 
 function buildHandleSuggestions(base: string, existing: Set<string>): string[] {
@@ -472,7 +533,20 @@ function memorySaveProfileForUser(
   }
 
   const existingLinks = new Map(profile.links.map((link) => [link.id, link]));
-  profile.links = links.map((link, index) => {
+  const existingLinkStateById = new Map<string, ExistingLinkState>(
+    profile.links.map((link) => [
+      link.id,
+      {
+        is_active: Boolean(link.is_active),
+        is_override: Boolean(link.is_override),
+      },
+    ])
+  );
+  const normalizedLinks = normalizeIncomingLinksForSave(
+    links,
+    existingLinkStateById
+  );
+  profile.links = normalizedLinks.map((link, index) => {
     const existing = link.id ? existingLinks.get(link.id) : undefined;
     const id = existing?.id || link.id || randomId();
     const createdAt = existing?.created_at || now;
@@ -483,7 +557,8 @@ function memorySaveProfileForUser(
       title: link.title?.trim() || `Link ${index + 1}`,
       url: link.url?.trim() || "",
       order_index: index,
-      is_active: existing?.is_active ?? true,
+      is_active: link.isActive,
+      is_override: link.isOverride,
       click_count: existing?.click_count ?? 0,
       created_at: createdAt,
       updated_at: now,
@@ -761,16 +836,27 @@ export async function saveProfileForUser(
 
   const { data: existingLinks, error: existingErr } = await supabaseAdmin
     .from(PROFILE_LINKS_TABLE)
-    .select("id")
+    .select("id,is_active,is_override")
     .eq("profile_id", profileId);
   if (existingErr) throw new Error(existingErr.message);
 
-  const indexedLinks = links.map((link, index) => ({
-    ...link,
-    order_index: index,
-  }));
+  const existingLinkStateById = new Map<string, ExistingLinkState>(
+    (existingLinks ?? []).map((row) => [
+      row.id as string,
+      {
+        is_active: Boolean((row as { is_active?: boolean | null }).is_active),
+        is_override: Boolean(
+          (row as { is_override?: boolean | null }).is_override
+        ),
+      },
+    ])
+  );
+  const normalizedLinks = normalizeIncomingLinksForSave(
+    links,
+    existingLinkStateById
+  );
   const incomingIds = new Set(
-    indexedLinks.filter((link) => isUuid(link.id)).map((link) => link.id!)
+    normalizedLinks.filter((link) => isUuid(link.id)).map((link) => link.id!)
   );
   const idsToDelete = (existingLinks ?? [])
     .map((row) => row.id as string)
@@ -784,7 +870,7 @@ export async function saveProfileForUser(
     if (deleteErr) throw new Error(deleteErr.message);
   }
 
-  const upsertLinks = indexedLinks
+  const upsertLinks = normalizedLinks
     .filter((link) => isUuid(link.id))
     .map((link) => ({
       id: link.id!,
@@ -793,7 +879,8 @@ export async function saveProfileForUser(
       title: link.title?.trim() || "Link",
       url: link.url?.trim() || "https://",
       order_index: link.order_index,
-      is_active: true,
+      is_active: link.isActive,
+      is_override: link.isOverride,
     }));
 
   if (upsertLinks.length) {
@@ -803,7 +890,7 @@ export async function saveProfileForUser(
     if (upsertErr) throw new Error(upsertErr.message);
   }
 
-  const newLinks = indexedLinks.filter((link) => !isUuid(link.id));
+  const newLinks = normalizedLinks.filter((link) => !isUuid(link.id));
   if (newLinks.length) {
     const formatted = newLinks.map((link) => ({
       profile_id: profileId!,
@@ -811,7 +898,8 @@ export async function saveProfileForUser(
       title: link.title?.trim() || "Link",
       url: link.url?.trim() || "https://",
       order_index: link.order_index,
-      is_active: true,
+      is_active: link.isActive,
+      is_override: link.isOverride,
     }));
     const { error: insertErr } = await supabaseAdmin
       .from(PROFILE_LINKS_TABLE)

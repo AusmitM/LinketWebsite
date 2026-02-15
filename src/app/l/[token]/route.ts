@@ -72,35 +72,95 @@ async function recordScan(
   }
 }
 
-async function resolveAssignmentHandle(assignment: {
+type ResolvedProfileTarget = {
+  profileId: string | null;
+  handle: string | null;
+};
+
+type OverrideLinkTarget = {
+  linkId: string;
+  url: string;
+};
+
+async function resolveAssignmentProfileTarget(assignment: {
   profile_id?: string | null;
   user_id?: string | null;
-}) {
+}): Promise<ResolvedProfileTarget> {
   if (assignment.profile_id) {
     const { data: profile } = await supabaseAdmin
       .from("user_profiles")
-      .select("handle")
+      .select("id,handle")
       .eq("id", assignment.profile_id)
       .limit(1)
       .maybeSingle();
     const handle = normalizeHandle(profile?.handle);
-    if (handle) return handle;
+    if (handle) {
+      return {
+        profileId: (profile as { id?: string | null } | null)?.id ?? null,
+        handle,
+      };
+    }
   }
 
   if (assignment.user_id) {
     const { data: activeProfile } = await supabaseAdmin
       .from("user_profiles")
-      .select("handle")
+      .select("id,handle")
       .eq("user_id", assignment.user_id)
       .order("is_active", { ascending: false })
       .order("updated_at", { ascending: false })
       .limit(1)
       .maybeSingle();
     const handle = normalizeHandle(activeProfile?.handle);
-    if (handle) return handle;
+    if (handle) {
+      return {
+        profileId:
+          (activeProfile as { id?: string | null } | null)?.id ?? null,
+        handle,
+      };
+    }
   }
 
-  return null;
+  return { profileId: null, handle: null };
+}
+
+async function resolveProfileOverrideLink(
+  profileId: string
+): Promise<OverrideLinkTarget | null> {
+  const { data, error } = await supabaseAdmin
+    .from("profile_links")
+    .select("id,url")
+    .eq("profile_id", profileId)
+    .eq("is_active", true)
+    .eq("is_override", true)
+    .order("order_index", { ascending: true })
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    console.warn("linket-override lookup failed:", error.message);
+    return null;
+  }
+  if (!data?.url || !data?.id) return null;
+
+  try {
+    return {
+      linkId: data.id as string,
+      url: sanitizeHttpUrl(data.url as string),
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function incrementOverrideLinkClick(linkId: string) {
+  const { error } = await supabaseAdmin.rpc("increment_profile_link_click", {
+    p_link_id: linkId,
+  });
+  if (error) {
+    console.warn("linket-override click increment failed:", error.message);
+  }
 }
 
 export async function GET(
@@ -149,8 +209,15 @@ export async function GET(
       }
     }
 
-    const handle = await resolveAssignmentHandle(assignment);
-    if (handle) return redirectTo(req, `/${handle}`);
+    const target = await resolveAssignmentProfileTarget(assignment);
+    if (target.profileId) {
+      const override = await resolveProfileOverrideLink(target.profileId);
+      if (override) {
+        await incrementOverrideLinkClick(override.linkId);
+        return NextResponse.redirect(override.url);
+      }
+    }
+    if (target.handle) return redirectTo(req, `/${target.handle}`);
   }
 
   return redirectTo(req, "/dashboard/linkets");

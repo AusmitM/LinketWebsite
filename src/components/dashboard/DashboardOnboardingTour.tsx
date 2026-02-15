@@ -79,6 +79,14 @@ const TOUR_STEPS: TourStep[] = [
     selectors: ['[data-tour="profile-editor-panel"]'],
   },
   {
+    id: "profile-override-link",
+    path: "/dashboard/profiles",
+    title: "Control Linket redirect behavior",
+    description:
+      "Enable Linket redirect override on one link when you want scans to open that destination directly instead of your public profile.",
+    selectors: ['[data-tour="profile-override-link"]'],
+  },
+  {
     id: "profile-lead-form",
     path: "/dashboard/profiles",
     title: "Build lead form inside Public Profile",

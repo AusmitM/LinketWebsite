@@ -267,6 +267,66 @@ function isUuid(value: string | null | undefined): value is string {
   );
 }
 
+type ExistingLinkState = {
+  is_active: boolean;
+  is_override: boolean;
+};
+
+type IncomingLinkForSave = {
+  id?: string;
+  title: string;
+  url: string;
+  order_index: number;
+  isActive: boolean;
+  isOverride: boolean;
+};
+
+function normalizeIncomingLinksForSave(
+  links: Array<{
+    id?: string;
+    title: string;
+    url: string;
+    isActive?: boolean;
+    isOverride?: boolean;
+  }>,
+  existingById: Map<string, ExistingLinkState>
+): IncomingLinkForSave[] {
+  const indexed = links.map((link, index) => ({
+    ...link,
+    order_index: index,
+  }));
+  const hasExplicitOverride = indexed.some(
+    (link) => typeof link.isOverride === "boolean"
+  );
+  let overrideIndex = -1;
+  if (hasExplicitOverride) {
+    overrideIndex = indexed.findIndex((link) => link.isOverride === true);
+  } else {
+    overrideIndex = indexed.findIndex(
+      (link) => isUuid(link.id) && existingById.get(link.id)?.is_override === true
+    );
+  }
+
+  return indexed.map((link, index) => {
+    const existing = isUuid(link.id) ? existingById.get(link.id) : undefined;
+    const isOverride = index === overrideIndex;
+    const hasExplicitActive = typeof link.isActive === "boolean";
+    const isActive = isOverride
+      ? true
+      : hasExplicitActive
+      ? Boolean(link.isActive)
+      : existing?.is_active ?? true;
+    return {
+      id: link.id,
+      title: link.title,
+      url: link.url,
+      order_index: index,
+      isActive,
+      isOverride,
+    };
+  });
+}
+
 async function ensureAuthedUser(userId: string) {
   const supabase = await createServerSupabase();
   const { data, error } = await supabase.auth.getUser();
@@ -596,16 +656,27 @@ export async function POST(request: NextRequest) {
 
     const { data: existingLinks, error: existingError } = await supabase
       .from("profile_links")
-      .select("id")
+      .select("id,is_active,is_override")
       .eq("profile_id", profileId);
     if (existingError) throw new Error(existingError.message);
 
-    const indexedLinks = linksForSave.map((link, index) => ({
-      ...link,
-      order_index: index,
-    }));
+    const existingLinkStateById = new Map<string, ExistingLinkState>(
+      (existingLinks ?? []).map((row) => [
+        row.id as string,
+        {
+          is_active: Boolean((row as { is_active?: boolean | null }).is_active),
+          is_override: Boolean(
+            (row as { is_override?: boolean | null }).is_override
+          ),
+        },
+      ])
+    );
+    const normalizedLinks = normalizeIncomingLinksForSave(
+      linksForSave,
+      existingLinkStateById
+    );
     const incomingIds = new Set(
-      indexedLinks.filter((link) => isUuid(link.id)).map((link) => link.id!)
+      normalizedLinks.filter((link) => isUuid(link.id)).map((link) => link.id!)
     );
     const idsToDelete = (existingLinks ?? [])
       .map((row) => row.id as string)
@@ -619,7 +690,7 @@ export async function POST(request: NextRequest) {
       if (deleteError) throw new Error(deleteError.message);
     }
 
-    const upsertLinks = indexedLinks
+    const upsertLinks = normalizedLinks
       .filter((link) => isUuid(link.id))
       .map((link) => ({
         id: link.id!,
@@ -628,7 +699,8 @@ export async function POST(request: NextRequest) {
         title: link.title?.trim() || "Link",
         url: link.url?.trim() || "https://",
         order_index: link.order_index,
-        is_active: true,
+        is_active: link.isActive,
+        is_override: link.isOverride,
       }));
     if (upsertLinks.length) {
       const { error: upsertLinksError } = await supabase
@@ -637,7 +709,7 @@ export async function POST(request: NextRequest) {
       if (upsertLinksError) throw new Error(upsertLinksError.message);
     }
 
-    const newLinks = indexedLinks.filter((link) => !isUuid(link.id));
+    const newLinks = normalizedLinks.filter((link) => !isUuid(link.id));
     if (newLinks.length) {
       const formatted = newLinks.map((link) => ({
         profile_id: profileId,
@@ -645,7 +717,8 @@ export async function POST(request: NextRequest) {
         title: link.title?.trim() || "Link",
         url: link.url?.trim() || "https://",
         order_index: link.order_index,
-        is_active: true,
+        is_active: link.isActive,
+        is_override: link.isOverride,
       }));
       const { error: insertLinksError } = await supabase
         .from("profile_links")

@@ -183,6 +183,7 @@ const PUBLIC_PROFILE_PREVIEW_LINKS = [
     url: "https://www.peridotkonda.com",
     order_index: 0,
     is_active: true,
+    is_override: false,
     click_count: 2,
     created_at: "2026-01-01T00:00:00.000Z",
     updated_at: null,
@@ -195,6 +196,7 @@ const PUBLIC_PROFILE_PREVIEW_LINKS = [
     url: "https://www.linkedin.com/in/punit-kothakonda",
     order_index: 1,
     is_active: true,
+    is_override: false,
     click_count: 0,
     created_at: "2026-01-01T00:00:00.000Z",
     updated_at: null,
@@ -207,6 +209,7 @@ const PUBLIC_PROFILE_PREVIEW_LINKS = [
     url: "https://www.instagram.com/peridotkonda",
     order_index: 2,
     is_active: true,
+    is_override: false,
     click_count: 0,
     created_at: "2026-01-01T00:00:00.000Z",
     updated_at: null,
@@ -219,6 +222,7 @@ const PUBLIC_PROFILE_PREVIEW_LINKS = [
     url: "https://www.LinketConnect.com",
     order_index: 3,
     is_active: true,
+    is_override: false,
     click_count: 0,
     created_at: "2026-01-01T00:00:00.000Z",
     updated_at: null,
@@ -1301,7 +1305,6 @@ function LandingFooter() {
     </footer>
   );
 }
-
 
 
 

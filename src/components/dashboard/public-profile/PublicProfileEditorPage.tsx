@@ -93,6 +93,7 @@ type LinkItem = {
   icon: LinkIconKey;
   color: string;
   visible: boolean;
+  isOverride: boolean;
   clicks?: number;
 };
 
@@ -533,6 +534,8 @@ export default function PublicProfileEditorPage() {
           id: link.id,
           title: link.label,
           url: link.url,
+          isActive: link.visible,
+          isOverride: link.isOverride,
         })),
         active: true,
       };
@@ -802,6 +805,40 @@ export default function PublicProfileEditorPage() {
     []
   );
 
+  const setOverrideLink = useCallback(
+    (linkId: string, enabled: boolean) => {
+      let nextDraft: ProfileDraft | null = null;
+      setDraft((prev) => {
+        if (!prev) return prev;
+        const nextLinks = prev.links.map((link) => {
+          if (link.id === linkId) {
+            return {
+              ...link,
+              isOverride: enabled,
+              // Override links must stay visible on the public profile.
+              visible: enabled ? true : link.visible,
+            };
+          }
+          if (!enabled) return link;
+          return {
+            ...link,
+            isOverride: false,
+          };
+        });
+        nextDraft = {
+          ...prev,
+          links: nextLinks,
+          updatedAt: new Date().toISOString(),
+        };
+        return nextDraft;
+      });
+      if (nextDraft) {
+        void handleSave(nextDraft);
+      }
+    },
+    [handleSave]
+  );
+
   const addLink = useCallback(() => {
     const newLink = createLink();
     setLinkForm(newLink);
@@ -917,26 +954,44 @@ export default function PublicProfileEditorPage() {
 
   const saveLinkModal = useCallback(() => {
     if (!linkForm) return;
-    if (linkModalMode === "add") {
-      let nextDraft: ProfileDraft | null = null;
-      setDraft((prev) => {
-        if (!prev) return prev;
-        const nextLinks = prev.links.some((link) => link.id === linkForm.id)
-          ? prev.links.map((link) =>
-              link.id === linkForm.id ? linkForm : link
-            )
-          : [...prev.links, linkForm];
-        nextDraft = { ...prev, links: nextLinks, updatedAt: new Date().toISOString() };
-        return nextDraft;
-      });
-      if (nextDraft) {
-        void handleSave(nextDraft);
-      }
-    } else if (editingLinkId) {
-      updateLink(editingLinkId, linkForm);
+    let nextDraft: ProfileDraft | null = null;
+    setDraft((prev) => {
+      if (!prev) return prev;
+      const resolvedId = linkModalMode === "edit" && editingLinkId ? editingLinkId : linkForm.id;
+      const incomingLink = {
+        ...linkForm,
+        id: resolvedId,
+        visible: linkForm.isOverride ? true : linkForm.visible,
+      };
+      const baseLinks =
+        linkModalMode === "add"
+          ? prev.links.some((link) => link.id === incomingLink.id)
+            ? prev.links.map((link) =>
+                link.id === incomingLink.id ? incomingLink : link
+              )
+            : [...prev.links, incomingLink]
+          : prev.links.map((link) =>
+              link.id === resolvedId ? incomingLink : link
+            );
+      const normalizedLinks = incomingLink.isOverride
+        ? baseLinks.map((link) => ({
+            ...link,
+            isOverride: link.id === incomingLink.id,
+            visible: link.id === incomingLink.id ? true : link.visible,
+          }))
+        : baseLinks;
+      nextDraft = {
+        ...prev,
+        links: normalizedLinks,
+        updatedAt: new Date().toISOString(),
+      };
+      return nextDraft;
+    });
+    if (nextDraft) {
+      void handleSave(nextDraft);
     }
     setLinkModalOpen(false);
-  }, [editingLinkId, handleSave, linkForm, linkModalMode, updateLink]);
+  }, [editingLinkId, handleSave, linkForm, linkModalMode]);
 
   const hasContactDetails = Boolean(
     vcardSnapshot.email?.trim() || vcardSnapshot.phone?.trim()
@@ -1167,13 +1222,37 @@ export default function PublicProfileEditorPage() {
               onProfileChange={handleProfileChange}
               onAddLink={addLink}
               onUpdateLink={updateLink}
+              onSetOverrideLink={setOverrideLink}
               onEditLink={openEditLink}
               onRemoveLink={removeLink}
               logoPreviewUrl={logoPreviewUrl}
               onToggleLink={(linkId) =>
-                updateLink(linkId, {
-                  visible: !draft?.links.find((link) => link.id === linkId)?.visible,
-                })
+                (() => {
+                  const current = draft?.links.find((link) => link.id === linkId);
+                  if (!current) return;
+                  if (current.isOverride && current.visible) {
+                    let nextDraft: ProfileDraft | null = null;
+                    setDraft((prev) => {
+                      if (!prev) return prev;
+                      const nextLinks = prev.links.map((link) =>
+                        link.id === linkId
+                          ? { ...link, isOverride: false, visible: false }
+                          : link
+                      );
+                      nextDraft = {
+                        ...prev,
+                        links: nextLinks,
+                        updatedAt: new Date().toISOString(),
+                      };
+                      return nextDraft;
+                    });
+                    if (nextDraft) {
+                      void handleSave(nextDraft);
+                    }
+                    return;
+                  }
+                  updateLink(linkId, { visible: !current.visible });
+                })()
               }
               onReorderLink={reorderLinks}
               draggingLinkId={draggingLinkId}
@@ -1241,6 +1320,7 @@ export default function PublicProfileEditorPage() {
         onOpenChange={setLinkModalOpen}
         mode={linkModalMode}
         link={linkForm}
+        hasOverrideLink={Boolean(draft?.links.some((item) => item.isOverride))}
         onChange={setLinkForm}
         onSave={saveLinkModal}
       />
@@ -1267,6 +1347,7 @@ function EditorPanel({
   onProfileChange,
   onAddLink,
   onUpdateLink,
+  onSetOverrideLink,
   onEditLink,
   onRemoveLink,
   logoPreviewUrl,
@@ -1309,6 +1390,7 @@ function EditorPanel({
   onProfileChange: (patch: Partial<ProfileDraft>) => void;
   onAddLink: () => void;
   onUpdateLink: (linkId: string, patch: Partial<LinkItem>) => void;
+  onSetOverrideLink: (linkId: string, enabled: boolean) => void;
   onEditLink: (linkId: string) => void;
   onRemoveLink: (linkId: string) => void;
   logoPreviewUrl: string | null;
@@ -1377,6 +1459,10 @@ function EditorPanel({
   const canReorderLinks =
     linkSortMode === "manual" && linkSearchQuery.trim().length === 0;
   const hasLinkMatches = sortedFilteredLinks.length > 0;
+  const activeOverrideLink = useMemo(
+    () => draft?.links.find((link) => link.isOverride) ?? null,
+    [draft?.links]
+  );
 
   if (loading && activeSection !== "preview") {
     return (
@@ -1586,6 +1672,23 @@ function EditorPanel({
             </div>
           </CardHeader>
         <CardContent className="space-y-3">
+          <div
+            data-tour="profile-override-link"
+            className="rounded-xl border border-primary/30 bg-primary/5 px-3 py-3"
+          >
+            <p className="text-sm font-semibold text-foreground">
+              Linket redirect override
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Turn this on for one link to make your Linket URL open that
+              destination directly instead of your public profile page.
+            </p>
+            <p className="mt-2 text-xs text-foreground">
+              {activeOverrideLink
+                ? `Currently active: ${activeOverrideLink.label || "Selected link"}`
+                : "Currently active: none (Linket URL opens your public profile)."}
+            </p>
+          </div>
           <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_160px]">
             <Input
               value={linkSearchQuery}
@@ -1670,6 +1773,23 @@ function EditorPanel({
                         }}
                       />
                     </div>
+                    <label className="mt-1 flex items-start gap-2 rounded-md border border-border/50 bg-muted/20 px-2 py-2">
+                      <Switch
+                        checked={link.isOverride}
+                        onCheckedChange={(value) =>
+                          onSetOverrideLink(link.id, Boolean(value))
+                        }
+                        aria-label={`Use ${link.label || "this link"} as Linket redirect override`}
+                      />
+                      <span className="space-y-0.5 text-left">
+                        <span className="block text-xs font-medium text-foreground">
+                          Use as Linket redirect override
+                        </span>
+                        <span className="block text-[11px] text-muted-foreground">
+                          Linket scans skip your public page and open this link directly.
+                        </span>
+                      </span>
+                    </label>
                 </div>
                 <div className="flex flex-col gap-2">
                   <Button
@@ -2224,6 +2344,7 @@ function LinkModal({
   onOpenChange,
   mode,
   link,
+  hasOverrideLink,
   onChange,
   onSave,
 }: {
@@ -2231,6 +2352,7 @@ function LinkModal({
   onOpenChange: (open: boolean) => void;
   mode: "add" | "edit";
   link: LinkItem | null;
+  hasOverrideLink: boolean;
   onChange: (link: LinkItem | null) => void;
   onSave: () => void;
 }) {
@@ -2271,16 +2393,54 @@ function LinkModal({
                 />
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <input
-                id="link-visible"
-                type="checkbox"
-                checked={link.visible}
-                onChange={(event) =>
-                  onChange({ ...link, visible: event.target.checked })
-                }
-              />
-              <Label htmlFor="link-visible">Visible</Label>
+            <div className="space-y-3 rounded-xl border border-border/60 px-3 py-3">
+              <label className="flex items-center justify-between gap-3">
+                <span className="space-y-0.5">
+                  <span className="block text-sm font-medium text-foreground">
+                    Visible on public profile
+                  </span>
+                  <span className="block text-xs text-muted-foreground">
+                    Hides this link from your public page when turned off.
+                  </span>
+                </span>
+                <Switch
+                  id="link-visible"
+                  checked={link.visible}
+                  onCheckedChange={(value) =>
+                    onChange({
+                      ...link,
+                      visible: Boolean(value),
+                      isOverride: value ? link.isOverride : false,
+                    })
+                  }
+                />
+              </label>
+              <label className="flex items-center justify-between gap-3">
+                <span className="space-y-0.5">
+                  <span className="block text-sm font-medium text-foreground">
+                    Linket redirect override
+                  </span>
+                  <span className="block text-xs text-muted-foreground">
+                    Linket scans open this URL directly instead of your public profile.
+                  </span>
+                  {hasOverrideLink && !link.isOverride ? (
+                    <span className="block text-xs text-muted-foreground">
+                      Turning this on replaces your current override link.
+                    </span>
+                  ) : null}
+                </span>
+                <Switch
+                  id="link-override"
+                  checked={link.isOverride}
+                  onCheckedChange={(value) =>
+                    onChange({
+                      ...link,
+                      isOverride: Boolean(value),
+                      visible: value ? true : link.visible,
+                    })
+                  }
+                />
+              </label>
             </div>
           </div>
         ) : null}
@@ -2340,6 +2500,7 @@ function createLink(): LinkItem {
     icon: base.value,
     color: base.color,
     visible: true,
+    isOverride: false,
     clicks: 0,
   };
 }
@@ -2365,6 +2526,7 @@ function mapProfile(record: ProfileWithLinks): ProfileDraft {
       icon,
       color: fallbackColor,
       visible: link.is_active ?? true,
+      isOverride: link.is_override ?? false,
       clicks: link.click_count ?? 0,
     };
   });
@@ -2393,7 +2555,7 @@ function mergeProfileUi(next: ProfileDraft, previous: ProfileDraft | null) {
   const uiById = new Map(
     previous.links.map((link) => [
       link.id,
-      { icon: link.icon, color: link.color, visible: link.visible },
+      { icon: link.icon, color: link.color },
     ])
   );
   return {
@@ -2428,6 +2590,7 @@ function normalizeDraftForCompare(draft: ProfileDraft) {
       icon: link.icon,
       color: link.color,
       visible: link.visible,
+      isOverride: link.isOverride,
       clicks: link.clicks ?? 0,
     })),
   };

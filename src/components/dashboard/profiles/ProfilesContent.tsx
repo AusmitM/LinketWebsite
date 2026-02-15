@@ -116,6 +116,7 @@ type LinkItem = {
   id: string;
   label: string;
   url: string;
+  isOverride: boolean;
   clicks?: number;
 };
 
@@ -412,6 +413,7 @@ export default function ProfilesContent() {
                   id: `link-${cryptoRandom()}`,
                   label: "New link",
                   url: DEFAULT_PROFILE_LINK_URL,
+                  isOverride: false,
                   clicks: 0,
                 },
             ],
@@ -525,6 +527,8 @@ export default function ProfilesContent() {
             id: link.id,
             title: link.label,
             url: link.url,
+            isActive: true,
+            isOverride: link.isOverride,
           })),
           active: draft.active,
         };
@@ -1367,6 +1371,7 @@ function mapProfile(record: ProfileWithLinks): LinketProfile {
     id: link.id ?? `link-${index}`,
     label: link.title,
     url: link.url,
+    isOverride: link.is_override ?? false,
     clicks: link.click_count ?? 0,
   }));
   return {
