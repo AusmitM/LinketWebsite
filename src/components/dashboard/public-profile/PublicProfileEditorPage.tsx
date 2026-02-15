@@ -993,6 +993,23 @@ export default function PublicProfileEditorPage() {
     setLinkModalOpen(false);
   }, [editingLinkId, handleSave, linkForm, linkModalMode]);
 
+  const handleModalOverrideToggle = useCallback(
+    (enabled: boolean) => {
+      setLinkForm((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          isOverride: enabled,
+          visible: enabled ? true : prev.visible,
+        };
+      });
+      if (linkModalMode === "edit" && editingLinkId) {
+        setOverrideLink(editingLinkId, enabled);
+      }
+    },
+    [editingLinkId, linkModalMode, setOverrideLink]
+  );
+
   const hasContactDetails = Boolean(
     vcardSnapshot.email?.trim() || vcardSnapshot.phone?.trim()
   );
@@ -1321,6 +1338,7 @@ export default function PublicProfileEditorPage() {
         mode={linkModalMode}
         link={linkForm}
         hasOverrideLink={Boolean(draft?.links.some((item) => item.isOverride))}
+        onOverrideToggle={handleModalOverrideToggle}
         onChange={setLinkForm}
         onSave={saveLinkModal}
       />
@@ -2345,6 +2363,7 @@ function LinkModal({
   mode,
   link,
   hasOverrideLink,
+  onOverrideToggle,
   onChange,
   onSave,
 }: {
@@ -2353,6 +2372,7 @@ function LinkModal({
   mode: "add" | "edit";
   link: LinkItem | null;
   hasOverrideLink: boolean;
+  onOverrideToggle: (enabled: boolean) => void;
   onChange: (link: LinkItem | null) => void;
   onSave: () => void;
 }) {
@@ -2433,11 +2453,7 @@ function LinkModal({
                   id="link-override"
                   checked={link.isOverride}
                   onCheckedChange={(value) =>
-                    onChange({
-                      ...link,
-                      isOverride: Boolean(value),
-                      visible: value ? true : link.visible,
-                    })
+                    onOverrideToggle(Boolean(value))
                   }
                 />
               </label>
