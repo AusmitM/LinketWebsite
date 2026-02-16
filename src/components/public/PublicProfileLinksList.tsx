@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, type CSSProperties } from "react";
+import { useCallback, useState, type CSSProperties } from "react";
 import { ArrowUpRight } from "lucide-react";
 import { emitAnalyticsEvent } from "@/lib/analytics";
 import type { ProfileLinkRecord } from "@/types/db";
@@ -17,6 +17,42 @@ function faviconForUrl(url: string) {
   } catch {
     return null;
   }
+}
+
+function toLinkMonogram(title: string) {
+  const cleaned = title.trim();
+  if (!cleaned) return "L";
+  const words = cleaned.split(/\s+/).filter(Boolean);
+  if (words.length === 0) return "L";
+  if (words.length === 1) return words[0].slice(0, 1).toUpperCase();
+  return `${words[0][0] ?? ""}${words[1][0] ?? ""}`.toUpperCase();
+}
+
+function LinkIcon({ title, url }: { title: string; url: string }) {
+  const [failed, setFailed] = useState(false);
+  const src = faviconForUrl(url);
+  const monogram = toLinkMonogram(title);
+
+  if (!src || failed) {
+    return (
+      <span className="public-profile-link-icon-fallback" aria-hidden>
+        {monogram}
+      </span>
+    );
+  }
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={src}
+      alt=""
+      loading="lazy"
+      decoding="async"
+      onError={() => setFailed(true)}
+      className="public-profile-link-icon h-10 w-10 rounded"
+      aria-hidden
+    />
+  );
 }
 
 export default function PublicProfileLinksList({
@@ -62,17 +98,7 @@ export default function PublicProfileLinksList({
           className="public-profile-link public-profile-link-entrance group flex min-w-0 items-center justify-between gap-4 overflow-hidden rounded-2xl border border-border/60 bg-card/80 px-4 py-3 transition hover:border-[color:var(--ring)] hover:shadow-[0_18px_45px_-35px_var(--ring)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]"
         >
           <div className="flex min-w-0 flex-1 items-center gap-3">
-            {faviconForUrl(link.url) ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={faviconForUrl(link.url) ?? ""}
-                alt=""
-                loading="lazy"
-                decoding="async"
-                className="public-profile-link-icon h-10 w-10 rounded"
-                aria-hidden
-              />
-            ) : null}
+            <LinkIcon title={link.title} url={link.url} />
             <div className="min-w-0">
               <div className="truncate text-base font-semibold text-foreground">
                 {link.title}

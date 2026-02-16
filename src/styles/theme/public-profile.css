@@ -14,7 +14,8 @@
   transition: none !important;
 }
 
-:root[data-lite="true"] .public-profile-link-icon {
+:root[data-lite="true"] .public-profile-link-icon,
+:root[data-lite="true"] .public-profile-link-icon-fallback {
   display: none !important;
 }
 
@@ -102,6 +103,66 @@
   filter: blur(0) saturate(1);
 }
 
+.public-profile-image-hidden {
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+.public-profile-image-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: inherit;
+  border: 1px solid color-mix(in srgb, var(--border) 75%, transparent);
+  background: linear-gradient(
+    138deg,
+    color-mix(in srgb, var(--muted) 78%, var(--background) 22%) 0%,
+    color-mix(in srgb, var(--card) 70%, var(--background) 30%) 48%,
+    color-mix(in srgb, var(--primary) 24%, var(--card) 76%) 100%
+  );
+  color: color-mix(in srgb, var(--foreground) 72%, var(--muted-foreground) 28%);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--background) 55%, transparent);
+}
+
+.public-profile-image-fallback::after {
+  content: "";
+  position: absolute;
+  inset: -42%;
+  background: linear-gradient(
+    120deg,
+    transparent 0%,
+    color-mix(in srgb, var(--background) 55%, transparent) 48%,
+    transparent 100%
+  );
+  opacity: 0.5;
+  animation: public-profile-fallback-sheen 3.2s linear infinite;
+}
+
+.public-profile-image-fallback-label {
+  position: relative;
+  z-index: 1;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.public-profile-image-fallback-header .public-profile-image-fallback-label {
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  opacity: 0.9;
+}
+
+.public-profile-image-fallback-avatar .public-profile-image-fallback-label {
+  font-size: clamp(0.78rem, 2.8vw, 1.08rem);
+}
+
+.public-profile-image-fallback-logo .public-profile-image-fallback-label {
+  font-size: clamp(0.62rem, 1.9vw, 0.82rem);
+}
+
 @keyframes public-profile-fade-in {
   from {
     opacity: 0;
@@ -153,6 +214,16 @@
 
   50% {
     transform: translate3d(-16px, 12px, 0) scale(1.02);
+  }
+}
+
+@keyframes public-profile-fallback-sheen {
+  from {
+    transform: translate3d(-34%, -6%, 0) rotate(14deg);
+  }
+
+  to {
+    transform: translate3d(34%, 6%, 0) rotate(14deg);
   }
 }
 
@@ -218,6 +289,26 @@
   opacity: 1 !important;
   transform: none !important;
   filter: none !important;
+}
+
+:root[data-lite="true"] .public-profile-image-fallback {
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--border) 82%, transparent);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--card) 90%, var(--background) 10%),
+    color-mix(in srgb, var(--card) 78%, var(--background) 22%)
+  );
+  box-shadow: none;
+}
+
+:root[data-lite="true"] .public-profile-image-fallback::after {
+  display: none;
+}
+
+:root[data-lite="true"] .public-profile-image-fallback-label {
+  font-size: 0.6rem;
+  letter-spacing: 0.06em;
 }
 
 /* Hook 'Em theme: gradient only */
@@ -814,8 +905,33 @@
   transform: translateY(-1px);
 }
 
+.public-profile-link-icon,
+.public-profile-link-icon-fallback {
+  height: 2.5rem;
+  width: 2.5rem;
+  flex-shrink: 0;
+  border-radius: 0.5rem;
+}
+
 .public-profile-link-icon {
   background: transparent;
+}
+
+.public-profile-link-icon-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--card) 86%, var(--background) 14%),
+    color-mix(in srgb, var(--primary) 22%, var(--card) 78%)
+  );
+  color: color-mix(in srgb, var(--foreground) 70%, var(--muted-foreground) 30%);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 .public-profile-link-action {

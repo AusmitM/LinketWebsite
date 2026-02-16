@@ -195,6 +195,7 @@ export default async function PublicProfilePage({ params }: Props) {
                       <PublicProfileImage
                         src={headerImage}
                         alt=""
+                        fallbackKind="header"
                         fill
                         unoptimized
                         loading="eager"
@@ -214,10 +215,12 @@ export default async function PublicProfilePage({ params }: Props) {
                     {avatar ? (
                       <div className="flex flex-col items-center">
                         <div className="relative h-28 w-28 rounded-3xl shadow-sm z-10 bg-muted/40 overflow-visible">
-                          <div className="h-full w-full overflow-hidden rounded-3xl ring-4 ring-[var(--avatar-border)]">
+                          <div className="relative h-full w-full overflow-hidden rounded-3xl ring-4 ring-[var(--avatar-border)]">
                             <PublicProfileImage
                               src={avatar}
                               alt={`${displayName} avatar`}
+                              fallbackKind="avatar"
+                              fallbackLabel={displayName}
                               width={112}
                               height={112}
                               unoptimized
@@ -230,6 +233,8 @@ export default async function PublicProfilePage({ params }: Props) {
                               <PublicProfileImage
                                 src={logoUrl}
                                 alt=""
+                                fallbackKind="logo"
+                                fallbackLabel={displayName}
                                 width={48}
                                 height={48}
                                 unoptimized
@@ -239,10 +244,12 @@ export default async function PublicProfilePage({ params }: Props) {
                           ) : null}
                         </div>
                         {logoUrl && logoShape === "rect" ? (
-                          <span className={`mt-2 h-8 w-20 overflow-hidden rounded-md border border-[var(--avatar-border)] shadow-sm ${logoBadgeClass}`}>
+                          <span className={`relative mt-2 h-8 w-20 overflow-hidden rounded-md border border-[var(--avatar-border)] shadow-sm ${logoBadgeClass}`}>
                             <PublicProfileImage
                               src={logoUrl}
                               alt=""
+                              fallbackKind="logo"
+                              fallbackLabel={displayName}
                               width={80}
                               height={32}
                               unoptimized
@@ -275,10 +282,12 @@ export default async function PublicProfilePage({ params }: Props) {
                 {avatar ? (
                   <div className="flex flex-col items-center">
                     <div className="relative h-20 w-20 rounded-3xl bg-muted/40 overflow-visible">
-                      <div className="h-full w-full overflow-hidden rounded-3xl ring-4 ring-[var(--avatar-border)]">
+                      <div className="relative h-full w-full overflow-hidden rounded-3xl ring-4 ring-[var(--avatar-border)]">
                         <PublicProfileImage
                           src={avatar}
                           alt={`${displayName} avatar`}
+                          fallbackKind="avatar"
+                          fallbackLabel={displayName}
                           width={80}
                           height={80}
                           unoptimized
@@ -291,6 +300,8 @@ export default async function PublicProfilePage({ params }: Props) {
                           <PublicProfileImage
                             src={logoUrl}
                             alt=""
+                            fallbackKind="logo"
+                            fallbackLabel={displayName}
                             width={32}
                             height={32}
                             unoptimized
@@ -300,10 +311,12 @@ export default async function PublicProfilePage({ params }: Props) {
                       ) : null}
                     </div>
                     {logoUrl && logoShape === "rect" ? (
-                      <span className={`mt-2 h-6 w-16 overflow-hidden rounded-md border border-[var(--avatar-border)] shadow-sm ${logoBadgeClass}`}>
+                      <span className={`relative mt-2 h-6 w-16 overflow-hidden rounded-md border border-[var(--avatar-border)] shadow-sm ${logoBadgeClass}`}>
                         <PublicProfileImage
                           src={logoUrl}
                           alt=""
+                          fallbackKind="logo"
+                          fallbackLabel={displayName}
                           width={64}
                           height={24}
                           unoptimized
