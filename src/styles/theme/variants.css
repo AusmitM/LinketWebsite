@@ -1172,6 +1172,22 @@
   color: rgba(255, 255, 255, 0.92);
 }
 
+/* Hook 'Em + Aggie: analytics chart tooltip text should be white */
+#dashboard-theme-scope.theme-burnt-orange .dashboard-analytics-tooltip,
+#dashboard-theme-scope.theme-maroon .dashboard-analytics-tooltip {
+  color: #ffffff;
+}
+
+#dashboard-theme-scope.theme-burnt-orange .dashboard-analytics-tooltip .text-foreground,
+#dashboard-theme-scope.theme-maroon .dashboard-analytics-tooltip .text-foreground {
+  color: #ffffff;
+}
+
+#dashboard-theme-scope.theme-burnt-orange .dashboard-analytics-tooltip .text-muted-foreground,
+#dashboard-theme-scope.theme-maroon .dashboard-analytics-tooltip .text-muted-foreground {
+  color: rgba(255, 255, 255, 0.88);
+}
+
 /* Aggie: mock public profile preview matches desktop colors */
 .public-profile-preview.theme-maroon {
   background-image: linear-gradient(180deg, #500000 0%, #ffffff 100%);
