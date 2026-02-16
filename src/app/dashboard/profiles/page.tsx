@@ -1,7 +1,7 @@
 import PublicProfileEditorPage from "@/components/dashboard/public-profile/PublicProfileEditorPage";
 
 export const metadata = {
-  title: "Linket public profile",
+  title: "Public Profile",
 };
 
 export default function ProfilesPage() {

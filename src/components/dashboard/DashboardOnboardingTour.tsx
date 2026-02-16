@@ -81,27 +81,18 @@ const TOUR_STEPS: TourStep[] = [
   {
     id: "profile-override-link",
     path: "/dashboard/profiles",
-    title: "Control Linket redirect behavior",
+    title: "Control Direct-to-link mode",
     description:
-      "Enable Linket redirect override on one link when you want scans to open that destination directly instead of your public profile.",
+      "Turn on Direct-to-link mode for one link when you want scans to open that destination instead of your public profile.",
     selectors: ['[data-tour="profile-override-link"]'],
   },
   {
     id: "profile-lead-form",
     path: "/dashboard/profiles",
-    title: "Build lead form inside Public Profile",
+    title: "Build your lead form in Public Profile",
     description:
       "The Linket Public Profile editor includes a built-in lead form builder. Configure fields right here.",
     selectors: ['[data-tour="profile-lead-form-builder"]'],
-    scrollBlock: "start",
-  },
-  {
-    id: "lead-form",
-    path: "/dashboard/leads",
-    title: "Publish your lead form",
-    description:
-      "Configure the form fields visitors complete after scanning your Linket.",
-    selectors: ['[data-tour="leads-form-builder"]'],
     scrollBlock: "start",
   },
   {
@@ -148,7 +139,7 @@ const TOUR_STEPS: TourStep[] = [
 
 const TOUR_PATH_LABELS: Record<string, string> = {
   "/dashboard/linkets": "Linkets",
-  "/dashboard/profiles": "Profile Editor",
+  "/dashboard/profiles": "Public Profile",
   "/dashboard/leads": "Leads",
   "/dashboard/analytics": "Analytics",
   "/dashboard/overview": "Overview",

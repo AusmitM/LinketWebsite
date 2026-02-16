@@ -33,13 +33,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { getSignedAvatarUrl } from "@/lib/avatar-client";
 import { brand } from "@/config/brand";
@@ -95,7 +88,7 @@ const DASHBOARD_NAV = [
   { href: "/dashboard/overview", label: "Overview" },
   { href: "/dashboard/analytics", label: "Analytics" },
   { href: "/dashboard/leads", label: "Leads" },
-  { href: "/dashboard/profiles", label: "Profiles" },
+  { href: "/dashboard/profiles", label: "Public Profile" },
 ] as const;
 
 const MARKETING_LINKS: Array<{ href: string; label: string }> = [];
@@ -204,14 +197,11 @@ export function Navbar() {
   const isAuthPage =
     pathname?.startsWith("/auth") || pathname?.startsWith("/forgot-password");
   const isProfileEditor = pathname?.startsWith("/dashboard/profiles") ?? false;
-  const isOverviewPage =
-    pathname === "/dashboard" || pathname?.startsWith("/dashboard/overview");
   const isMarketingPage =
     isPublic && !isLandingPage && !isPublicProfile && !isAuthPage;
   const userNeedsEmailVerification =
     Boolean(user?.email) && !Boolean(user?.emailConfirmedAt);
-  const shouldShowNotifications =
-    Boolean(isDashboard && isOverviewPage && user);
+  const shouldShowNotifications = Boolean(isDashboard && user);
   const notificationsReadStorageKey = user?.id
     ? `${NOTIFICATIONS_LAST_READ_STORAGE_KEY_PREFIX}:${user.id}`
     : null;
@@ -937,7 +927,7 @@ export function Navbar() {
   };
 
   const mobilePanelClass = cn(
-    "fixed inset-x-4 top-24 z-50 rounded-2xl border p-6 shadow-xl backdrop-blur-sm",
+    "fixed inset-x-3 top-[5.25rem] z-50 rounded-2xl border p-4 shadow-xl backdrop-blur-sm sm:inset-x-4 sm:top-24 sm:p-6",
     isDashboard
       ? "border-border/60 bg-background/95"
       : overlayMode
@@ -1213,7 +1203,7 @@ export function Navbar() {
           <div className="dashboard-navbar-left flex min-w-0 flex-1 items-center gap-4 pr-3">
             <Link
               href="/dashboard"
-              className="dashboard-brand inline-flex items-center gap-3"
+              className="dashboard-brand -ml-4 inline-flex items-center gap-3 sm:-ml-6 md:-ml-9 lg:-ml-10"
               aria-label={`${brand.name} dashboard`}
             >
               {brand.logo ? (
@@ -1235,7 +1225,7 @@ export function Navbar() {
             </Link>
             {isProfileEditor ? (
               <>
-                <div className="hidden min-w-0 max-w-[550px] flex-1 lg:ml-[calc(2rem)] md:flex">
+                <div className="hidden min-w-0 max-w-[550px] flex-1 md:ml-3 md:flex lg:ml-5">
                   <div className="flex min-h-[52px] w-full items-center rounded-2xl border border-border/50 bg-card/70 px-3 py-2 shadow-[0_20px_40px_-32px_rgba(15,23,42,0.45)]">
                     <div className="flex w-full flex-nowrap items-center gap-2">
                       {PROFILE_SECTIONS.map((section) => {
@@ -1526,43 +1516,29 @@ export function Navbar() {
           <div className={mobilePanelClass}>
             <nav aria-label="Mobile primary" className="grid gap-4">
               {isLandingPage ? (
-                <Select
-                  value={activeLandingId}
-                  onValueChange={(value) =>
-                    handleDropdownSelect(value as LandingSectionId)
-                  }
-                >
-                  <SelectTrigger
-                    className={cn(
-                      "w-full justify-between rounded-2xl px-4 py-3 text-base font-semibold",
-                      isDashboard
-                        ? "border-border/60 bg-card/80 text-foreground hover:bg-card"
-                        : overlayMode
-                        ? "border-white/40 bg-white/10 text-white shadow-[0_10px_24px_rgba(15,15,30,0.18)] hover:bg-white/15"
-                        : "border-foreground/10 bg-white text-[#0b1220] shadow-[0_12px_32px_rgba(15,23,42,0.12)] hover:bg-slate-50"
-                    )}
-                    aria-label="Jump to section"
-                  >
-                    <SelectValue placeholder="Navigate" />
-                  </SelectTrigger>
-                  <SelectContent
-                    className={cn(
-                      "rounded-xl shadow-lg",
-                      isDashboard
-                        ? "border-border/60 bg-background/95 text-foreground"
-                        : overlayMode
-                        ? "border-white/20 bg-slate-900 text-white"
-                        : "border-foreground/10 bg-white text-[#0b1220]"
-                    )}
-                    position="popper"
-                  >
-                    {LANDING_LINKS.map((link) => (
-                      <SelectItem key={link.id} value={link.id}>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                  {LANDING_LINKS.map((link) => {
+                    const isActive = activeLandingId === link.id;
+                    return (
+                      <button
+                        key={link.id}
+                        type="button"
+                        onClick={() => handleDropdownSelect(link.id)}
+                        className={cn(
+                          "min-h-11 rounded-2xl border px-3 py-2 text-center text-xs font-semibold tracking-[0.04em] transition sm:text-sm",
+                          isActive
+                            ? "border-[#ffb166]/70 bg-[#fff2e6] text-[#9a3412]"
+                            : overlayMode
+                            ? "border-white/25 bg-white/5 text-white hover:bg-white/12"
+                            : "border-foreground/10 bg-white text-[#0b1220] hover:bg-slate-50"
+                        )}
+                        aria-label={`Go to ${link.label}`}
+                      >
                         {link.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                      </button>
+                    );
+                  })}
+                </div>
               ) : MARKETING_LINKS.length ? (
                 <div className="grid gap-2">
                   {MARKETING_LINKS.map((link) => (

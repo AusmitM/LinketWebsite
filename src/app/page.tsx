@@ -569,9 +569,9 @@ function HeroSection() {
           </h1>
           {/* Supporting value proposition. */}
           <p className="landing-fade-up landing-delay-2 mx-auto mt-6 max-w-2xl text-sm text-slate-600 sm:text-lg">
-            Transform your market into leads, and your leads into sales with our comprehensive suite of
-            development tools and resources. Launch faster, adapt in real time,
-            and keep every interaction memorable.
+            One NFC tap opens your live public profile, lets people save your contact,
+            and drives qualified leads into your dashboard. Update once, and every
+            future scan shares your latest info.
           </p>
           {/* Primary CTA. */}
           <div className="landing-fade-up landing-delay-3 mt-10 flex justify-center">
@@ -1241,7 +1241,7 @@ function LandingFooter() {
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/60 sm:tracking-[0.35em]">
                 Contact
               </p>
-              <p className="text-white/80">Contact@LinketConnect.com</p>
+              <p className="text-white/80">hello@linketconnect.com</p>
               <p className="text-white/60">
                 400 Bizzell St, College Station, TX
               </p>
@@ -1294,7 +1294,7 @@ function LandingFooter() {
               Warranty
             </Link>
             <Link
-              href="mailto:hello@linket.com"
+              href="mailto:hello@linketconnect.com"
               className="transition hover:text-white"
             >
               Contact sales
@@ -1305,7 +1305,6 @@ function LandingFooter() {
     </footer>
   );
 }
-
 
 
 

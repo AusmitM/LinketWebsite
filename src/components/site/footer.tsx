@@ -125,7 +125,7 @@ export function Footer() {
                 <p className="text-xs font-semibold uppercase tracking-[0.35em] text-white/60">
                   Contact
                 </p>
-                <p className="text-white/80">Contact@LinketConnect.com</p>
+                <p className="text-white/80">hello@linketconnect.com</p>
                 <p className="text-white/60">
                   400 Bizzell St, College Station, TX
                 </p>
@@ -169,7 +169,7 @@ export function Footer() {
                 Security
               </Link>
               <Link
-                href="mailto:hello@linket.com"
+                href="mailto:hello@linketconnect.com"
                 className="transition hover:text-white"
               >
                 Contact sales

@@ -23,7 +23,7 @@ const BASE_NAV = [
   { href: "/dashboard/overview", label: "Overview", icon: LayoutDashboard },
   {
     href: "/dashboard/profiles",
-    label: "Linket Public Profile",
+    label: "Public Profile",
     icon: User,
   },
   { href: "/dashboard/leads", label: "Leads", icon: MessageSquare },

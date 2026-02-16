@@ -1702,7 +1702,7 @@ function EditorPanel({
                 isHookEmOrAggieTheme ? "text-[#500000]" : "text-foreground"
               )}
             >
-              Linket redirect override
+              Direct-to-link mode
             </p>
             <p
               className={cn(
@@ -1714,6 +1714,17 @@ function EditorPanel({
             >
               Turn this on for one link to make your Linket URL open that
               destination directly instead of your public profile page.
+            </p>
+            <p
+              className={cn(
+                "mt-2 text-[11px]",
+                isHookEmOrAggieTheme
+                  ? "text-[#500000]/85"
+                  : "text-muted-foreground"
+              )}
+            >
+              Consequence: scans bypass your profile page and open the selected
+              link directly.
             </p>
             <p
               className={cn(
@@ -1816,7 +1827,7 @@ function EditorPanel({
                         onCheckedChange={(value) =>
                           onSetOverrideLink(link.id, Boolean(value))
                         }
-                        aria-label={`Use ${link.label || "this link"} as Linket redirect override`}
+                        aria-label={`Use ${link.label || "this link"} for Direct-to-link mode`}
                       />
                       <span className="space-y-0.5 text-left">
                         <span
@@ -1825,7 +1836,7 @@ function EditorPanel({
                             isHookEmOrAggieTheme ? "text-white" : "text-foreground"
                           )}
                         >
-                          Use as Linket redirect override
+                          Use Direct-to-link mode
                         </span>
                         <span
                           className={cn(
@@ -2469,14 +2480,17 @@ function LinkModal({
               <label className="flex items-center justify-between gap-3">
                 <span className="space-y-0.5">
                   <span className="block text-sm font-medium text-foreground">
-                    Linket redirect override
+                    Direct-to-link mode
                   </span>
                   <span className="block text-xs text-muted-foreground">
                     Linket scans open this URL directly instead of your public profile.
                   </span>
+                  <span className="block text-xs text-muted-foreground">
+                    Consequence: this bypasses your profile page for Linket scans.
+                  </span>
                   {hasOverrideLink && !link.isOverride ? (
                     <span className="block text-xs text-muted-foreground">
-                      Turning this on replaces your current override link.
+                      Turning this on replaces your current Direct-to-link selection.
                     </span>
                   ) : null}
                 </span>
