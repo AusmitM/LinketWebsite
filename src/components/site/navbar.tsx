@@ -21,6 +21,7 @@ import {
   MailWarning,
   Menu,
   MessageSquare,
+  Plus,
   User,
   X,
 } from "lucide-react";
@@ -1097,7 +1098,7 @@ export function Navbar() {
         type="button"
         ref={notificationsButtonRef}
         onClick={handleNotificationsToggle}
-        className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-border/60 bg-card/80 text-foreground transition hover:bg-card"
+        className="dashboard-notifications-button relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-border/60 bg-card/80 text-foreground transition hover:bg-card"
         aria-label="Open notifications"
         aria-expanded={notificationsOpen}
         aria-haspopup="dialog"
@@ -1203,7 +1204,7 @@ export function Navbar() {
           <div className="dashboard-navbar-left flex min-w-0 flex-1 items-center gap-4 pr-3">
             <Link
               href="/dashboard"
-              className="dashboard-brand -ml-4 inline-flex items-center gap-3 sm:-ml-6 md:-ml-9 lg:-ml-10"
+              className="dashboard-brand ml-0 inline-flex items-center gap-3 md:-ml-8 lg:-ml-10"
               aria-label={`${brand.name} dashboard`}
             >
               {brand.logo ? (
@@ -1298,10 +1299,18 @@ export function Navbar() {
             <Button
               asChild
               size="sm"
-              className="dashboard-new-linket-button rounded-full lg:hidden"
+              className="dashboard-new-linket-button dashboard-new-linket-button--mobile rounded-full lg:hidden"
             >
-              <Link href="/dashboard/linkets" aria-label="Create new Linket">
-                New Linket
+              <Link
+                href="/dashboard/linkets"
+                aria-label="Create new Linket"
+                className="inline-flex items-center gap-1.5"
+              >
+                <Plus
+                  className="dashboard-new-linket-icon h-4 w-4"
+                  aria-hidden="true"
+                />
+                <span className="dashboard-new-linket-label">New Linket</span>
               </Link>
             </Button>
             {dashboardAvatar}
