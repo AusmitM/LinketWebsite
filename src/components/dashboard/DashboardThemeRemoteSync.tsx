@@ -22,6 +22,7 @@ const THEMES: ThemeName[] = [
 
 const PENDING_THEME_KEY = "linket:dashboard-theme:pending";
 const PENDING_TTL_MS = 8000;
+const THEME_SYNC_INTERVAL_MS = 120_000;
 
 type PendingThemePayload = {
   theme: ThemeName;
@@ -152,8 +153,9 @@ export default function DashboardThemeRemoteSync() {
     window.addEventListener("focus", handleFocus);
     document.addEventListener("visibilitychange", handleVisibility);
     const interval = window.setInterval(() => {
+      if (document.hidden) return;
       void syncTheme();
-    }, 15000);
+    }, THEME_SYNC_INTERVAL_MS);
 
     return () => {
       active = false;

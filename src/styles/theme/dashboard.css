@@ -1277,6 +1277,11 @@ body.theme-forest .dashboard-forest-pin {
     margin-right: auto;
   }
 
+  #dashboard-theme-scope .dashboard-content [data-slot="switch"] {
+    margin-left: 0;
+    margin-right: 0;
+  }
+
   #dashboard-theme-scope .dashboard-content .justify-between,
   #dashboard-theme-scope .dashboard-content .justify-start {
     justify-content: center;

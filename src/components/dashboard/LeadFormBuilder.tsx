@@ -324,6 +324,23 @@ export default function LeadFormBuilder({
     updateForm({ fields: nextFields });
   };
 
+  const focusFieldSettingsOnPhone = useCallback(() => {
+    if (
+      layout !== "side" ||
+      columns !== 2 ||
+      showPreview ||
+      typeof window === "undefined" ||
+      window.matchMedia("(min-width: 768px)").matches
+    ) {
+      return;
+    }
+    window.requestAnimationFrame(() => {
+      document
+        .getElementById("lead-form-field-settings-panel")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }, [columns, layout, showPreview]);
+
   const addPresetField = (presetId: string) => {
     if (!form) return;
     const preset = FIELD_PRESETS.find((item) => item.id === presetId);
@@ -335,6 +352,7 @@ export default function LeadFormBuilder({
     });
     updateForm({ fields: [...form.fields, newField] });
     setSelectedFieldId(newField.id);
+    focusFieldSettingsOnPhone();
   };
 
   const duplicateField = (field: LeadFormField) => {
@@ -596,10 +614,13 @@ export default function LeadFormBuilder({
           className={cn(
             "grid gap-6",
             layout === "side" &&
-              (columns === 3 ? "md:grid-cols-2 lg:grid-cols-3" : "grid-cols-2")
+              (columns === 3 ? "md:grid-cols-2 lg:grid-cols-3" : "md:grid-cols-2")
           )}
         >
-          <Card className="rounded-2xl border border-border/60 bg-card/80 shadow-sm">
+          <Card
+            id="lead-form-field-settings-panel"
+            className="rounded-2xl border border-border/60 bg-card/80 shadow-sm"
+          >
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-sm font-semibold whitespace-nowrap">
                 Questions
@@ -622,6 +643,11 @@ export default function LeadFormBuilder({
               >
                 <Plus className="mr-2 h-4 w-4" /> Add field
               </Button>
+              {layout === "side" && columns === 2 && !showPreview ? (
+                <p className="text-xs text-muted-foreground md:hidden">
+                  Tap a question to open its settings below.
+                </p>
+              ) : null}
               {form.fields.length ? (
                 form.fields.map((field) => (
                   <div
@@ -639,7 +665,10 @@ export default function LeadFormBuilder({
                         reorderFields(draggingFieldId, field.id);
                     }}
                     onDragEnd={() => setDraggingFieldId(null)}
-                    onClick={() => setSelectedFieldId(field.id)}
+                    onClick={() => {
+                      setSelectedFieldId(field.id);
+                      focusFieldSettingsOnPhone();
+                    }}
                   >
                     <GripVertical className="mt-1 h-4 w-4 text-muted-foreground" />
                     <div className="flex-1 space-y-1">

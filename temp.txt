@@ -37,7 +37,7 @@ export const metadata: Metadata = {
     images: ["/og.png"],
   },
   icons: {
-    icon: "/linket-favicon.svg",
+    icon: "/linket-favicon.png",
   },
 };
 

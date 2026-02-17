@@ -101,7 +101,8 @@ const PROFILE_SECTIONS = [
   { id: "lead", label: "Lead Form", icon: MessageSquare },
 ] as const;
 
-const NOTIFICATIONS_POLL_INTERVAL_MS = 45_000;
+const NOTIFICATIONS_POLL_INTERVAL_OPEN_MS = 30_000;
+const NOTIFICATIONS_POLL_INTERVAL_IDLE_MS = 120_000;
 const DASHBOARD_VERIFICATION_ENTRY = "/dashboard/overview";
 const NOTIFICATIONS_LAST_READ_STORAGE_KEY_PREFIX =
   "linket:dashboard-notifications:last-read-at";
@@ -406,16 +407,21 @@ export function Navbar() {
       }
     };
 
+    const pollIntervalMs = notificationsOpen
+      ? NOTIFICATIONS_POLL_INTERVAL_OPEN_MS
+      : NOTIFICATIONS_POLL_INTERVAL_IDLE_MS;
+
     void loadNotifications();
     const poller = window.setInterval(() => {
+      if (document.hidden) return;
       void loadNotifications(true);
-    }, NOTIFICATIONS_POLL_INTERVAL_MS);
+    }, pollIntervalMs);
 
     return () => {
       active = false;
       window.clearInterval(poller);
     };
-  }, [shouldShowNotifications, user?.id]);
+  }, [notificationsOpen, shouldShowNotifications, user?.id]);
 
   const markNotificationsAsRead = useCallback(() => {
     if (!notificationsReadStorageKey) return;

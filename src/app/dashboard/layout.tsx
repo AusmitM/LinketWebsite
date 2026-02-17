@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 
+import "@/styles/theme/dashboard.css";
+import "@/styles/theme/public-profile.css";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import DashboardPrefetcher from "@/components/dashboard/DashboardPrefetcher";
 import DashboardThemeSync from "@/components/dashboard/DashboardThemeSync";

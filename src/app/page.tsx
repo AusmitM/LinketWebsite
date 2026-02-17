@@ -5,6 +5,7 @@ import Script from "next/script";
 import type { LucideIcon } from "lucide-react";
 import { stat } from "node:fs/promises";
 import { join } from "node:path";
+import "@/styles/theme/public-profile.css";
 
 import {
   Accordion,
@@ -1305,7 +1306,6 @@ function LandingFooter() {
     </footer>
   );
 }
-
 
 
 

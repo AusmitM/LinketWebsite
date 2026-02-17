@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import "@/styles/theme/public-profile.css";
 import { getSignedAvatarUrl } from "@/lib/avatar-server";
 import { getSignedProfileHeaderUrl } from "@/lib/profile-header-server";
 import { getSignedProfileLogoUrl } from "@/lib/profile-logo-server";

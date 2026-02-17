@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
+import "@/styles/theme/public-profile.css";
 import { createClient } from "@/lib/supabase/client";
 import type { ProfileWithLinks } from "@/lib/profile-service";
 import PublicProfilePreview from "@/components/public/PublicProfilePreview";

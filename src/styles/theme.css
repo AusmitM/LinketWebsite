@@ -1,5 +1,3 @@
-﻿/* Linket theme system entrypoint */
+/* Linket theme system entrypoint */
 @import "./theme/base.css";
 @import "./theme/variants.css";
-@import "./theme/dashboard.css";
-@import "./theme/public-profile.css";
