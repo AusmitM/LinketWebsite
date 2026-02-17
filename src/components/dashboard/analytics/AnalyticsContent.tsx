@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
+import { useThemeOptional } from "@/components/theme/theme-provider";
 import { readLocalStorage, writeLocalStorage } from "@/lib/browser-storage";
 import { ANALYTICS_BROADCAST_KEY, ANALYTICS_EVENT_NAME } from "@/lib/analytics";
 import type { UserAnalytics } from "@/lib/analytics-service";
@@ -54,6 +55,7 @@ type DeltaBadge = {
 };
 
 export default function AnalyticsContent() {
+  const { theme } = useThemeOptional();
   const [userId, setUserId] = useState<string | null>(null);
   const [reloadToken, setReloadToken] = useState(0);
   const [isPhone, setIsPhone] = useState(false);
@@ -670,7 +672,14 @@ export default function AnalyticsContent() {
                           </div>
                           <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
                             {link.handle ? (
-                              <span className="rounded-full bg-muted px-2 py-0.5 font-medium text-foreground/80">
+                              <span
+                                className={cn(
+                                  "rounded-full bg-muted px-2 py-0.5 font-medium",
+                                  theme === "dark" || theme === "gilded" || theme === "midnight"
+                                    ? "text-slate-100"
+                                    : "text-slate-900"
+                                )}
+                              >
                                 {link.handle}
                               </span>
                             ) : null}
