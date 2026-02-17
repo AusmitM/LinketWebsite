@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   BarChart3,
   Calendar,
@@ -432,8 +433,8 @@ export default function OverviewContent() {
         </div>
 
         <div className="hidden md:block lg:col-span-5">
-          <Card className="h-full rounded-3xl border border-border/70 bg-card/90 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
-            <CardContent className="flex h-full items-stretch p-6">
+          <Card className="h-full rounded-[44px] border border-border/70 bg-card/90 py-3 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
+            <CardContent className="flex h-full items-stretch px-6 py-2">
               <PublicProfilePreviewPanel userId={userId ?? null} />
             </CardContent>
           </Card>
@@ -649,10 +650,6 @@ function PublicProfilePreviewPanel({ userId }: { userId: string | null }) {
   return (
     <div className="flex h-full w-full items-center justify-center">
       <div className="relative h-full w-full max-w-sm overflow-hidden rounded-[36px] border border-border/60 bg-black shadow-[0_24px_48px_-32px_rgba(15,23,42,0.45)]">
-        <div
-          className="pointer-events-none absolute inset-x-[31%] top-0 z-20 h-6 rounded-b-2xl bg-black/90"
-          aria-hidden
-        />
         {previewSrc ? (
           <iframe
             key={previewSrc}
@@ -669,9 +666,7 @@ function PublicProfilePreviewPanel({ userId }: { userId: string | null }) {
           </div>
         )}
         {previewSrc && (loading || !frameReady) ? (
-          <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/90 backdrop-blur-[2px]">
-            <div className="dashboard-skeleton h-14 w-40 animate-pulse rounded-full bg-muted" data-skeleton />
-          </div>
+          <PublicProfilePreviewLoadingState />
         ) : null}
         {error && previewSrc ? (
           <div className="absolute inset-x-3 bottom-3 z-30 rounded-xl border border-border/60 bg-background/95 px-3 py-2 text-xs text-muted-foreground shadow-sm">
@@ -679,6 +674,64 @@ function PublicProfilePreviewPanel({ userId }: { userId: string | null }) {
           </div>
         ) : null}
       </div>
+    </div>
+  );
+}
+
+function PublicProfilePreviewLoadingState() {
+  return (
+    <div
+      className="absolute inset-0 z-10 overflow-hidden bg-background/90 backdrop-blur-[3px]"
+      role="status"
+      aria-live="polite"
+      aria-label="Loading public profile preview"
+    >
+      <div className="pointer-events-none absolute -top-20 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-primary/30 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-16 right-[-40px] h-48 w-48 rounded-full bg-accent/25 blur-3xl" />
+
+      <div className="relative flex h-full flex-col items-center justify-start gap-4 px-5 py-4">
+        <div className="relative w-full max-w-[285px] overflow-hidden rounded-[30px] border border-border/60 bg-card/80 shadow-[0_20px_50px_-32px_rgba(15,23,42,0.65)]">
+          <div className="relative h-24 w-full overflow-hidden">
+            <Image
+              src="/mockups/profile-header.jpg"
+              alt=""
+              fill
+              aria-hidden
+              sizes="285px"
+              className="object-cover opacity-90"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background/45" />
+          </div>
+
+          <div className="relative -mt-10 flex flex-col items-center px-4 pb-5">
+            <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-3xl border-4 border-[var(--avatar-border)] bg-background shadow-lg">
+              <Image
+                src="/brand/logo-mark.png"
+                alt=""
+                width={64}
+                height={64}
+                aria-hidden
+                className="h-16 w-16 object-contain landing-float"
+              />
+            </div>
+            <div className="mt-3 h-3 w-36 rounded-full bg-muted/80 animate-pulse" />
+            <div className="mt-2 h-2.5 w-24 rounded-full bg-muted/70 animate-pulse [animation-delay:180ms]" />
+          </div>
+        </div>
+
+        <div className="text-center">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground/90">
+            Loading Preview
+          </p>
+          <div className="mt-2 flex items-center justify-center gap-2">
+          <span className="h-2.5 w-2.5 rounded-full bg-primary/70 animate-pulse [animation-delay:0ms]" />
+            <span className="h-2.5 w-2.5 rounded-full bg-primary/55 animate-pulse [animation-delay:180ms]" />
+            <span className="h-2.5 w-2.5 rounded-full bg-primary/40 animate-pulse [animation-delay:360ms]" />
+          </div>
+        </div>
+      </div>
+
+      <span className="sr-only">Loading public profile preview.</span>
     </div>
   );
 }

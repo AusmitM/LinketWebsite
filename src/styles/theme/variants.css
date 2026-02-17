@@ -48,7 +48,7 @@
   --popover: rgba(26, 34, 55, 0.98);
   --popover-foreground: #f6f8ff;
   --primary: #63a8ff;
-  --primary-foreground: #0b1220;
+  --primary-foreground: #ffffff;
   --secondary: #253352;
   --secondary-foreground: #e6eeff;
   --muted: #1c2942;
@@ -63,7 +63,7 @@
   --sidebar: #111a2b;
   --sidebar-foreground: #f6f8ff;
   --sidebar-primary: #63a8ff;
-  --sidebar-primary-foreground: #0b1220;
+  --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #1d2c48;
   --sidebar-accent-foreground: #dce7ff;
   --sidebar-border: #212f4a;
@@ -89,7 +89,7 @@
   --popover: rgba(18, 15, 46, 0.98);
   --popover-foreground: #f7f5ff;
   --primary: #8d5fff;
-  --primary-foreground: #140d2c;
+  --primary-foreground: #ffffff;
   --secondary: #231b50;
   --secondary-foreground: #ece6ff;
   --muted: #1a1440;
@@ -104,7 +104,7 @@
   --sidebar: #0c0923;
   --sidebar-foreground: #f7f5ff;
   --sidebar-primary: #8d5fff;
-  --sidebar-primary-foreground: #140d2c;
+  --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #20194c;
   --sidebar-accent-foreground: #ebe4ff;
   --sidebar-border: #261f56;
@@ -171,7 +171,7 @@
   --popover: rgba(63, 80, 69, 0.97);
   --popover-foreground: #f2efe3;
   --primary: #7c5c48;
-  --primary-foreground: #1e2522;
+  --primary-foreground: #ffffff;
   --secondary: #7e9585;
   --secondary-foreground: #27312b;
   --muted: #7e9585;
@@ -186,7 +186,7 @@
   --sidebar: #252d33;
   --sidebar-foreground: #f2efe3;
   --sidebar-primary: #7c5c48;
-  --sidebar-primary-foreground: #1e2522;
+  --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #7e9585;
   --sidebar-accent-foreground: #27312b;
   --sidebar-border: #3f5045;
@@ -228,7 +228,7 @@
   --popover: rgba(29, 29, 31, 0.96);
   --popover-foreground: #f7f0e2;
   --primary: #b16c04;
-  --primary-foreground: #1a1205;
+  --primary-foreground: #ffffff;
   --secondary: #3b3130;
   --secondary-foreground: #f4e6c3;
   --muted: #3b3130;
@@ -243,7 +243,7 @@
   --sidebar: #1d1d1f;
   --sidebar-foreground: #f7f0e2;
   --sidebar-primary: #b16c04;
-  --sidebar-primary-foreground: #1a1205;
+  --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #3b3130;
   --sidebar-accent-foreground: #f4e6c3;
   --sidebar-border: #3b3130;
@@ -310,7 +310,7 @@
   --popover: rgba(255, 247, 234, 0.98);
   --popover-foreground: #3c2012;
   --primary: #bd5230;
-  --primary-foreground: #2f180b;
+  --primary-foreground: #fff9eb;
   --secondary: #e5bf69;
   --secondary-foreground: #4a2c17;
   --muted: #e8ca95;
@@ -804,7 +804,7 @@
   --popover: rgba(255, 247, 240, 0.98);
   --popover-foreground: #7a3a00;
   --primary: #c05600 ; 
-  --primary-foreground: #fff6ed;
+  --primary-foreground: #ffffff;
   --secondary: #ffe6d5;
   --secondary-foreground: #4a2312;
   --muted: #ffe6d5;
@@ -819,7 +819,7 @@
   --sidebar: #fff1e6;
   --sidebar-foreground: #7a3a00;
   --sidebar-primary: #c05600;
-  --sidebar-primary-foreground: #fff6ed;
+  --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #ffe6d5;
   --sidebar-accent-foreground: #4a2312;
   --sidebar-border: #f2d2bf;
@@ -1023,7 +1023,7 @@
   --popover: rgba(255, 247, 247, 0.98);
   --popover-foreground: #500000;
   --primary: #500000;
-  --primary-foreground: #fff1f1;
+  --primary-foreground: #ffffff;
   --secondary: #f7dede;
   --secondary-foreground: #3b0000;
   --muted: #f7dede;
@@ -1034,11 +1034,11 @@
   --border: #f0c6c6;
   --input: #f0c6c6;
   --ring: #500000;
-  --avatar-border: var(--ring);
+  --avatar-border: #ffffff;
   --sidebar: #fff1f1;
   --sidebar-foreground: #500000;
   --sidebar-primary: #500000;
-  --sidebar-primary-foreground: #fff1f1;
+  --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #f7dede;
   --sidebar-accent-foreground: #3b0000;
   --sidebar-border: #f0c6c6;
@@ -1134,6 +1134,61 @@
 /* Aggie: mobile nav toggle icon only */
 .theme-maroon .dashboard-mobile-toggle svg {
   color: #fff1f1;
+}
+
+/* Hook 'Em + Aggie: honey-style gradient + logo presentation with native theme colors */
+.theme-burnt-orange .dashboard-topbar,
+.theme-burnt-orange .dashboard-navbar,
+.theme-maroon .dashboard-topbar,
+.theme-maroon .dashboard-navbar {
+  background: var(--premium-topbar-gradient);
+  border-color: var(--premium-border);
+}
+
+.theme-burnt-orange .dashboard-nav-links,
+.theme-maroon .dashboard-nav-links {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--card) 88%, white 12%) 0%,
+    color-mix(in srgb, var(--card) 72%, var(--background) 28%) 100%
+  );
+  border-color: var(--premium-border);
+  box-shadow: 0 14px 28px -22px rgba(15, 23, 42, 0.34), var(--premium-inset);
+}
+
+.theme-burnt-orange .dashboard-logo,
+.theme-burnt-orange .dashboard-logo-fallback,
+.theme-maroon .dashboard-logo,
+.theme-maroon .dashboard-logo-fallback {
+  border-radius: 999px;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.55);
+}
+
+.theme-burnt-orange .dashboard-logo::before,
+.theme-maroon .dashboard-logo::before {
+  content: "";
+  position: absolute;
+  inset-block: 2px;
+  inset-inline: 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--card) 92%, white 8%);
+  box-shadow:
+    0 0 14px color-mix(in srgb, var(--ring) 45%, white 55%),
+    0 0 28px color-mix(in srgb, var(--ring) 32%, transparent);
+  z-index: 0;
+}
+
+.theme-burnt-orange .dashboard-logo img,
+.theme-maroon .dashboard-logo img {
+  z-index: 1;
+}
+
+.theme-burnt-orange .dashboard-logo-fallback,
+.theme-maroon .dashboard-logo-fallback {
+  background: color-mix(in srgb, var(--card) 92%, white 8%);
+  box-shadow:
+    0 0 14px color-mix(in srgb, var(--ring) 45%, white 55%),
+    0 0 28px color-mix(in srgb, var(--ring) 32%, transparent);
 }
 
 /* Hook 'Em + Aggie: account popover menu copy should be white */

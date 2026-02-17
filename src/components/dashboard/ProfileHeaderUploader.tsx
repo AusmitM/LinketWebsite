@@ -496,7 +496,7 @@ export default function ProfileHeaderUploader({
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="h-10 w-full rounded-full bg-primary text-foreground hover:bg-primary/90 disabled:bg-primary/70 disabled:text-foreground/90 disabled:opacity-100 sm:h-8 sm:w-auto"
+                  className="h-10 w-full rounded-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:bg-primary/70 disabled:text-primary-foreground/90 disabled:opacity-100 sm:h-8 sm:w-auto"
                   onClick={handleReCrop}
                   disabled={!latestHeaderUrl || loading}
                 >
@@ -506,7 +506,7 @@ export default function ProfileHeaderUploader({
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="h-10 w-full rounded-full bg-primary text-foreground hover:bg-primary/90 disabled:bg-primary/70 disabled:text-foreground/90 disabled:opacity-100 sm:h-8 sm:w-auto"
+                  className="h-10 w-full rounded-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:bg-primary/70 disabled:text-primary-foreground/90 disabled:opacity-100 sm:h-8 sm:w-auto"
                   onClick={handleRemove}
                   disabled={!(latestHeaderUrl || sourceUrl) || loading}
                 >

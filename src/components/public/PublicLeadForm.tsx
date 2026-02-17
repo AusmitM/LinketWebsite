@@ -100,8 +100,7 @@ export default function PublicLeadForm({
   const buttonClassName = cn(
     variant === "profile"
       ? "w-fit rounded-full px-5 py-1.5 text-sm shadow-[0_10px_24px_-18px_var(--ring)]"
-      : "rounded-2xl",
-    "text-foreground"
+      : "rounded-2xl"
   );
   const cardClassName = cn(
     "border border-border/60",

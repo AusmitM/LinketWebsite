@@ -557,7 +557,7 @@ export default function AuthPage() {
               </form>
 
               <div className="mt-6 space-y-3">
-                <div className="flex items-center gap-4 text-xs uppercase tracking-[0.3em] text-slate-400">
+                <div className="flex items-center gap-4 text-xs uppercase tracking-[0.3em] text-slate-500">
                   <span className="h-px flex-1 bg-slate-200" />
                   <span>or continue with</span>
                   <span className="h-px flex-1 bg-slate-200" />
