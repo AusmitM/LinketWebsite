@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/components/system/toaster";
+import { confirmRemove } from "@/lib/confirm-remove";
 import { QrCode } from "lucide-react";
 
 type TelType = "cell" | "work" | "home" | "fax" | "pager" | "text" | "voice" | "other";
@@ -258,7 +259,19 @@ export default function VCardBuilder() {
                     />
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button variant="outline" className="rounded-2xl" onClick={()=> setForm((f)=> ({...f, phones: f.phones.filter((_,i)=> i!==idx)}))}>Remove</Button>
+                    <Button
+                      variant="outline"
+                      className="rounded-2xl"
+                      onClick={() => {
+                        if (!confirmRemove("Are you sure you want to remove this phone number?")) return;
+                        setForm((f) => ({
+                          ...f,
+                          phones: f.phones.filter((_, i) => i !== idx),
+                        }));
+                      }}
+                    >
+                      Remove
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -285,7 +298,19 @@ export default function VCardBuilder() {
                     <Input id={`email-${idx}`} value={e.value} onChange={(ev) => setForm((f)=> ({...f, emails: f.emails.map((x,i)=> i===idx? { ...x, value: ev.target.value }: x)}))} placeholder="name@example.com" />
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button variant="outline" className="rounded-2xl" onClick={()=> setForm((f)=> ({...f, emails: f.emails.filter((_,i)=> i!==idx)}))}>Remove</Button>
+                    <Button
+                      variant="outline"
+                      className="rounded-2xl"
+                      onClick={() => {
+                        if (!confirmRemove("Are you sure you want to remove this email?")) return;
+                        setForm((f) => ({
+                          ...f,
+                          emails: f.emails.filter((_, i) => i !== idx),
+                        }));
+                      }}
+                    >
+                      Remove
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -313,7 +338,19 @@ export default function VCardBuilder() {
                     <Input id={`addr-label-${idx}`} placeholder="Label (eg. Home)" value={a.label || ""} onChange={(e) => setForm((f)=> ({...f, addresses: f.addresses.map((x,i)=> i===idx? { ...x, label: e.target.value }: x)}))} />
                   </div>
                   <div className="md:col-span-3 flex items-center gap-2">
-                    <Button variant="outline" className="rounded-2xl" onClick={() => setForm((f)=> ({...f, addresses: f.addresses.filter((_,i)=> i!==idx)}))}>Remove</Button>
+                    <Button
+                      variant="outline"
+                      className="rounded-2xl"
+                      onClick={() => {
+                        if (!confirmRemove("Are you sure you want to remove this address?")) return;
+                        setForm((f) => ({
+                          ...f,
+                          addresses: f.addresses.filter((_, i) => i !== idx),
+                        }));
+                      }}
+                    >
+                      Remove
+                    </Button>
                   </div>
                 </div>
                 <div className="grid gap-2 md:grid-cols-3">
@@ -367,7 +404,19 @@ export default function VCardBuilder() {
                     <Input id={`url-${idx}`} value={u.value} onChange={(e) => setForm((f)=> ({...f, urls: f.urls.map((x,i)=> i===idx? { ...x, value: e.target.value }: x)}))} placeholder="https://example.com" />
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button variant="outline" className="rounded-2xl" onClick={()=> setForm((f)=> ({...f, urls: f.urls.filter((_,i)=> i!==idx)}))}>Remove</Button>
+                    <Button
+                      variant="outline"
+                      className="rounded-2xl"
+                      onClick={() => {
+                        if (!confirmRemove("Are you sure you want to remove this website?")) return;
+                        setForm((f) => ({
+                          ...f,
+                          urls: f.urls.filter((_, i) => i !== idx),
+                        }));
+                      }}
+                    >
+                      Remove
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -394,7 +443,19 @@ export default function VCardBuilder() {
                     <Input id={`im-uri-${idx}`} value={i.uri} onChange={(e) => setForm((f)=> ({...f, impps: f.impps.map((x,i2)=> i2===idx? { ...x, uri: e.target.value }: x)}))} placeholder="e.g. skype:username or username" />
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button variant="outline" className="rounded-2xl" onClick={()=> setForm((f)=> ({...f, impps: f.impps.filter((_,i2)=> i2!==idx)}))}>Remove</Button>
+                    <Button
+                      variant="outline"
+                      className="rounded-2xl"
+                      onClick={() => {
+                        if (!confirmRemove("Are you sure you want to remove this IM entry?")) return;
+                        setForm((f) => ({
+                          ...f,
+                          impps: f.impps.filter((_, i2) => i2 !== idx),
+                        }));
+                      }}
+                    >
+                      Remove
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -421,7 +482,19 @@ export default function VCardBuilder() {
                     <Input id={`soc-url-${idx}`} value={s.url} onChange={(e) => setForm((f)=> ({...f, socials: f.socials.map((x,i2)=> i2===idx? { ...x, url: e.target.value }: x)}))} placeholder="https://..." />
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button variant="outline" className="rounded-2xl" onClick={()=> setForm((f)=> ({...f, socials: f.socials.filter((_,i2)=> i2!==idx)}))}>Remove</Button>
+                    <Button
+                      variant="outline"
+                      className="rounded-2xl"
+                      onClick={() => {
+                        if (!confirmRemove("Are you sure you want to remove this social profile?")) return;
+                        setForm((f) => ({
+                          ...f,
+                          socials: f.socials.filter((_, i2) => i2 !== idx),
+                        }));
+                      }}
+                    >
+                      Remove
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -446,7 +519,21 @@ export default function VCardBuilder() {
                 <div key={idx} className="grid gap-2 md:grid-cols-6">
                   <div className="md:col-span-2"><Label className="sr-only" htmlFor={`rel-type-${idx}`}>Type</Label><Input id={`rel-type-${idx}`} value={r.type} onChange={(e)=> setForm((f)=> ({...f, related: f.related.map((x,i)=> i===idx? { ...x, type: e.target.value }: x)}))} placeholder="e.g. friend, spouse" /></div>
                   <div className="md:col-span-3"><Label className="sr-only" htmlFor={`rel-val-${idx}`}>Value</Label><Input id={`rel-val-${idx}`} value={r.value} onChange={(e)=> setForm((f)=> ({...f, related: f.related.map((x,i)=> i===idx? { ...x, value: e.target.value }: x)}))} placeholder="mailto:..., tel:..., urn:uuid:..., or text" /></div>
-                  <div className="flex items-center gap-2"><Button variant="outline" className="rounded-2xl" onClick={()=> setForm((f)=> ({...f, related: f.related.filter((_,i)=> i!==idx)}))}>Remove</Button></div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      className="rounded-2xl"
+                      onClick={() => {
+                        if (!confirmRemove("Are you sure you want to remove this related entry?")) return;
+                        setForm((f) => ({
+                          ...f,
+                          related: f.related.filter((_, i) => i !== idx),
+                        }));
+                      }}
+                    >
+                      Remove
+                    </Button>
+                  </div>
                 </div>
               ))}
               <Button className="rounded-2xl" onClick={()=> setForm((f)=> ({...f, related: [...f.related, { type: "friend", value: "" }]}))}>Add related</Button>
@@ -465,7 +552,21 @@ export default function VCardBuilder() {
                 <div key={idx} className="grid gap-2 md:grid-cols-6">
                   <div className="md:col-span-2"><Label className="sr-only" htmlFor={`c-name-${idx}`}>Name</Label><Input id={`c-name-${idx}`} value={c.name} onChange={(e)=> setForm((f)=> ({...f, customProps: f.customProps.map((x,i)=> i===idx? { ...x, name: e.target.value }: x)}))} placeholder="e.g. X-CUSTOM" /></div>
                   <div className="md:col-span-3"><Label className="sr-only" htmlFor={`c-val-${idx}`}>Value</Label><Input id={`c-val-${idx}`} value={c.value} onChange={(e)=> setForm((f)=> ({...f, customProps: f.customProps.map((x,i)=> i===idx? { ...x, value: e.target.value }: x)}))} placeholder="value" /></div>
-                  <div className="flex items-center gap-2"><Button variant="outline" className="rounded-2xl" onClick={()=> setForm((f)=> ({...f, customProps: f.customProps.filter((_,i)=> i!==idx)}))}>Remove</Button></div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      className="rounded-2xl"
+                      onClick={() => {
+                        if (!confirmRemove("Are you sure you want to remove this custom property?")) return;
+                        setForm((f) => ({
+                          ...f,
+                          customProps: f.customProps.filter((_, i) => i !== idx),
+                        }));
+                      }}
+                    >
+                      Remove
+                    </Button>
+                  </div>
                 </div>
               ))}
               <Button className="rounded-2xl" onClick={()=> setForm((f)=> ({...f, customProps: [...f.customProps, { name: "X-", value: "" }]}))}>Add property</Button>

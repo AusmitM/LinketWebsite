@@ -6,6 +6,7 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { confirmRemove } from "@/lib/confirm-remove";
 import type { ContactProfile } from "@/lib/profile.store";
 
 const PhoneSchema = z.object({ value: z.string().min(3), type: z.enum(["work","cell"]), pref: z.boolean().optional() });
@@ -166,7 +167,17 @@ export default function ContactForm({ initial, onSave }: { initial: ContactProfi
                 <option value="personal">personal</option>
               </select>
               <label className="inline-flex items-center gap-1 text-xs"><input type="checkbox" {...register(`emails.${idx}.pref` as const)} /> Pref</label>
-              <Button type="button" variant="outline" size="sm" onClick={() => emails.remove(idx)}>Remove</Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (!confirmRemove("Are you sure you want to remove this email?")) return;
+                  emails.remove(idx);
+                }}
+              >
+                Remove
+              </Button>
             </div>
           ))}
           <Button type="button" variant="outline" onClick={() => emails.append({ value: "", type: "work" })}>Add email</Button>
@@ -182,7 +193,17 @@ export default function ContactForm({ initial, onSave }: { initial: ContactProfi
                 <option value="work">work</option>
               </select>
               <label className="inline-flex items-center gap-1 text-xs"><input type="checkbox" {...register(`phones.${idx}.pref` as const)} /> Pref</label>
-              <Button type="button" variant="outline" size="sm" onClick={() => phones.remove(idx)}>Remove</Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (!confirmRemove("Are you sure you want to remove this phone number?")) return;
+                  phones.remove(idx);
+                }}
+              >
+                Remove
+              </Button>
             </div>
           ))}
           <Button type="button" variant="outline" onClick={() => phones.append({ value: "", type: "cell" })}>Add phone</Button>

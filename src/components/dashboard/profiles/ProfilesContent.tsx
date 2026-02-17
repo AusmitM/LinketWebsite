@@ -18,6 +18,7 @@ import { toast } from "@/components/system/toaster";
 import { supabase } from "@/lib/supabase";
 import AvatarUploader from "@/components/dashboard/AvatarUploader";
 import { getSignedAvatarUrl } from "@/lib/avatar-client";
+import { confirmRemove } from "@/lib/confirm-remove";
 import { normalizeThemeName, type ThemeName } from "@/lib/themes";
 import type { ProfileWithLinks } from "@/lib/profile-service";
 import { useDashboardUser } from "@/components/dashboard/DashboardSessionContext";
@@ -424,6 +425,7 @@ export default function ProfilesContent() {
   }
 
   function removeLink(linkId: string) {
+    if (!confirmRemove("Are you sure you want to remove this link?")) return;
     setAutoSaveError(null);
     setDraft((prev) =>
       prev

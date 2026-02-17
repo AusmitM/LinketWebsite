@@ -25,6 +25,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/system/toaster";
+import { confirmRemove } from "@/lib/confirm-remove";
 import { cn } from "@/lib/utils";
 import {
   createDefaultLeadFormConfig,
@@ -478,7 +479,7 @@ export default function LeadFormBuilder({
                   disabled={saving}
                   className={cn(
                     saving ? "dashboard-saving-indicator" : undefined,
-                    "text-foreground hover:text-foreground dark:text-foreground dark:hover:text-foreground"
+                    "hidden sm:inline-flex text-foreground hover:text-foreground dark:text-foreground dark:hover:text-foreground"
                   )}
                 >
                   {saving ? "Saving" : "Save"}
@@ -1262,9 +1263,10 @@ function OptionsEditor({
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() =>
-                  updateOptions(options.filter((item) => item.id !== option.id))
-                }
+                onClick={() => {
+                  if (!confirmRemove("Are you sure you want to remove this option?")) return;
+                  updateOptions(options.filter((item) => item.id !== option.id));
+                }}
                 aria-label="Remove option"
               >
                 <Trash2 className="h-4 w-4" />
@@ -1349,9 +1351,10 @@ function GridEditor({
             <Button
               variant="ghost"
               size="icon"
-              onClick={() =>
-                updateRows(rows.filter((item) => item.id !== row.id))
-              }
+              onClick={() => {
+                if (!confirmRemove("Are you sure you want to remove this row?")) return;
+                updateRows(rows.filter((item) => item.id !== row.id));
+              }}
               aria-label="Remove row"
             >
               <Trash2 className="h-4 w-4" />
@@ -1386,9 +1389,10 @@ function GridEditor({
             <Button
               variant="ghost"
               size="icon"
-              onClick={() =>
-                updateColumns(columns.filter((item) => item.id !== col.id))
-              }
+              onClick={() => {
+                if (!confirmRemove("Are you sure you want to remove this column?")) return;
+                updateColumns(columns.filter((item) => item.id !== col.id));
+              }}
               aria-label="Remove column"
             >
               <Trash2 className="h-4 w-4" />

@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
+import { confirmRemove } from "@/lib/confirm-remove";
 
 const OUTPUT_SIZE = 256;
 const MIN_ZOOM = 1;
@@ -83,6 +84,7 @@ export default function VCardContent({
   const initialisedRef = useRef(false);
   const latestFieldsRef = useRef(fields);
   const contentRef = useRef<HTMLDivElement | null>(null);
+  const photoFileInputRef = useRef<HTMLInputElement | null>(null);
   const pointerPosition = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const [photoSourceUrl, setPhotoSourceUrl] = useState<string | null>(null);
   const [photoSourceName, setPhotoSourceName] = useState<string | null>(null);
@@ -130,6 +132,9 @@ export default function VCardContent({
   const resetPhotoEditor = useCallback(() => {
     if (photoSourceUrl?.startsWith("blob:")) {
       URL.revokeObjectURL(photoSourceUrl);
+    }
+    if (photoFileInputRef.current) {
+      photoFileInputRef.current.value = "";
     }
     setPhotoSourceUrl(null);
     setPhotoSourceName(null);
@@ -299,6 +304,9 @@ export default function VCardContent({
   );
 
   const handlePhotoRemove = useCallback(() => {
+    if (!confirmRemove("Are you sure you want to remove this profile photo?")) {
+      return;
+    }
     resetPhotoEditor();
     const nextFields = { ...latestFieldsRef.current, photoData: null, photoName: null };
     setFields(nextFields);
@@ -475,55 +483,78 @@ export default function VCardContent({
         ref={contentRef}
         onBlurCapture={handleContainerBlur}
       >
-        <section className="flex flex-col gap-4 rounded-2xl border border-dashed border-muted/70 p-4 sm:flex-row sm:items-center">
-          <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center">
-            <div className="h-16 w-16 overflow-hidden rounded-full border bg-muted sm:h-20 sm:w-20">
-              {photoPreview ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={photoPreview} alt="Selected profile" className="h-full w-full object-cover" />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">150×150</div>
-              )}
-            </div>
-            <div className="flex-1 space-y-2">
-              <Label htmlFor="profile-photo">Profile photo</Label>
-              <Input
-                id="profile-photo"
-                type="file"
-                accept="image/png,image/jpeg,image/webp"
-                onChange={(event) => handlePhotoChange(event.target.files?.[0] ?? null)}
-                onBlur={handleFieldBlur}
-                disabled={inputsDisabled}
-              />
-              <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                {fields.photoName ? <span className="truncate">Selected: {fields.photoName}</span> : <span>Crop to fit the circle. JPG/PNG/WebP.</span>}
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                    className="rounded-full bg-primary text-foreground hover:bg-primary/90 disabled:bg-primary/70 disabled:text-foreground/90 disabled:opacity-100"
-                  onClick={handlePhotoReCrop}
-                  disabled={!fields.photoData}
-                >
-                  Re-crop
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                    className="rounded-full bg-primary text-foreground hover:bg-primary/90 disabled:bg-primary/70 disabled:text-foreground/90 disabled:opacity-100"
-                  onClick={handlePhotoRemove}
-                  disabled={!fields.photoData && !photoSourceUrl}
-                >
-                  Remove
-                </Button>
+        <section className="flex flex-col gap-3 rounded-2xl border border-dashed border-muted/70 p-3 sm:gap-4 sm:p-4">
+          {!photoSourceUrl ? (
+            <div className="flex w-full flex-col items-center gap-3 sm:flex-row sm:items-center sm:gap-4">
+              <div className="h-24 w-24 overflow-hidden rounded-full border bg-muted sm:h-20 sm:w-20">
+                {photoPreview ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={photoPreview} alt="Selected profile" className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">150x150</div>
+                )}
+              </div>
+              <div className="min-w-0 w-full flex-1 space-y-2 text-center sm:text-left">
+                <Label htmlFor="profile-photo" className="block text-center sm:text-left">Profile photo</Label>
+                <input
+                  ref={photoFileInputRef}
+                  id="profile-photo"
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  className="sr-only"
+                  onChange={(event) => handlePhotoChange(event.target.files?.[0] ?? null)}
+                  disabled={inputsDisabled}
+                />
+                <div className="flex w-full min-w-0 flex-col items-stretch gap-2 overflow-hidden rounded-xl border border-input bg-background/70 px-3 py-2">
+                  <span
+                    className="min-w-0 truncate whitespace-nowrap text-center text-sm text-muted-foreground"
+                    title={photoSourceName ?? fields.photoName ?? "No image selected"}
+                  >
+                    {photoSourceName ?? fields.photoName ?? "No image selected"}
+                  </span>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-10 w-full rounded-full"
+                    onClick={() => photoFileInputRef.current?.click()}
+                    disabled={inputsDisabled}
+                  >
+                    Choose file
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground text-center sm:text-left">
+                  Crop to fit the circle. JPG/PNG/WebP.
+                </p>
+                <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-3">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-10 w-full rounded-full bg-primary text-foreground hover:bg-primary/90 disabled:bg-primary/70 disabled:text-foreground/90 disabled:opacity-100 sm:h-8 sm:w-auto"
+                    onClick={handlePhotoReCrop}
+                    disabled={!fields.photoData}
+                  >
+                    Re-crop
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-10 w-full rounded-full bg-primary text-foreground hover:bg-primary/90 disabled:bg-primary/70 disabled:text-foreground/90 disabled:opacity-100 sm:h-8 sm:w-auto"
+                    onClick={handlePhotoRemove}
+                    disabled={!fields.photoData && !photoSourceUrl}
+                  >
+                    Remove
+                  </Button>
+                </div>
               </div>
             </div>
-          </div>
+          ) : null}
           {photoSourceUrl && (
-            <div className="w-full space-y-3">
+            <div className="mx-auto w-full max-w-sm space-y-3">
               <div
-                className="relative flex touch-none items-center justify-center overflow-hidden rounded-2xl border bg-muted/40 cursor-grab active:cursor-grabbing"
+                className="relative mx-auto flex touch-none items-center justify-center overflow-hidden rounded-2xl border bg-muted/40 cursor-grab active:cursor-grabbing"
                 style={{ width: "100%", maxWidth: `${previewSize}px`, height: `${previewSize}px` }}
                 onPointerDown={handlePointerDown}
                 onPointerMove={handlePointerMove}
@@ -575,8 +606,8 @@ export default function VCardContent({
                 </div>
               </div>
               <div className="space-y-2">
-                <label htmlFor="vcard-photo-zoom" className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                  Zoom
+                <label htmlFor="vcard-photo-zoom" className="flex items-center justify-center gap-1 text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                  Zoom:
                   <span className="text-[11px] font-semibold text-foreground">
                     {Math.round(zoom * 100)}%
                   </span>
@@ -592,11 +623,11 @@ export default function VCardContent({
                   className="w-full accent-primary"
                 />
               </div>
-              <div className="flex flex-wrap items-center gap-3">
+              <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:justify-center sm:gap-3">
                 <Button
                   type="button"
                   size="sm"
-                  className="rounded-full"
+                  className="h-10 w-full rounded-full sm:h-8 sm:w-auto"
                   onClick={handlePhotoApply}
                   disabled={!previewReady || inputsDisabled}
                 >
@@ -606,7 +637,7 @@ export default function VCardContent({
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="rounded-full"
+                  className="h-10 w-full rounded-full sm:h-8 sm:w-auto"
                   onClick={resetPhotoEditor}
                 >
                   Cancel

@@ -59,6 +59,7 @@ import {
 import { getSignedAvatarUrl } from "@/lib/avatar-client";
 import { getSignedProfileHeaderUrl } from "@/lib/profile-header-client";
 import { getSignedProfileLogoUrl } from "@/lib/profile-logo-client";
+import { confirmRemove } from "@/lib/confirm-remove";
 import { cn } from "@/lib/utils";
 import { shuffleFields } from "@/lib/lead-form";
 import { readLocalStorage, writeLocalStorage } from "@/lib/browser-storage";
@@ -848,6 +849,7 @@ export default function PublicProfileEditorPage() {
   }, []);
 
   const removeLink = useCallback((linkId: string) => {
+    if (!confirmRemove("Are you sure you want to remove this link?")) return;
     let removedLink: LinkItem | undefined;
     let removedIndex = -1;
     setDraft((prev) => {

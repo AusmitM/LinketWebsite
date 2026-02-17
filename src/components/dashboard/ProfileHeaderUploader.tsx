@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { uploadProfileHeaderImage } from "@/lib/supabase-storage";
 import { supabase } from "@/lib/supabase";
 import { appendVersion } from "@/lib/avatar-utils";
+import { confirmRemove } from "@/lib/confirm-remove";
 import {
   forgetOriginalUploadFileName,
   readOriginalUploadFileName,
@@ -360,19 +361,38 @@ export default function ProfileHeaderUploader({
 
   const handleReset = useCallback(() => {
     if (sourceUrl) {
-      setZoom(1);
-      setOffset({ x: 0, y: 0 });
-      setError(null);
+      resetEditor();
+      setSourceFile(null);
+      setInputFileName(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+      const restoredName =
+        latestHeaderUrl
+          ? readOriginalUploadFileName(latestHeaderUrl) ??
+            headerOriginalFileName?.trim() ??
+            null
+          : null;
+      setPersistedFileName(restoredName);
       return;
     }
     if (latestHeaderUrl) {
       void handleReCrop();
     }
-  }, [sourceUrl, latestHeaderUrl, handleReCrop]);
+  }, [
+    sourceUrl,
+    latestHeaderUrl,
+    handleReCrop,
+    resetEditor,
+    headerOriginalFileName,
+  ]);
 
   const handleRemove = useCallback(async () => {
     if (loading) return;
     if (!latestHeaderUrl && !sourceUrl) return;
+    if (!confirmRemove("Are you sure you want to remove this header image?")) {
+      return;
+    }
     setError(null);
     setLoading(true);
     try {
@@ -424,85 +444,83 @@ export default function ProfileHeaderUploader({
     const visibleFileName = inputFileName ?? persistedFileName;
     const inputTargetId = inputId ?? "profile-header-upload";
     return (
-      <section className="flex flex-col gap-4 rounded-2xl border border-dashed border-muted/70 p-4">
-        <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center">
-          <div className="flex w-full justify-center sm:w-auto sm:justify-start">
-            <div className="h-30 w-48 overflow-hidden rounded-xl border-2 border-[var(--accent)] bg-muted sm:h-20 sm:w-36">
-              {displayUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={displayUrl} alt="Header image" className="h-full w-full object-cover" />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
-                  300A-150
-                </div>
-              )}
+      <section className="flex flex-col gap-3 rounded-2xl border border-dashed border-muted/70 p-3 sm:gap-4 sm:p-4">
+        {!sourceUrl ? (
+          <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+            <div className="flex w-full justify-center sm:w-auto sm:justify-start">
+              <div className="h-24 w-44 overflow-hidden rounded-xl border-2 border-[var(--accent)] bg-muted sm:h-20 sm:w-36">
+                {displayUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={displayUrl} alt="Header image" className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
+                    300x150
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-          <div className="min-w-0 flex-1 space-y-2">
-            <Label htmlFor={inputTargetId}>Header image</Label>
-            <input
-              ref={fileInputRef}
-              id={inputTargetId}
-              type="file"
-              accept="image/png,image/jpeg,image/webp"
-              className="sr-only"
-              onChange={(event) => handleFile(event.target.files?.[0] ?? null)}
-              disabled={loading}
-            />
-            <div className="flex w-full min-w-0 items-center gap-2 overflow-hidden rounded-xl border border-input bg-background/70 px-3 py-2">
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                className="shrink-0 rounded-full"
-                onClick={() => fileInputRef.current?.click()}
+            <div className="min-w-0 flex-1 space-y-2">
+              <Label htmlFor={inputTargetId}>Header image</Label>
+              <input
+                ref={fileInputRef}
+                id={inputTargetId}
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                className="sr-only"
+                onChange={(event) => handleFile(event.target.files?.[0] ?? null)}
                 disabled={loading}
-              >
-                Choose file
-              </Button>
-              <span
-                className="min-w-0 flex-1 truncate whitespace-nowrap text-sm text-muted-foreground"
-                title={visibleFileName ?? "No image selected"}
-              >
-                {visibleFileName ?? "No image selected"}
-              </span>
-            </div>
-            <div className="flex flex-wrap items-center justify-end gap-[2px] text-xs text-muted-foreground sm:justify-start sm:gap-3">
-              {visibleFileName ? (
-                <span className="w-full min-w-0 truncate sm:w-auto sm:max-w-[20rem]" title={visibleFileName}>
-                  File: {visibleFileName}
+              />
+              <div className="flex w-full min-w-0 flex-col items-stretch gap-2 overflow-hidden rounded-xl border border-input bg-background/70 px-3 py-2">
+                <span
+                  className="min-w-0 truncate whitespace-nowrap text-center text-sm text-muted-foreground"
+                  title={visibleFileName ?? "No image selected"}
+                >
+                  {visibleFileName ?? "No image selected"}
                 </span>
-              ) : (
-                <span>Crop to fit the header. JPG/PNG/WebP.</span>
-              )}
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="rounded-full bg-primary text-foreground hover:bg-primary/90 disabled:bg-primary/70 disabled:text-foreground/90 disabled:opacity-100"
-                onClick={handleReCrop}
-                disabled={!latestHeaderUrl || loading}
-              >
-                Re-crop
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="rounded-full bg-primary text-foreground hover:bg-primary/90 disabled:bg-primary/70 disabled:text-foreground/90 disabled:opacity-100"
-                onClick={handleRemove}
-                disabled={!(latestHeaderUrl || sourceUrl) || loading}
-              >
-                Remove
-              </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="h-10 w-full rounded-full"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={loading}
+                >
+                  Choose file
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Crop to fit the header. JPG/PNG/WebP.
+              </p>
+              <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-3">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-10 w-full rounded-full bg-primary text-foreground hover:bg-primary/90 disabled:bg-primary/70 disabled:text-foreground/90 disabled:opacity-100 sm:h-8 sm:w-auto"
+                  onClick={handleReCrop}
+                  disabled={!latestHeaderUrl || loading}
+                >
+                  Re-crop
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-10 w-full rounded-full bg-primary text-foreground hover:bg-primary/90 disabled:bg-primary/70 disabled:text-foreground/90 disabled:opacity-100 sm:h-8 sm:w-auto"
+                  onClick={handleRemove}
+                  disabled={!(latestHeaderUrl || sourceUrl) || loading}
+                >
+                  Remove
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
+        ) : null}
 
         {sourceUrl && (
-          <div className="space-y-3">
+          <div className="mx-auto w-full max-w-md space-y-3">
             <div
-              className="relative flex items-center justify-center overflow-hidden rounded-2xl border bg-muted/40 cursor-grab touch-none active:cursor-grabbing"
+              className="relative mx-auto flex items-center justify-center overflow-hidden rounded-2xl border bg-muted/40 cursor-grab touch-none active:cursor-grabbing"
               style={{ width: "100%", maxWidth: `${previewWidth}px`, height: `${previewHeight}px` }}
               onPointerDown={handlePointerDown}
               onPointerMove={handlePointerMove}
@@ -560,9 +578,9 @@ export default function ProfileHeaderUploader({
             <div className="space-y-2">
               <label
                 htmlFor="header-zoom"
-                className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-muted-foreground"
+                className="flex items-center justify-center gap-1 text-xs uppercase tracking-[0.2em] text-muted-foreground"
               >
-                Zoom
+                Zoom:
                 <span className="text-[11px] font-semibold text-foreground">
                   {Math.round(zoom * 100)}%
                 </span>
@@ -579,11 +597,11 @@ export default function ProfileHeaderUploader({
               />
             </div>
 
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:justify-center sm:gap-3">
               <Button
                 type="button"
                 size="sm"
-                className="rounded-full"
+                className="h-10 w-full rounded-full sm:h-8 sm:w-auto"
                 disabled={!previewReady || loading}
                 onClick={handleUpload}
               >
@@ -593,7 +611,7 @@ export default function ProfileHeaderUploader({
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="rounded-full"
+                className="h-10 w-full rounded-full sm:h-8 sm:w-auto"
                 onClick={handleReset}
                 disabled={!(sourceUrl || latestHeaderUrl) || loading}
               >
@@ -766,11 +784,11 @@ export default function ProfileHeaderUploader({
                 <label
                   htmlFor="header-zoom"
                   className={cn(
-                    "flex items-center justify-between text-xs uppercase tracking-[0.2em] text-muted-foreground",
+                    "flex items-center justify-center gap-1 text-xs uppercase tracking-[0.2em] text-muted-foreground",
                     isCompact && "text-[10px]"
                   )}
                 >
-                  Zoom
+                  Zoom:
                   <span className="text-[11px] font-semibold text-foreground">
                     {Math.round(zoom * 100)}%
                   </span>
