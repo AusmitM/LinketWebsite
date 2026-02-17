@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -503,6 +503,11 @@ function ChecklistItemRow({
 }
 
 function PublicProfilePreviewPanel({ userId }: { userId: string | null }) {
+  const hasHydrated = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [publicHandle, setPublicHandle] = useState<string | null>(null);
@@ -634,6 +639,14 @@ function PublicProfilePreviewPanel({ userId }: { userId: string | null }) {
       window.removeEventListener("linket:handle-updated", handleHandleUpdated);
     };
   }, [fetchPublicHandle, publicHandle, reloadFrame, userId]);
+
+  if (!hasHydrated) {
+    return (
+      <div className="flex h-full w-full items-center justify-center rounded-[36px] border border-border/60 bg-background px-4 text-center text-sm text-muted-foreground shadow-[0_20px_40px_-30px_rgba(15,23,42,0.3)]">
+        Loading preview...
+      </div>
+    );
+  }
 
   if (!userId) {
     return (
