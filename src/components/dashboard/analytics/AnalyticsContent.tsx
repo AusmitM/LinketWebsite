@@ -24,6 +24,15 @@ const RANGES = [
 const DEFAULT_RANGE = 30;
 const ANALYTICS_RANGE_STORAGE_KEY = "linket:analytics:range";
 const ANALYTICS_CACHE_TTL_MS = 60_000;
+const DARK_DELTA_TEXT_THEMES = new Set([
+  "light",
+  "dream",
+  "rose",
+  "autumn",
+  "honey",
+  "maroon",
+  "burnt-orange",
+]);
 
 type TimelineDatum = {
   date: string;
@@ -56,6 +65,7 @@ type DeltaBadge = {
 
 export default function AnalyticsContent() {
   const { theme } = useThemeOptional();
+  const useDarkDeltaText = DARK_DELTA_TEXT_THEMES.has(theme);
   const [userId, setUserId] = useState<string | null>(null);
   const [reloadToken, setReloadToken] = useState(0);
   const [isPhone, setIsPhone] = useState(false);
@@ -439,18 +449,21 @@ export default function AnalyticsContent() {
           value={analytics ? numberFormatter.format(rangeTotals.scans) : loading ? "--" : "0"}
           helper={`Last ${range} days`}
           delta={trendDeltas?.scans}
+          darkDeltaText={useDarkDeltaText}
         />
         <StatCard
           label="Leads in range"
           value={analytics ? numberFormatter.format(rangeTotals.leads) : loading ? "--" : "0"}
           helper={`Last ${range} days`}
           delta={trendDeltas?.leads}
+          darkDeltaText={useDarkDeltaText}
         />
         <StatCard
           label="Conversion"
           value={analytics ? `${(rangeTotals.conversion * 100).toFixed(1)}%` : loading ? "--" : "0%"}
           helper="Leads / scans"
           delta={trendDeltas?.conversion}
+          darkDeltaText={useDarkDeltaText}
         />
         <StatCard
           label="Active Linkets"
@@ -729,9 +742,10 @@ type StatCardProps = {
   value: string;
   helper?: string;
   delta?: DeltaBadge;
+  darkDeltaText?: boolean;
 };
 
-function StatCard({ label, value, helper, delta }: StatCardProps) {
+function StatCard({ label, value, helper, delta, darkDeltaText = false }: StatCardProps) {
   return (
     <Card className="dashboard-analytics-card min-w-0 rounded-3xl border bg-card/80 shadow-sm">
       <CardHeader className="flex-col items-center justify-center gap-2 space-y-0 text-center sm:flex-row sm:flex-wrap sm:items-start sm:justify-between sm:text-left sm:gap-3">
@@ -740,9 +754,12 @@ function StatCard({ label, value, helper, delta }: StatCardProps) {
           <span
             className={cn(
               "rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wide",
-              delta.tone === "up" && "bg-emerald-500/10 text-emerald-300",
-              delta.tone === "down" && "bg-amber-500/10 text-amber-300",
-              delta.tone === "neutral" && "bg-muted text-muted-foreground"
+              delta.tone === "up" &&
+                cn("bg-emerald-500/10", darkDeltaText ? "text-slate-900" : "text-emerald-300"),
+              delta.tone === "down" &&
+                cn("bg-amber-500/10", darkDeltaText ? "text-slate-900" : "text-amber-300"),
+              delta.tone === "neutral" &&
+                cn("bg-muted", darkDeltaText ? "text-slate-900" : "text-muted-foreground")
             )}
           >
             {delta.text}
