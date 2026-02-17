@@ -15,11 +15,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useDashboardUser } from "@/components/dashboard/DashboardSessionContext";
-import { useThemeOptional } from "@/components/theme/theme-provider";
-import PublicProfilePreview from "@/components/public/PublicProfilePreview";
 import { ANALYTICS_BROADCAST_KEY, ANALYTICS_EVENT_NAME } from "@/lib/analytics";
 import type { UserAnalytics } from "@/lib/analytics-service";
-import type { ProfileWithLinks } from "@/lib/profile-service";
 
 const numberFormatter = new Intl.NumberFormat("en-US");
 const percentFormatter = new Intl.NumberFormat("en-US", {
@@ -505,95 +502,53 @@ function ChecklistItemRow({
 }
 
 function PublicProfilePreviewPanel({ userId }: { userId: string | null }) {
-  const { theme } = useThemeOptional();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [profile, setProfile] = useState<ProfileWithLinks | null>(null);
-  const [hasContactDetails, setHasContactDetails] = useState(false);
-  const [account, setAccount] = useState<{
-    handle: string;
-    displayName: string | null;
-    avatarPath: string | null;
-    avatarUpdatedAt: string | null;
-  } | null>(null);
+  const [publicHandle, setPublicHandle] = useState<string | null>(null);
+  const [frameReady, setFrameReady] = useState(false);
 
   useEffect(() => {
     if (!userId) {
       setLoading(false);
       setError("Sign in to see your live preview.");
-      setProfile(null);
-      setAccount(null);
-      setHasContactDetails(false);
+      setPublicHandle(null);
+      setFrameReady(false);
       return;
     }
 
     let active = true;
     setLoading(true);
     setError(null);
-    setHasContactDetails(false);
+    setPublicHandle(null);
+    setFrameReady(false);
 
     (async () => {
       try {
-        const [accountRes, profilesRes, vcardRes] = await Promise.all([
-          fetch(`/api/account/handle?userId=${encodeURIComponent(userId)}`, {
-            cache: "no-store",
-          }),
-          fetch(`/api/linket-profiles?userId=${encodeURIComponent(userId)}`, {
-            cache: "no-store",
-          }),
-          fetch(`/api/vcard/profile?userId=${encodeURIComponent(userId)}`, {
-            cache: "no-store",
-          }),
-        ]);
-
+        const accountRes = await fetch(
+          `/api/account/handle?userId=${encodeURIComponent(userId)}`,
+          { cache: "no-store" }
+        );
         if (!accountRes.ok) {
           const info = await accountRes.json().catch(() => ({}));
           throw new Error(info?.error || "Unable to load account.");
         }
-        if (!profilesRes.ok) {
-          const info = await profilesRes.json().catch(() => ({}));
-          throw new Error(info?.error || "Unable to load profile.");
-        }
-
         const accountPayload = (await accountRes.json()) as {
           handle?: string | null;
-          displayName?: string | null;
-          avatarPath?: string | null;
-          avatarUpdatedAt?: string | null;
         };
-        const profiles = (await profilesRes.json()) as ProfileWithLinks[];
-        const activeProfile =
-          profiles.find((item) => item.is_active) ?? profiles[0];
-        let nextHasContactDetails = false;
-        if (vcardRes.ok) {
-          const vcardPayload = (await vcardRes.json()) as {
-            fields?: { email?: string | null; phone?: string | null };
-          };
-          nextHasContactDetails = Boolean(
-            vcardPayload.fields?.email?.trim() || vcardPayload.fields?.phone?.trim()
-          );
-        }
-
-        if (!activeProfile) {
+        const resolvedHandle = accountPayload.handle?.trim().toLowerCase();
+        if (!resolvedHandle) {
           throw new Error("Create a public profile to see the preview.");
         }
 
         if (!active) return;
-        setAccount({
-          handle: accountPayload?.handle || activeProfile.handle,
-          displayName: accountPayload?.displayName ?? null,
-          avatarPath: accountPayload?.avatarPath ?? null,
-          avatarUpdatedAt: accountPayload?.avatarUpdatedAt ?? null,
-        });
-        setHasContactDetails(nextHasContactDetails);
-        setProfile(activeProfile);
+        setPublicHandle(resolvedHandle);
+        setFrameReady(false);
         setLoading(false);
       } catch (err) {
         if (!active) return;
         setError(err instanceof Error ? err.message : "Preview unavailable.");
-        setProfile(null);
-        setAccount(null);
-        setHasContactDetails(false);
+        setPublicHandle(null);
+        setFrameReady(false);
         setLoading(false);
       }
     })();
@@ -603,36 +558,40 @@ function PublicProfilePreviewPanel({ userId }: { userId: string | null }) {
     };
   }, [userId]);
 
-  if (loading) {
-    return (
-      <div className="flex h-full w-full items-center justify-center rounded-[36px] border border-border/60 bg-background text-sm text-muted-foreground shadow-[0_20px_40px_-30px_rgba(15,23,42,0.3)]">
-        Loading preview...
-      </div>
-    );
-  }
-
-  if (!profile || !account) {
-    return (
-      <div className="flex h-full w-full items-center justify-center rounded-[36px] border border-border/60 bg-background text-sm text-muted-foreground shadow-[0_20px_40px_-30px_rgba(15,23,42,0.3)]">
-        {error ?? "Preview unavailable."}
-      </div>
-    );
-  }
+  const previewSrc = publicHandle ? `/${encodeURIComponent(publicHandle)}` : null;
 
   return (
     <div className="flex h-full w-full items-center justify-center">
-      <div className="h-full w-full max-w-sm overflow-hidden rounded-[36px] border border-border/60 bg-background shadow-[0_20px_40px_-30px_rgba(15,23,42,0.3)]">
-        <div className="h-full w-full overflow-y-auto">
-          <PublicProfilePreview
-            profile={profile}
-            account={account}
-            handle={account.handle || profile.handle}
-            layout="stacked"
-            forceMobile
-            themeOverride={theme}
-            contactEnabled={hasContactDetails}
+      <div className="relative h-full w-full max-w-sm overflow-hidden rounded-[36px] border border-border/60 bg-black shadow-[0_24px_48px_-32px_rgba(15,23,42,0.45)]">
+        <div
+          className="pointer-events-none absolute inset-x-[31%] top-0 z-20 h-6 rounded-b-2xl bg-black/90"
+          aria-hidden
+        />
+        {previewSrc ? (
+          <iframe
+            key={previewSrc}
+            src={previewSrc}
+            title="Public profile phone preview"
+            loading="lazy"
+            referrerPolicy="strict-origin-when-cross-origin"
+            onLoad={() => setFrameReady(true)}
+            className="h-full w-full border-0 bg-background"
           />
-        </div>
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-background px-4 text-center text-sm text-muted-foreground">
+            {loading ? "Loading preview..." : error ?? "Preview unavailable."}
+          </div>
+        )}
+        {previewSrc && (loading || !frameReady) ? (
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/90 backdrop-blur-[2px]">
+            <div className="dashboard-skeleton h-14 w-40 animate-pulse rounded-full bg-muted" data-skeleton />
+          </div>
+        ) : null}
+        {error && previewSrc ? (
+          <div className="absolute inset-x-3 bottom-3 z-30 rounded-xl border border-border/60 bg-background/95 px-3 py-2 text-xs text-muted-foreground shadow-sm">
+            {error}
+          </div>
+        ) : null}
       </div>
     </div>
   );
