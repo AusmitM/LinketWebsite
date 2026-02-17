@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   BarChart3,
@@ -506,44 +506,66 @@ function PublicProfilePreviewPanel({ userId }: { userId: string | null }) {
   const [error, setError] = useState<string | null>(null);
   const [publicHandle, setPublicHandle] = useState<string | null>(null);
   const [frameReady, setFrameReady] = useState(false);
+  const [frameVersion, setFrameVersion] = useState(0);
+  const reloadTimerRef = useRef<number | null>(null);
+
+  const reloadFrame = useCallback((withSettle = false) => {
+    setFrameReady(false);
+    setFrameVersion((value) => value + 1);
+    if (typeof window === "undefined") return;
+    if (reloadTimerRef.current !== null) {
+      window.clearTimeout(reloadTimerRef.current);
+      reloadTimerRef.current = null;
+    }
+    if (!withSettle) return;
+    // Theme saves are async; follow-up refresh picks up the committed theme.
+    reloadTimerRef.current = window.setTimeout(() => {
+      setFrameReady(false);
+      setFrameVersion((value) => value + 1);
+      reloadTimerRef.current = null;
+    }, 1800);
+  }, []);
+
+  const fetchPublicHandle = useCallback(async () => {
+    if (!userId) {
+      throw new Error("Sign in to see your live preview.");
+    }
+    const accountRes = await fetch(
+      `/api/account/handle?userId=${encodeURIComponent(userId)}`,
+      { cache: "no-store" }
+    );
+    if (!accountRes.ok) {
+      const info = await accountRes.json().catch(() => ({}));
+      throw new Error(info?.error || "Unable to load account.");
+    }
+    const accountPayload = (await accountRes.json()) as {
+      handle?: string | null;
+    };
+    const resolvedHandle = accountPayload.handle?.trim().toLowerCase();
+    if (!resolvedHandle) {
+      throw new Error("Create a public profile to see the preview.");
+    }
+    return resolvedHandle;
+  }, [userId]);
 
   useEffect(() => {
-    if (!userId) {
-      setLoading(false);
-      setError("Sign in to see your live preview.");
-      setPublicHandle(null);
-      setFrameReady(false);
-      return;
-    }
+    if (!userId) return;
 
     let active = true;
-    setLoading(true);
-    setError(null);
-    setPublicHandle(null);
-    setFrameReady(false);
 
     (async () => {
+      if (!active) return;
+      setLoading(true);
+      setError(null);
+      setPublicHandle(null);
+      setFrameReady(false);
       try {
-        const accountRes = await fetch(
-          `/api/account/handle?userId=${encodeURIComponent(userId)}`,
-          { cache: "no-store" }
-        );
-        if (!accountRes.ok) {
-          const info = await accountRes.json().catch(() => ({}));
-          throw new Error(info?.error || "Unable to load account.");
-        }
-        const accountPayload = (await accountRes.json()) as {
-          handle?: string | null;
-        };
-        const resolvedHandle = accountPayload.handle?.trim().toLowerCase();
-        if (!resolvedHandle) {
-          throw new Error("Create a public profile to see the preview.");
-        }
-
+        const resolvedHandle = await fetchPublicHandle();
         if (!active) return;
         setPublicHandle(resolvedHandle);
         setFrameReady(false);
         setLoading(false);
+        reloadFrame(false);
       } catch (err) {
         if (!active) return;
         setError(err instanceof Error ? err.message : "Preview unavailable.");
@@ -556,9 +578,73 @@ function PublicProfilePreviewPanel({ userId }: { userId: string | null }) {
     return () => {
       active = false;
     };
-  }, [userId]);
+  }, [fetchPublicHandle, reloadFrame, userId]);
 
-  const previewSrc = publicHandle ? `/${encodeURIComponent(publicHandle)}` : null;
+  useEffect(() => {
+    return () => {
+      if (reloadTimerRef.current !== null && typeof window !== "undefined") {
+        window.clearTimeout(reloadTimerRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!userId || typeof window === "undefined") return;
+
+    const refreshFromServer = async () => {
+      try {
+        const nextHandle = await fetchPublicHandle();
+        setPublicHandle((prev) => (prev === nextHandle ? prev : nextHandle));
+        setError(null);
+        reloadFrame(true);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Preview unavailable.");
+      }
+    };
+
+    const handleThemeChange = () => {
+      if (!publicHandle) return;
+      reloadFrame(true);
+    };
+
+    const handleProfilesUpdated = () => {
+      void refreshFromServer();
+    };
+
+    const handleHandleUpdated = (event: Event) => {
+      const detail = (event as CustomEvent<{ handle?: string }>).detail;
+      const nextHandle = detail?.handle?.trim().toLowerCase();
+      if (nextHandle) {
+        setPublicHandle(nextHandle);
+        setError(null);
+        reloadFrame(true);
+        return;
+      }
+      void refreshFromServer();
+    };
+
+    window.addEventListener("linket:theme-change", handleThemeChange);
+    window.addEventListener("linket-profiles:updated", handleProfilesUpdated);
+    window.addEventListener("linket:handle-updated", handleHandleUpdated);
+
+    return () => {
+      window.removeEventListener("linket:theme-change", handleThemeChange);
+      window.removeEventListener("linket-profiles:updated", handleProfilesUpdated);
+      window.removeEventListener("linket:handle-updated", handleHandleUpdated);
+    };
+  }, [fetchPublicHandle, publicHandle, reloadFrame, userId]);
+
+  if (!userId) {
+    return (
+      <div className="flex h-full w-full items-center justify-center rounded-[36px] border border-border/60 bg-background px-4 text-center text-sm text-muted-foreground shadow-[0_20px_40px_-30px_rgba(15,23,42,0.3)]">
+        Sign in to see your live preview.
+      </div>
+    );
+  }
+
+  const previewSrc = publicHandle
+    ? `/${encodeURIComponent(publicHandle)}?overviewPreview=${frameVersion}`
+    : null;
 
   return (
     <div className="flex h-full w-full items-center justify-center">
