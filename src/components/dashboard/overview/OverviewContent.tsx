@@ -431,7 +431,7 @@ export default function OverviewContent() {
           </Card>
         </div>
 
-        <div className="lg:col-span-5">
+        <div className="hidden md:block lg:col-span-5">
           <Card className="h-full rounded-3xl border border-border/70 bg-card/90 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
             <CardContent className="flex h-full items-stretch p-6">
               <PublicProfilePreviewPanel userId={userId ?? null} />
