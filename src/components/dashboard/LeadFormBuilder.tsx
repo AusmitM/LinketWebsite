@@ -9,7 +9,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { GripVertical, Plus, Trash2 } from "lucide-react";
+import { Gem, GripVertical, Plus, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -132,11 +132,20 @@ const ALLOWED_TYPES: Array<{ type: LeadFormFieldType; label: string }> = [
   { type: "file_upload", label: "File upload" },
 ];
 
+const FREE_PLAN_PRESET_IDS = new Set(["name", "email", "phone"]);
+const FREE_PLAN_ALLOWED_TYPES = new Set<LeadFormFieldType>(["short_text"]);
+
 type Props = {
   userId: string;
   handle: string | null;
+  hasPaidAccess?: boolean;
   profileId?: string | null;
   onPreviewChange?: (form: LeadFormConfig) => void;
+  onStatusChange?: (payload: {
+    status: "idle" | "saving" | "saved" | "error";
+    isDirty: boolean;
+    error: string | null;
+  }) => void;
   showPreview?: boolean;
   layout?: "side" | "stacked";
   columns?: 2 | 3;
@@ -151,8 +160,10 @@ type ResponsesStats = {
 export default function LeadFormBuilder({
   userId,
   handle,
+  hasPaidAccess = true,
   profileId,
   onPreviewChange,
+  onStatusChange,
   showPreview = true,
   layout = "side",
   columns = 2,
@@ -195,6 +206,24 @@ export default function LeadFormBuilder({
     : isDirty
     ? "unsaved"
     : "saved";
+
+  useEffect(() => {
+    if (!onStatusChange) return;
+    const status: "idle" | "saving" | "saved" | "error" = loading
+      ? "idle"
+      : saveState === "failed"
+      ? "error"
+      : saveState === "saving"
+      ? "saving"
+      : saveState === "saved"
+      ? "saved"
+      : "idle";
+    onStatusChange({
+      status,
+      isDirty,
+      error: saveError,
+    });
+  }, [isDirty, loading, onStatusChange, saveError, saveState]);
 
   const previewFields = useMemo(() => {
     if (!form) return [];
@@ -344,6 +373,13 @@ export default function LeadFormBuilder({
 
   const addPresetField = (presetId: string) => {
     if (!form) return;
+    if (!hasPaidAccess && !FREE_PLAN_PRESET_IDS.has(presetId)) {
+      toast({
+        title: "Premium field",
+        description: "Upgrade to Pro to add this lead field.",
+      });
+      return;
+    }
     const preset = FIELD_PRESETS.find((item) => item.id === presetId);
     if (!preset) return;
     const newField = createField(preset.type, preset.label, {
@@ -777,8 +813,17 @@ export default function LeadFormBuilder({
                       }
                     >
                       {ALLOWED_TYPES.map((option) => (
-                        <option key={option.type} value={option.type}>
+                        <option
+                          key={option.type}
+                          value={option.type}
+                          disabled={
+                            !hasPaidAccess && !FREE_PLAN_ALLOWED_TYPES.has(option.type)
+                          }
+                        >
                           {option.label}
+                          {!hasPaidAccess && !FREE_PLAN_ALLOWED_TYPES.has(option.type)
+                            ? " (Premium)"
+                            : ""}
                         </option>
                       ))}
                     </select>
@@ -861,18 +906,28 @@ export default function LeadFormBuilder({
           </DialogHeader>
           <div className="space-y-2">
             <div className="grid gap-2 sm:grid-cols-2">
-              {FIELD_PRESETS.map((item) => (
-                <Button
-                  key={item.id}
-                  variant="secondary"
-                  onClick={() => {
-                    addPresetField(item.id);
-                    setFieldPickerOpen(false);
-                  }}
-                >
-                  {item.label}
-                </Button>
-              ))}
+              {FIELD_PRESETS.map((item) => {
+                const premiumLocked =
+                  !hasPaidAccess && !FREE_PLAN_PRESET_IDS.has(item.id);
+                return (
+                  <Button
+                    key={item.id}
+                    variant="secondary"
+                    disabled={premiumLocked}
+                    className={cn(
+                      "justify-between gap-2 disabled:opacity-100",
+                      premiumLocked && "text-muted-foreground"
+                    )}
+                    onClick={() => {
+                      addPresetField(item.id);
+                      setFieldPickerOpen(false);
+                    }}
+                  >
+                    <span>{item.label}</span>
+                    {premiumLocked ? <PremiumDiamond compact /> : null}
+                  </Button>
+                );
+              })}
             </div>
           </div>
           <DialogFooter>
@@ -886,6 +941,22 @@ export default function LeadFormBuilder({
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+function PremiumDiamond({ compact = false }: { compact?: boolean }) {
+  return (
+    <span
+      title="Premium feature"
+      className={cn(
+        "relative inline-flex items-center justify-center rounded-full border border-amber-400/80 text-amber-500 shadow-[0_0_14px_rgba(251,191,36,0.65)]",
+        compact ? "h-4 w-4" : "h-5 w-5"
+      )}
+      aria-hidden
+    >
+      <span className="absolute inset-0 rounded-full bg-amber-400/30 blur-[5px]" />
+      <Gem className={cn("relative", compact ? "h-2.5 w-2.5" : "h-3 w-3")} />
+    </span>
   );
 }
 

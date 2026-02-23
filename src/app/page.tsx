@@ -19,7 +19,6 @@ import {
   Focus,
   Instagram,
   LineChart,
-  Search,
   Sparkles,
   Twitter,
   Youtube,
@@ -29,6 +28,7 @@ import ConsultForm from "@/components/landing/ConsultForm";
 import LinketPlansToggle from "@/components/landing/LinketPlansToggle";
 import PublicProfilePreview from "@/components/public/PublicProfilePreview";
 import { Button } from "@/components/ui/button";
+import { ThemedSearchInput } from "@/components/ui/themed-search-input";
 import { cn } from "@/lib/utils";
 import { brand } from "@/config/brand";
 import { getActiveProfileForPublicHandle } from "@/lib/profile-service";
@@ -457,7 +457,7 @@ const FAQ = [
   {
     question: "What is the best-value starter option?",
     answer:
-      "The Web + Linket Bundle is $59 one-time and includes 12 months of Paid Web-Only (Pro). After that, keep Pro for $3/month or $30/year.",
+      "The Web + Linket Bundle is $59 one-time and includes 12 months of Paid Web-Only (Pro). After that, continue Pro at $7/month or $70/year. Discounted Pro ($5/$50) unlocks after 12 cumulative paid subscription months.",
   },
   {
     question: "Is data collection privacy-centered?",
@@ -655,14 +655,12 @@ function HeroDashboardPreview() {
             ))}
           </div>
           <div className="flex min-w-0 flex-1 items-center justify-end gap-2 sm:gap-3">
-            <div className="relative w-full max-w-full flex-1 sm:max-w-xs">
-              <Search
-                className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-300"
-                aria-hidden
-              />
-              <input
-                className="w-full rounded-full border border-slate-200 bg-white py-2 pl-11 pr-4 text-sm text-slate-700 placeholder:text-slate-300 focus:border-[#ff9776] focus:outline-none focus:ring-2 focus:ring-[#ff9776]/30"
+            <div className="w-full max-w-full flex-1 sm:max-w-xs">
+              <ThemedSearchInput
+                size="sm"
                 placeholder="Search..."
+                aria-label="Search dashboard preview"
+                inputClassName="text-sm"
               />
             </div>
             <div className="hidden items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-600 sm:flex">
@@ -1306,9 +1304,6 @@ function LandingFooter() {
     </footer>
   );
 }
-
-
-
 
 
 

@@ -17,7 +17,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useDashboardUser } from "@/components/dashboard/DashboardSessionContext";
 import { ANALYTICS_BROADCAST_KEY, ANALYTICS_EVENT_NAME } from "@/lib/analytics";
-import type { UserAnalytics } from "@/lib/analytics-service";
+import { supabase } from "@/lib/supabase";
+import type { OnboardingChecklist, UserAnalytics } from "@/lib/analytics-service";
 
 const numberFormatter = new Intl.NumberFormat("en-US");
 const percentFormatter = new Intl.NumberFormat("en-US", {
@@ -44,6 +45,55 @@ type ViewState = {
   analytics: UserAnalytics | null;
 };
 
+type RecentLead = UserAnalytics["recentLeads"][number];
+
+type RecentLeadRow = {
+  id: string;
+  name: string | null;
+  email: string | null;
+  phone: string | null;
+  company: string | null;
+  message: string | null;
+  source_url: string | null;
+  handle: string | null;
+  created_at: string;
+};
+
+function isPaidPlanAnalyticsError(status: number, message: string | undefined) {
+  if (status !== 403) return false;
+  const normalized = (message ?? "").toLowerCase();
+  return normalized.includes("paid plans only");
+}
+
+async function fetchRecentLeadsForFreeAccount(
+  userId: string,
+  limit = 5
+): Promise<RecentLead[]> {
+  const { data, error } = await supabase
+    .from("leads")
+    .select("id,name,email,phone,company,message,source_url,handle,created_at")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const rows = (data ?? []) as RecentLeadRow[];
+  return rows.map((lead) => ({
+    id: lead.id,
+    name: lead.name ?? "Unknown",
+    email: lead.email ?? "",
+    phone: lead.phone ?? null,
+    company: lead.company ?? null,
+    message: lead.message ?? null,
+    source_url: lead.source_url ?? null,
+    handle: lead.handle ?? null,
+    created_at: lead.created_at,
+  }));
+}
+
 export default function OverviewContent() {
   const dashboardUser = useDashboardUser();
   const userId = dashboardUser?.id ?? null;
@@ -52,6 +102,12 @@ export default function OverviewContent() {
   const [isChecklistPoppingOut, setIsChecklistPoppingOut] = useState(false);
   const checklistCompletionRef = useRef<boolean | null>(null);
   const checklistDismissTimerRef = useRef<number | null>(null);
+  const [fallbackRecentLeads, setFallbackRecentLeads] = useState<RecentLead[]>(
+    []
+  );
+  const [onboarding, setOnboarding] = useState<OnboardingChecklist | null>(null);
+  const [onboardingLoading, setOnboardingLoading] = useState(true);
+  const [onboardingError, setOnboardingError] = useState<string | null>(null);
   const [{ loading, error, analytics }, setState] = useState<ViewState>({
     loading: true,
     error: null,
@@ -65,11 +121,17 @@ export default function OverviewContent() {
         error: "You're not signed in.",
         analytics: null,
       });
+      setFallbackRecentLeads([]);
+      setOnboarding(null);
+      setOnboardingError(null);
+      setOnboardingLoading(false);
       return;
     }
 
     let cancelled = false;
     setState((prev) => ({ ...prev, loading: true, error: null }));
+    setOnboardingLoading(true);
+    setOnboardingError(null);
 
     const resolvedUserId = userId as string;
 
@@ -81,18 +143,71 @@ export default function OverviewContent() {
         )}&days=90&tzOffsetMinutes=${encodeURIComponent(
           String(timezoneOffsetMinutes)
         )}`;
-        const [analyticsRes] = await Promise.all([
+        const onboardingUrl = `/api/dashboard/onboarding?userId=${encodeURIComponent(
+          resolvedUserId
+        )}`;
+        const [analyticsResult, onboardingResult] = await Promise.allSettled([
           fetch(analyticsUrl, { cache: "no-store" }),
+          fetch(onboardingUrl, { cache: "no-store" }),
         ]);
+        if (onboardingResult.status === "fulfilled") {
+          const onboardingRes = onboardingResult.value;
+          if (onboardingRes.ok) {
+            const onboardingPayload =
+              (await onboardingRes.json()) as OnboardingChecklist;
+            if (!cancelled) {
+              setOnboarding(onboardingPayload);
+              setOnboardingError(null);
+            }
+          } else {
+            const info = await onboardingRes.json().catch(() => ({}));
+            if (!cancelled) {
+              setOnboarding(null);
+              setOnboardingError(
+                info?.error ||
+                  `Checklist request failed (${onboardingRes.status})`
+              );
+            }
+          }
+        } else if (!cancelled) {
+          const reason =
+            onboardingResult.reason instanceof Error
+              ? onboardingResult.reason.message
+              : "Unable to load checklist.";
+          setOnboarding(null);
+          setOnboardingError(reason);
+        }
+        if (!cancelled) {
+          setOnboardingLoading(false);
+        }
+        if (analyticsResult.status !== "fulfilled") {
+          throw analyticsResult.reason;
+        }
+        const analyticsRes = analyticsResult.value;
 
         if (!analyticsRes.ok) {
           const info = await analyticsRes.json().catch(() => ({}));
+          if (isPaidPlanAnalyticsError(analyticsRes.status, info?.error)) {
+            const freeRecentLeads = await fetchRecentLeadsForFreeAccount(
+              resolvedUserId
+            );
+            if (!cancelled) {
+              setFallbackRecentLeads(freeRecentLeads);
+              setState({
+                loading: false,
+                error: null,
+                analytics: null,
+              });
+            }
+            return;
+          }
           throw new Error(
             info?.error || `Analytics request failed (${analyticsRes.status})`
           );
         }
 
         const analyticsPayload = (await analyticsRes.json()) as UserAnalytics;
+        setFallbackRecentLeads([]);
 
         if (!cancelled) {
           setState({
@@ -109,6 +224,8 @@ export default function OverviewContent() {
         const message =
           err instanceof Error ? err.message : "Unable to load overview";
         if (!cancelled) {
+          setFallbackRecentLeads([]);
+          setOnboardingLoading(false);
           setState({ loading: false, error: message, analytics: null });
         }
       }
@@ -158,16 +275,15 @@ export default function OverviewContent() {
   }, [userId]);
 
   const totals = analytics?.totals;
-  const onboarding = analytics?.onboarding;
   const checklistComplete = Boolean(
     onboarding &&
       onboarding.totalCount > 0 &&
       onboarding.completedCount >= onboarding.totalCount
   );
-  const leads = analytics?.recentLeads ?? [];
+  const leads = analytics?.recentLeads ?? fallbackRecentLeads;
   const recentLeads = leads.slice(0, 5);
   const recentLeadsLoading = loading && !analytics;
-  const recentLeadsError = error && !analytics ? error : null;
+  const recentLeadsError = error && !analytics && fallbackRecentLeads.length === 0 ? error : null;
 
   const overviewItems = [
     {
@@ -209,7 +325,7 @@ export default function OverviewContent() {
   }, []);
 
   useEffect(() => {
-    if (loading || !onboarding) return;
+    if (onboardingLoading || !onboarding) return;
 
     const previousCompletion = checklistCompletionRef.current;
 
@@ -237,7 +353,7 @@ export default function OverviewContent() {
     }
 
     checklistCompletionRef.current = checklistComplete;
-  }, [checklistComplete, loading, onboarding]);
+  }, [checklistComplete, onboardingLoading, onboarding]);
 
 
   return (
@@ -291,75 +407,6 @@ export default function OverviewContent() {
               ))}
             </CardContent>
           </Card>
-
-          {isChecklistDismissed ? null : (
-            <Card
-              className={`dashboard-overview-section-card dashboard-overview-checklist-card rounded-3xl border border-border/70 bg-card/90 shadow-[0_18px_45px_rgba(15,23,42,0.08)] ${isChecklistPoppingOut ? "dashboard-overview-checklist-card--exiting" : ""}`}
-              data-tour="overview-checklist"
-            >
-              <CardHeader className="space-y-2">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                  <CardTitle className="text-lg font-semibold text-foreground">
-                    First-run checklist
-                  </CardTitle>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="w-full rounded-full sm:w-auto"
-                    onClick={() => {
-                      if (typeof window === "undefined") return;
-                      window.dispatchEvent(new CustomEvent("linket:onboarding-tour:start"));
-                    }}
-                  >
-                    Start walkthrough
-                  </Button>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Complete these steps to launch your profile and start capturing leads.
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {loading && !analytics ? (
-                  <div className="space-y-2">
-                    <div className="dashboard-skeleton h-2 w-full animate-pulse rounded bg-muted" data-skeleton />
-                    <div className="dashboard-skeleton h-10 w-full animate-pulse rounded-2xl bg-muted" data-skeleton />
-                    <div className="dashboard-skeleton h-10 w-full animate-pulse rounded-2xl bg-muted" data-skeleton />
-                    <div className="dashboard-skeleton h-10 w-full animate-pulse rounded-2xl bg-muted" data-skeleton />
-                  </div>
-                ) : onboarding ? (
-                  <>
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                        Progress
-                      </p>
-                      <p className="text-sm font-semibold text-foreground">
-                        {onboarding.completedCount}/{onboarding.totalCount}
-                      </p>
-                    </div>
-                    <div className="h-2 overflow-hidden rounded-full bg-muted">
-                      <div
-                        className="h-full rounded-full bg-primary transition-all"
-                        style={{ width: `${Math.round(onboarding.progress * 100)}%` }}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      {onboarding.items.map((item) => (
-                        <ChecklistItemRow
-                          key={item.id}
-                          label={item.label}
-                          detail={item.detail}
-                          completed={item.completed}
-                        />
-                      ))}
-                    </div>
-                  </>
-                ) : (
-                  <EmptyState message="Checklist unavailable right now." />
-                )}
-              </CardContent>
-            </Card>
-          )}
 
           <Card className="dashboard-overview-section-card rounded-3xl border border-border/70 bg-card/90 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
             <CardHeader className="space-y-4">
@@ -430,6 +477,77 @@ export default function OverviewContent() {
               )}
             </CardContent>
           </Card>
+
+          {isChecklistDismissed ? null : (
+            <Card
+              className={`dashboard-overview-section-card dashboard-overview-checklist-card rounded-3xl border border-border/70 bg-card/90 shadow-[0_18px_45px_rgba(15,23,42,0.08)] ${isChecklistPoppingOut ? "dashboard-overview-checklist-card--exiting" : ""}`}
+              data-tour="overview-checklist"
+            >
+              <CardHeader className="space-y-2">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                  <CardTitle className="text-lg font-semibold text-foreground">
+                    First-run checklist
+                  </CardTitle>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-full rounded-full sm:w-auto"
+                    onClick={() => {
+                      if (typeof window === "undefined") return;
+                      window.dispatchEvent(new CustomEvent("linket:onboarding-tour:start"));
+                    }}
+                  >
+                    Start walkthrough
+                  </Button>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Complete these steps to launch your profile and start capturing leads.
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {onboardingLoading ? (
+                  <div className="space-y-2">
+                    <div className="dashboard-skeleton h-2 w-full animate-pulse rounded bg-muted" data-skeleton />
+                    <div className="dashboard-skeleton h-10 w-full animate-pulse rounded-2xl bg-muted" data-skeleton />
+                    <div className="dashboard-skeleton h-10 w-full animate-pulse rounded-2xl bg-muted" data-skeleton />
+                    <div className="dashboard-skeleton h-10 w-full animate-pulse rounded-2xl bg-muted" data-skeleton />
+                  </div>
+                ) : onboarding ? (
+                  <>
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                        Progress
+                      </p>
+                      <p className="text-sm font-semibold text-foreground">
+                        {onboarding.completedCount}/{onboarding.totalCount}
+                      </p>
+                    </div>
+                    <div className="h-2 overflow-hidden rounded-full bg-muted">
+                      <div
+                        className="h-full rounded-full bg-primary transition-all"
+                        style={{ width: `${Math.round(onboarding.progress * 100)}%` }}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      {onboarding.items.map((item) => (
+                        <ChecklistItemRow
+                          key={item.id}
+                          label={item.label}
+                          detail={item.detail}
+                          completed={item.completed}
+                        />
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <EmptyState
+                    message={onboardingError ?? "Checklist unavailable right now."}
+                  />
+                )}
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         <div className="hidden md:block lg:col-span-5">

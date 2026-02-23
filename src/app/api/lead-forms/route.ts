@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getBillingAccessForUser } from "@/lib/billing/access";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
 import {
   createDefaultLeadFormConfig,
+  enforceFreePlanLeadFormConfig,
   normalizeLeadFormConfig,
 } from "@/lib/lead-form";
 import type {
@@ -182,6 +184,7 @@ export async function GET(request: NextRequest) {
 
     const { supabase, ok, error } = await ensureAuthedUser(userId);
     if (!ok) return NextResponse.json({ error }, { status: 401 });
+    const billingAccess = await getBillingAccessForUser(userId, supabase as any);
 
     let query = supabase.from("lead_forms").select("*").eq("user_id", userId);
     if (profileId) query = query.eq("profile_id", profileId);
@@ -225,10 +228,13 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const resolvedConfig = normalizeLeadFormConfig(
+    let resolvedConfig = normalizeLeadFormConfig(
       formRow?.config,
       formRow?.id || `form-${userId}`
     );
+    if (!billingAccess.hasPaidAccess) {
+      resolvedConfig = enforceFreePlanLeadFormConfig(resolvedConfig);
+    }
 
     const stats = formRow?.id
       ? await getResponseStats(supabase, formRow.id)
@@ -280,9 +286,13 @@ export async function PUT(request: NextRequest) {
 
     const { supabase, ok, error } = await ensureAuthedUser(userId);
     if (!ok) return NextResponse.json({ error }, { status: 401 });
+    const billingAccess = await getBillingAccessForUser(userId, supabase as any);
 
     const now = new Date().toISOString();
-    const normalized = normalizeLeadFormConfig(config, config.id || handle);
+    let normalized = normalizeLeadFormConfig(config, config.id || handle);
+    if (!billingAccess.hasPaidAccess) {
+      normalized = enforceFreePlanLeadFormConfig(normalized);
+    }
     normalized.status = "published";
     const nextVersion = (normalized.meta.version || 1) + 1;
     normalized.meta = {

@@ -11,6 +11,7 @@ import { Card, CardContent } from "@/components/ui/card";
 export default function LeadsPage() {
   const dashboardUser = useDashboardUser();
   const userId = dashboardUser?.id ?? null;
+  const [hasPaidAccess, setHasPaidAccess] = useState(false);
   const [fetchedHandle, setFetchedHandle] = useState<{
     userId: string;
     handle: string | null;
@@ -51,6 +52,39 @@ export default function LeadsPage() {
     };
   }, [userId]);
 
+  useEffect(() => {
+    let active = true;
+    if (!userId) {
+      setHasPaidAccess(false);
+      return () => {
+        active = false;
+      };
+    }
+
+    (async () => {
+      try {
+        const response = await fetch("/api/billing/summary", {
+          cache: "no-store",
+        });
+        if (!active) return;
+        if (!response.ok) {
+          setHasPaidAccess(false);
+          return;
+        }
+        const payload = (await response.json().catch(() => null)) as
+          | { hasPaidAccess?: boolean }
+          | null;
+        setHasPaidAccess(Boolean(payload?.hasPaidAccess));
+      } catch {
+        if (active) setHasPaidAccess(false);
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [userId]);
+
   if (!userId) {
     return (
       <Card className="rounded-3xl border bg-card/80 shadow-sm">
@@ -73,6 +107,7 @@ export default function LeadsPage() {
           <LeadFormBuilder
             userId={userId}
             handle={handle}
+            hasPaidAccess={hasPaidAccess}
             showPreview
             layout="side"
             columns={3}

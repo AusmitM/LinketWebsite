@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore, type CSSProperties } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Info, X } from "lucide-react";
 
 export type ToastOptions = {
   id?: string;
@@ -18,13 +18,29 @@ type ToastInternal = Required<ToastOptions> & { id: string };
 
 const TOAST_EVENT = "app:toast";
 
+type ToastTone = {
+  accent: string;
+  icon: typeof Info;
+  label: string;
+};
+
+function getToastTone(variant: ToastInternal["variant"]): ToastTone {
+  if (variant === "success") {
+    return { accent: "#22c55e", icon: CheckCircle2, label: "Success" };
+  }
+  if (variant === "destructive") {
+    return { accent: "#ef4444", icon: AlertTriangle, label: "Error" };
+  }
+  return { accent: "#4f9ce8", icon: Info, label: "Notice" };
+}
+
 export function toast(opts: ToastOptions) {
   const detail: ToastInternal = {
     id: opts.id || Math.random().toString(36).slice(2),
     title: opts.title || "",
     description: opts.description || "",
     variant: opts.variant || "default",
-    durationMs: opts.durationMs ?? 3200,
+    durationMs: opts.durationMs ?? 8200,
     actionLabel: opts.actionLabel || "",
     onAction: opts.onAction || (() => undefined),
   };
@@ -64,68 +80,75 @@ export function Toaster() {
     <div className="pointer-events-none fixed inset-0 z-[100] flex items-start justify-end p-4 sm:p-6">
       <div className="flex w-full max-w-sm flex-col gap-3" aria-live="polite" aria-atomic>
         <AnimatePresence initial={false}>
-          {toasts.map((t) => (
-            <motion.div
-              key={t.id}
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.18 }}
-            >
-              <div
-                role="status"
-                aria-label={t.title || t.description}
-                className="pointer-events-auto rounded-xl border bg-card p-4 text-card-foreground shadow-[var(--shadow-ambient)] outline-none"
-                style={{
-                  borderColor:
-                    t.variant === "success"
-                      ? "color-mix(in oklab, var(--success), #fff 70%)"
-                      : t.variant === "destructive"
-                      ? "color-mix(in oklab, var(--danger), #fff 70%)"
-                      : "var(--border)",
-                }}
+          {toasts.map((t) => {
+            const tone = getToastTone(t.variant);
+            const ToneIcon = tone.icon;
+
+            return (
+              <motion.div
+                key={t.id}
+                initial={{ opacity: 0, y: -10, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -8, scale: 0.98 }}
+                transition={{ duration: 0.2 }}
               >
-                <div className="flex items-start gap-3">
-                  <div
-                    className="mt-0.5 h-2.5 w-2.5 shrink-0 rounded-full"
-                    style={{
-                      background:
-                        t.variant === "success"
-                          ? "var(--success)"
-                          : t.variant === "destructive"
-                          ? "var(--danger)"
-                          : "var(--brand-emphasis)",
-                    }}
-                    aria-hidden
-                  />
-                  <div className="min-w-0 flex-1">
-                    {t.title && <div className="text-sm font-medium text-foreground">{t.title}</div>}
-                    {t.description && (
-                      <div className="mt-0.5 text-sm text-muted-foreground">{t.description}</div>
-                    )}
+                <div
+                  role="status"
+                  aria-label={t.title || t.description}
+                  className="uiverse-toast-shell pointer-events-auto"
+                  style={
+                    {
+                      "--toast-accent": tone.accent,
+                    } as CSSProperties
+                  }
+                >
+                  <div className="uiverse-toast-card">
+                    <div className="uiverse-toast-top-row">
+                      <div className="uiverse-toast-icon-pill" aria-hidden>
+                        <ToneIcon className="h-4 w-4" />
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="uiverse-toast-label">{tone.label}</div>
+                        {t.title ? (
+                          <div className="uiverse-toast-title">{t.title}</div>
+                        ) : null}
+                        {t.description ? (
+                          <div className="uiverse-toast-description">
+                            {t.description}
+                          </div>
+                        ) : null}
+                      </div>
+
+                      <button
+                        aria-label="Dismiss notification"
+                        className="uiverse-toast-dismiss"
+                        onClick={() => dismiss(t.id)}
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+
+                    {t.actionLabel ? (
+                      <div className="mt-2 flex justify-end">
+                        <button
+                          className="uiverse-toast-action"
+                          onClick={() => {
+                            t.onAction?.();
+                            dismiss(t.id);
+                          }}
+                        >
+                          {t.actionLabel}
+                        </button>
+                      </div>
+                    ) : null}
+
+                    <div className="uiverse-toast-progress" aria-hidden />
                   </div>
-                  {t.actionLabel ? (
-                    <button
-                      className="rounded-full px-2 py-1 text-sm font-medium text-foreground underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]"
-                      onClick={() => {
-                        t.onAction?.();
-                        dismiss(t.id);
-                      }}
-                    >
-                      {t.actionLabel}
-                    </button>
-                  ) : null}
-                  <button
-                    aria-label="Dismiss notification"
-                    className="rounded-full p-1 text-muted-foreground hover:bg-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]"
-                    onClick={() => dismiss(t.id)}
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
                 </div>
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            );
+          })}
         </AnimatePresence>
       </div>
     </div>

@@ -4,7 +4,15 @@ import "@/styles/theme/public-profile.css";
 import { getSignedAvatarUrl } from "@/lib/avatar-server";
 import { getSignedProfileHeaderUrl } from "@/lib/profile-header-server";
 import { getSignedProfileLogoUrl } from "@/lib/profile-logo-server";
-import { normalizeLeadFormConfig } from "@/lib/lead-form";
+import {
+  enforceFreePlanLeadFormConfig,
+  normalizeLeadFormConfig,
+} from "@/lib/lead-form";
+import { getBillingAccessForUser } from "@/lib/billing/access";
+import {
+  coerceThemeForFreePlan,
+  FREE_PLAN_MAX_PUBLISHED_LINKS,
+} from "@/lib/billing/feature-limits";
 import { getActiveProfileForPublicHandle } from "@/lib/profile-service";
 import { createServerSupabaseReadonly } from "@/lib/supabase/server";
 import { getConfiguredSiteOrigin } from "@/lib/site-url";
@@ -102,6 +110,7 @@ export default async function PublicProfilePage({ params }: Props) {
   if (!payload) notFound();
 
   const { account, profile } = payload;
+  const billingAccess = await getBillingAccessForUser(account.user_id);
   const avatar = await getSignedAvatarUrl(
     account.avatar_url,
     account.avatar_updated_at
@@ -143,17 +152,26 @@ export default async function PublicProfilePage({ params }: Props) {
         leadFormRow.id ?? `form-${publicHandle}`
       )
     : null;
-  const leadFormTitle = normalizedLeadForm?.title ?? "Contact";
-  const hasLeadForm = Boolean(normalizedLeadForm?.fields?.length);
+  const effectiveLeadForm =
+    normalizedLeadForm && !billingAccess.hasPaidAccess
+      ? enforceFreePlanLeadFormConfig(normalizedLeadForm)
+      : normalizedLeadForm;
+  const leadFormTitle = effectiveLeadForm?.title ?? "Contact";
+  const hasLeadForm = Boolean(effectiveLeadForm?.fields?.length);
   const displayName = profile.name || account.display_name || publicHandle;
-  const resolvedTheme = normalizeThemeName(profile.theme, "autumn");
+  const resolvedTheme = billingAccess.hasPaidAccess
+    ? normalizeThemeName(profile.theme, "autumn")
+    : coerceThemeForFreePlan(profile.theme);
   const isDark = isDarkTheme(resolvedTheme);
   const themeClass = `theme-${resolvedTheme} ${isDark ? "dark" : ""}`;
   const isHookEmOrAggie =
     resolvedTheme === "burnt-orange" || resolvedTheme === "maroon";
   const headline = profile.headline?.trim() ?? "";
   const isBurntOrange = resolvedTheme === "burnt-orange";
-  const links = sortLinks(profile.links);
+  const sortedLinks = sortLinks(profile.links);
+  const links = billingAccess.hasPaidAccess
+    ? sortedLinks
+    : sortedLinks.slice(0, FREE_PLAN_MAX_PUBLISHED_LINKS);
   const hasLinks = links.length > 0;
   const hasHeadline = Boolean(headline);
 
@@ -401,7 +419,7 @@ export default async function PublicProfilePage({ params }: Props) {
                   <PublicLeadForm
                     ownerId={profile.user_id}
                     handle={publicHandle}
-                    initialForm={normalizedLeadForm}
+                    initialForm={effectiveLeadForm}
                     initialFormId={leadFormRow?.id ?? null}
                     variant="profile"
                     showHeader={false}

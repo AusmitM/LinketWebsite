@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getBillingAccessForUser } from "@/lib/billing/access";
 import { createServerSupabaseReadonly } from "@/lib/supabase/server";
-import { normalizeLeadFormConfig } from "@/lib/lead-form";
+import {
+  enforceFreePlanLeadFormConfig,
+  normalizeLeadFormConfig,
+} from "@/lib/lead-form";
 import type { LeadFormConfig } from "@/types/lead-form";
 
 type LeadFormRow = {
   id: string;
+  user_id: string;
   handle: string | null;
   status: "draft" | "published";
   config: LeadFormConfig;
@@ -25,7 +30,7 @@ export async function GET(request: NextRequest) {
     const supabase = await createServerSupabaseReadonly();
     const { data, error } = await supabase
       .from("lead_forms")
-      .select("id, handle, status, config")
+      .select("id, user_id, handle, status, config")
       .eq("handle", handle)
       .eq("status", "published")
       .maybeSingle();
@@ -35,10 +40,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ form: null }, { status: 200 });
     }
 
-    const form = normalizeLeadFormConfig(
+    let form = normalizeLeadFormConfig(
       (data as LeadFormRow).config,
       (data as LeadFormRow).id
     );
+    const billingAccess = await getBillingAccessForUser((data as LeadFormRow).user_id);
+    if (!billingAccess.hasPaidAccess) {
+      form = enforceFreePlanLeadFormConfig(form);
+    }
 
     return NextResponse.json(
       { form, formId: (data as LeadFormRow).id },

@@ -58,6 +58,7 @@ export default function AuthPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const nextParam = searchParams.get("next");
+  const hasExplicitNext = Boolean(nextParam?.trim());
   const next = useMemo(() => {
     if (!nextParam) return DEFAULT_NEXT;
     const trimmed = nextParam.trim();
@@ -123,7 +124,11 @@ export default function AuthPage() {
         const response = await fetch("/auth/callback", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ event: "SIGNED_IN", session }),
+          body: JSON.stringify({
+            event: "SIGNED_IN",
+            session,
+            next: hasExplicitNext ? next : undefined,
+          }),
         });
         if (!response.ok) return null;
         const payload = await response.json().catch(() => null);
@@ -135,7 +140,7 @@ export default function AuthPage() {
       }
       return next || DEFAULT_NEXT;
     },
-    [next]
+    [hasExplicitNext, next]
   );
 
   useEffect(() => {

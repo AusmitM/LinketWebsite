@@ -70,6 +70,23 @@ Optional:
 
 - `NEXT_PUBLIC_SITE_URL` for sitemap/robots and OpenGraph base (defaults to http://localhost:3000)
 
+Stripe billing vars (required for billing APIs):
+
+- `STRIPE_SECRET_KEY`
+- `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
+- `STRIPE_WEBHOOK_SECRET`
+- `STRIPE_PRICE_PRO_MONTHLY`
+- `STRIPE_PRICE_PRO_YEARLY`
+- `STRIPE_PRICE_PRO_MONTHLY_DISCOUNTED`
+- `STRIPE_PRICE_PRO_YEARLY_DISCOUNTED`
+- `STRIPE_PRICE_BUNDLE_ONE_TIME`
+- `STRIPE_SHIPPING_RATE_STANDARD`
+- `STRIPE_SHIPPING_RATE_EXPEDITED`
+
+Optional billing/reminder vars:
+
+- `BILLING_FROM` (email sender override for billing reminders)
+
 ### Granting admin access
 
 Use the new `admin_users` table to control who can open the manufacturing console and other privileged tools.

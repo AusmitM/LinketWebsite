@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
+import { ThemedSearchInput } from "@/components/ui/themed-search-input";
 
 const LEADS: Lead[] = [
   {
@@ -110,11 +110,12 @@ export default function MessagesContent() {
             <p className="text-sm text-muted-foreground">Captured from tap journeys and contact forms.</p>
           </div>
           <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:gap-3">
-            <Input
+            <ThemedSearchInput
               placeholder="Search name, company, school, location"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              className="sm:min-w-[240px]"
+              containerClassName="w-full sm:min-w-[260px]"
+              inputClassName="text-sm"
             />
             <Button variant="outline" size="sm" className="rounded-full" onClick={onDownloadCsv} disabled={filteredLeads.length === 0}>
               Download CSV
@@ -200,7 +201,6 @@ function escapeCsv(value: string): string {
   }
   return value;
 }
-
 
 
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -18,6 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useThemeOptional } from "@/components/theme/theme-provider";
 import type { ThemeName } from "@/lib/themes";
+import { FREE_PLAN_ALLOWED_THEMES } from "@/lib/billing/feature-limits";
 import { useDashboardUser } from "@/components/dashboard/DashboardSessionContext";
 
 const ORDER: ThemeName[] = [
@@ -33,6 +34,9 @@ const ORDER: ThemeName[] = [
   "burnt-orange",
   "maroon",
 ];
+
+const FREE_ORDER: ThemeName[] = [...FREE_PLAN_ALLOWED_THEMES];
+const FREE_THEME_SET = new Set<ThemeName>(FREE_ORDER);
 
 const BullHead = ({ className }: { className?: string }) => (
   <svg
@@ -111,17 +115,60 @@ export default function ThemeToggle({ showLabel = false }: { showLabel?: boolean
   const user = useDashboardUser();
   const abortRef = useRef<AbortController | null>(null);
   const [mounted, setMounted] = useState(false);
-  const [index, setIndex] = useState(Math.max(0, ORDER.indexOf(theme)));
+  const [hasPaidAccess, setHasPaidAccess] = useState<boolean | null>(null);
+  const accessIsKnownFree = hasPaidAccess === false;
+  const accessHasPaid = hasPaidAccess === true;
+  const availableOrder = useMemo(
+    () => (accessIsKnownFree ? FREE_ORDER : ORDER),
+    [accessIsKnownFree]
+  );
+  const [index, setIndex] = useState(
+    Math.max(0, availableOrder.indexOf(theme))
+  );
 
   useEffect(() => {
-    setIndex(Math.max(0, ORDER.indexOf(theme)));
-  }, [theme]);
+    const nextIndex = availableOrder.indexOf(theme);
+    setIndex(nextIndex >= 0 ? nextIndex : 0);
+  }, [availableOrder, theme]);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  async function syncPublicTheme(nextTheme: ThemeName) {
+  useEffect(() => {
+    let active = true;
+
+    async function loadBillingAccess() {
+      if (!user?.id) {
+        setHasPaidAccess(false);
+        return;
+      }
+
+      try {
+        const response = await fetch("/api/billing/summary", {
+          cache: "no-store",
+        });
+        if (!active) return;
+        if (!response.ok) {
+          setHasPaidAccess(null);
+          return;
+        }
+        const payload = (await response.json().catch(() => null)) as
+          | { hasPaidAccess?: boolean }
+          | null;
+        setHasPaidAccess(Boolean(payload?.hasPaidAccess));
+      } catch {
+        if (active) setHasPaidAccess(null);
+      }
+    }
+
+    void loadBillingAccess();
+    return () => {
+      active = false;
+    };
+  }, [user?.id]);
+
+  const syncPublicTheme = useCallback(async (nextTheme: ThemeName) => {
     if (!user?.id) return;
 
     abortRef.current?.abort();
@@ -143,7 +190,13 @@ export default function ThemeToggle({ showLabel = false }: { showLabel?: boolean
         handle: string;
         headline?: string | null;
         is_active?: boolean | null;
-        links?: Array<{ id?: string; title: string; url: string }>;
+        links?: Array<{
+          id?: string;
+          title: string;
+          url: string;
+          is_active?: boolean | null;
+          is_override?: boolean | null;
+        }>;
       }>;
       const activeProfile =
         profiles.find((item) => item.is_active) ?? profiles[0];
@@ -159,6 +212,8 @@ export default function ThemeToggle({ showLabel = false }: { showLabel?: boolean
           id: link.id,
           title: link.title,
           url: link.url,
+          isActive: Boolean(link.is_active),
+          isOverride: Boolean(link.is_override),
         })),
         active: activeProfile.is_active ?? true,
       };
@@ -179,13 +234,23 @@ export default function ThemeToggle({ showLabel = false }: { showLabel?: boolean
       const message =
         error instanceof Error ? error.message : "Unable to update public theme.";
       console.warn("Theme update failed:", message);
-      clearPendingTheme();
+      // Keep the pending marker so background sync can retry persistence.
     }
-  }
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!mounted || accessHasPaid || !accessIsKnownFree) return;
+    if (FREE_THEME_SET.has(theme)) return;
+
+    const fallbackTheme: ThemeName = "light";
+    setTheme(fallbackTheme);
+    writePendingTheme(fallbackTheme);
+    void syncPublicTheme(fallbackTheme);
+  }, [accessHasPaid, accessIsKnownFree, mounted, setTheme, syncPublicTheme, theme]);
 
   function next() {
-    const nextIndex = (index + 1) % ORDER.length;
-    const value = ORDER[nextIndex];
+    const nextIndex = (index + 1) % availableOrder.length;
+    const value = availableOrder[nextIndex];
     setIndex(nextIndex);
     writePendingTheme(value);
     setTheme(value);
@@ -193,15 +258,16 @@ export default function ThemeToggle({ showLabel = false }: { showLabel?: boolean
   }
 
   function previous() {
-    const nextIndex = (index - 1 + ORDER.length) % ORDER.length;
-    const value = ORDER[nextIndex];
+    const nextIndex =
+      (index - 1 + availableOrder.length) % availableOrder.length;
+    const value = availableOrder[nextIndex];
     setIndex(nextIndex);
     writePendingTheme(value);
     setTheme(value);
     void syncPublicTheme(value);
   }
 
-  const current = ORDER[index] || ORDER[0];
+  const current = availableOrder[index] || availableOrder[0];
   const Icon = ICONS[current];
   const label = LABELS[current];
 
