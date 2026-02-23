@@ -5,12 +5,6 @@ import {
   isHandleConflictError,
   type ProfilePayload,
 } from "@/lib/profile-service";
-import { getBillingAccessForUser } from "@/lib/billing/access";
-import {
-  coerceThemeForFreePlan,
-  countPublishedLinks,
-  FREE_PLAN_MAX_PUBLISHED_LINKS,
-} from "@/lib/billing/feature-limits";
 import { normalizeThemeName } from "@/lib/themes";
 import { isSupabaseAdminAvailable } from "@/lib/supabase-admin";
 import { createServerSupabase } from "@/lib/supabase/server";
@@ -20,7 +14,7 @@ import type { ProfileLinkRecord, UserProfileRecord } from "@/types/db";
 type ProfileWithLinks = UserProfileRecord & { links: ProfileLinkRecord[] };
 const DEFAULT_PROFILE_LINK_URL = "https://www.LinketConnect.com";
 const DEFAULT_PROFILE_NAME = "Linket Public Profile";
-const DEFAULT_THEME = normalizeThemeName("light", "light");
+const DEFAULT_THEME = normalizeThemeName("autumn", "autumn");
 const DEFAULT_LINK_HOST = "linketconnect.com";
 
 function normalizeHandle(handle: string) {
@@ -333,31 +327,6 @@ function normalizeIncomingLinksForSave(
   });
 }
 
-function getFreePlanLinkLimitError(publishedCount: number) {
-  return `Free plans can publish up to ${FREE_PLAN_MAX_PUBLISHED_LINKS} links. You currently have ${publishedCount} published.`;
-}
-
-function applyFreePlanRestrictionsToProfiles(profiles: ProfileWithLinks[]) {
-  return profiles.map((profile) => {
-    let publishedCount = 0;
-    const links = sortLinks(profile.links).map((link) => {
-      if (!link.is_active) return link;
-      publishedCount += 1;
-      if (publishedCount <= FREE_PLAN_MAX_PUBLISHED_LINKS) return link;
-      return {
-        ...link,
-        is_active: false,
-      };
-    });
-
-    return {
-      ...profile,
-      theme: coerceThemeForFreePlan(profile.theme),
-      links,
-    };
-  });
-}
-
 async function ensureAuthedUser(userId: string) {
   const supabase = await createServerSupabase();
   const { data, error } = await supabase.auth.getUser();
@@ -434,15 +403,11 @@ export async function GET(request: NextRequest) {
         { status: error === "Forbidden" ? 403 : 401 }
       );
     }
-    const billingAccess = await getBillingAccessForUser(userId, supabase as any);
 
     if (isSupabaseAdminAvailable) {
       try {
         const profiles = await getProfilesForUser(userId);
-        const visibleProfiles = billingAccess.hasPaidAccess
-          ? profiles
-          : applyFreePlanRestrictionsToProfiles(profiles);
-        if (visibleProfiles.length === 0) {
+        if (profiles.length === 0) {
           const starter = await ensureStarterProfileWithDefaultLink(
             supabase,
             userId
@@ -453,8 +418,7 @@ export async function GET(request: NextRequest) {
             },
           });
         }
-        const active =
-          visibleProfiles.find((profile) => profile.is_active) ?? visibleProfiles[0];
+        const active = profiles.find((profile) => profile.is_active) ?? profiles[0];
         if (needsStarterLinkRepair(active?.links)) {
           const starter = await ensureStarterProfileWithDefaultLink(
             supabase,
@@ -466,7 +430,7 @@ export async function GET(request: NextRequest) {
             },
           });
         }
-        return NextResponse.json(visibleProfiles, {
+        return NextResponse.json(profiles, {
           headers: {
             "Cache-Control": "no-store, max-age=0",
           },
@@ -477,10 +441,7 @@ export async function GET(request: NextRequest) {
     }
 
     const mapped = await fetchProfilesForUserViaClient(supabase, userId);
-    const visibleMapped = billingAccess.hasPaidAccess
-      ? mapped
-      : applyFreePlanRestrictionsToProfiles(mapped);
-    if (visibleMapped.length === 0) {
+    if (mapped.length === 0) {
       const starter = await ensureStarterProfileWithDefaultLink(supabase, userId);
       return NextResponse.json([starter], {
         headers: {
@@ -488,8 +449,7 @@ export async function GET(request: NextRequest) {
         },
       });
     }
-    const active =
-      visibleMapped.find((profile) => profile.is_active) ?? visibleMapped[0];
+    const active = mapped.find((profile) => profile.is_active) ?? mapped[0];
     if (needsStarterLinkRepair(active?.links)) {
       const starter = await ensureStarterProfileWithDefaultLink(supabase, userId);
       return NextResponse.json([starter], {
@@ -499,7 +459,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    return NextResponse.json(visibleMapped, {
+    return NextResponse.json(mapped, {
       headers: {
         "Cache-Control": "no-store, max-age=0",
       },
@@ -547,36 +507,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const billingAccess = await getBillingAccessForUser(userId, supabase as any);
-    const requestedTheme = normalizeThemeName(profile.theme, "light");
-    const resolvedTheme = billingAccess.hasPaidAccess
-      ? requestedTheme
-      : coerceThemeForFreePlan(requestedTheme);
-    const normalizedProfile: ProfilePayload = {
-      ...profile,
-      theme: resolvedTheme,
-    };
-
-    if (!billingAccess.hasPaidAccess) {
-      const draftPublishedCount = countPublishedLinks(
-        (normalizedProfile.links ?? []).map((link) => ({
-          isActive:
-            typeof link.isActive === "boolean" ? link.isActive : true,
-          isOverride:
-            typeof link.isOverride === "boolean" ? link.isOverride : false,
-        }))
-      );
-      if (draftPublishedCount > FREE_PLAN_MAX_PUBLISHED_LINKS) {
-        return NextResponse.json(
-          { error: getFreePlanLinkLimitError(draftPublishedCount) },
-          { status: 403 }
-        );
-      }
-    }
-
     if (isSupabaseAdminAvailable) {
       try {
-        const saved = await saveProfileForUser(userId, normalizedProfile);
+        const saved = await saveProfileForUser(userId, profile);
         return NextResponse.json(saved, {
           headers: {
             "Cache-Control": "no-store, max-age=0",
@@ -602,9 +535,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const name = normalizedProfile.name?.trim();
-    const handle = normalizeHandle(normalizedProfile.handle ?? "");
-    const theme = normalizeThemeName(normalizedProfile.theme, "light");
+    const name = profile.name?.trim();
+    const handle = normalizeHandle(profile.handle ?? "");
+    const theme = normalizeThemeName(profile.theme, "autumn");
     if (!name) {
       return NextResponse.json(
         { error: "Profile name is required" },
@@ -618,13 +551,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (normalizedProfile.id) {
+    if (profile.id) {
       const { data } = await supabase
         .from("user_profiles")
         .select("id")
         .eq("handle", handle)
         .maybeSingle();
-      if (data && (data as { id?: string }).id !== normalizedProfile.id) {
+      if (data && (data as { id?: string }).id !== profile.id) {
         return NextResponse.json(
           {
             error: "Handle already taken",
@@ -650,8 +583,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    let profileId = normalizedProfile.id ?? null;
-    const incomingLinks = normalizedProfile.links ?? [];
+    let profileId = profile.id ?? null;
+    const incomingLinks = profile.links ?? [];
     const linksForSave =
       !profileId && incomingLinks.length === 0
         ? [{ title: "Website", url: DEFAULT_PROFILE_LINK_URL }]
@@ -663,16 +596,16 @@ export async function POST(request: NextRequest) {
           user_id: userId,
           name,
           handle,
-          headline: normalizedProfile.headline?.trim() || null,
-          header_image_url: normalizedProfile.headerImageUrl ?? null,
-          header_image_updated_at: normalizedProfile.headerImageUpdatedAt ?? null,
+          headline: profile.headline?.trim() || null,
+          header_image_url: profile.headerImageUrl ?? null,
+          header_image_updated_at: profile.headerImageUpdatedAt ?? null,
           header_image_original_file_name:
-            normalizedProfile.headerImageOriginalFileName ?? null,
-          logo_url: normalizedProfile.logoUrl ?? null,
-          logo_updated_at: normalizedProfile.logoUpdatedAt ?? null,
-          logo_original_file_name: normalizedProfile.logoOriginalFileName ?? null,
-          logo_shape: normalizedProfile.logoShape ?? "circle",
-          logo_bg_white: normalizedProfile.logoBackgroundWhite ?? false,
+            profile.headerImageOriginalFileName ?? null,
+          logo_url: profile.logoUrl ?? null,
+          logo_updated_at: profile.logoUpdatedAt ?? null,
+          logo_original_file_name: profile.logoOriginalFileName ?? null,
+          logo_shape: profile.logoShape ?? "circle",
+          logo_bg_white: profile.logoBackgroundWhite ?? false,
           theme,
           is_active: false,
         })
@@ -684,34 +617,34 @@ export async function POST(request: NextRequest) {
       const updatePayload: Record<string, unknown> = {
         name,
         handle,
-        headline: normalizedProfile.headline?.trim() || null,
+        headline: profile.headline?.trim() || null,
         theme,
         updated_at: new Date().toISOString(),
       };
-      if (normalizedProfile.headerImageUrl !== undefined) {
-        updatePayload.header_image_url = normalizedProfile.headerImageUrl;
+      if (profile.headerImageUrl !== undefined) {
+        updatePayload.header_image_url = profile.headerImageUrl;
       }
-      if (normalizedProfile.headerImageUpdatedAt !== undefined) {
-        updatePayload.header_image_updated_at = normalizedProfile.headerImageUpdatedAt;
+      if (profile.headerImageUpdatedAt !== undefined) {
+        updatePayload.header_image_updated_at = profile.headerImageUpdatedAt;
       }
-      if (normalizedProfile.headerImageOriginalFileName !== undefined) {
+      if (profile.headerImageOriginalFileName !== undefined) {
         updatePayload.header_image_original_file_name =
-          normalizedProfile.headerImageOriginalFileName;
+          profile.headerImageOriginalFileName;
       }
-      if (normalizedProfile.logoUrl !== undefined) {
-        updatePayload.logo_url = normalizedProfile.logoUrl;
+      if (profile.logoUrl !== undefined) {
+        updatePayload.logo_url = profile.logoUrl;
       }
-      if (normalizedProfile.logoUpdatedAt !== undefined) {
-        updatePayload.logo_updated_at = normalizedProfile.logoUpdatedAt;
+      if (profile.logoUpdatedAt !== undefined) {
+        updatePayload.logo_updated_at = profile.logoUpdatedAt;
       }
-      if (normalizedProfile.logoOriginalFileName !== undefined) {
-        updatePayload.logo_original_file_name = normalizedProfile.logoOriginalFileName;
+      if (profile.logoOriginalFileName !== undefined) {
+        updatePayload.logo_original_file_name = profile.logoOriginalFileName;
       }
-      if (normalizedProfile.logoShape !== undefined) {
-        updatePayload.logo_shape = normalizedProfile.logoShape;
+      if (profile.logoShape !== undefined) {
+        updatePayload.logo_shape = profile.logoShape;
       }
-      if (normalizedProfile.logoBackgroundWhite !== undefined) {
-        updatePayload.logo_bg_white = normalizedProfile.logoBackgroundWhite;
+      if (profile.logoBackgroundWhite !== undefined) {
+        updatePayload.logo_bg_white = profile.logoBackgroundWhite;
       }
       const { error: updateError } = await supabase
         .from("user_profiles")
@@ -742,22 +675,6 @@ export async function POST(request: NextRequest) {
       linksForSave,
       existingLinkStateById
     );
-
-    if (!billingAccess.hasPaidAccess) {
-      const publishedCount = countPublishedLinks(
-        normalizedLinks.map((link) => ({
-          isActive: link.isActive,
-          isOverride: link.isOverride,
-        }))
-      );
-      if (publishedCount > FREE_PLAN_MAX_PUBLISHED_LINKS) {
-        return NextResponse.json(
-          { error: getFreePlanLinkLimitError(publishedCount) },
-          { status: 403 }
-        );
-      }
-    }
-
     const selectedOverrideOrderIndex =
       normalizedLinks.find((link) => link.isOverride)?.order_index ?? null;
     const incomingIds = new Set(
@@ -829,7 +746,7 @@ export async function POST(request: NextRequest) {
       if (setOverrideError) throw new Error(setOverrideError.message);
     }
 
-    if (normalizedProfile.active) {
+    if (profile.active) {
       const { error: deactivateError } = await supabase
         .from("user_profiles")
         .update({ is_active: false })

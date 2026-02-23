@@ -106,10 +106,6 @@ export async function POST() {
     await deleteByUserColumn("lead_form_settings", "user_id", userId);
     await deleteByUserColumn("lead_form_fields", "user_id", userId);
     await deleteByUserColumn("lead_forms", "user_id", userId);
-    await deleteByUserColumn("billing_entitlements", "user_id", userId);
-    await deleteByUserColumn("billing_orders", "user_id", userId);
-    await deleteByUserColumn("billing_subscriptions", "user_id", userId);
-    await deleteByUserColumn("billing_customers", "user_id", userId);
     await deleteByUserColumn("profile_links", "user_id", userId);
     await deleteByUserColumn("user_profiles", "user_id", userId);
     await deleteByUserColumn("vcard_profiles", "user_id", userId);

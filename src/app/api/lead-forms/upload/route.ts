@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getBillingAccessForUser } from "@/lib/billing/access";
 import { createServerSupabaseReadonly } from "@/lib/supabase/server";
 import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
 import { limitRequest } from "@/lib/rate-limit";
@@ -68,14 +67,6 @@ export async function POST(request: NextRequest) {
     if (typedFormRow.status !== "published") {
       return NextResponse.json(
         { error: "Form not available." },
-        { status: 403 }
-      );
-    }
-
-    const billingAccess = await getBillingAccessForUser(typedFormRow.user_id);
-    if (!billingAccess.hasPaidAccess) {
-      return NextResponse.json(
-        { error: "File uploads are available on paid plans only." },
         { status: 403 }
       );
     }

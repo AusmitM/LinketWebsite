@@ -1,15 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import { Package, Pencil, Sparkles, Star } from "lucide-react";
 
 import { CreativePricing } from "@/components/ui/creative-pricing";
 import type { PricingTier } from "@/components/ui/creative-pricing";
-import { toast } from "@/components/system/toaster";
-import { BILLING_PLANS, isCheckoutPlanKey } from "@/lib/billing/plans";
 import { cn } from "@/lib/utils";
-import type { CheckoutPlanKey } from "@/types/billing";
 
 type Audience = "individual" | "business";
 
@@ -28,33 +24,28 @@ const INDIVIDUAL_TIERS: PricingTier[] = [
       "Best for trying Linket at no cost",
       "Upgrade anytime when you need more",
     ],
-    ctaLabel: "Start for free",
-    ctaHref: "/auth?view=signup",
   },
   {
     name: "Web + Linket Bundle",
     icon: <Star className="h-6 w-6" />,
-    price: BILLING_PLANS.bundle_59.displayPrice,
-    billingLabel: BILLING_PLANS.bundle_59.billingLabel,
+    price: 59,
+    billingLabel: "$59 one-time, then optional Pro renewal after year 1",
     description: "Linket + 12 month pro access",
     audience: "Individuals",
     color: "blue",
     features: [
       "Get 1 standard Linket",
       "12 months of Paid Web-Only (Pro) included",
-      "After year 1: keep Pro at $7/month or $70/year",
-      "Discounted Pro ($5/$50) unlocks after 12 cumulative paid subscription months",
+      "After year 1: keep Pro for $5/month or $50/year",
       "Best first purchase for one person",
     ],
     popular: true,
-    planKey: "bundle_59",
-    ctaLabel: "Buy bundle",
   },
   {
-    name: "Paid Web-Only (Pro Monthly)",
+    name: "Paid Web-Only (Pro)",
     icon: <Pencil className="h-6 w-6" />,
-    price: BILLING_PLANS.pro_monthly.displayPrice,
-    billingLabel: BILLING_PLANS.pro_monthly.billingLabel,
+    price: "$7/mo",
+    billingLabel: "or $70/year",
     description: "Individual software plan",
     audience: "Individuals",
     color: "amber",
@@ -62,29 +53,8 @@ const INDIVIDUAL_TIERS: PricingTier[] = [
       "Publish your profile and links with no hardware required",
       "Capture unlimited leads",
       "Remove Linket branding",
-      "Loyalty discount unlocks after 12 cumulative paid subscription months",
-      "Cancel anytime from billing portal",
+      "Pick monthly or yearly billing",
     ],
-    planKey: "pro_monthly",
-    ctaLabel: "Start monthly",
-  },
-  {
-    name: "Paid Web-Only (Pro Yearly)",
-    icon: <Pencil className="h-6 w-6" />,
-    price: BILLING_PLANS.pro_yearly.displayPrice,
-    billingLabel: BILLING_PLANS.pro_yearly.billingLabel,
-    description: "Individual software plan",
-    audience: "Individuals",
-    color: "amber",
-    features: [
-      "Same Pro feature set as monthly",
-      "Capture unlimited leads",
-      "Remove Linket branding",
-      "Loyalty discount unlocks after 12 cumulative paid subscription months",
-      "Best value for long-term use",
-    ],
-    planKey: "pro_yearly",
-    ctaLabel: "Start yearly",
   },
 ];
 
@@ -103,8 +73,6 @@ const BUSINESS_TIERS: PricingTier[] = [
       "One-time hardware pricing",
       "Bulk pricing availible",
     ],
-    ctaLabel: "Contact sales",
-    ctaHref: "/#customization",
   },
   {
     name: "Custom Design Add-On (min 5 units)",
@@ -123,71 +91,19 @@ const BUSINESS_TIERS: PricingTier[] = [
       "Bulk pricing availible",
     ],
     popular: true,
-    ctaLabel: "Book consult",
-    ctaHref: "/#customization",
   },
 ];
 
 export default function LinketPlansToggle() {
-  const router = useRouter();
   const [audience, setAudience] = useState<Audience>("individual");
-  const [pendingPlan, setPendingPlan] = useState<CheckoutPlanKey | null>(null);
-
-  const startCheckout = async (planKey: CheckoutPlanKey) => {
-    setPendingPlan(planKey);
-    try {
-      const response = await fetch("/api/billing/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planKey, source: "landing" }),
-      });
-
-      if (response.status === 401) {
-        const next = `/dashboard/billing?checkout=${encodeURIComponent(planKey)}&source=landing`;
-        setPendingPlan(null);
-        router.push(`/auth?view=signin&next=${encodeURIComponent(next)}`);
-        return;
-      }
-
-      const payload = (await response.json().catch(() => null)) as
-        | { url?: string; error?: string }
-        | null;
-      if (!response.ok || !payload?.url) {
-        throw new Error(payload?.error || "Unable to start checkout.");
-      }
-      window.location.assign(payload.url);
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Unable to start checkout.";
-      toast({
-        title: "Checkout unavailable",
-        description: message,
-        variant: "destructive",
-      });
-      setPendingPlan(null);
-    }
-  };
 
   const { title, description, tiers, theme } = useMemo(() => {
-    const withPendingState = (items: PricingTier[]) =>
-      items.map((item) => {
-        const isPending =
-          item.planKey && isCheckoutPlanKey(item.planKey)
-            ? pendingPlan === item.planKey
-            : false;
-        return {
-          ...item,
-          disabled: isPending,
-          pending: isPending,
-        };
-      });
-
     if (audience === "individual") {
       return {
         title: "Individual options",
         description:
           "Choose free web-only, paid web-only, or web + Linket bundle.",
-        tiers: withPendingState(INDIVIDUAL_TIERS),
+        tiers: INDIVIDUAL_TIERS,
         theme: "warm" as const,
       };
     }
@@ -196,10 +112,10 @@ export default function LinketPlansToggle() {
       title: "Business options",
       description:
         "Choose standard business Linkets or book a consult to customize a design.",
-      tiers: withPendingState(BUSINESS_TIERS),
+      tiers: BUSINESS_TIERS,
       theme: "business" as const,
     };
-  }, [audience, pendingPlan]);
+  }, [audience]);
 
   return (
     <CreativePricing
@@ -247,12 +163,6 @@ export default function LinketPlansToggle() {
       }
       theme={theme}
       tiers={tiers}
-      onTierSelect={(tier) => {
-        const maybePlanKey = tier.planKey;
-        if (maybePlanKey && isCheckoutPlanKey(maybePlanKey)) {
-          void startCheckout(maybePlanKey);
-        }
-      }}
     />
   );
 }

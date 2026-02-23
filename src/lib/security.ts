@@ -1,14 +1,6 @@
 const DEV_FALLBACK_SECRET = "devsalt";
 const INTERNAL_SECRET = process.env.INTERNAL_SECRET?.trim() ?? "";
 
-export function isValidInternalSecret(candidate: string | null | undefined) {
-  const expectedSecret =
-    INTERNAL_SECRET ||
-    (process.env.NODE_ENV !== "production" ? DEV_FALLBACK_SECRET : "");
-  if (!expectedSecret) return false;
-  return typeof candidate === "string" && candidate.trim() === expectedSecret;
-}
-
 export function sanitizeHttpUrl(raw: string) {
   const parsed = new URL(raw);
   if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {

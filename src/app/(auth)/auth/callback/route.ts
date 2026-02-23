@@ -5,35 +5,6 @@ import { recordConversionEvent } from "@/lib/server-conversion-events";
 const FIRST_LOGIN_REDIRECT = "/dashboard/linkets?tour=welcome";
 const RETURNING_LOGIN_REDIRECT = "/dashboard/overview";
 
-function toSafeNextPath(raw: unknown) {
-  if (typeof raw !== "string") return null;
-  const trimmed = raw.trim();
-  if (!trimmed.startsWith("/")) return null;
-  if (trimmed.startsWith("//")) return null;
-  return trimmed;
-}
-
-function shouldUseGetNextPath(path: string | null) {
-  if (!path) return false;
-  if (path === RETURNING_LOGIN_REDIRECT) return false;
-  return true;
-}
-
-function toSessionTokens(value: unknown) {
-  if (!value || typeof value !== "object") return null;
-  const source = value as { access_token?: unknown; refresh_token?: unknown };
-  if (
-    typeof source.access_token !== "string" ||
-    typeof source.refresh_token !== "string"
-  ) {
-    return null;
-  }
-  return {
-    access_token: source.access_token,
-    refresh_token: source.refresh_token,
-  };
-}
-
 async function resolveRedirectPath(
   supabase: Awaited<ReturnType<typeof createServerSupabase>>
 ) {
@@ -66,7 +37,6 @@ async function resolveRedirectPath(
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
-  const requestedNext = toSafeNextPath(url.searchParams.get("next"));
   const supabase = await createServerSupabase();
 
   if (code) {
@@ -81,24 +51,14 @@ export async function GET(request: Request) {
     await supabase.auth.getSession();
   }
 
-  const redirectPath =
-    shouldUseGetNextPath(requestedNext) && requestedNext
-      ? requestedNext
-      : await resolveRedirectPath(supabase);
+  const redirectPath = await resolveRedirectPath(supabase);
   const redirectUrl = new URL(redirectPath, url.origin);
   return NextResponse.redirect(redirectUrl);
 }
 
 export async function POST(request: Request) {
   const supabase = await createServerSupabase();
-  const payload = (await request.json()) as {
-    event?: string;
-    session?: unknown;
-    next?: string | null;
-  };
-  const event = payload.event;
-  const session = payload.session;
-  const requestedNext = toSafeNextPath(payload.next);
+  const { event, session } = await request.json();
 
   if (event === "SIGNED_OUT") {
     await supabase.auth.signOut();
@@ -106,19 +66,12 @@ export async function POST(request: Request) {
   }
 
   if (event === "SIGNED_IN" && session) {
-    const sessionTokens = toSessionTokens(session);
-    if (!sessionTokens) {
-      return NextResponse.json(
-        { error: "Invalid session payload." },
-        { status: 400 }
-      );
-    }
-    const { error } = await supabase.auth.setSession(sessionTokens);
+    const { error } = await supabase.auth.setSession(session);
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
   }
 
-  const redirectTo = requestedNext ?? (await resolveRedirectPath(supabase));
+  const redirectTo = await resolveRedirectPath(supabase);
   return NextResponse.json({ ok: true, redirectTo });
 }

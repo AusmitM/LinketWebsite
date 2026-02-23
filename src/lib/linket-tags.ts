@@ -1,7 +1,4 @@
-import "server-only";
-
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { grantLinketProOfferEntitlement } from "@/lib/billing/entitlements";
 import { getActiveProfileForUser } from "@/lib/profile-service";
 import type {
   HardwareTagRecord,
@@ -9,26 +6,12 @@ import type {
   TagEventRecord,
   UserProfileRecord,
 } from "@/types/db";
-import type {
-  ClaimLinketProOfferResult,
-  TagAssignmentDetail,
-} from "@/types/linkets";
 
-type LinketProOfferClaimRow = {
-  tag_id: string;
-  claimed_by_user_id: string;
-  claimed_at: string;
+export type TagAssignmentDetail = {
+  assignment: TagAssignmentRecord;
+  tag: HardwareTagRecord;
+  profile: Pick<UserProfileRecord, "id" | "name" | "handle" | "is_active"> | null;
 };
-
-function isMissingRelationError(error: { code?: string; message?: string } | null) {
-  if (!error) return false;
-  if (error.code === "42P01" || error.code === "PGRST205") return true;
-  const message = (error.message ?? "").toLowerCase();
-  return (
-    message.includes("does not exist") ||
-    message.includes("could not find the table")
-  );
-}
 
 function normaliseChipUid(uid: string) {
   return uid.trim();
@@ -73,58 +56,10 @@ function mapAssignmentRow(row: Record<string, unknown>): TagAssignmentDetail {
       };
     }
 
-  return {
-    assignment,
-    tag,
-    profile,
-    proOffer: {
-      claimable: true,
-      claimedAt: null,
-      claimedByUserId: null,
-    },
-  };
+  return { assignment, tag, profile };
 }
 
-async function fetchProOfferClaimsByTagIds(tagIds: string[]) {
-  if (tagIds.length === 0) return new Map<string, LinketProOfferClaimRow>();
-
-  const { data, error } = await supabaseAdmin
-    .from("linket_pro_offer_claims")
-    .select("tag_id,claimed_by_user_id,claimed_at")
-    .in("tag_id", tagIds);
-
-  if (error) {
-    if (isMissingRelationError(error)) {
-      return new Map<string, LinketProOfferClaimRow>();
-    }
-    throw new Error(error.message);
-  }
-
-  return new Map(
-    ((data ?? []) as LinketProOfferClaimRow[]).map((row) => [row.tag_id, row])
-  );
-}
-
-function withProOfferStatus(
-  assignments: TagAssignmentDetail[],
-  offerClaimsByTagId: Map<string, LinketProOfferClaimRow>
-) {
-  return assignments.map((detail) => {
-    const claim = offerClaimsByTagId.get(detail.tag.id);
-    return {
-      ...detail,
-      proOffer: {
-        claimable: !claim,
-        claimedAt: claim?.claimed_at ?? null,
-        claimedByUserId: claim?.claimed_by_user_id ?? null,
-      },
-    } satisfies TagAssignmentDetail;
-  });
-}
-
-async function fetchAssignmentById(
-  assignmentId: string
-): Promise<TagAssignmentDetail | null> {
+async function fetchAssignmentById(assignmentId: string): Promise<TagAssignmentDetail | null> {
   const { data, error } = await supabaseAdmin
     .from("tag_assignments")
     .select(
@@ -139,9 +74,7 @@ async function fetchAssignmentById(
     .maybeSingle();
   if (error) throw new Error(error.message);
   if (!data) return null;
-  const detail = mapAssignmentRow(data);
-  const offerClaimsByTagId = await fetchProOfferClaimsByTagIds([detail.tag.id]);
-  return withProOfferStatus([detail], offerClaimsByTagId)[0] ?? null;
+  return mapAssignmentRow(data);
 }
 
 export async function getAssignmentsForUser(userId: string): Promise<TagAssignmentDetail[]> {
@@ -158,11 +91,7 @@ export async function getAssignmentsForUser(userId: string): Promise<TagAssignme
     .eq("user_id", userId)
     .order("created_at", { ascending: true });
   if (error) throw new Error(error.message);
-  const assignments = (data ?? []).map(mapAssignmentRow);
-  const offerClaimsByTagId = await fetchProOfferClaimsByTagIds(
-    assignments.map((detail) => detail.tag.id)
-  );
-  return withProOfferStatus(assignments, offerClaimsByTagId);
+  return (data ?? []).map(mapAssignmentRow);
 }
 
 export async function claimTagForUser(options: {
@@ -288,126 +217,6 @@ export async function updateAssignmentForUser(options: {
   }
 
   return fetchAssignmentById(options.assignmentId);
-}
-
-async function getExistingProOfferClaim(tagId: string) {
-  const { data, error } = await supabaseAdmin
-    .from("linket_pro_offer_claims")
-    .select("tag_id,claimed_by_user_id,claimed_at")
-    .eq("tag_id", tagId)
-    .maybeSingle();
-
-  if (error) {
-    if (isMissingRelationError(error)) {
-      throw new Error(
-        "Linket Pro offer is not configured. Run the latest billing migrations."
-      );
-    }
-    throw new Error(error.message);
-  }
-
-  return (data as LinketProOfferClaimRow | null) ?? null;
-}
-
-export async function claimLinketProOfferForAssignment(options: {
-  assignmentId: string;
-  userId: string;
-}): Promise<ClaimLinketProOfferResult> {
-  const assignment = await fetchAssignmentById(options.assignmentId);
-  if (!assignment) {
-    throw new Error("Assignment not found");
-  }
-  if (assignment.assignment.user_id !== options.userId) {
-    throw new Error("Not authorized to claim this Linket offer");
-  }
-
-  const tagId = assignment.assignment.tag_id;
-  const existingClaim = await getExistingProOfferClaim(tagId);
-
-  if (existingClaim) {
-    if (existingClaim.claimed_by_user_id === options.userId) {
-      const entitlement = await grantLinketProOfferEntitlement({
-        userId: options.userId,
-        tagId,
-        startsAt: existingClaim.claimed_at,
-      });
-      return {
-        status: "already_claimed_by_you",
-        tagId,
-        claimedAt: existingClaim.claimed_at,
-        entitlementEndsAt: entitlement?.endsAt ?? null,
-      };
-    }
-    return {
-      status: "already_claimed_by_other",
-      tagId,
-      claimedAt: existingClaim.claimed_at,
-      entitlementEndsAt: null,
-    };
-  }
-
-  const claimedAt = new Date().toISOString();
-  const { error: insertError } = await supabaseAdmin
-    .from("linket_pro_offer_claims")
-    .insert({
-      tag_id: tagId,
-      claimed_by_user_id: options.userId,
-      claimed_at: claimedAt,
-      updated_at: claimedAt,
-    });
-
-  if (insertError) {
-    if (insertError.code === "23505") {
-      const conflictClaim = await getExistingProOfferClaim(tagId);
-      if (!conflictClaim) {
-        throw new Error("Unable to claim Linket Pro offer.");
-      }
-      if (conflictClaim.claimed_by_user_id === options.userId) {
-        const entitlement = await grantLinketProOfferEntitlement({
-          userId: options.userId,
-          tagId,
-          startsAt: conflictClaim.claimed_at,
-        });
-        return {
-          status: "already_claimed_by_you",
-          tagId,
-          claimedAt: conflictClaim.claimed_at,
-          entitlementEndsAt: entitlement?.endsAt ?? null,
-        };
-      }
-      return {
-        status: "already_claimed_by_other",
-        tagId,
-        claimedAt: conflictClaim.claimed_at,
-        entitlementEndsAt: null,
-      };
-    }
-    if (isMissingRelationError(insertError)) {
-      throw new Error(
-        "Linket Pro offer is not configured. Run the latest billing migrations."
-      );
-    }
-    throw new Error(insertError.message);
-  }
-
-  const entitlement = await grantLinketProOfferEntitlement({
-    userId: options.userId,
-    tagId,
-    startsAt: claimedAt,
-  });
-
-  await supabaseAdmin.from("tag_events").insert({
-    tag_id: tagId,
-    event_type: "pro_offer_claim",
-    metadata: { user_id: options.userId },
-  } satisfies Partial<TagEventRecord>);
-
-  return {
-    status: "claimed",
-    tagId,
-    claimedAt,
-    entitlementEndsAt: entitlement?.endsAt ?? null,
-  };
 }
 
 export async function recordTagEvent(event: Partial<TagEventRecord>) {

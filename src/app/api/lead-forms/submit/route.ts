@@ -1,11 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getBillingAccessForUser } from "@/lib/billing/access";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
-import {
-  enforceFreePlanLeadFormConfig,
-  validateSubmission,
-} from "@/lib/lead-form";
+import { validateSubmission } from "@/lib/lead-form";
 import { limitRequest } from "@/lib/rate-limit";
 import { recordConversionEvent } from "@/lib/server-conversion-events";
 import type {
@@ -186,10 +182,7 @@ export async function POST(request: NextRequest) {
         { status: 403 }
       );
     }
-    const billingAccess = await getBillingAccessForUser(formPayload.user_id);
-    const config = billingAccess.hasPaidAccess
-      ? formPayload.config
-      : enforceFreePlanLeadFormConfig(formPayload.config);
+    const config = formPayload.config;
     const validationErrors = validateSubmission(config, answers);
     if (validationErrors.length) {
       return NextResponse.json(

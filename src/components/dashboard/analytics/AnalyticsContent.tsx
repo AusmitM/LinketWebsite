@@ -1,7 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import Link from "next/link";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
@@ -11,19 +10,7 @@ import { readLocalStorage, writeLocalStorage } from "@/lib/browser-storage";
 import { ANALYTICS_BROADCAST_KEY, ANALYTICS_EVENT_NAME } from "@/lib/analytics";
 import type { UserAnalytics } from "@/lib/analytics-service";
 import { ResponsiveContainer, LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, Legend } from "recharts";
-import {
-  Download,
-  Gem,
-  ArrowRight,
-  CheckCircle2,
-  Radar,
-  MousePointerClick,
-  Funnel,
-  TrendingUp,
-  FileSpreadsheet,
-  Sparkles,
-  type LucideIcon,
-} from "lucide-react";
+import { Download } from "lucide-react";
 
 const numberFormatter = new Intl.NumberFormat("en-US");
 const shortDate = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" });
@@ -76,14 +63,6 @@ type DeltaBadge = {
   tone: "up" | "down" | "neutral";
 };
 
-type BillingSummaryResponse = {
-  hasPaidAccess?: boolean;
-};
-
-function isPaidPlanOnlyMessage(message: string) {
-  return message.toLowerCase().includes("paid plans only");
-}
-
 export default function AnalyticsContent() {
   const { theme } = useThemeOptional();
   const useDarkDeltaText = DARK_DELTA_TEXT_THEMES.has(theme);
@@ -91,7 +70,6 @@ export default function AnalyticsContent() {
   const [reloadToken, setReloadToken] = useState(0);
   const [isPhone, setIsPhone] = useState(false);
   const [range, setRange] = useState<number>(DEFAULT_RANGE);
-  const [hasPaidAccess, setHasPaidAccess] = useState<boolean | null>(null);
   const [hasLoadedPersistedRange, setHasLoadedPersistedRange] = useState(false);
   const analyticsCacheRef = useRef<Map<string, CachedAnalyticsEntry>>(new Map());
   const analyticsInFlightRef = useRef<Map<string, Promise<UserAnalytics>>>(new Map());
@@ -136,49 +114,16 @@ export default function AnalyticsContent() {
         const user = data.user;
         setUserId(user?.id ?? null);
         if (!user) {
-          setHasPaidAccess(null);
           setState({ loading: false, error: "You're not signed in.", analytics: null });
         }
       })
       .catch(() => {
-        if (active) {
-          setHasPaidAccess(null);
-          setState({ loading: false, error: "Unable to verify session.", analytics: null });
-        }
+        if (active) setState({ loading: false, error: "Unable to verify session.", analytics: null });
       });
     return () => {
       active = false;
     };
   }, []);
-
-  useEffect(() => {
-    if (!userId) return;
-    let active = true;
-
-    async function loadBillingAccess() {
-      try {
-        const response = await fetch("/api/billing/summary", {
-          cache: "no-store",
-        });
-        if (!active) return;
-        if (!response.ok) {
-          setHasPaidAccess(true);
-          return;
-        }
-        const payload = (await response.json().catch(() => null)) as
-          | BillingSummaryResponse
-          | null;
-        setHasPaidAccess(Boolean(payload?.hasPaidAccess));
-      } catch {
-        if (active) setHasPaidAccess(true);
-      }
-    }
-
-    void loadBillingAccess();
-    return () => {
-      active = false;
-    };
-  }, [userId]);
 
   const fetchAnalyticsForRange = useCallback(
     async (activeUserId: string, days: number, timezoneOffsetMinutes: number) => {
@@ -224,15 +169,6 @@ export default function AnalyticsContent() {
 
   useEffect(() => {
     if (!userId) return;
-    if (hasPaidAccess === null) {
-      setState((prev) => ({ ...prev, loading: true, error: null, analytics: null }));
-      return;
-    }
-    if (!hasPaidAccess) {
-      setState({ loading: false, error: null, analytics: null });
-      return;
-    }
-
     let cancelled = false;
     const timezoneOffsetMinutes = new Date().getTimezoneOffset();
     const cacheKey = `${userId}:${range}:${timezoneOffsetMinutes}`;
@@ -272,11 +208,6 @@ export default function AnalyticsContent() {
       } catch (err) {
         const message = err instanceof Error ? err.message : "Unable to load analytics";
         if (!cancelled) {
-          if (isPaidPlanOnlyMessage(message)) {
-            setHasPaidAccess(false);
-            setState({ loading: false, error: null, analytics: null });
-            return;
-          }
           if (cached) {
             setState((prev) => ({ ...prev, loading: false, error: message }));
           } else {
@@ -290,17 +221,10 @@ export default function AnalyticsContent() {
     return () => {
       cancelled = true;
     };
-  }, [
-    fetchAnalyticsForRange,
-    hasPaidAccess,
-    prefetchOtherRanges,
-    reloadToken,
-    range,
-    userId,
-  ]);
+  }, [fetchAnalyticsForRange, prefetchOtherRanges, reloadToken, range, userId]);
 
   useEffect(() => {
-    if (!userId || !hasPaidAccess || typeof window === "undefined") return;
+    if (!userId || typeof window === "undefined") return;
 
     let settleTimer: number | null = null;
 
@@ -334,10 +258,10 @@ export default function AnalyticsContent() {
         window.clearTimeout(settleTimer);
       }
     };
-  }, [hasPaidAccess, userId]);
+  }, [userId]);
 
   useEffect(() => {
-    if (!userId || !hasPaidAccess) return;
+    if (!userId) return;
     if (!canUseRealtime()) return;
 
     let channel: ReturnType<typeof supabase.channel> | null = null;
@@ -392,7 +316,7 @@ export default function AnalyticsContent() {
         supabase.removeChannel(channel);
       }
     };
-  }, [hasPaidAccess, userId]);
+  }, [userId]);
 
   const totals = analytics?.totals;
 
@@ -464,10 +388,6 @@ export default function AnalyticsContent() {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   }, [analytics, range]);
-
-  if (hasPaidAccess === false) {
-    return <AnalyticsPremiumPreview />;
-  }
 
   return (
     <div className="dashboard-analytics-page w-full space-y-6" data-tour="analytics-overview">
@@ -817,190 +737,6 @@ export default function AnalyticsContent() {
   );
 }
 
-function AnalyticsPremiumPreview() {
-  const offerings: Array<{
-    title: string;
-    description: string;
-    icon: LucideIcon;
-    accent: string;
-  }> = [
-    {
-      title: "Live scan and lead intelligence",
-      description:
-        "Catch buyer intent in the moment and respond while attention is still high.",
-      icon: Radar,
-      accent: "#22d3ee",
-    },
-    {
-      title: "Link-level performance insights",
-      description:
-        "See which links pull clicks and optimize your profile for action, not just views.",
-      icon: MousePointerClick,
-      accent: "#818cf8",
-    },
-    {
-      title: "Lead funnel visibility",
-      description:
-        "Understand where interest drops so you can tighten each step of your form journey.",
-      icon: Funnel,
-      accent: "#f59e0b",
-    },
-    {
-      title: "Trend and momentum tracking",
-      description:
-        "Spot directional shifts early and adjust campaigns before performance dips.",
-      icon: TrendingUp,
-      accent: "#34d399",
-    },
-    {
-      title: "Export-ready reporting",
-      description:
-        "Create polished updates for clients, collaborators, and internal stakeholders fast.",
-      icon: FileSpreadsheet,
-      accent: "#a78bfa",
-    },
-    {
-      title: "Action-focused dashboard",
-      description:
-        "Translate activity into confident next steps with context built for growth teams.",
-      icon: Sparkles,
-      accent: "#f472b6",
-    },
-  ];
-
-  return (
-    <div className="dashboard-analytics-page w-full space-y-6" data-tour="analytics-overview">
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-xl font-semibold text-foreground">Analytics Pro</h1>
-          <p className="text-sm text-muted-foreground">
-            Turn profile traffic into qualified conversations with actionable analytics.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button asChild className="rounded-full">
-            <Link href="/dashboard/billing">
-              Upgrade to Pro
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
-        </div>
-      </header>
-
-      <Card className="dashboard-analytics-card rounded-3xl border border-border/80 bg-card/80 shadow-sm">
-        <CardContent className="space-y-5 py-7">
-          <div className="inline-flex items-center gap-2 rounded-full border border-amber-400/60 bg-amber-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-amber-500 shadow-[0_0_16px_rgba(251,191,36,0.45)]">
-            <span className="relative inline-flex h-4 w-4 items-center justify-center">
-              <span className="absolute inset-0 rounded-full bg-amber-400/35 blur-[6px]" />
-              <Gem className="relative h-3 w-3" />
-            </span>
-            Pro-only intelligence
-          </div>
-          <h2 className="text-2xl font-semibold tracking-tight text-foreground">
-            See what drives results, then act on it immediately.
-          </h2>
-          <p className="max-w-3xl text-sm text-muted-foreground">
-            Pro analytics shows where attention comes from, which links get action, and how your lead funnel behaves. It is built to help you decide what to keep, what to fix, and what to scale.
-          </p>
-        </CardContent>
-      </Card>
-
-      <section className="space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h3 className="text-base font-semibold text-foreground">
-            Pick your growth superpowers
-          </h3>
-          <span className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-            Pro unlocks every tile
-          </span>
-        </div>
-        <div className="grid gap-4 lg:grid-cols-3">
-          {offerings.map((offering, index) => (
-            <AnalyticsRibbonCard
-              key={offering.title}
-              title={offering.title}
-              description={offering.description}
-              icon={offering.icon}
-              accent={offering.accent}
-              ribbonLabel={String(index + 1).padStart(2, "0")}
-            />
-          ))}
-        </div>
-      </section>
-
-      <Card className="dashboard-analytics-card rounded-3xl border bg-card/80 shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold">Why creators upgrade</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {[
-            "Understand what content and placements create high-intent clicks.",
-            "Prioritize follow-ups using clear visibility into incoming lead quality.",
-            "Improve conversions with continuous feedback on profile and form performance.",
-            "Present professional reporting when working with partners or clients.",
-          ].map((item) => (
-            <div key={item} className="flex items-start gap-2 rounded-2xl border border-border/60 bg-background/60 px-3 py-2.5">
-              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-              <p className="text-sm text-muted-foreground">{item}</p>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
-
-      <div className="flex flex-col items-start gap-3 rounded-3xl border border-primary/20 bg-primary/5 p-5 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h3 className="text-base font-semibold text-foreground">Unlock Pro Analytics</h3>
-          <p className="text-sm text-muted-foreground">
-            Get the full analytics workspace and make smarter growth decisions.
-          </p>
-        </div>
-        <Button asChild className="rounded-full">
-          <Link href="/dashboard/billing">
-            See Pro plans
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Link>
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-function AnalyticsRibbonCard({
-  title,
-  description,
-  icon: Icon,
-  accent,
-  ribbonLabel,
-}: {
-  title: string;
-  description: string;
-  icon: LucideIcon;
-  accent: string;
-  ribbonLabel: string;
-}) {
-  const cardStyle = {
-    "--analytics-ribbon-accent": accent,
-  } as CSSProperties;
-
-  return (
-    <div
-      className="analytics-ribbon-card"
-      style={cardStyle}
-    >
-      <div className="analytics-ribbon-card__body">
-        <div className="analytics-ribbon-card__icon" aria-hidden>
-          <Icon className="h-6 w-6" />
-        </div>
-        <p className="analytics-ribbon-card__title">{title}</p>
-        <p className="analytics-ribbon-card__paragraph">{description}</p>
-      </div>
-      <div className="analytics-ribbon-card__ribbon">
-        <label className="analytics-ribbon-card__ribbon-label">{ribbonLabel}</label>
-      </div>
-    </div>
-  );
-}
-
 type StatCardProps = {
   label: string;
   value: string;
@@ -1313,4 +1049,3 @@ function canUseRealtime() {
     hostname.endsWith(".local")
   );
 }
-

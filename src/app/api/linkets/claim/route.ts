@@ -18,16 +18,6 @@ function normalizeClaimCode(value: string) {
   return value.trim().replace(/-/g, "").toUpperCase();
 }
 
-function isMissingRelationError(error: { code?: string; message?: string } | null) {
-  if (!error) return false;
-  if (error.code === "42P01" || error.code === "PGRST205") return true;
-  const message = (error.message ?? "").toLowerCase();
-  return (
-    message.includes("does not exist") ||
-    message.includes("could not find the table")
-  );
-}
-
 export async function POST(req: NextRequest) {
   if (!isSupabaseAdminAvailable) {
     return NextResponse.json(
@@ -140,24 +130,5 @@ export async function POST(req: NextRequest) {
     metadata: { user_id: auth.user.id },
   });
 
-  let proOfferAvailable = false;
-  if (tagId) {
-    const { data: proOfferClaim, error: proOfferError } = await supabaseAdmin
-      .from("linket_pro_offer_claims")
-      .select("tag_id")
-      .eq("tag_id", tagId)
-      .maybeSingle();
-
-    if (proOfferError && !isMissingRelationError(proOfferError)) {
-      return NextResponse.json({ error: proOfferError.message }, { status: 500 });
-    }
-    proOfferAvailable = !proOfferClaim;
-  }
-
-  return NextResponse.json({
-    ok: true,
-    assignmentId: assignment?.id ?? null,
-    tagId,
-    proOfferAvailable,
-  });
+  return NextResponse.json({ ok: true, assignmentId: assignment?.id ?? null });
 }

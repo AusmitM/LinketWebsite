@@ -16,8 +16,6 @@ type ValidationError = { fieldId: string; message: string };
 const DEFAULT_FORM_TITLE = "Let's Connect!";
 const DEFAULT_CONFIRMATION =
   "Thanks for reaching out. We will follow up soon.";
-const FREE_PLAN_FIELD_KEYS = ["name", "email", "phone"] as const;
-type FreePlanFieldKey = (typeof FREE_PLAN_FIELD_KEYS)[number];
 
 export function createDefaultLeadFormConfig(id: string): LeadFormConfig {
   const now = new Date().toISOString();
@@ -49,71 +47,6 @@ export function createDefaultLeadFormConfig(id: string): LeadFormConfig {
       createField("long_text", "Note"),
     ],
     meta: { createdAt: now, updatedAt: now, version: 1 },
-  };
-}
-
-function inferFreeFieldKey(field: LeadFormField): FreePlanFieldKey | null {
-  const text = `${field.id} ${field.label}`.toLowerCase();
-  if (text.includes("email")) return "email";
-  if (text.includes("phone") || text.includes("mobile") || text.includes("tel")) {
-    return "phone";
-  }
-  if (text.includes("name")) return "name";
-  return null;
-}
-
-function buildFreePlanField(
-  key: FreePlanFieldKey,
-  existing: LeadFormField | null
-): LeadFormField {
-  const baseId = existing?.id || `free-${key}`;
-  if (key === "name") {
-    return createField("short_text", "Name", {
-      id: baseId,
-      helpText: "Ex. John Doe",
-      required: true,
-      validation: { rule: "none" },
-    });
-  }
-  if (key === "email") {
-    return createField("short_text", "Email", {
-      id: baseId,
-      helpText: "JDoe@LinketConnect.com",
-      required: true,
-      validation: { rule: "email" },
-    });
-  }
-  return createField("short_text", "Phone Number", {
-    id: baseId,
-    helpText: "(###) ### - ####",
-    required: false,
-    validation: { rule: "none" },
-  });
-}
-
-export function enforceFreePlanLeadFormConfig(config: LeadFormConfig): LeadFormConfig {
-  const matched = new Map<FreePlanFieldKey, LeadFormField>();
-
-  for (const field of config.fields) {
-    if (field.type === "section") continue;
-    const key = inferFreeFieldKey(field);
-    if (!key || matched.has(key)) continue;
-    matched.set(key, field);
-  }
-
-  const fields = FREE_PLAN_FIELD_KEYS.map((key) =>
-    buildFreePlanField(key, matched.get(key) ?? null)
-  );
-
-  return {
-    ...config,
-    status: "published",
-    fields,
-    meta: {
-      ...config.meta,
-      updatedAt: config.meta?.updatedAt || new Date().toISOString(),
-      version: Math.max(1, config.meta?.version ?? 1),
-    },
   };
 }
 

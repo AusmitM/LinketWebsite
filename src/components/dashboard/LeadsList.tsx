@@ -8,7 +8,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ThemedSearchInput } from "@/components/ui/themed-search-input";
+import { Input } from "@/components/ui/input";
 import { toast } from "@/components/system/toaster";
 import { normalizeLeadFormConfig } from "@/lib/lead-form";
 import { Download, RefreshCw, Trash2, XCircle } from "lucide-react";
@@ -485,12 +485,11 @@ export default function LeadsList({ userId }: { userId: string }) {
       <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <CardTitle className="font-display">Leads</CardTitle>
         <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
-          <ThemedSearchInput
+          <Input
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Search name, email, company, message"
-            containerClassName="w-full sm:min-w-[320px]"
-            inputClassName="text-sm"
+            className="rounded-xl"
             aria-label="Search leads"
           />
           <div className="flex flex-col gap-2 sm:flex-row">

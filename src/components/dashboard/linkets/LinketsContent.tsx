@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   AlertCircle,
   ExternalLink,
@@ -15,7 +14,7 @@ import {
 
 import { supabase } from "@/lib/supabase";
 import type { ProfileWithLinks } from "@/lib/profile-service";
-import type { TagAssignmentDetail } from "@/types/linkets";
+import type { TagAssignmentDetail } from "@/lib/linket-tags";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -31,7 +30,6 @@ type LinketsContentProps = {
 
 export default function LinketsContent({ variant = "standalone" }: LinketsContentProps) {
   const isEmbedded = variant === "embedded";
-  const router = useRouter();
   const dashboardUser = useDashboardUser();
   const [userId, setUserId] = useState<string | null>(dashboardUser?.id ?? null);
   const [loading, setLoading] = useState(true);
@@ -39,9 +37,6 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
   const [profiles, setProfiles] = useState<ProfileWithLinks[]>([]);
   const [claimCode, setClaimCode] = useState("");
   const [claiming, setClaiming] = useState(false);
-  const [claimingProOfferFor, setClaimingProOfferFor] = useState<string | null>(
-    null
-  );
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -165,70 +160,18 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId, chipUid: claimCode.trim() }),
       });
-      const body = (await response.json().catch(() => null)) as
-        | { error?: string; proOfferAvailable?: boolean }
-        | null;
       if (!response.ok) {
+        const body = await response.json().catch(() => null);
         throw new Error((body?.error as string) || "Unable to claim Linket");
       }
       setClaimCode("");
-      toast({
-        title: "Linket claimed",
-        description: body?.proOfferAvailable
-          ? "Claim your free 12 months of Pro from this Linket card."
-          : "Assign a profile below.",
-        variant: "success",
-      });
+      toast({ title: "Linket claimed", description: "Assign a profile below.", variant: "success" });
       await loadData(userId);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unable to claim Linket";
       toast({ title: "Claim failed", description: message, variant: "destructive" });
     } finally {
       setClaiming(false);
-    }
-  }
-
-  async function handleClaimProOffer(assignmentId: string) {
-    if (!userId) return;
-    setClaimingProOfferFor(assignmentId);
-    try {
-      const response = await fetch("/api/linkets/pro-offer/claim", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ assignmentId }),
-      });
-      const body = (await response.json().catch(() => null)) as
-        | { error?: string; status?: string; entitlementEndsAt?: string | null }
-        | null;
-      if (!response.ok) {
-        throw new Error(body?.error || "Unable to claim free Pro offer.");
-      }
-
-      const title =
-        body?.status === "already_claimed_by_you"
-          ? "Free Pro already claimed"
-          : "Free Pro claimed";
-      const description = body?.entitlementEndsAt
-        ? `Pro access is active until ${new Date(body.entitlementEndsAt).toLocaleDateString()}.`
-        : "Pro access is active for 12 months.";
-
-      toast({
-        title,
-        description,
-        variant: "success",
-      });
-      await loadData(userId);
-      router.refresh();
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Unable to claim free Pro offer.";
-      toast({
-        title: "Offer unavailable",
-        description: message,
-        variant: "destructive",
-      });
-    } finally {
-      setClaimingProOfferFor(null);
     }
   }
 
@@ -351,30 +294,6 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
                         <div className="text-xs text-muted-foreground">
                           Status: {item.tag.status === "claimed" ? "Active" : item.tag.status}
                         </div>
-                        {item.proOffer.claimable ? (
-                          <div className="pt-1">
-                            <Button
-                              type="button"
-                              size="sm"
-                              className="rounded-full !text-black hover:!text-black disabled:!text-black/70 dark:!text-white dark:hover:!text-white dark:disabled:!text-white/70"
-                              onClick={() => void handleClaimProOffer(item.assignment.id)}
-                              disabled={claimingProOfferFor === item.assignment.id}
-                            >
-                              {claimingProOfferFor === item.assignment.id ? (
-                                <span className="inline-flex items-center gap-2">
-                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                  Claiming free 12 months Pro...
-                                </span>
-                              ) : (
-                                "Claim free 12 months Pro"
-                              )}
-                            </Button>
-                          </div>
-                        ) : (
-                          <div className="pt-1 text-xs text-muted-foreground">
-                            Free 12 months Pro offer already claimed for this Linket.
-                          </div>
-                        )}
                       </div>
                       <div className="flex flex-col gap-2 text-sm md:flex-row md:items-center">
                         <div className="flex items-center gap-2">

@@ -17,7 +17,6 @@ import {
   Package,
   Megaphone,
   User,
-  Gem,
 } from "lucide-react";
 
 const BASE_NAV = [
@@ -69,7 +68,6 @@ export default function Sidebar({
     return readSidebarCollapsed();
   });
   const [isAdmin, setIsAdmin] = useState(false);
-  const [hasPaidAccess, setHasPaidAccess] = useState<boolean | null>(null);
   const supabase = useMemo(() => createClient(), []);
   const isMobile = variant === "mobile";
   const isProfileEditor = pathname?.startsWith("/dashboard/profiles") ?? false;
@@ -89,7 +87,6 @@ export default function Sidebar({
       const userId = userData.user?.id;
       if (!userId) {
         setIsAdmin(false);
-        setHasPaidAccess(null);
         return;
       }
 
@@ -101,31 +98,11 @@ export default function Sidebar({
       if (!active) return;
       if (error) {
         setIsAdmin(false);
-      } else {
-        setIsAdmin(Array.isArray(data) ? data.length > 0 : Boolean(data));
+        return;
       }
-
-      try {
-        const billingRes = await fetch("/api/billing/summary", {
-          cache: "no-store",
-        });
-        if (!active) return;
-        if (!billingRes.ok) {
-          setHasPaidAccess(null);
-          return;
-        }
-        const billingPayload = (await billingRes.json().catch(() => null)) as
-          | { hasPaidAccess?: boolean }
-          | null;
-        setHasPaidAccess(Boolean(billingPayload?.hasPaidAccess));
-      } catch {
-        if (active) setHasPaidAccess(null);
-      }
+      setIsAdmin(Array.isArray(data) ? data.length > 0 : Boolean(data));
     })().catch(() => {
-      if (active) {
-        setIsAdmin(false);
-        setHasPaidAccess(null);
-      }
+      if (active) setIsAdmin(false);
     });
     return () => {
       active = false;
@@ -133,10 +110,9 @@ export default function Sidebar({
   }, [supabase]);
 
   const navItems = useMemo(() => {
-    const baseItems = BASE_NAV;
-    if (!isAdmin) return baseItems;
+    if (!isAdmin) return BASE_NAV;
     return [
-      ...baseItems,
+      ...BASE_NAV,
       { href: "/dashboard/admin/mint", label: "Minting", icon: Package },
       {
         href: "/dashboard/admin/notifications",
@@ -221,22 +197,8 @@ export default function Sidebar({
               >
                 <Icon className="h-4 w-4 shrink-0" />
                 {(!isCollapsed || isMobile) && (
-                  <span className="flex min-w-0 items-center gap-2">
-                    <span className="truncate">{item.label}</span>
-                    {item.href === "/dashboard/analytics" &&
-                    hasPaidAccess === false ? (
-                      <PremiumDiamond compact={false} />
-                    ) : null}
-                  </span>
+                  <span className="truncate">{item.label}</span>
                 )}
-                {item.href === "/dashboard/analytics" &&
-                hasPaidAccess === false &&
-                isCollapsed &&
-                !isMobile ? (
-                  <span className="absolute right-1.5 top-1.5">
-                    <PremiumDiamond compact />
-                  </span>
-                ) : null}
                 {isCollapsed && !isMobile && (
                   <span className="pointer-events-none absolute left-[54px] top-1/2 hidden -translate-y-1/2 rounded-md bg-popover px-2 py-1 text-xs text-popover-foreground shadow-md ring-1 ring-border group-hover:block">
                     {item.label}
@@ -253,21 +215,5 @@ export default function Sidebar({
         </div>
       </div>
     </aside>
-  );
-}
-
-function PremiumDiamond({ compact }: { compact: boolean }) {
-  return (
-    <span
-      title="Premium feature"
-      className={cn(
-        "relative inline-flex items-center justify-center rounded-full border border-amber-400/80 text-amber-500 shadow-[0_0_14px_rgba(251,191,36,0.65)]",
-        compact ? "h-4 w-4" : "h-5 w-5"
-      )}
-      aria-hidden
-    >
-      <span className="absolute inset-0 rounded-full bg-amber-400/30 blur-[5px]" />
-      <Gem className={cn("relative", compact ? "h-2.5 w-2.5" : "h-3 w-3")} />
-    </span>
   );
 }

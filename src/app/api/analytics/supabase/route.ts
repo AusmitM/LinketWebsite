@@ -1,7 +1,6 @@
 // app/api/analytics/supabase/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { getUserAnalytics } from "@/lib/analytics-service";
-import { getBillingAccessForUser } from "@/lib/billing/access";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { isSupabaseAdminAvailable } from "@/lib/supabase-admin";
 
@@ -154,14 +153,6 @@ export async function GET(request: NextRequest) {
     }
     if (auth.user.id !== userId) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
-    const billingAccess = await getBillingAccessForUser(auth.user.id, supabase as any);
-    if (!billingAccess.allowsAnalytics) {
-      return NextResponse.json(
-        { error: "Analytics is available on paid plans only." },
-        { status: 403 }
-      );
     }
 
     if (isSupabaseAdminAvailable) {

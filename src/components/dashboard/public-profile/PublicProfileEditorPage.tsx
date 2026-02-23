@@ -65,11 +65,9 @@ import { shuffleFields } from "@/lib/lead-form";
 import { readLocalStorage, writeLocalStorage } from "@/lib/browser-storage";
 import { toast } from "@/components/system/toaster";
 import { createClient } from "@/lib/supabase/client";
-import { FREE_PLAN_MAX_PUBLISHED_LINKS } from "@/lib/billing/feature-limits";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { ThemedSearchInput } from "@/components/ui/themed-search-input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
@@ -128,12 +126,6 @@ type VCardSnapshot = {
   error: string | null;
 };
 
-type LeadFormSnapshot = {
-  status: "idle" | "saving" | "saved" | "error";
-  isDirty: boolean;
-  error: string | null;
-};
-
 
 const ICON_OPTIONS: Array<{
   value: LinkIconKey;
@@ -184,7 +176,6 @@ export default function PublicProfileEditorPage() {
   const [savedProfile, setSavedProfile] = useState<ProfileDraft | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [hasPaidAccess, setHasPaidAccess] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
   const [handleError, setHandleError] = useState<string | null>(null);
@@ -210,16 +201,6 @@ export default function PublicProfileEditorPage() {
     isDirty: false,
     error: null,
   });
-  const [leadFormSnapshot, setLeadFormSnapshot] = useState<LeadFormSnapshot>({
-    status: "idle",
-    isDirty: false,
-    error: null,
-  });
-  const [leadFormReorderPending, setLeadFormReorderPending] = useState(false);
-  const [leadFormReorderSaving, setLeadFormReorderSaving] = useState(false);
-  const [leadFormReorderError, setLeadFormReorderError] = useState<string | null>(
-    null
-  );
   const [vcardLoaded, setVcardLoaded] = useState(false);
   const handleVCardFieldsChange = useCallback(
     (fields: { email: string; phone: string; photoData: string | null }) => {
@@ -249,31 +230,6 @@ export default function PublicProfileEditorPage() {
       error: string | null;
     }) => {
       setVcardSnapshot((prev) => {
-        const next = {
-          ...prev,
-          status: payload.status,
-          isDirty: payload.isDirty,
-          error: payload.error,
-        };
-        if (
-          prev.status === next.status &&
-          prev.isDirty === next.isDirty &&
-          prev.error === next.error
-        ) {
-          return prev;
-        }
-        return next;
-      });
-    },
-    []
-  );
-  const handleLeadFormStatusChange = useCallback(
-    (payload: {
-      status: "idle" | "saving" | "saved" | "error";
-      isDirty: boolean;
-      error: string | null;
-    }) => {
-      setLeadFormSnapshot((prev) => {
         const next = {
           ...prev,
           status: payload.status,
@@ -380,37 +336,6 @@ export default function PublicProfileEditorPage() {
       setUserId(dashboardUser.id);
     }
   }, [dashboardUser]);
-
-  useEffect(() => {
-    if (!userId) {
-      setHasPaidAccess(false);
-      return;
-    }
-
-    let active = true;
-    (async () => {
-      try {
-        const response = await fetch("/api/billing/summary", {
-          cache: "no-store",
-        });
-        if (!active) return;
-        if (!response.ok) {
-          setHasPaidAccess(false);
-          return;
-        }
-        const payload = (await response.json().catch(() => null)) as
-          | { hasPaidAccess?: boolean }
-          | null;
-        setHasPaidAccess(Boolean(payload?.hasPaidAccess));
-      } catch {
-        if (active) setHasPaidAccess(false);
-      }
-    })();
-
-    return () => {
-      active = false;
-    };
-  }, [userId]);
   useEffect(() => {
     if (!userId) return;
     let active = true;
@@ -760,12 +685,8 @@ export default function PublicProfileEditorPage() {
       if (leadFormReorderSaveTimer.current) {
         clearTimeout(leadFormReorderSaveTimer.current);
       }
-      setLeadFormReorderError(null);
-      setLeadFormReorderPending(true);
       leadFormReorderSaveTimer.current = setTimeout(() => {
         leadFormReorderSaveTimer.current = null;
-        setLeadFormReorderPending(false);
-        setLeadFormReorderSaving(true);
         void (async () => {
           try {
             const response = await fetch("/api/lead-forms", {
@@ -785,14 +706,11 @@ export default function PublicProfileEditorPage() {
           } catch (error) {
             const message =
               error instanceof Error ? error.message : "Unable to save form";
-            setLeadFormReorderError(message);
             toast({
               title: "Lead form save failed",
               description: message,
               variant: "destructive",
             });
-          } finally {
-            setLeadFormReorderSaving(false);
           }
         })();
       }, 500);
@@ -888,29 +806,8 @@ export default function PublicProfileEditorPage() {
     []
   );
 
-  const publishedLinkCount = useMemo(
-    () =>
-      (draft?.links ?? []).filter((link) => link.visible || link.isOverride)
-        .length,
-    [draft?.links]
-  );
-
   const setOverrideLink = useCallback(
     (linkId: string, enabled: boolean) => {
-      if (enabled && !hasPaidAccess) {
-        const current = draft?.links.find((link) => link.id === linkId);
-        const currentlyPublished = Boolean(current?.visible || current?.isOverride);
-        if (
-          !currentlyPublished &&
-          publishedLinkCount >= FREE_PLAN_MAX_PUBLISHED_LINKS
-        ) {
-          toast({
-            title: "Free plan limit reached",
-            description: `You can publish up to ${FREE_PLAN_MAX_PUBLISHED_LINKS} links on the free plan.`,
-          });
-          return;
-        }
-      }
       let nextDraft: ProfileDraft | null = null;
       setDraft((prev) => {
         if (!prev) return prev;
@@ -940,18 +837,16 @@ export default function PublicProfileEditorPage() {
         void handleSave(nextDraft);
       }
     },
-    [draft?.links, handleSave, hasPaidAccess, publishedLinkCount]
+    [handleSave]
   );
 
   const addLink = useCallback(() => {
-    const atFreePublishedLimit =
-      !hasPaidAccess && publishedLinkCount >= FREE_PLAN_MAX_PUBLISHED_LINKS;
-    const newLink = createLink(!atFreePublishedLimit);
+    const newLink = createLink();
     setLinkForm(newLink);
     setEditingLinkId(null);
     setLinkModalMode("add");
     setLinkModalOpen(true);
-  }, [hasPaidAccess, publishedLinkCount]);
+  }, []);
 
   const removeLink = useCallback((linkId: string) => {
     if (!confirmRemove("Are you sure you want to remove this link?")) return;
@@ -1060,56 +955,45 @@ export default function PublicProfileEditorPage() {
   );
 
   const saveLinkModal = useCallback(() => {
-    if (!linkForm || !draft) return;
-
-    const resolvedId =
-      linkModalMode === "edit" && editingLinkId ? editingLinkId : linkForm.id;
-    const incomingLink = {
-      ...linkForm,
-      id: resolvedId,
-      visible: linkForm.isOverride ? true : linkForm.visible,
-    };
-    const baseLinks =
-      linkModalMode === "add"
-        ? draft.links.some((link) => link.id === incomingLink.id)
-          ? draft.links.map((link) =>
-              link.id === incomingLink.id ? incomingLink : link
-            )
-          : [...draft.links, incomingLink]
-        : draft.links.map((link) =>
-            link.id === resolvedId ? incomingLink : link
-          );
-    const normalizedLinks = incomingLink.isOverride
-      ? baseLinks.map((link) => ({
-          ...link,
-          isOverride: link.id === incomingLink.id,
-          visible: link.id === incomingLink.id ? true : link.visible,
-        }))
-      : baseLinks;
-
-    const nextDraft: ProfileDraft = {
-      ...draft,
-      links: normalizedLinks,
-      updatedAt: new Date().toISOString(),
-    };
-
-    if (!hasPaidAccess) {
-      const publishedCount = nextDraft.links.filter(
-        (link) => link.visible || link.isOverride
-      ).length;
-      if (publishedCount > FREE_PLAN_MAX_PUBLISHED_LINKS) {
-        toast({
-          title: "Free plan limit reached",
-          description: `You can publish up to ${FREE_PLAN_MAX_PUBLISHED_LINKS} links on the free plan.`,
-        });
-        return;
-      }
+    if (!linkForm) return;
+    let nextDraft: ProfileDraft | null = null;
+    setDraft((prev) => {
+      if (!prev) return prev;
+      const resolvedId = linkModalMode === "edit" && editingLinkId ? editingLinkId : linkForm.id;
+      const incomingLink = {
+        ...linkForm,
+        id: resolvedId,
+        visible: linkForm.isOverride ? true : linkForm.visible,
+      };
+      const baseLinks =
+        linkModalMode === "add"
+          ? prev.links.some((link) => link.id === incomingLink.id)
+            ? prev.links.map((link) =>
+                link.id === incomingLink.id ? incomingLink : link
+              )
+            : [...prev.links, incomingLink]
+          : prev.links.map((link) =>
+              link.id === resolvedId ? incomingLink : link
+            );
+      const normalizedLinks = incomingLink.isOverride
+        ? baseLinks.map((link) => ({
+            ...link,
+            isOverride: link.id === incomingLink.id,
+            visible: link.id === incomingLink.id ? true : link.visible,
+          }))
+        : baseLinks;
+      nextDraft = {
+        ...prev,
+        links: normalizedLinks,
+        updatedAt: new Date().toISOString(),
+      };
+      return nextDraft;
+    });
+    if (nextDraft) {
+      void handleSave(nextDraft);
     }
-
-    setDraft(nextDraft);
-    void handleSave(nextDraft);
     setLinkModalOpen(false);
-  }, [draft, editingLinkId, handleSave, hasPaidAccess, linkForm, linkModalMode]);
+  }, [editingLinkId, handleSave, linkForm, linkModalMode]);
 
   const handleModalOverrideToggle = useCallback(
     (enabled: boolean) => {
@@ -1132,28 +1016,10 @@ export default function PublicProfileEditorPage() {
     vcardSnapshot.email?.trim() || vcardSnapshot.phone?.trim()
   );
 
-  const hasSaveError = Boolean(
-    saveError ||
-      vcardSnapshot.status === "error" ||
-      leadFormSnapshot.status === "error" ||
-      leadFormReorderError
-  );
-  const isSavingAnything = Boolean(
-    saving ||
-      vcardSnapshot.status === "saving" ||
-      leadFormSnapshot.status === "saving" ||
-      leadFormReorderPending ||
-      leadFormReorderSaving
-  );
-  const hasUnsavedChanges = Boolean(
-    isDirty || vcardSnapshot.isDirty || leadFormSnapshot.isDirty
-  );
-  const saveState = hasSaveError
+  const saveState = saveError || vcardSnapshot.status === "error"
     ? "failed"
-    : isSavingAnything
+    : saving || vcardSnapshot.status === "saving"
     ? "saving"
-    : hasUnsavedChanges
-    ? "unsaved"
     : "saved";
   const saveStatusMeta = useMemo(() => {
     if (saveState === "failed") {
@@ -1170,7 +1036,7 @@ export default function PublicProfileEditorPage() {
           "border-foreground/20 bg-foreground/10 text-foreground dashboard-saving-indicator",
       };
     }
-    if (saveState === "unsaved") {
+    if (isDirty) {
       return {
         label: "Unsaved changes",
         className: "border-amber-500/40 bg-amber-500/10 text-amber-700",
@@ -1180,43 +1046,22 @@ export default function PublicProfileEditorPage() {
       label: "All changes saved",
       className: "border-emerald-500/40 bg-emerald-500/10 text-emerald-700",
     };
-  }, [saveState, sidebarSavePulse]);
+  }, [isDirty, saveState, sidebarSavePulse]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
     (window as Window & {
       __linketProfileEditorState?: { hasUnsavedChanges: boolean; saveFailed: boolean };
     }).__linketProfileEditorState = {
-      hasUnsavedChanges: Boolean(
-        isDirty ||
-          vcardSnapshot.isDirty ||
-          leadFormSnapshot.isDirty ||
-          leadFormReorderPending ||
-          leadFormReorderSaving
-      ),
-      saveFailed: Boolean(
-        saveError ||
-          vcardSnapshot.status === "error" ||
-          leadFormSnapshot.status === "error" ||
-          leadFormReorderError
-      ),
+      hasUnsavedChanges: Boolean(isDirty || vcardSnapshot.isDirty),
+      saveFailed: Boolean(saveError || vcardSnapshot.status === "error"),
     };
     return () => {
       delete (window as Window & {
         __linketProfileEditorState?: { hasUnsavedChanges: boolean; saveFailed: boolean };
       }).__linketProfileEditorState;
     };
-  }, [
-    isDirty,
-    vcardSnapshot.isDirty,
-    vcardSnapshot.status,
-    leadFormSnapshot.isDirty,
-    leadFormSnapshot.status,
-    leadFormReorderPending,
-    leadFormReorderSaving,
-    leadFormReorderError,
-    saveError,
-  ]);
+  }, [isDirty, vcardSnapshot.isDirty, saveError, vcardSnapshot.status]);
 
   useEffect(() => {
     writeLocalStorage(ACTIVE_PROFILE_SECTION_STORAGE_KEY, activeSection);
@@ -1395,8 +1240,6 @@ export default function PublicProfileEditorPage() {
               }}
               onProfileChange={handleProfileChange}
               onAddLink={addLink}
-              hasPaidAccess={hasPaidAccess}
-              publishedLinkCount={publishedLinkCount}
               onUpdateLink={updateLink}
               onSetOverrideLink={setOverrideLink}
               onEditLink={openEditLink}
@@ -1427,17 +1270,6 @@ export default function PublicProfileEditorPage() {
                     }
                     return;
                   }
-                  if (
-                    !hasPaidAccess &&
-                    !current.visible &&
-                    publishedLinkCount >= FREE_PLAN_MAX_PUBLISHED_LINKS
-                  ) {
-                    toast({
-                      title: "Free plan limit reached",
-                      description: `You can publish up to ${FREE_PLAN_MAX_PUBLISHED_LINKS} links on the free plan.`,
-                    });
-                    return;
-                  }
                   updateLink(linkId, { visible: !current.visible });
                 })()
               }
@@ -1446,7 +1278,6 @@ export default function PublicProfileEditorPage() {
               setDraggingLinkId={setDraggingLinkId}
               onVCardFields={handleVCardFieldsChange}
               onVCardStatus={handleVCardStatusChange}
-              onLeadFormStatus={handleLeadFormStatusChange}
               handleError={handleError}
               setHandleError={setHandleError}
             />
@@ -1535,8 +1366,6 @@ function EditorPanel({
   onRegisterLeadFormReorder,
   onProfileChange,
   onAddLink,
-  hasPaidAccess,
-  publishedLinkCount,
   onUpdateLink,
   onSetOverrideLink,
   onEditLink,
@@ -1548,7 +1377,6 @@ function EditorPanel({
   setDraggingLinkId,
   onVCardFields,
   onVCardStatus,
-  onLeadFormStatus,
   handleError,
   setHandleError,
 }: {
@@ -1581,8 +1409,6 @@ function EditorPanel({
   ) => void;
   onProfileChange: (patch: Partial<ProfileDraft>) => void;
   onAddLink: () => void;
-  hasPaidAccess: boolean;
-  publishedLinkCount: number;
   onUpdateLink: (linkId: string, patch: Partial<LinkItem>) => void;
   onSetOverrideLink: (linkId: string, enabled: boolean) => void;
   onEditLink: (linkId: string) => void;
@@ -1602,11 +1428,6 @@ function EditorPanel({
     photoData: string | null;
   }) => void;
   onVCardStatus: (payload: {
-    status: "idle" | "saving" | "saved" | "error";
-    isDirty: boolean;
-    error: string | null;
-  }) => void;
-  onLeadFormStatus: (payload: {
     status: "idle" | "saving" | "saved" | "error";
     isDirty: boolean;
     error: string | null;
@@ -1639,18 +1460,8 @@ function EditorPanel({
   const [linkSortMode, setLinkSortMode] = useState<"manual" | "label" | "clicks">(
     "manual"
   );
-  const hiddenLockedLinkCount = useMemo(() => {
-    if (hasPaidAccess) return 0;
-    const published = (draft?.links ?? []).filter(
-      (link) => link.visible || link.isOverride
-    );
-    return Math.max(0, published.length - FREE_PLAN_MAX_PUBLISHED_LINKS);
-  }, [draft?.links, hasPaidAccess]);
-
-  const linkEditorBase = useMemo(() => draft?.links ?? [], [draft?.links]);
-
   const sortedFilteredLinks = useMemo(() => {
-    const base = linkEditorBase;
+    const base = draft?.links ?? [];
     const query = linkSearchQuery.trim().toLowerCase();
     const filtered = query
       ? base.filter(
@@ -1664,7 +1475,7 @@ function EditorPanel({
       return [...filtered].sort((a, b) => a.label.localeCompare(b.label));
     }
     return [...filtered].sort((a, b) => (b.clicks ?? 0) - (a.clicks ?? 0));
-  }, [linkEditorBase, linkSearchQuery, linkSortMode]);
+  }, [draft?.links, linkSearchQuery, linkSortMode]);
   const canReorderLinks =
     linkSortMode === "manual" && linkSearchQuery.trim().length === 0;
   const hasLinkMatches = sortedFilteredLinks.length > 0;
@@ -1883,19 +1694,6 @@ function EditorPanel({
             </div>
           </CardHeader>
         <CardContent className="space-y-3">
-          {!hasPaidAccess ? (
-            <div className="rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
-              Free plans can publish up to {FREE_PLAN_MAX_PUBLISHED_LINKS} links.
-              Currently published: {publishedLinkCount}/{FREE_PLAN_MAX_PUBLISHED_LINKS}.
-            </div>
-          ) : null}
-          {!hasPaidAccess && hiddenLockedLinkCount > 0 ? (
-            <div className="rounded-xl border border-border/60 bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-              {hiddenLockedLinkCount} additional published link
-              {hiddenLockedLinkCount === 1 ? "" : "s"} preserved from your paid
-              plan and hidden in free mode.
-            </div>
-          ) : null}
           <div
             data-tour="profile-override-link"
             className="rounded-xl border border-primary/30 bg-primary/5 px-3 py-3"
@@ -1942,12 +1740,11 @@ function EditorPanel({
             </p>
           </div>
           <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_160px]">
-            <ThemedSearchInput
+            <Input
               value={linkSearchQuery}
               onChange={(event) => setLinkSearchQuery(event.target.value)}
               placeholder="Search by label or URL"
-              size="sm"
-              inputClassName="text-sm"
+              className="h-9 text-sm"
             />
             <select
               className="h-9 rounded-md border border-border/60 bg-background px-3 text-sm"
@@ -2132,13 +1929,11 @@ function EditorPanel({
             <LeadFormBuilder
               userId={userId}
               handle={accountHandle || draft?.handle || null}
-              hasPaidAccess={hasPaidAccess}
               profileId={draft?.id ?? null}
               onPreviewChange={onLeadFormPreview}
               showPreview={false}
               layout="side"
               columns={2}
-              onStatusChange={onLeadFormStatus}
               onRegisterReorder={(reorder) => {
                 onRegisterLeadFormReorder(reorder);
               }}
@@ -2759,7 +2554,7 @@ function buildFallbackDraft(
   };
 }
 
-function createLink(visible = true): LinkItem {
+function createLink(): LinkItem {
   const base = ICON_OPTIONS[0];
   return {
     id: `link-${cryptoRandom()}`,
@@ -2767,7 +2562,7 @@ function createLink(visible = true): LinkItem {
     url: DEFAULT_PROFILE_LINK_URL,
     icon: base.value,
     color: base.color,
-    visible,
+    visible: true,
     isOverride: false,
     clicks: 0,
   };
