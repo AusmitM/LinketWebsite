@@ -69,6 +69,18 @@ Required vars:
 Optional:
 
 - `NEXT_PUBLIC_SITE_URL` for sitemap/robots and OpenGraph base (defaults to http://localhost:3000)
+- `SUPABASE_SERVICE_ROLE_KEY` for server-side billing/lead update workflows
+- `STRIPE_SECRET_KEY` for Stripe API/webhook processing
+- `STRIPE_WEBHOOK_SECRET` for Stripe signature verification
+- `STRIPE_PERSONAL_PRO_PRICE_IDS` comma-separated Stripe Price IDs that should count toward personal Pro loyalty accrual
+
+### Stripe loyalty accrual
+
+- Webhook endpoint: `/api/stripe/webhook`
+- Loyalty accrues from Stripe paid billing periods only.
+- Eligibility is granted after 365 total paid days (continuous or discontinuous).
+- To map Stripe events to a user, include `user_id` (or `supabase_user_id`) in Stripe metadata on the invoice/subscription/customer.
+- For strict personal-only accrual, configure `STRIPE_PERSONAL_PRO_PRICE_IDS` to your personal Pro price IDs.
 
 ### Granting admin access
 

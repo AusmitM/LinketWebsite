@@ -5,97 +5,123 @@ import { Package, Pencil, Sparkles, Star } from "lucide-react";
 
 import { CreativePricing } from "@/components/ui/creative-pricing";
 import type { PricingTier } from "@/components/ui/creative-pricing";
+import {
+  getBundleBillingLabel,
+  getBusinessCustomBillingLabel,
+  getBusinessCustomPriceLabel,
+  getBusinessGenericBillingLabel,
+  getBusinessGenericPriceLabel,
+  getPersonalProBillingLabel,
+  getPersonalProLoyaltyFeature,
+  getPersonalProPriceLabel,
+  type PublicPricingSnapshot,
+} from "@/lib/billing/pricing";
 import { cn } from "@/lib/utils";
 
 type Audience = "individual" | "business";
 
-const INDIVIDUAL_TIERS: PricingTier[] = [
-  {
-    name: "Free Web-Only",
-    icon: <Pencil className="h-6 w-6" />,
-    price: 0,
-    billingLabel: "free + limited features",
-    description: "Individual web-only starter",
-    audience: "Individuals",
-    color: "amber",
-    features: [
-      "Share one web profile and your core links",
-      "No hardware required",
-      "Best for trying Linket at no cost",
-      "Upgrade anytime when you need more",
-    ],
-  },
-  {
-    name: "Web + Linket Bundle",
-    icon: <Star className="h-6 w-6" />,
-    price: 59,
-    billingLabel: "$59 one-time, then optional Pro renewal after year 1",
-    description: "Linket + 12 month pro access",
-    audience: "Individuals",
-    color: "blue",
-    features: [
-      "Get 1 standard Linket",
-      "12 months of Paid Web-Only (Pro) included",
-      "After year 1: keep Pro for $5/month or $50/year",
-      "Best first purchase for one person",
-    ],
-    popular: true,
-  },
-  {
-    name: "Paid Web-Only (Pro)",
-    icon: <Pencil className="h-6 w-6" />,
-    price: "$7/mo",
-    billingLabel: "or $70/year",
-    description: "Individual software plan",
-    audience: "Individuals",
-    color: "amber",
-    features: [
-      "Publish your profile and links with no hardware required",
-      "Capture unlimited leads",
-      "Remove Linket branding",
-      "Pick monthly or yearly billing",
-    ],
-  },
-];
+function buildIndividualTiers(pricing: PublicPricingSnapshot): PricingTier[] {
+  const bundle = pricing.individual.webPlusLinketBundle;
+  return [
+    {
+      name: "Free Web-Only",
+      icon: <Pencil className="h-6 w-6" />,
+      price: pricing.individual.freeWebOnly.monthly,
+      billingLabel: pricing.individual.freeWebOnly.billingLabel,
+      description: "Individual web-only starter",
+      audience: "Individuals",
+      color: "amber",
+      features: [
+        "Share one web profile and your core links",
+        "No hardware required",
+        "Best for trying Linket at no cost",
+        "Upgrade anytime when you need more",
+      ],
+    },
+    {
+      name: "Web + Linket Bundle",
+      icon: <Star className="h-6 w-6" />,
+      price: bundle.oneTime,
+      billingLabel: getBundleBillingLabel(pricing),
+      description: "Linket + 12 month pro access",
+      audience: "Individuals",
+      color: "blue",
+      features: [
+        "Get 1 standard Linket",
+        `${bundle.includesProMonths} months of Paid Web-Only (Pro) included`,
+        getPersonalProLoyaltyFeature(pricing),
+        "Best first purchase for one person",
+      ],
+      popular: true,
+    },
+    {
+      name: "Paid Web-Only (Pro)",
+      icon: <Pencil className="h-6 w-6" />,
+      price: getPersonalProPriceLabel(pricing),
+      billingLabel: getPersonalProBillingLabel(pricing),
+      description: "Individual software plan",
+      audience: "Individuals",
+      color: "amber",
+      features: [
+        "Publish your profile and links with no hardware required",
+        "Capture unlimited leads",
+        "Remove Linket branding",
+        "Pick monthly or yearly billing",
+        getPersonalProLoyaltyFeature(pricing),
+      ],
+    },
+  ];
+}
 
-const BUSINESS_TIERS: PricingTier[] = [
-  {
-    name: "Business Generic (min 5 units)",
-    icon: <Package className="h-6 w-6" />,
-    price: "$39/Linket",
-    billingLabel: "one-time hardware purchase + $6/user/month",
-    description: "Linket + Web-Platform",
-    audience: "Businesses",
-    color: "blue",
-    features: [
-      "Standard Linkets for your team",
-      "Built for business rollout",
-      "One-time hardware pricing",
-      "Bulk pricing availible",
-    ],
-  },
-  {
-    name: "Custom Design Add-On (min 5 units)",
-    icon: <Sparkles className="h-6 w-6" />,
-    price: "$49-$69/Linket",
-    billingLabel: "$499 custom design setup + $6/user/month",
-    description: "Custom branded Linkets",
-    audience: "Businesses",
-    color: "amber",
-    features: [
-      "Consult with our 3D design specialists",
-      "Custom branded designs",
-      "Standard Linkets for your team",
-      "Built for business rollout",
-      "One-time hardware pricing",
-      "Bulk pricing availible",
-    ],
-    popular: true,
-  },
-];
+function buildBusinessTiers(pricing: PublicPricingSnapshot): PricingTier[] {
+  return [
+    {
+      name: `Business Generic (min ${pricing.business.generic.minUnits} units)`,
+      icon: <Package className="h-6 w-6" />,
+      price: getBusinessGenericPriceLabel(pricing),
+      billingLabel: getBusinessGenericBillingLabel(pricing),
+      description: "Linket + Web-Platform",
+      audience: "Businesses",
+      color: "blue",
+      features: [
+        "Standard Linkets for your team",
+        "Built for business rollout",
+        "One-time hardware pricing",
+        "Bulk pricing available",
+      ],
+    },
+    {
+      name: `Custom Design Add-On (min ${pricing.business.custom.minUnits} units)`,
+      icon: <Sparkles className="h-6 w-6" />,
+      price: getBusinessCustomPriceLabel(pricing),
+      billingLabel: getBusinessCustomBillingLabel(pricing),
+      description: "Custom branded Linkets",
+      audience: "Businesses",
+      color: "amber",
+      features: [
+        "Consult with our 3D design specialists",
+        "Custom branded designs",
+        "Standard Linkets for your team",
+        "Built for business rollout",
+        "One-time hardware pricing",
+        "Bulk pricing available",
+      ],
+      popular: true,
+    },
+  ];
+}
 
-export default function LinketPlansToggle() {
+type LinketPlansToggleProps = {
+  pricing: PublicPricingSnapshot;
+};
+
+export default function LinketPlansToggle({ pricing }: LinketPlansToggleProps) {
   const [audience, setAudience] = useState<Audience>("individual");
+  const individualTiers = useMemo(
+    () => buildIndividualTiers(pricing),
+    [pricing]
+  );
+  const businessTiers = useMemo(() => buildBusinessTiers(pricing), [pricing]);
 
   const { title, description, tiers, theme } = useMemo(() => {
     if (audience === "individual") {
@@ -103,7 +129,7 @@ export default function LinketPlansToggle() {
         title: "Individual options",
         description:
           "Choose free web-only, paid web-only, or web + Linket bundle.",
-        tiers: INDIVIDUAL_TIERS,
+        tiers: individualTiers,
         theme: "warm" as const,
       };
     }
@@ -112,10 +138,10 @@ export default function LinketPlansToggle() {
       title: "Business options",
       description:
         "Choose standard business Linkets or book a consult to customize a design.",
-      tiers: BUSINESS_TIERS,
+      tiers: businessTiers,
       theme: "business" as const,
     };
-  }, [audience]);
+  }, [audience, businessTiers, individualTiers]);
 
   return (
     <CreativePricing

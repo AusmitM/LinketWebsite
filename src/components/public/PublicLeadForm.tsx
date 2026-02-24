@@ -71,6 +71,7 @@ export default function PublicLeadForm({
   const [loading, setLoading] = useState(!initialForm);
   const [submitting, setSubmitting] = useState(false);
   const [responseId, setResponseId] = useState<string | null>(null);
+  const [responseToken, setResponseToken] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [editingResponse, setEditingResponse] = useState(false);
 
@@ -153,9 +154,15 @@ export default function PublicLeadForm({
 
   useEffect(() => {
     if (!formId) return;
+    setResponseId(null);
+    setResponseToken(null);
     try {
       const savedResponseId = localStorage.getItem(`lead-form-response:${formId}`);
       if (savedResponseId) setResponseId(savedResponseId);
+      const savedResponseToken = localStorage.getItem(
+        `lead-form-response-token:${formId}`
+      );
+      if (savedResponseToken) setResponseToken(savedResponseToken);
     } catch {
       // Ignore storage failures (private browsing / restricted storage).
     }
@@ -296,16 +303,29 @@ export default function PublicLeadForm({
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     if (!form || !formId) return;
+    const canEditStoredResponse = Boolean(
+      form.settings.allowEditAfterSubmit && responseId && responseToken
+    );
     if (
       form.settings.limitOneResponse === "on" &&
       responseId &&
-      !form.settings.allowEditAfterSubmit
+      !canEditStoredResponse
     ) {
       toast({
         title: "Already submitted",
         description: "Only one response is allowed.",
         variant: "destructive",
       });
+      return;
+    }
+    if (editingResponse && !canEditStoredResponse) {
+      toast({
+        title: "Edit unavailable",
+        description:
+          "This response cannot be edited because no secure edit token was found.",
+        variant: "destructive",
+      });
+      setEditingResponse(false);
       return;
     }
     if (form.settings.collectEmail === "verified" && emailField && !emailValue) {
@@ -350,8 +370,7 @@ export default function PublicLeadForm({
       }
       const shouldEdit =
         editingResponse &&
-        form.settings.allowEditAfterSubmit &&
-        Boolean(responseId);
+        canEditStoredResponse;
       const endpoint = shouldEdit
           ? "/api/lead-forms/response"
           : "/api/lead-forms/submit";
@@ -362,6 +381,7 @@ export default function PublicLeadForm({
         body: JSON.stringify({
           formId,
           responseId: shouldEdit ? responseId : undefined,
+          responseToken: shouldEdit ? responseToken : undefined,
           answers: nextAnswers,
           responderEmail: shouldCaptureResponderEmail ? emailValue || null : null,
           pageUrl: typeof window !== "undefined" ? window.location.href : null,
@@ -379,16 +399,27 @@ export default function PublicLeadForm({
         }
         throw new Error(message);
       }
-      const payload = (await response.json()) as { responseId?: string };
+      const payload = (await response.json()) as {
+        responseId?: string;
+        responseToken?: string;
+      };
       const nextResponseId = payload.responseId ?? responseId;
+      const nextResponseToken = payload.responseToken ?? responseToken;
       if (nextResponseId) {
         try {
           localStorage.setItem(`lead-form-response:${formId}`, nextResponseId);
+          if (nextResponseToken) {
+            localStorage.setItem(
+              `lead-form-response-token:${formId}`,
+              nextResponseToken
+            );
+          }
         } catch {
           // Ignore storage failures (private browsing / restricted storage).
         }
         setResponseId(nextResponseId);
       }
+      setResponseToken(nextResponseToken ?? null);
       emitAnalyticsEvent({
         id: shouldEdit ? "lead_form_response_updated" : "lead_form_response_submitted",
         meta: {
@@ -961,7 +992,7 @@ export default function PublicLeadForm({
           <p className="text-sm text-muted-foreground" style={mutedStyle}>
             {form.settings.confirmationMessage}
           </p>
-          {form.settings.allowEditAfterSubmit ? (
+          {form.settings.allowEditAfterSubmit && responseId && responseToken ? (
             <Button
               type="button"
               variant="secondary"

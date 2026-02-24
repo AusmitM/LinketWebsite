@@ -18,9 +18,14 @@ type LeadFormRow = {
   config: LeadFormConfig;
 };
 
-function shouldRetryWithoutToken(message: string) {
+function isResponseTokenColumnError(message: string) {
   const lowered = message.toLowerCase();
-  return lowered.includes("response_token") || lowered.includes("schema cache");
+  return lowered.includes("response_token");
+}
+
+function shouldRetryLeadInsertWithoutResponseId(message: string) {
+  const lowered = message.toLowerCase();
+  return lowered.includes("lead_response_id") || lowered.includes("schema cache");
 }
 
 async function insertLeadFormResponse(
@@ -35,13 +40,37 @@ async function insertLeadFormResponse(
   }
 ) {
   const { error } = await client.from("lead_form_responses").insert(payload);
+  if (error) {
+    if (isResponseTokenColumnError(error.message)) {
+      throw new Error(
+        "Lead form response editing is not configured. Run the latest Supabase migrations."
+      );
+    }
+    throw new Error(error.message);
+  }
+}
+
+async function insertLeadRecord(
+  client: typeof supabaseAdmin,
+  payload: {
+    user_id: string;
+    handle: string;
+    name: string;
+    email: string;
+    phone: string | null;
+    company: string | null;
+    message: string | null;
+    source_url: string | null;
+    custom_fields: Record<string, unknown>;
+    lead_response_id: string;
+  }
+) {
+  const { error } = await client.from("leads").insert(payload);
   if (!error) return;
-  if (payload.response_token && shouldRetryWithoutToken(error.message)) {
+  if (shouldRetryLeadInsertWithoutResponseId(error.message)) {
     const fallback = { ...payload };
-    delete (fallback as { response_token?: string }).response_token;
-    const { error: retryError } = await client
-      .from("lead_form_responses")
-      .insert(fallback);
+    delete (fallback as { lead_response_id?: string }).lead_response_id;
+    const { error: retryError } = await client.from("leads").insert(fallback);
     if (!retryError) return;
     throw new Error(retryError.message);
   }
@@ -130,6 +159,13 @@ function normaliseSourceUrl(value: unknown, fallback: string | null) {
   return null;
 }
 
+function createResponseToken() {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return `tok_${Date.now()}_${Math.random().toString(36).slice(2, 12)}`;
+}
+
 export async function POST(request: NextRequest) {
   try {
     if (await limitRequest(request, "lead-form-submit", 20, 60_000)) {
@@ -194,11 +230,7 @@ export async function POST(request: NextRequest) {
     const resolvedResponseId =
       responseId || crypto.randomUUID?.() || `resp_${Date.now()}`;
     const now = new Date().toISOString();
-
-    const responseToken =
-      (typeof crypto !== "undefined" && "randomUUID" in crypto
-        ? (crypto as Crypto).randomUUID?.()
-        : null) || `tok_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    const responseToken = createResponseToken();
 
     const payload = {
       form_id: formId,
@@ -209,21 +241,27 @@ export async function POST(request: NextRequest) {
       responder_email: responderEmail ?? null,
     };
 
+    const writeClient = isSupabaseAdminAvailable
+      ? supabaseAdmin
+      : (supabase as typeof supabaseAdmin);
+
     if (isSupabaseAdminAvailable) {
       await insertLeadFormResponse(supabaseAdmin, payload);
     } else {
-      await insertLeadFormResponse(supabase as typeof supabaseAdmin, payload);
+      await insertLeadFormResponse(writeClient, payload);
     }
 
     const leadValues = inferLeadFields(answers, config);
     const emailValue = leadValues.email || responderEmail || null;
-    const sourceUrl = normaliseSourceUrl(pageUrl, request.headers.get("referer"));
+    const sourceUrl = normaliseSourceUrl(
+      pageUrl,
+      request.headers.get("referer")
+    );
     if (leadValues.name && emailValue) {
-      const { error: leadError } = await supabase
-        .from("leads")
-        .insert({
-          user_id: (formRow as LeadFormRow).user_id,
-          handle: (formRow as LeadFormRow).handle || "public",
+      try {
+        await insertLeadRecord(writeClient, {
+          user_id: formPayload.user_id,
+          handle: formPayload.handle || "public",
           name: leadValues.name,
           email: emailValue,
           phone: leadValues.phone,
@@ -231,10 +269,8 @@ export async function POST(request: NextRequest) {
           message: leadValues.message,
           source_url: sourceUrl,
           custom_fields: mapLeadFields(answers, config),
+          lead_response_id: resolvedResponseId,
         });
-      if (leadError) {
-        console.warn("Lead insert failed:", leadError.message);
-      } else {
         await recordConversionEvent({
           eventId: "lead_captured",
           userId: formPayload.user_id,
@@ -244,6 +280,10 @@ export async function POST(request: NextRequest) {
             handle: formPayload.handle,
           },
         });
+      } catch (leadError) {
+        const message =
+          leadError instanceof Error ? leadError.message : String(leadError);
+        console.warn("Lead insert failed:", message);
       }
     }
 

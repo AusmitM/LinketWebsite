@@ -5,6 +5,12 @@ import { toast } from "@/components/system/toaster";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
+  formatMonthly,
+  formatYearly,
+  type PersonalProLoyaltyStatus,
+  type PublicPricingSnapshot,
+} from "@/lib/billing/pricing";
+import {
   billingSummary,
   invoices,
   paymentMethods,
@@ -12,9 +18,35 @@ import {
 } from "@/lib/dashboard/mock-data";
 import { CreditCard, Download } from "lucide-react";
 
-export default function BillingContent() {
+const DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+});
+
+function formatIsoDate(value: string | null) {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return DATE_FORMATTER.format(date);
+}
+
+type BillingContentProps = {
+  pricing: PublicPricingSnapshot;
+  personalProLoyalty: PersonalProLoyaltyStatus;
+};
+
+export default function BillingContent({
+  pricing,
+  personalProLoyalty,
+}: BillingContentProps) {
   const notify = (title: string, description: string) =>
     toast({ title, description });
+  const loyaltyEligibleOnLabel = formatIsoDate(personalProLoyalty.eligibleOn);
+  const initialRateLabel = `${formatMonthly(personalProLoyalty.initialRate.monthly)} or ${formatYearly(personalProLoyalty.initialRate.yearly)}`;
+  const loyaltyRateLabel = `${formatMonthly(personalProLoyalty.loyaltyRate.monthly)} or ${formatYearly(personalProLoyalty.loyaltyRate.yearly)}`;
+  const discountDays =
+    pricing.individual.paidWebOnlyPro.loyalty.requiredPaidDays;
 
   return (
     <div className="space-y-6">
@@ -47,7 +79,7 @@ export default function BillingContent() {
                   {billingSummary.currentPlan.name}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {billingSummary.currentPlan.price} ·{" "}
+                  {billingSummary.currentPlan.price} -{" "}
                   {billingSummary.currentPlan.seats} seats
                 </p>
               </div>
@@ -75,6 +107,45 @@ export default function BillingContent() {
             <div className="rounded-2xl border border-dashed px-3 py-2 text-xs text-muted-foreground">
               Forecast next month: {billingSummary.forecast.nextMonth}.{" "}
               {billingSummary.forecast.note}.
+            </div>
+            <div className="rounded-2xl border px-3 py-3 text-xs text-muted-foreground">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-foreground">
+                  Personal Pro loyalty discount
+                </p>
+                <Badge
+                  variant={personalProLoyalty.eligible ? "secondary" : "outline"}
+                  className="rounded-full"
+                >
+                  {personalProLoyalty.eligible ? "Active" : "Pending"}
+                </Badge>
+              </div>
+              <p className="mt-2">
+                After {discountDays} total paid days (continuous or
+                discontinuous), renewals move from {initialRateLabel} to{" "}
+                {loyaltyRateLabel}.
+              </p>
+              <p className="mt-2">
+                Progress: {personalProLoyalty.totalPaidDays}/
+                {personalProLoyalty.requiredPaidDays} paid days.
+              </p>
+              {personalProLoyalty.eligible ? (
+                <p className="mt-2 text-emerald-700">
+                  Loyalty discount is active for your personal Pro renewal rate.
+                </p>
+              ) : loyaltyEligibleOnLabel ? (
+                <p className="mt-2">
+                  Eligible on {loyaltyEligibleOnLabel}
+                  {typeof personalProLoyalty.daysUntilEligible === "number"
+                    ? ` (${personalProLoyalty.daysUntilEligible} day${personalProLoyalty.daysUntilEligible === 1 ? "" : "s"} remaining).`
+                    : "."}
+                </p>
+              ) : (
+                <p className="mt-2">
+                  Paid time is cumulative, so canceled and restarted paid
+                  periods still count toward the loyalty discount.
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>

@@ -14,6 +14,7 @@ import "@/styles/theme.css";
 import Script from "next/script";
 import { CustomizationProvider } from "@/components/providers/customization-provider";
 import { brand } from "@/config/brand";
+import { getPublicPricingSnapshot } from "@/lib/billing/pricing";
 import { getConfiguredSiteOrigin } from "@/lib/site-url";
 
 const geistSans = Geist({
@@ -80,6 +81,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const siteUrl = getConfiguredSiteOrigin();
+  const pricing = getPublicPricingSnapshot();
+  const oneTimeBundlePrice = pricing.individual.webPlusLinketBundle.oneTime;
   const productJsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -93,7 +96,7 @@ export default function RootLayout({
     offers: {
       "@type": "Offer",
       priceCurrency: "USD",
-      price: "59.00",
+      price: oneTimeBundlePrice.toFixed(2),
       availability: "https://schema.org/InStock",
       url: siteUrl,
     },

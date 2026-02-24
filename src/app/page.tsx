@@ -29,6 +29,11 @@ import ConsultForm from "@/components/landing/ConsultForm";
 import LinketPlansToggle from "@/components/landing/LinketPlansToggle";
 import PublicProfilePreview from "@/components/public/PublicProfilePreview";
 import { Button } from "@/components/ui/button";
+import {
+  buildBestValueStarterFaqAnswer,
+  getPublicPricingSnapshot,
+  type PublicPricingSnapshot,
+} from "@/lib/billing/pricing";
 import { cn } from "@/lib/utils";
 import { brand } from "@/config/brand";
 import { getActiveProfileForPublicHandle } from "@/lib/profile-service";
@@ -78,6 +83,11 @@ type PublicPreviewAccount = {
   displayName: string | null;
   avatarPath: string | null;
   avatarUpdatedAt: string | null;
+};
+
+type FaqItem = {
+  question: string;
+  answer: string;
 };
 
 // -----------------------------------------------------------------------------
@@ -433,38 +443,39 @@ const SLIDER_TESTIMONIALS = [
 ] as const;
 
 // FAQ content for the accordion + JSON-LD schema.
-const FAQ = [
-  {
-    question: "Does Linket work with both iPhone and Android?",
-    answer:
-      "Yes. Modern phones tap via NFC and older devices can scan the etched QR. No downloads needed for either option.",
-  },
-  {
-    question: "Do recipients need a Linket or an app?",
-    answer:
-      "No. Your Linket opens in the recipient&apos;s browser right away. They can save your contact, follow links, or book time instantly.",
-  },
-  {
-    question: "Can I update my profile after printing?",
-    answer:
-      "Absolutely. Change your headline, links, colors, or media anytime. Every tap uses the latest version automatically.",
-  },
-  {
-    question: "How fast do orders ship?",
-    answer:
-      "Single Linkets ship within 48 hours. Team and event kits include a dedicated concierge for rush coordination.",
-  },
-  {
-    question: "What is the best-value starter option?",
-    answer:
-      "The Web + Linket Bundle is $59 one-time and includes 12 months of Paid Web-Only (Pro). After that, keep Pro for $3/month or $30/year.",
-  },
-  {
-    question: "Is data collection privacy-centered?",
-    answer:
-      "We only track what matters: tap counts, link clicks, and lead form submissions. No invasive tracking or retargeting pixels.",
-  },
-] as const;
+function buildFaq(pricing: PublicPricingSnapshot): FaqItem[] {
+  return [
+    {
+      question: "Does Linket work with both iPhone and Android?",
+      answer:
+        "Yes. Modern phones tap via NFC and older devices can scan the etched QR. No downloads needed for either option.",
+    },
+    {
+      question: "Do recipients need a Linket or an app?",
+      answer:
+        "No. Your Linket opens in the recipient&apos;s browser right away. They can save your contact, follow links, or book time instantly.",
+    },
+    {
+      question: "Can I update my profile after printing?",
+      answer:
+        "Absolutely. Change your headline, links, colors, or media anytime. Every tap uses the latest version automatically.",
+    },
+    {
+      question: "How fast do orders ship?",
+      answer:
+        "Single Linkets ship within 48 hours. Team and event kits include a dedicated concierge for rush coordination.",
+    },
+    {
+      question: "What is the best-value starter option?",
+      answer: buildBestValueStarterFaqAnswer(pricing),
+    },
+    {
+      question: "Is data collection privacy-centered?",
+      answer:
+        "We only track what matters: tap counts, link clicks, and lead form submissions. No invasive tracking or retargeting pixels.",
+    },
+  ];
+}
 
 // -----------------------------------------------------------------------------
 // Page component: composes all landing sections and structured data.
@@ -472,6 +483,8 @@ const FAQ = [
 export default async function Home() {
   // Resolve the site URL for structured data and assets.
   const siteUrl = getConfiguredSiteOrigin();
+  const pricing = getPublicPricingSnapshot();
+  const faq = buildFaq(pricing);
   const demoMedia = await resolveLandingDemoMedia();
   // Load the public profile preview (live if possible, mock if not).
   const publicPreview = await loadPublicProfilePreview();
@@ -480,7 +493,7 @@ export default async function Home() {
   const faqSchema = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
-    mainEntity: FAQ.map((item) => ({
+    mainEntity: faq.map((item) => ({
       "@type": "Question",
       name: item.question,
       acceptedAnswer: {
@@ -533,8 +546,8 @@ export default async function Home() {
           profile={publicPreview.profile}
           account={publicPreview.account}
         />
-        <PricingSection />
-        <FAQSection />
+        <PricingSection pricing={pricing} />
+        <FAQSection items={faq} />
       </div>
       <LandingFooter />
       {/* Structured data for SEO. */}
@@ -1112,19 +1125,19 @@ function PublicProfilePreviewSection({
 }
 
 // Pricing section wrapper around the CreativePricing component.
-function PricingSection() {
+function PricingSection({ pricing }: { pricing: PublicPricingSnapshot }) {
   return (
     <section
       id="pricing"
       className="landing-alt-font landing-fade-up relative mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-24"
     >
-      <LinketPlansToggle />
+      <LinketPlansToggle pricing={pricing} />
     </section>
   );
 }
 
 // FAQ accordion with structured data handled in the page component.
-function FAQSection() {
+function FAQSection({ items }: { items: FaqItem[] }) {
   return (
     <section
       id="faq"
@@ -1143,7 +1156,7 @@ function FAQSection() {
       </div>
       {/* FAQ accordion items. */}
       <Accordion type="single" collapsible className="mt-10 space-y-4">
-        {FAQ.map((item, index) => (
+        {items.map((item, index) => (
           <AccordionItem
             key={item.question}
             value={`faq-${index}`}
@@ -1306,10 +1319,6 @@ function LandingFooter() {
     </footer>
   );
 }
-
-
-
-
 
 
 
