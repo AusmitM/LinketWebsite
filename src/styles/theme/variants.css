@@ -1103,6 +1103,26 @@
   color: #fff1f1;
 }
 
+/* Hook 'Em + Aggie: Stripe secure-entry text should stay white on dark banner backgrounds */
+#dashboard-theme-scope.theme-burnt-orange .billing-card-entry-header,
+#dashboard-theme-scope.theme-maroon .billing-card-entry-header {
+  color: #ffffff;
+}
+
+#dashboard-theme-scope.theme-burnt-orange .billing-card-entry-header .text-foreground,
+#dashboard-theme-scope.theme-burnt-orange .billing-card-entry-header .text-primary,
+#dashboard-theme-scope.theme-burnt-orange .billing-card-entry-header .billing-card-entry-header-badge,
+#dashboard-theme-scope.theme-maroon .billing-card-entry-header .text-foreground,
+#dashboard-theme-scope.theme-maroon .billing-card-entry-header .text-primary,
+#dashboard-theme-scope.theme-maroon .billing-card-entry-header .billing-card-entry-header-badge {
+  color: #ffffff;
+}
+
+#dashboard-theme-scope.theme-burnt-orange .billing-card-entry-header .billing-card-entry-header-badge,
+#dashboard-theme-scope.theme-maroon .billing-card-entry-header .billing-card-entry-header-badge {
+  border-color: rgba(255, 255, 255, 0.52);
+}
+
 /* Aggie: white copy-link buttons + white outline for New Linket */
 .theme-maroon .dashboard-navbar .dashboard-copy-link-button {
   background: #ffffff;

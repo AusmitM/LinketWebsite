@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { createServerSupabaseReadonly } from "@/lib/supabase/server";
+import { createServerSupabase } from "@/lib/supabase/server";
 import {
   buildDefaultPersonalProLoyaltyStatus,
   getPublicPricingSnapshot,
@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   const pricing = getPublicPricingSnapshot();
-  const supabase = await createServerSupabaseReadonly();
+  const supabase = await createServerSupabase();
   const {
     data: { user },
   } = await supabase.auth.getUser();

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import Link from "next/link";
 
 import { Check, Sparkles } from "lucide-react";
 
@@ -15,6 +16,10 @@ export interface PricingTier {
   color: string;
   billingLabel?: string;
   audience?: string;
+  ctaLabel?: string;
+  ctaHref?: string;
+  secondaryCtaLabel?: string;
+  secondaryCtaHref?: string;
 }
 
 function CreativePricing({
@@ -144,24 +149,86 @@ function CreativePricing({
               ))}
             </ul>
 
-            <Button
-              data-analytics-id="pricing_cta_click"
-              data-analytics-meta={JSON.stringify({
-                section: "landing_pricing",
-                tier: tier.name,
-                price: tier.price,
-              })}
-              className={cn(
-                "w-full rounded-2xl bg-white text-base font-semibold text-[#0f172a] transition hover:-translate-y-0.5",
-                businessTheme ? "border border-[#cfe0ff]" : "border border-[#ffd7c0]",
-                tier.popular &&
-                  (businessTheme
-                    ? "border-transparent bg-gradient-to-r from-[#2563eb] to-[#60a5fa] text-white shadow-[0_18px_45px_rgba(37,99,235,0.35)]"
-                    : "border-transparent bg-gradient-to-r from-[#ff9776] via-[#ffb866] to-[#5dd6f7] text-white shadow-[0_18px_45px_rgba(255,151,118,0.35)]")
-              )}
-            >
-              Choose this option
-            </Button>
+            {tier.ctaHref ? (
+              <div
+                className={cn(
+                  "grid gap-2",
+                  tier.secondaryCtaHref ? "sm:grid-cols-2" : "sm:grid-cols-1"
+                )}
+              >
+                <Button
+                  asChild
+                  className={cn(
+                    "w-full rounded-2xl bg-white text-base font-semibold text-[#0f172a] transition hover:-translate-y-0.5",
+                    businessTheme
+                      ? "border border-[#cfe0ff]"
+                      : "border border-[#ffd7c0]",
+                    tier.popular &&
+                      (businessTheme
+                        ? "border-transparent bg-gradient-to-r from-[#2563eb] to-[#60a5fa] text-white shadow-[0_18px_45px_rgba(37,99,235,0.35)]"
+                        : "border-transparent bg-gradient-to-r from-[#ff9776] via-[#ffb866] to-[#5dd6f7] text-white shadow-[0_18px_45px_rgba(255,151,118,0.35)]")
+                  )}
+                >
+                  <Link
+                    href={tier.ctaHref}
+                    data-analytics-id="pricing_cta_click"
+                    data-analytics-meta={JSON.stringify({
+                      section: "landing_pricing",
+                      tier: tier.name,
+                      price: tier.price,
+                      href: tier.ctaHref,
+                      billing_interval: "month_or_default",
+                    })}
+                  >
+                    {tier.ctaLabel ?? "Choose this option"}
+                  </Link>
+                </Button>
+                {tier.secondaryCtaHref ? (
+                  <Button
+                    asChild
+                    variant="outline"
+                    className={cn(
+                      "w-full rounded-2xl text-base font-semibold transition hover:-translate-y-0.5",
+                      businessTheme
+                        ? "border border-[#cfe0ff] bg-white text-[#1e3a8a]"
+                        : "border border-[#ffd7c0] bg-white text-[#9a3412]"
+                    )}
+                  >
+                    <Link
+                      href={tier.secondaryCtaHref}
+                      data-analytics-id="pricing_cta_click"
+                      data-analytics-meta={JSON.stringify({
+                        section: "landing_pricing",
+                        tier: tier.name,
+                        price: tier.price,
+                        href: tier.secondaryCtaHref,
+                        billing_interval: "year",
+                      })}
+                    >
+                      {tier.secondaryCtaLabel ?? "Yearly"}
+                    </Link>
+                  </Button>
+                ) : null}
+              </div>
+            ) : (
+              <Button
+                type="button"
+                disabled
+                data-analytics-id="pricing_cta_click"
+                data-analytics-meta={JSON.stringify({
+                  section: "landing_pricing",
+                  tier: tier.name,
+                  price: tier.price,
+                  disabled: true,
+                })}
+                className={cn(
+                  "w-full rounded-2xl bg-white text-base font-semibold text-[#0f172a]",
+                  businessTheme ? "border border-[#cfe0ff]" : "border border-[#ffd7c0]"
+                )}
+              >
+                {tier.ctaLabel ?? "Choose this option"}
+              </Button>
+            )}
           </div>
         ))}
       </div>

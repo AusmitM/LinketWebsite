@@ -123,7 +123,7 @@ export default function AuthPage() {
         const response = await fetch("/auth/callback", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ event: "SIGNED_IN", session }),
+          body: JSON.stringify({ event: "SIGNED_IN", session, next }),
         });
         if (!response.ok) return null;
         const payload = await response.json().catch(() => null);

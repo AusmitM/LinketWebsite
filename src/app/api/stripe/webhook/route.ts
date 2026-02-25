@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
+import { getLinketBundleComplimentaryWindowForUser } from "@/lib/billing/linket-bundle";
 import { getPersonalProPriceIds, getStripeServerClient, getStripeWebhookSecret } from "@/lib/stripe";
 import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
 
@@ -37,6 +38,8 @@ type InvoiceLineItemCompat = Stripe.InvoiceLineItem & {
 type InvoiceCompat = Stripe.Invoice & {
   subscription?: string | Stripe.Subscription | null;
   customer?: string | Stripe.Customer | Stripe.DeletedCustomer | null;
+  charge?: string | Stripe.Charge | null;
+  payment_intent?: string | Stripe.PaymentIntent | null;
   period_start?: number | null;
   period_end?: number | null;
   lines?: {
@@ -58,6 +61,15 @@ type ChargeCompat = Stripe.Charge & {
 function isUuid(value: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
     value
+  );
+}
+
+function isMissingRelationError(message: string) {
+  const lowered = message.toLowerCase();
+  return (
+    lowered.includes("does not exist") ||
+    lowered.includes("relation") ||
+    lowered.includes("schema cache")
   );
 }
 
@@ -113,6 +125,38 @@ function getCustomerId(invoice: Stripe.Invoice) {
     "id" in compat.customer
   ) {
     return compat.customer.id;
+  }
+  return null;
+}
+
+function getChargeIdFromInvoice(invoice: Stripe.Invoice) {
+  const compat = invoice as InvoiceCompat;
+  if (typeof compat.charge === "string" && compat.charge) {
+    return compat.charge;
+  }
+  if (
+    compat.charge &&
+    typeof compat.charge === "object" &&
+    "id" in compat.charge &&
+    typeof compat.charge.id === "string"
+  ) {
+    return compat.charge.id;
+  }
+  return null;
+}
+
+function getPaymentIntentIdFromInvoice(invoice: Stripe.Invoice) {
+  const compat = invoice as InvoiceCompat;
+  if (typeof compat.payment_intent === "string" && compat.payment_intent) {
+    return compat.payment_intent;
+  }
+  if (
+    compat.payment_intent &&
+    typeof compat.payment_intent === "object" &&
+    "id" in compat.payment_intent &&
+    typeof compat.payment_intent.id === "string"
+  ) {
+    return compat.payment_intent.id;
   }
   return null;
 }
@@ -253,6 +297,78 @@ function collectInvoicePeriods(invoice: Stripe.Invoice): PeriodWindow[] {
   return [...periods.values()];
 }
 
+function isWithinComplimentaryWindow(
+  periods: PeriodWindow[],
+  complimentaryEndsAt: string | null
+) {
+  if (!complimentaryEndsAt) return false;
+  const endsAtMs = new Date(complimentaryEndsAt).getTime();
+  if (!Number.isFinite(endsAtMs)) return false;
+  return periods.length > 0 && periods.every((period) => period.start * 1000 < endsAtMs);
+}
+
+async function resolveChargeIdForInvoice(
+  stripe: Stripe,
+  invoice: Stripe.Invoice
+) {
+  const directChargeId = getChargeIdFromInvoice(invoice);
+  if (directChargeId) return directChargeId;
+
+  const paymentIntentId = getPaymentIntentIdFromInvoice(invoice);
+  if (!paymentIntentId) return null;
+
+  const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+  if (typeof paymentIntent.latest_charge === "string" && paymentIntent.latest_charge) {
+    return paymentIntent.latest_charge;
+  }
+  if (
+    paymentIntent.latest_charge &&
+    typeof paymentIntent.latest_charge === "object" &&
+    "id" in paymentIntent.latest_charge &&
+    typeof paymentIntent.latest_charge.id === "string"
+  ) {
+    return paymentIntent.latest_charge.id;
+  }
+  return null;
+}
+
+async function refundComplimentaryInvoiceIfNeeded(args: {
+  stripe: Stripe;
+  invoice: Stripe.Invoice;
+  userId: string;
+}) {
+  if ((args.invoice.amount_paid ?? 0) <= 0) return;
+
+  const chargeId = await resolveChargeIdForInvoice(args.stripe, args.invoice);
+  if (!chargeId) {
+    throw new Error(`Unable to find charge for complimentary invoice ${args.invoice.id}`);
+  }
+
+  const charge = await args.stripe.charges.retrieve(chargeId);
+  const alreadyRefunded = charge.refunded || charge.amount_refunded >= charge.amount;
+  if (alreadyRefunded) return;
+
+  const remainingChargeAmount = Math.max(0, charge.amount - charge.amount_refunded);
+  const requestedAmount = Math.max(0, args.invoice.amount_paid ?? 0);
+  const refundAmount = Math.min(remainingChargeAmount, requestedAmount);
+  if (refundAmount <= 0) return;
+
+  await args.stripe.refunds.create(
+    {
+      charge: charge.id,
+      amount: refundAmount,
+      metadata: {
+        reason: "linket_bundle_complimentary_window",
+        invoice_id: args.invoice.id,
+        user_id: args.userId,
+      },
+    },
+    {
+      idempotencyKey: `linket-bundle-complimentary-${args.invoice.id}`,
+    }
+  );
+}
+
 async function lookupUserIdFromExistingPeriods(
   field: "provider_subscription_id" | "provider_customer_id",
   value: string
@@ -361,6 +477,256 @@ async function resolveUserIdForInvoice(
   }
 
   return null;
+}
+
+function readCheckoutCustomerId(session: Stripe.Checkout.Session) {
+  if (typeof session.customer === "string") return session.customer;
+  if (session.customer && typeof session.customer === "object") {
+    return session.customer.id ?? null;
+  }
+  return null;
+}
+
+function readCheckoutPaymentIntentId(session: Stripe.Checkout.Session) {
+  if (typeof session.payment_intent === "string") return session.payment_intent;
+  if (session.payment_intent && typeof session.payment_intent === "object") {
+    return session.payment_intent.id ?? null;
+  }
+  return null;
+}
+
+function readCheckoutInvoiceId(session: Stripe.Checkout.Session) {
+  if (typeof session.invoice === "string") return session.invoice;
+  if (session.invoice && typeof session.invoice === "object") {
+    return session.invoice.id ?? null;
+  }
+  return null;
+}
+
+function readCheckoutShippingRateId(session: Stripe.Checkout.Session) {
+  const shippingRate = session.shipping_cost?.shipping_rate ?? null;
+  if (typeof shippingRate === "string") return shippingRate;
+  if (shippingRate && typeof shippingRate === "object") {
+    return shippingRate.id ?? null;
+  }
+  return null;
+}
+
+function mapCheckoutPaymentStatusToOrderStatus(
+  paymentStatus: Stripe.Checkout.Session.PaymentStatus | null | undefined
+) {
+  if (paymentStatus === "paid" || paymentStatus === "no_payment_required") {
+    return "paid" as const;
+  }
+  if (paymentStatus === "unpaid") {
+    return "pending" as const;
+  }
+  return "pending" as const;
+}
+
+function mapCheckoutPaymentStatusToPurchaseStatus(
+  paymentStatus: Stripe.Checkout.Session.PaymentStatus | null | undefined
+) {
+  if (paymentStatus === "paid" || paymentStatus === "no_payment_required") {
+    return "paid" as const;
+  }
+  if (paymentStatus === "unpaid") {
+    return "pending" as const;
+  }
+  return "pending" as const;
+}
+
+async function resolveUserIdForCheckoutSession(
+  session: Stripe.Checkout.Session,
+  stripe: Stripe
+) {
+  const metadataUserId = readUserIdFromMetadata(session.metadata);
+  if (metadataUserId) return metadataUserId;
+
+  if (session.client_reference_id && isUuid(session.client_reference_id)) {
+    return session.client_reference_id;
+  }
+
+  if (
+    session.customer &&
+    typeof session.customer === "object" &&
+    "metadata" in session.customer
+  ) {
+    const customerUserId = readUserIdFromMetadata(
+      session.customer.metadata ?? null
+    );
+    if (customerUserId) return customerUserId;
+  }
+
+  const customerId = readCheckoutCustomerId(session);
+  if (!customerId) return null;
+
+  const customer = await stripe.customers.retrieve(customerId);
+  if (
+    customer &&
+    typeof customer === "object" &&
+    "metadata" in customer &&
+    customer.metadata
+  ) {
+    const customerUserId = readUserIdFromMetadata(customer.metadata);
+    if (customerUserId) return customerUserId;
+  }
+
+  return null;
+}
+
+async function processBundleCheckoutSessionCompleted(args: {
+  stripe: Stripe;
+  eventId: string;
+  session: Stripe.Checkout.Session;
+}) {
+  const purchaseType = toLowerText(args.session.metadata?.purchase_type);
+  if (args.session.mode !== "payment") return;
+  if (purchaseType !== "web_plus_linket_bundle") return;
+
+  const userId = await resolveUserIdForCheckoutSession(args.session, args.stripe);
+  if (!userId) {
+    console.warn(
+      `Stripe webhook skipped checkout.session.completed: missing user_id for session ${args.session.id}`
+    );
+    return;
+  }
+
+  const createdAtIso = new Date(
+    (args.session.created ?? Math.floor(Date.now() / 1000)) * 1000
+  ).toISOString();
+  const customerId = readCheckoutCustomerId(args.session);
+  const paymentIntentId = readCheckoutPaymentIntentId(args.session);
+  const invoiceId = readCheckoutInvoiceId(args.session);
+  const shippingRateId = readCheckoutShippingRateId(args.session);
+  const shippingAddress =
+    args.session.collected_information?.shipping_details?.address ??
+    args.session.customer_details?.address ??
+    null;
+  const orderStatus = mapCheckoutPaymentStatusToOrderStatus(
+    args.session.payment_status
+  );
+  const purchaseStatus = mapCheckoutPaymentStatusToPurchaseStatus(
+    args.session.payment_status
+  );
+
+  let quantity = 1;
+  let bundlePriceId: string | null = null;
+  try {
+    const lineItems = await args.stripe.checkout.sessions.listLineItems(
+      args.session.id,
+      {
+        limit: 10,
+      }
+    );
+    const firstLine =
+      lineItems.data.find((line) => (line.quantity ?? 0) > 0) ??
+      lineItems.data[0] ??
+      null;
+
+    if (firstLine?.quantity && firstLine.quantity > 0) {
+      quantity = firstLine.quantity;
+    }
+    bundlePriceId =
+      (typeof firstLine?.price === "string"
+        ? firstLine.price
+        : firstLine?.price?.id) ?? null;
+  } catch (error) {
+    console.warn(
+      `Stripe webhook line item lookup failed for bundle session ${args.session.id}`,
+      error
+    );
+  }
+
+  const metadata = {
+    ...args.session.metadata,
+    event_id: args.eventId,
+    checkout_status: args.session.status ?? null,
+    checkout_payment_status: args.session.payment_status ?? null,
+    checkout_mode: args.session.mode ?? null,
+    entitlement_start: "linket_claim",
+  };
+
+  const { data: orderRow, error: orderError } = await supabaseAdmin
+    .from("orders")
+    .upsert(
+      {
+        user_id: userId,
+        provider: "stripe",
+        provider_checkout_session_id: args.session.id,
+        provider_customer_id: customerId,
+        status: orderStatus,
+        currency: args.session.currency ?? "usd",
+        subtotal_minor: args.session.amount_subtotal ?? 0,
+        tax_minor: args.session.total_details?.amount_tax ?? 0,
+        shipping_minor: args.session.total_details?.amount_shipping ?? 0,
+        total_minor: args.session.amount_total ?? 0,
+        metadata,
+        updated_at: new Date().toISOString(),
+      },
+      {
+        onConflict: "provider,provider_checkout_session_id",
+      }
+    )
+    .select("id")
+    .maybeSingle();
+
+  if (orderError) {
+    if (isMissingRelationError(orderError.message)) {
+      console.warn(
+        "Stripe webhook skipped orders upsert because table is unavailable."
+      );
+      return;
+    }
+    throw new Error(orderError.message);
+  }
+
+  if (!orderRow?.id) {
+    console.warn(
+      `Stripe webhook could not resolve persisted order row for checkout session ${args.session.id}`
+    );
+    return;
+  }
+
+  const { error: bundlePurchaseError } = await supabaseAdmin
+    .from("bundle_purchases")
+    .upsert(
+      {
+        order_id: orderRow.id,
+        user_id: userId,
+        provider: "stripe",
+        provider_checkout_session_id: args.session.id,
+        provider_customer_id: customerId,
+        provider_payment_intent_id: paymentIntentId,
+        provider_invoice_id: invoiceId,
+        bundle_price_id: bundlePriceId,
+        quantity,
+        purchase_status: purchaseStatus,
+        purchased_at: createdAtIso,
+        shipping_rate_id: shippingRateId,
+        shipping_name:
+          args.session.collected_information?.shipping_details?.name ??
+          args.session.customer_details?.name ??
+          null,
+        shipping_phone: args.session.customer_details?.phone ?? null,
+        shipping_address: shippingAddress,
+        metadata,
+        updated_at: new Date().toISOString(),
+      },
+      {
+        onConflict: "provider,provider_checkout_session_id",
+      }
+    );
+
+  if (bundlePurchaseError) {
+    if (isMissingRelationError(bundlePurchaseError.message)) {
+      console.warn(
+        "Stripe webhook skipped bundle_purchases upsert because table is unavailable."
+      );
+      return;
+    }
+    throw new Error(bundlePurchaseError.message);
+  }
 }
 
 function buildEventMetadata(
@@ -496,11 +862,18 @@ async function processInvoicePeriods(args: {
     args.invoice,
     personalProPriceIds
   );
-  const metadata = buildEventMetadata(
-    args.eventType,
-    args.invoice,
-    loyaltyEligible
-  );
+  const complimentaryWindow =
+    await getLinketBundleComplimentaryWindowForUser(userId);
+  const metadata = {
+    ...buildEventMetadata(
+      args.eventType,
+      args.invoice,
+      loyaltyEligible
+    ),
+    complimentary_window_active: complimentaryWindow.active,
+    complimentary_window_starts_at: complimentaryWindow.startsAt,
+    complimentary_window_ends_at: complimentaryWindow.endsAt,
+  };
 
   if (args.eventType === "invoice.voided") {
     await markPaidPeriodsWithStatus({
@@ -529,6 +902,27 @@ async function processInvoicePeriods(args: {
   }
 
   if (!loyaltyEligible) return;
+
+  const canApplyComplimentaryRefund = personalProPriceIds.size > 0;
+  if (complimentaryWindow.active && !canApplyComplimentaryRefund) {
+    console.warn(
+      "Stripe webhook skipped complimentary refund because STRIPE_PERSONAL_PRO_PRICE_IDS is empty."
+    );
+  }
+
+  const complimentaryInvoice =
+    canApplyComplimentaryRefund &&
+    complimentaryWindow.active &&
+    isWithinComplimentaryWindow(periods, complimentaryWindow.endsAt);
+
+  if (complimentaryInvoice) {
+    await refundComplimentaryInvoiceIfNeeded({
+      stripe: args.stripe,
+      invoice: args.invoice,
+      userId,
+    });
+    return;
+  }
 
   await upsertPaidPeriods({
     userId,
@@ -577,7 +971,16 @@ export async function POST(request: Request) {
   }
 
   try {
-    if (event.type === "invoice.paid" || event.type === "invoice.payment_succeeded") {
+    if (event.type === "checkout.session.completed") {
+      await processBundleCheckoutSessionCompleted({
+        stripe,
+        eventId: event.id,
+        session: event.data.object as Stripe.Checkout.Session,
+      });
+    } else if (
+      event.type === "invoice.paid" ||
+      event.type === "invoice.payment_succeeded"
+    ) {
       await processInvoicePeriods({
         stripe,
         eventType: event.type,

@@ -20,6 +20,11 @@ import { cn } from "@/lib/utils";
 
 type Audience = "individual" | "business";
 
+function buildAuthBillingIntentHref(intent: "bundle" | "pro_monthly" | "pro_yearly") {
+  const next = `/dashboard/billing?intent=${intent}`;
+  return `/auth?view=signin&next=${encodeURIComponent(next)}`;
+}
+
 function buildIndividualTiers(pricing: PublicPricingSnapshot): PricingTier[] {
   const bundle = pricing.individual.webPlusLinketBundle;
   return [
@@ -31,6 +36,8 @@ function buildIndividualTiers(pricing: PublicPricingSnapshot): PricingTier[] {
       description: "Individual web-only starter",
       audience: "Individuals",
       color: "amber",
+      ctaLabel: "Start free",
+      ctaHref: "/auth?view=signup&next=%2Fdashboard%2Foverview",
       features: [
         "Share one web profile and your core links",
         "No hardware required",
@@ -46,6 +53,8 @@ function buildIndividualTiers(pricing: PublicPricingSnapshot): PricingTier[] {
       description: "Linket + 12 month pro access",
       audience: "Individuals",
       color: "blue",
+      ctaLabel: "Buy bundle",
+      ctaHref: buildAuthBillingIntentHref("bundle"),
       features: [
         "Get 1 standard Linket",
         `${bundle.includesProMonths} months of Paid Web-Only (Pro) included`,
@@ -62,6 +71,10 @@ function buildIndividualTiers(pricing: PublicPricingSnapshot): PricingTier[] {
       description: "Individual software plan",
       audience: "Individuals",
       color: "amber",
+      ctaLabel: "Start monthly",
+      ctaHref: buildAuthBillingIntentHref("pro_monthly"),
+      secondaryCtaLabel: "Start yearly",
+      secondaryCtaHref: buildAuthBillingIntentHref("pro_yearly"),
       features: [
         "Publish your profile and links with no hardware required",
         "Capture unlimited leads",
@@ -83,6 +96,8 @@ function buildBusinessTiers(pricing: PublicPricingSnapshot): PricingTier[] {
       description: "Linket + Web-Platform",
       audience: "Businesses",
       color: "blue",
+      ctaLabel: "Contact sales",
+      ctaHref: "/contact?topic=business_generic",
       features: [
         "Standard Linkets for your team",
         "Built for business rollout",
@@ -98,6 +113,8 @@ function buildBusinessTiers(pricing: PublicPricingSnapshot): PricingTier[] {
       description: "Custom branded Linkets",
       audience: "Businesses",
       color: "amber",
+      ctaLabel: "Book a consult",
+      ctaHref: "/contact?topic=business_custom",
       features: [
         "Consult with our 3D design specialists",
         "Custom branded designs",

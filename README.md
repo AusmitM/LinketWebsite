@@ -73,11 +73,15 @@ Optional:
 - `STRIPE_SECRET_KEY` for Stripe API/webhook processing
 - `STRIPE_WEBHOOK_SECRET` for Stripe signature verification
 - `STRIPE_PERSONAL_PRO_PRICE_IDS` comma-separated Stripe Price IDs that should count toward personal Pro loyalty accrual
+- `STRIPE_WEB_PLUS_LINKET_BUNDLE_PRICE_ID` Stripe Price ID for one-time Web + Linket Bundle checkout
+- `STRIPE_LINKET_BUNDLE_SHIPPING_RATE_IDS` comma-separated Stripe Shipping Rate IDs used for bundle checkout
+- `STRIPE_LINKET_BUNDLE_ALLOWED_SHIPPING_COUNTRIES` optional comma-separated ISO country codes (defaults to `US`)
 
 ### Stripe loyalty accrual
 
 - Webhook endpoint: `/api/stripe/webhook`
 - Loyalty accrues from Stripe paid billing periods only.
+- Bundle complimentary Pro entitlement starts when the purchased Linket is claimed, not at checkout time.
 - Eligibility is granted after 365 total paid days (continuous or discontinuous).
 - To map Stripe events to a user, include `user_id` (or `supabase_user_id`) in Stripe metadata on the invoice/subscription/customer.
 - For strict personal-only accrual, configure `STRIPE_PERSONAL_PRO_PRICE_IDS` to your personal Pro price IDs.

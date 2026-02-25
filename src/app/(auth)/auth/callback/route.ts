@@ -5,12 +5,25 @@ import { recordConversionEvent } from "@/lib/server-conversion-events";
 const FIRST_LOGIN_REDIRECT = "/dashboard/linkets?tour=welcome";
 const RETURNING_LOGIN_REDIRECT = "/dashboard/overview";
 
+function sanitizeNextPath(value: string | null | undefined) {
+  if (!value) return null;
+  const trimmed = value.trim();
+  if (!trimmed.startsWith("/") || trimmed.startsWith("//")) return null;
+  try {
+    const parsed = new URL(trimmed, "http://localhost");
+    return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+  } catch {
+    return null;
+  }
+}
+
 async function resolveRedirectPath(
-  supabase: Awaited<ReturnType<typeof createServerSupabase>>
+  supabase: Awaited<ReturnType<typeof createServerSupabase>>,
+  preferredNext?: string | null
 ) {
   const { data } = await supabase.auth.getUser();
   const user = data.user;
-  if (!user) return RETURNING_LOGIN_REDIRECT;
+  if (!user) return preferredNext || RETURNING_LOGIN_REDIRECT;
   const metadata = (user.user_metadata ?? {}) as Record<string, unknown>;
   const hasOnboarded = Boolean(metadata.linket_onboarded);
   if (!hasOnboarded) {
@@ -29,14 +42,15 @@ async function resolveRedirectPath(
       eventSource: "server",
       meta: { source: "auth_callback" },
     });
-    return FIRST_LOGIN_REDIRECT;
+    return preferredNext || FIRST_LOGIN_REDIRECT;
   }
-  return RETURNING_LOGIN_REDIRECT;
+  return preferredNext || RETURNING_LOGIN_REDIRECT;
 }
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
+  const preferredNext = sanitizeNextPath(url.searchParams.get("next"));
   const supabase = await createServerSupabase();
 
   if (code) {
@@ -51,27 +65,46 @@ export async function GET(request: Request) {
     await supabase.auth.getSession();
   }
 
-  const redirectPath = await resolveRedirectPath(supabase);
+  const redirectPath = await resolveRedirectPath(supabase, preferredNext);
   const redirectUrl = new URL(redirectPath, url.origin);
   return NextResponse.redirect(redirectUrl);
 }
 
 export async function POST(request: Request) {
   const supabase = await createServerSupabase();
-  const { event, session } = await request.json();
+  const body = (await request.json().catch(() => null)) as
+    | {
+        event?: string;
+        session?: {
+          access_token?: string;
+          refresh_token?: string;
+        } | null;
+        next?: string | null;
+      }
+    | null;
+  const event = body?.event;
+  const session = body?.session;
+  const preferredNext = sanitizeNextPath(body?.next);
 
   if (event === "SIGNED_OUT") {
     await supabase.auth.signOut();
     return NextResponse.json({ ok: true });
   }
 
-  if (event === "SIGNED_IN" && session) {
-    const { error } = await supabase.auth.setSession(session);
+  if (
+    event === "SIGNED_IN" &&
+    session?.access_token &&
+    session?.refresh_token
+  ) {
+    const { error } = await supabase.auth.setSession({
+      access_token: session.access_token,
+      refresh_token: session.refresh_token,
+    });
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
   }
 
-  const redirectTo = await resolveRedirectPath(supabase);
+  const redirectTo = await resolveRedirectPath(supabase, preferredNext);
   return NextResponse.json({ ok: true, redirectTo });
 }

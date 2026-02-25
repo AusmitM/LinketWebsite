@@ -1,0 +1,79 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+
+import { toast } from "@/components/system/toaster";
+import { Button } from "@/components/ui/button";
+
+type RemovePaymentMethodButtonProps = {
+  paymentMethodId: string;
+  isDefault: boolean;
+};
+
+export default function RemovePaymentMethodButton({
+  paymentMethodId,
+  isDefault,
+}: RemovePaymentMethodButtonProps) {
+  const router = useRouter();
+  const [pending, setPending] = useState(false);
+
+  async function handleClick() {
+    if (pending) return;
+
+    const confirmed = window.confirm(
+      isDefault
+        ? "Remove this default card? Future renewals will use another saved card if available."
+        : "Remove this saved card?"
+    );
+    if (!confirmed) return;
+
+    setPending(true);
+
+    try {
+      const response = await fetch("/api/billing/payment-method/remove", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ paymentMethodId }),
+      });
+      const payload = (await response.json().catch(() => null)) as
+        | { error?: string }
+        | null;
+      if (!response.ok) {
+        throw new Error(payload?.error || "Unable to remove card.");
+      }
+
+      toast({
+        title: "Card removed",
+        description: "The payment method was removed from your billing profile.",
+        variant: "success",
+      });
+      router.refresh();
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to remove card.";
+      toast({
+        title: "Remove failed",
+        description: message,
+        variant: "destructive",
+      });
+    } finally {
+      setPending(false);
+    }
+  }
+
+  return (
+    <Button
+      type="button"
+      size="sm"
+      variant="outline"
+      className="rounded-full border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
+      onClick={handleClick}
+      disabled={pending}
+    >
+      {pending ? "Removing..." : "Remove card"}
+    </Button>
+  );
+}

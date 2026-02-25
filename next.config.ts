@@ -21,16 +21,25 @@ const remoteImageHosts = [
 ];
 
 const allowUnsafeEval = process.env.NODE_ENV !== "production";
+const stripeScriptOrigin = "https://js.stripe.com";
+const stripeConnectOrigins = [
+  "https://api.stripe.com",
+  "https://r.stripe.com",
+  "https://q.stripe.com",
+  "https://m.stripe.network",
+];
+const stripeFrameOrigins = ["https://js.stripe.com", "https://hooks.stripe.com"];
 
 const csp = [
   `default-src 'self'`,
-  `script-src 'self' 'unsafe-inline'${allowUnsafeEval ? " 'unsafe-eval'" : ""}`,
+  `script-src 'self' 'unsafe-inline'${allowUnsafeEval ? " 'unsafe-eval'" : ""} ${stripeScriptOrigin}`,
   `style-src 'self' 'unsafe-inline'`,
   `img-src 'self' data: blob: ${supabaseOrigin} ${remoteImageHosts
     .map((host) => `https://${host}`)
-    .join(" ")}`,
-  `connect-src 'self' ${supabaseOrigin}`,
+    .join(" ")} https://q.stripe.com`,
+  `connect-src 'self' ${supabaseOrigin} ${stripeConnectOrigins.join(" ")}`,
   `font-src 'self' data:`,
+  `frame-src 'self' ${stripeFrameOrigins.join(" ")}`,
   `frame-ancestors 'self'`,
   `base-uri 'self'`,
   `form-action 'self'`,
