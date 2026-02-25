@@ -9,6 +9,7 @@ function sanitizeNextPath(value: string | null | undefined) {
   if (!value) return null;
   const trimmed = value.trim();
   if (!trimmed.startsWith("/") || trimmed.startsWith("//")) return null;
+  if (trimmed.startsWith("/api/")) return null;
   try {
     const parsed = new URL(trimmed, "http://localhost");
     return `${parsed.pathname}${parsed.search}${parsed.hash}`;

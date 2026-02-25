@@ -27,6 +27,53 @@ type StripeInvoiceCompat = Stripe.Invoice & {
   period_end?: number | null;
 };
 
+type BillingOrderStatus = "pending" | "paid" | "refunded" | "canceled";
+type BillingBundlePurchaseStatus = BillingOrderStatus;
+type BillingEventStatus = "info" | "warning" | "error";
+type BillingWarningSeverity = Exclude<BillingEventStatus, "info">;
+
+type OrderRow = {
+  id: string;
+  provider_checkout_session_id: string;
+  status: BillingOrderStatus;
+  currency: string;
+  subtotal_minor: number;
+  tax_minor: number;
+  shipping_minor: number;
+  total_minor: number;
+  receipt_url: string | null;
+  metadata: Record<string, unknown> | null;
+  created_at: string;
+  updated_at: string;
+};
+
+type BundlePurchaseRow = {
+  id: string;
+  order_id: string;
+  provider_checkout_session_id: string;
+  provider_payment_intent_id: string | null;
+  provider_invoice_id: string | null;
+  bundle_price_id: string | null;
+  purchase_status: BillingBundlePurchaseStatus;
+  purchased_at: string;
+  quantity: number;
+  shipping_rate_id: string | null;
+  shipping_name: string | null;
+  shipping_phone: string | null;
+  shipping_address: Record<string, unknown> | null;
+  metadata: Record<string, unknown> | null;
+};
+
+type BillingWarningRow = {
+  id: string;
+  provider_subscription_id: string | null;
+  provider_customer_id: string | null;
+  event_type: string;
+  status: BillingEventStatus;
+  occurred_at: string;
+  metadata: Record<string, unknown> | null;
+};
+
 type StripeSubscriptionStatus =
   | "incomplete"
   | "incomplete_expired"
@@ -95,6 +142,41 @@ export type DashboardBillingInvoice = {
   invoicePdfUrl: string | null;
 };
 
+export type DashboardBillingBundlePurchase = {
+  id: string;
+  orderId: string;
+  checkoutSessionId: string;
+  paymentIntentId: string | null;
+  invoiceId: string | null;
+  bundlePriceId: string | null;
+  orderStatus: BillingOrderStatus;
+  purchaseStatus: BillingBundlePurchaseStatus;
+  purchasedAt: string;
+  quantity: number;
+  currency: string;
+  subtotalMinor: number;
+  taxMinor: number;
+  shippingMinor: number;
+  totalMinor: number;
+  receiptUrl: string | null;
+  shippingRateId: string | null;
+  shippingName: string | null;
+  shippingPhone: string | null;
+  shippingAddress: Record<string, unknown> | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type DashboardBillingWarning = {
+  id: string;
+  subscriptionId: string | null;
+  customerId: string | null;
+  eventType: string;
+  severity: BillingWarningSeverity;
+  occurredAt: string;
+  message: string;
+};
+
 export type DashboardBillingData = {
   summary: DashboardBillingSummary;
   complimentaryWindow: LinketBundleComplimentaryWindow;
@@ -102,6 +184,8 @@ export type DashboardBillingData = {
   subscription: DashboardBillingSubscription | null;
   paymentMethods: DashboardBillingPaymentMethod[];
   invoices: DashboardBillingInvoice[];
+  bundlePurchases: DashboardBillingBundlePurchase[];
+  warnings: DashboardBillingWarning[];
   stripe: {
     enabled: boolean;
     customerId: string | null;
@@ -111,6 +195,12 @@ export type DashboardBillingData = {
 
 const BILLING_PERIODS_SELECT =
   "id,provider_customer_id,provider_subscription_id,status,period_start,period_end,created_at";
+const BILLING_ORDERS_SELECT =
+  "id,provider_checkout_session_id,status,currency,subtotal_minor,tax_minor,shipping_minor,total_minor,receipt_url,metadata,created_at,updated_at";
+const BILLING_BUNDLE_PURCHASES_SELECT =
+  "id,order_id,provider_checkout_session_id,provider_payment_intent_id,provider_invoice_id,bundle_price_id,purchase_status,purchased_at,quantity,shipping_rate_id,shipping_name,shipping_phone,shipping_address,metadata";
+const BILLING_WARNINGS_SELECT =
+  "id,provider_subscription_id,provider_customer_id,event_type,status,occurred_at,metadata";
 
 function isMissingRelationError(message: string) {
   const lowered = message.toLowerCase();
@@ -137,6 +227,15 @@ function toTimestampMs(value: string | null | undefined) {
 
 function normalizeCurrency(value: string | null | undefined) {
   return value ? value.toUpperCase() : "USD";
+}
+
+function toMinorNumber(value: number | string | null | undefined) {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const parsed = Number.parseFloat(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return 0;
 }
 
 function formatErrorMessage(prefix: string, error: unknown) {
@@ -188,6 +287,219 @@ function readStripeCustomerNameFromUser(options?: {
   const last = options?.lastName?.trim() ?? "";
   const combined = `${first} ${last}`.trim();
   return combined || null;
+}
+
+async function fetchPersistedStripeCustomerIdForUser(userId: string) {
+  if (isSupabaseAdminAvailable) {
+    const { data, error } = await supabaseAdmin
+      .from("user_profiles")
+      .select("stripe_customer_id")
+      .eq("user_id", userId)
+      .not("stripe_customer_id", "is", null)
+      .limit(1)
+      .maybeSingle<{
+        stripe_customer_id: string | null;
+      }>();
+
+    if (error) {
+      if (isMissingRelationError(error.message)) return null;
+      throw new Error(error.message);
+    }
+
+    return data?.stripe_customer_id?.trim() || null;
+  }
+
+  const supabase = await createServerSupabaseReadonly();
+  const { data, error } = await supabase
+    .from("user_profiles")
+    .select("stripe_customer_id")
+    .eq("user_id", userId)
+    .not("stripe_customer_id", "is", null)
+    .limit(1)
+    .maybeSingle<{
+      stripe_customer_id: string | null;
+    }>();
+
+  if (error) {
+    if (isMissingRelationError(error.message)) return null;
+    throw new Error(error.message);
+  }
+
+  return data?.stripe_customer_id?.trim() || null;
+}
+
+async function persistStripeCustomerIdForUser(
+  userId: string,
+  customerId: string
+) {
+  if (!isSupabaseAdminAvailable) return;
+
+  const { error } = await supabaseAdmin
+    .from("user_profiles")
+    .update({
+      stripe_customer_id: customerId,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("user_id", userId);
+
+  if (error && !isMissingRelationError(error.message)) {
+    throw new Error(error.message);
+  }
+}
+
+async function fetchBundleOrdersForUser(userId: string) {
+  const execute = async (
+    db: typeof supabaseAdmin | Awaited<ReturnType<typeof createServerSupabaseReadonly>>
+  ) => {
+    const { data: orderRows, error: orderError } = await db
+      .from("orders")
+      .select(BILLING_ORDERS_SELECT)
+      .eq("provider", "stripe")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(50)
+      .returns<OrderRow[]>();
+
+    if (orderError) throw orderError;
+
+    const { data: bundleRows, error: bundleError } = await db
+      .from("bundle_purchases")
+      .select(BILLING_BUNDLE_PURCHASES_SELECT)
+      .eq("provider", "stripe")
+      .eq("user_id", userId)
+      .order("purchased_at", { ascending: false })
+      .limit(50)
+      .returns<BundlePurchaseRow[]>();
+
+    if (bundleError) throw bundleError;
+
+    return {
+      orderRows: orderRows ?? [],
+      bundleRows: bundleRows ?? [],
+    };
+  };
+
+  try {
+    if (isSupabaseAdminAvailable) {
+      return await execute(supabaseAdmin);
+    }
+    const supabase = await createServerSupabaseReadonly();
+    return await execute(supabase);
+  } catch (error) {
+    if (
+      error &&
+      typeof error === "object" &&
+      "message" in error &&
+      typeof (error as { message?: unknown }).message === "string" &&
+      isMissingRelationError((error as { message: string }).message)
+    ) {
+      return { orderRows: [] as OrderRow[], bundleRows: [] as BundlePurchaseRow[] };
+    }
+    throw error;
+  }
+}
+
+function buildBillingWarningMessage(
+  eventType: string,
+  metadata: Record<string, unknown> | null
+) {
+  const subscriptionStatus =
+    typeof metadata?.subscription_status === "string"
+      ? metadata.subscription_status
+      : null;
+
+  if (eventType === "invoice.payment_failed") {
+    return "A recent payment attempt failed. Update your card to avoid interruption.";
+  }
+
+  if (eventType === "customer.subscription.updated") {
+    if (
+      subscriptionStatus === "past_due" ||
+      subscriptionStatus === "unpaid" ||
+      subscriptionStatus === "incomplete" ||
+      subscriptionStatus === "incomplete_expired"
+    ) {
+      return "Your subscription is at risk due to payment issues. Update your card to avoid interruption.";
+    }
+    if (subscriptionStatus === "canceled") {
+      return "Your subscription is canceled. Re-subscribe anytime to restore paid billing.";
+    }
+  }
+
+  if (eventType === "customer.subscription.deleted") {
+    return "Your subscription was canceled. Re-subscribe anytime to restore paid billing.";
+  }
+
+  return "Billing needs attention. Update your payment method to keep service active.";
+}
+
+async function fetchBillingWarningsForUser(userId: string) {
+  const execute = async (
+    db: typeof supabaseAdmin | Awaited<ReturnType<typeof createServerSupabaseReadonly>>
+  ) => {
+    const { data, error } = await db
+      .from("subscription_billing_events")
+      .select(BILLING_WARNINGS_SELECT)
+      .eq("provider", "stripe")
+      .eq("user_id", userId)
+      .order("occurred_at", { ascending: false })
+      .limit(50)
+      .returns<BillingWarningRow[]>();
+
+    if (error) throw error;
+
+    const newestByBillingTarget = new Map<string, BillingWarningRow>();
+    for (const row of data ?? []) {
+      const key =
+        row.provider_subscription_id ??
+        row.provider_customer_id ??
+        `event:${row.id}`;
+      if (!newestByBillingTarget.has(key)) {
+        newestByBillingTarget.set(key, row);
+      }
+    }
+
+    return [...newestByBillingTarget.values()]
+      .filter(
+        (
+          row
+        ): row is BillingWarningRow & { status: BillingWarningSeverity } =>
+          row.status === "warning" || row.status === "error"
+      )
+      .sort(
+        (a, b) =>
+          new Date(b.occurred_at).getTime() - new Date(a.occurred_at).getTime()
+      )
+      .slice(0, 10)
+      .map((row) => ({
+        id: row.id,
+        subscriptionId: row.provider_subscription_id,
+        customerId: row.provider_customer_id,
+        eventType: row.event_type,
+        severity: row.status,
+        occurredAt: row.occurred_at,
+        message: buildBillingWarningMessage(row.event_type, row.metadata),
+      })) satisfies DashboardBillingWarning[];
+  };
+
+  try {
+    if (isSupabaseAdminAvailable) {
+      return await execute(supabaseAdmin);
+    }
+    const supabase = await createServerSupabaseReadonly();
+    return await execute(supabase);
+  } catch (error) {
+    if (
+      error &&
+      typeof error === "object" &&
+      "message" in error &&
+      typeof (error as { message?: unknown }).message === "string" &&
+      isMissingRelationError((error as { message: string }).message)
+    ) {
+      return [] as DashboardBillingWarning[];
+    }
+    throw error;
+  }
 }
 
 async function findStripeCustomerByUserId(
@@ -257,7 +569,6 @@ function pickManageableSubscriptionId(subscriptions: Stripe.Subscription[]) {
     "active",
     "past_due",
     "unpaid",
-    "incomplete",
     "paused",
   ];
   for (const status of priority) {
@@ -330,6 +641,9 @@ async function fetchSubscriptionBillingPeriods(userId: string) {
 }
 
 export async function getStripeCustomerIdForUser(userId: string) {
+  const persistedCustomerId = await fetchPersistedStripeCustomerIdForUser(userId);
+  if (persistedCustomerId) return persistedCustomerId;
+
   const rows = await fetchSubscriptionBillingPeriods(userId);
   const directCustomerId = pickPreferredCustomerId(rows);
   if (directCustomerId) return directCustomerId;
@@ -355,8 +669,16 @@ export async function getOrCreateStripeCustomerForUser(options: {
   firstName?: string | null;
   lastName?: string | null;
 }) {
+  const persistedCustomerId = await fetchPersistedStripeCustomerIdForUser(
+    options.userId
+  );
+  if (persistedCustomerId) return persistedCustomerId;
+
   const existingCustomerId = await getStripeCustomerIdForUser(options.userId);
-  if (existingCustomerId) return existingCustomerId;
+  if (existingCustomerId) {
+    await persistStripeCustomerIdForUser(options.userId, existingCustomerId);
+    return existingCustomerId;
+  }
   if (!getStripeSecretKey()) return null;
 
   const stripe = getStripeServerClient();
@@ -365,17 +687,12 @@ export async function getOrCreateStripeCustomerForUser(options: {
     stripe,
     options.userId
   );
-  if (searchedByUserId) return searchedByUserId;
+  if (searchedByUserId) {
+    await persistStripeCustomerIdForUser(options.userId, searchedByUserId);
+    return searchedByUserId;
+  }
 
   const email = options.email?.trim() ?? null;
-  if (email) {
-    const searchedByEmail = await findStripeCustomerByEmail(
-      stripe,
-      email,
-      options.userId
-    );
-    if (searchedByEmail) return searchedByEmail;
-  }
 
   const created = await stripe.customers.create({
     email: email ?? undefined,
@@ -385,6 +702,7 @@ export async function getOrCreateStripeCustomerForUser(options: {
       supabase_user_id: options.userId,
     },
   });
+  await persistStripeCustomerIdForUser(options.userId, created.id);
   return created.id;
 }
 
@@ -394,9 +712,13 @@ export async function getDashboardBillingDataForUser(
     email?: string | null;
   }
 ): Promise<DashboardBillingData> {
-  const complimentaryWindow =
-    await getLinketBundleComplimentaryWindowForUser(userId);
-  const periodRows = await fetchSubscriptionBillingPeriods(userId);
+  const [complimentaryWindow, { orderRows, bundleRows }, periodRows, warnings] =
+    await Promise.all([
+      getLinketBundleComplimentaryWindowForUser(userId),
+      fetchBundleOrdersForUser(userId),
+      fetchSubscriptionBillingPeriods(userId),
+      fetchBillingWarningsForUser(userId),
+    ]);
   const periods: DashboardBillingPeriod[] = periodRows.map((row) => ({
     id: row.id,
     subscriptionId: row.provider_subscription_id,
@@ -424,7 +746,9 @@ export async function getDashboardBillingDataForUser(
   const voidedPeriods = periodRows.filter((row) => row.status === "voided").length;
 
   let stripeEnabled = Boolean(getStripeSecretKey());
-  let stripeCustomerId = pickPreferredCustomerId(periodRows);
+  let stripeCustomerId =
+    (await fetchPersistedStripeCustomerIdForUser(userId)) ??
+    pickPreferredCustomerId(periodRows);
   const preferredSubscriptionId: string | null =
     pickPreferredSubscriptionId(periodRows);
   let resolvedSubscriptionId: string | null = preferredSubscriptionId;
@@ -437,6 +761,7 @@ export async function getDashboardBillingDataForUser(
     try {
       const stripe = getStripeServerClient();
       let defaultPaymentMethodId: string | null = null;
+      let preloadedSubscription: Stripe.Subscription | null = null;
       const normalizedEmail = options?.email?.trim() ?? null;
 
       if (!stripeCustomerId) {
@@ -475,7 +800,7 @@ export async function getDashboardBillingDataForUser(
         }
       }
 
-      if (resolvedSubscriptionId) {
+      if (resolvedSubscriptionId && !stripeCustomerId) {
         try {
           const stripeSubscription = await stripe.subscriptions.retrieve(
             resolvedSubscriptionId,
@@ -483,7 +808,7 @@ export async function getDashboardBillingDataForUser(
               expand: ["customer", "default_payment_method", "items.data.price.product"],
             }
           );
-          subscription = mapStripeSubscription(stripeSubscription);
+          preloadedSubscription = stripeSubscription;
           stripeCustomerId =
             readStripeCustomerId(stripeSubscription.customer) ?? stripeCustomerId;
           defaultPaymentMethodId =
@@ -495,27 +820,65 @@ export async function getDashboardBillingDataForUser(
       }
 
       if (stripeCustomerId) {
-        try {
-          const customer = await stripe.customers.retrieve(stripeCustomerId, {
-            expand: ["invoice_settings.default_payment_method"],
-          });
+        const [subscriptionResult, customerResult, paymentMethodsResult, invoicesResult] =
+          await Promise.allSettled([
+            preloadedSubscription
+              ? Promise.resolve(preloadedSubscription)
+              : resolvedSubscriptionId
+                ? stripe.subscriptions.retrieve(resolvedSubscriptionId, {
+                    expand: [
+                      "customer",
+                      "default_payment_method",
+                      "items.data.price.product",
+                    ],
+                  })
+                : Promise.resolve(null),
+            stripe.customers.retrieve(stripeCustomerId, {
+              expand: ["invoice_settings.default_payment_method"],
+            }),
+            stripe.paymentMethods.list({
+              customer: stripeCustomerId,
+              type: "card",
+              limit: 50,
+            }),
+            stripe.invoices.list({
+              customer: stripeCustomerId,
+              limit: 12,
+            }),
+          ]);
+
+        if (subscriptionResult.status === "fulfilled") {
+          const stripeSubscription = subscriptionResult.value;
+          if (stripeSubscription) {
+            subscription = mapStripeSubscription(stripeSubscription);
+            stripeCustomerId =
+              readStripeCustomerId(stripeSubscription.customer) ?? stripeCustomerId;
+            defaultPaymentMethodId =
+              readStripePaymentMethodId(stripeSubscription.default_payment_method) ??
+              defaultPaymentMethodId;
+          }
+        } else {
+          stripeErrors.push(
+            formatErrorMessage("Subscription lookup failed", subscriptionResult.reason)
+          );
+        }
+
+        if (customerResult.status === "fulfilled") {
+          const customer = customerResult.value;
           if (!("deleted" in customer && customer.deleted)) {
             defaultPaymentMethodId =
               readStripePaymentMethodId(
                 customer.invoice_settings.default_payment_method
               ) ?? defaultPaymentMethodId;
           }
-        } catch (error) {
-          stripeErrors.push(formatErrorMessage("Customer lookup failed", error));
+        } else {
+          stripeErrors.push(
+            formatErrorMessage("Customer lookup failed", customerResult.reason)
+          );
         }
 
-        try {
-          const paymentMethodList = await stripe.paymentMethods.list({
-            customer: stripeCustomerId,
-            type: "card",
-            limit: 8,
-          });
-          paymentMethods = paymentMethodList.data.map((method) => ({
+        if (paymentMethodsResult.status === "fulfilled") {
+          paymentMethods = paymentMethodsResult.value.data.map((method) => ({
             id: method.id,
             brand: method.card?.brand ?? null,
             last4: method.card?.last4 ?? null,
@@ -523,18 +886,17 @@ export async function getDashboardBillingDataForUser(
             expYear: method.card?.exp_year ?? null,
             isDefault: method.id === defaultPaymentMethodId,
           }));
-        } catch (error) {
+        } else {
           stripeErrors.push(
-            formatErrorMessage("Payment methods lookup failed", error)
+            formatErrorMessage(
+              "Payment methods lookup failed",
+              paymentMethodsResult.reason
+            )
           );
         }
 
-        try {
-          const invoiceList = await stripe.invoices.list({
-            customer: stripeCustomerId,
-            limit: 12,
-          });
-          invoices = invoiceList.data.map((invoice) => {
+        if (invoicesResult.status === "fulfilled") {
+          invoices = invoicesResult.value.data.map((invoice) => {
             const compat = invoice as StripeInvoiceCompat;
             return {
               id: invoice.id,
@@ -550,8 +912,10 @@ export async function getDashboardBillingDataForUser(
               invoicePdfUrl: invoice.invoice_pdf ?? null,
             };
           });
-        } catch (error) {
-          stripeErrors.push(formatErrorMessage("Invoices lookup failed", error));
+        } else {
+          stripeErrors.push(
+            formatErrorMessage("Invoices lookup failed", invoicesResult.reason)
+          );
         }
       }
     } catch (error) {
@@ -606,6 +970,43 @@ export async function getDashboardBillingDataForUser(
     voidedPeriods,
   };
 
+  const orderById = new Map(orderRows.map((row) => [row.id, row] as const));
+  const bundlePurchases: DashboardBillingBundlePurchase[] = bundleRows
+    .map((bundleRow) => {
+      const orderRow = orderById.get(bundleRow.order_id);
+      return {
+        id: bundleRow.id,
+        orderId: bundleRow.order_id,
+        checkoutSessionId:
+          bundleRow.provider_checkout_session_id ??
+          orderRow?.provider_checkout_session_id ??
+          "",
+        paymentIntentId: bundleRow.provider_payment_intent_id ?? null,
+        invoiceId: bundleRow.provider_invoice_id ?? null,
+        bundlePriceId: bundleRow.bundle_price_id ?? null,
+        orderStatus: orderRow?.status ?? "pending",
+        purchaseStatus: bundleRow.purchase_status,
+        purchasedAt: bundleRow.purchased_at,
+        quantity: bundleRow.quantity,
+        currency: normalizeCurrency(orderRow?.currency),
+        subtotalMinor: toMinorNumber(orderRow?.subtotal_minor),
+        taxMinor: toMinorNumber(orderRow?.tax_minor),
+        shippingMinor: toMinorNumber(orderRow?.shipping_minor),
+        totalMinor: toMinorNumber(orderRow?.total_minor),
+        receiptUrl: orderRow?.receipt_url ?? null,
+        shippingRateId: bundleRow.shipping_rate_id ?? null,
+        shippingName: bundleRow.shipping_name ?? null,
+        shippingPhone: bundleRow.shipping_phone ?? null,
+        shippingAddress: bundleRow.shipping_address ?? null,
+        createdAt: orderRow?.created_at ?? bundleRow.purchased_at,
+        updatedAt: orderRow?.updated_at ?? bundleRow.purchased_at,
+      };
+    })
+    .sort(
+      (a, b) =>
+        new Date(b.purchasedAt).getTime() - new Date(a.purchasedAt).getTime()
+    );
+
   return {
     summary,
     complimentaryWindow,
@@ -613,6 +1014,8 @@ export async function getDashboardBillingDataForUser(
     subscription,
     paymentMethods,
     invoices,
+    bundlePurchases,
+    warnings,
     stripe: {
       enabled: stripeEnabled,
       customerId: stripeCustomerId,

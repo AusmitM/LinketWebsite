@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
 
   if (!user) {
     const base = getConfiguredSiteOrigin().replace(/\/$/, "");
-    const nextPath = `${request.nextUrl.pathname}${request.nextUrl.search}`;
+    const nextPath = "/dashboard/billing";
     return NextResponse.redirect(
       `${base}/auth?view=signin&next=${encodeURIComponent(nextPath)}`,
       303

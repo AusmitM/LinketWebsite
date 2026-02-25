@@ -16,6 +16,24 @@ const PASSWORD_LENGTH_ERROR = "Password must be at least 6 characters.";
 const PASSWORD_STRENGTH_ERROR =
   "Use a stronger password: include at least 1 lowercase letter, 1 uppercase letter, 1 number, and 1 symbol.";
 
+function sanitizeAuthNextPath(value: string | null | undefined) {
+  if (!value) return DEFAULT_NEXT;
+  const trimmed = value.trim();
+  if (!trimmed) return DEFAULT_NEXT;
+
+  const withLeadingSlash = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+  if (withLeadingSlash.startsWith("//")) return DEFAULT_NEXT;
+  if (withLeadingSlash.startsWith("/api/")) return DEFAULT_NEXT;
+
+  try {
+    const parsed = new URL(withLeadingSlash, "http://localhost");
+    if (parsed.pathname.startsWith("/api/")) return DEFAULT_NEXT;
+    return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+  } catch {
+    return DEFAULT_NEXT;
+  }
+}
+
 function getPasswordRequirementStatus(value: string) {
   return (
     {
@@ -59,10 +77,7 @@ export default function AuthPage() {
   const searchParams = useSearchParams();
   const nextParam = searchParams.get("next");
   const next = useMemo(() => {
-    if (!nextParam) return DEFAULT_NEXT;
-    const trimmed = nextParam.trim();
-    if (!trimmed) return DEFAULT_NEXT;
-    return trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+    return sanitizeAuthNextPath(nextParam);
   }, [nextParam]);
   const oauthError = searchParams.get("error");
   const oauthMessage = searchParams.get("message");

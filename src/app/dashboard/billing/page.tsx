@@ -35,8 +35,13 @@ async function resolveSearchParams(
 
 function toCheckoutStatus(
   value: string | null
-): "success" | "cancel" | "incomplete" | null {
-  if (value === "success" || value === "cancel" || value === "incomplete") {
+): "success" | "cancel" | "incomplete" | "processing" | null {
+  if (
+    value === "success" ||
+    value === "cancel" ||
+    value === "incomplete" ||
+    value === "processing"
+  ) {
     return value;
   }
   return null;
@@ -61,12 +66,33 @@ function toSubscriptionNotice(value: string | null): "cancel_scheduled" | null {
   return null;
 }
 
+function toBillingResume(
+  value: string | null
+):
+  | "subscribe"
+  | "bundle_checkout"
+  | "portal"
+  | "portal_plan"
+  | null {
+  if (
+    value === "subscribe" ||
+    value === "bundle_checkout" ||
+    value === "portal" ||
+    value === "portal_plan"
+  ) {
+    return value;
+  }
+  return null;
+}
+
 export default async function BillingPage({ searchParams }: BillingPageProps) {
   const params = await resolveSearchParams(searchParams);
   const checkoutStatus = toCheckoutStatus(readSearchParam(params.checkout));
   const checkoutPurchase = toCheckoutPurchase(readSearchParam(params.purchase));
+  const checkoutSessionId = readSearchParam(params.session_id);
   const billingErrorCode = readSearchParam(params.billingError);
   const billingIntent = toBillingIntent(readSearchParam(params.intent));
+  const billingResume = toBillingResume(readSearchParam(params.resume));
   const subscriptionNotice = toSubscriptionNotice(
     readSearchParam(params.subscription)
   );
@@ -102,8 +128,10 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
       billingData={billingData}
       checkoutStatus={checkoutStatus}
       checkoutPurchase={checkoutPurchase}
+      checkoutSessionId={checkoutSessionId}
       billingErrorCode={billingErrorCode}
       billingIntent={billingIntent}
+      billingResume={billingResume}
       subscriptionNotice={subscriptionNotice}
     />
   );

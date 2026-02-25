@@ -43,24 +43,34 @@ function toMs(value: string | null) {
   return date.getTime();
 }
 
-async function fetchEarliestClaimAt(userId: string) {
+type ClaimLookupResult = {
+  value: string | null;
+  source: "linket_claim" | "unavailable";
+};
+
+async function fetchEarliestClaimAtByMetadataField(
+  userId: string,
+  metadataField: "entitlement_user_id" | "user_id"
+): Promise<ClaimLookupResult> {
   if (isSupabaseAdminAvailable) {
     const { data, error } = await supabaseAdmin
       .from("tag_events")
       .select("occurred_at")
       .eq("event_type", "claim")
-      .filter("metadata->>user_id", "eq", userId)
+      .filter(`metadata->>${metadataField}`, "eq", userId)
       .order("occurred_at", { ascending: true })
       .limit(1)
       .maybeSingle()
       .returns<ClaimEventRow | null>();
 
     if (error) {
-      if (isMissingRelationError(error.message)) return { value: null, source: "unavailable" as const };
+      if (isMissingRelationError(error.message)) {
+        return { value: null, source: "unavailable" };
+      }
       throw new Error(error.message);
     }
 
-    return { value: data?.occurred_at ?? null, source: "linket_claim" as const };
+    return { value: data?.occurred_at ?? null, source: "linket_claim" };
   }
 
   const supabase = await createServerSupabaseReadonly();
@@ -68,18 +78,57 @@ async function fetchEarliestClaimAt(userId: string) {
     .from("tag_events")
     .select("occurred_at")
     .eq("event_type", "claim")
-    .filter("metadata->>user_id", "eq", userId)
+    .filter(`metadata->>${metadataField}`, "eq", userId)
     .order("occurred_at", { ascending: true })
     .limit(1)
     .maybeSingle()
     .returns<ClaimEventRow | null>();
 
   if (error) {
-    if (isMissingRelationError(error.message)) return { value: null, source: "unavailable" as const };
+    if (isMissingRelationError(error.message)) {
+      return { value: null, source: "unavailable" };
+    }
     throw new Error(error.message);
   }
 
-  return { value: data?.occurred_at ?? null, source: "linket_claim" as const };
+  return { value: data?.occurred_at ?? null, source: "linket_claim" };
+}
+
+function pickEarliestIsoTimestamp(values: Array<string | null>) {
+  let earliest: string | null = null;
+  let earliestMs: number | null = null;
+
+  for (const value of values) {
+    if (!value) continue;
+    const ms = toMs(value);
+    if (ms === null) continue;
+    if (earliestMs === null || ms < earliestMs) {
+      earliest = value;
+      earliestMs = ms;
+    }
+  }
+
+  return earliest;
+}
+
+async function fetchEarliestClaimAt(userId: string) {
+  const [entitlementClaim, legacyClaim] = await Promise.all([
+    fetchEarliestClaimAtByMetadataField(userId, "entitlement_user_id"),
+    fetchEarliestClaimAtByMetadataField(userId, "user_id"),
+  ]);
+
+  const value = pickEarliestIsoTimestamp([
+    entitlementClaim.value,
+    legacyClaim.value,
+  ]);
+
+  const source: "linket_claim" | "unavailable" =
+    entitlementClaim.source === "unavailable" &&
+    legacyClaim.source === "unavailable"
+      ? "unavailable"
+      : "linket_claim";
+
+  return { value, source };
 }
 
 export async function getLinketBundleComplimentaryWindowForUser(

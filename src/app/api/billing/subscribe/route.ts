@@ -3,6 +3,7 @@ import type Stripe from "stripe";
 
 import { getOrCreateStripeCustomerForUser } from "@/lib/billing/dashboard";
 import { getLinketBundleComplimentaryWindowForUser } from "@/lib/billing/linket-bundle";
+import { isTrustedRequestOrigin } from "@/lib/http-origin";
 import { getConfiguredSiteOrigin } from "@/lib/site-url";
 import {
   getPersonalProPriceIdForInterval,
@@ -38,7 +39,7 @@ function toCancelUrl() {
 function pickManageableSubscriptionId(
   subscriptions: Stripe.Subscription[]
 ) {
-  const priority = ["trialing", "active", "past_due", "unpaid", "incomplete", "paused"] as const;
+  const priority = ["trialing", "active", "past_due", "unpaid", "paused"] as const;
   for (const status of priority) {
     const match = subscriptions.find((subscription) => subscription.status === status);
     if (match) return match.id;
@@ -46,7 +47,18 @@ function pickManageableSubscriptionId(
   return null;
 }
 
-export async function GET(request: NextRequest) {
+function buildCheckoutIdempotencyKey(args: {
+  userId: string;
+  interval: BillingInterval;
+  priceId: string;
+}) {
+  const slot = Math.floor(Date.now() / 30_000);
+  return `billing-subscribe:${args.userId}:${args.interval}:${args.priceId}:${slot}`;
+}
+
+async function handleSubscribe(request: NextRequest) {
+  const interval = toInterval(request.nextUrl.searchParams.get("interval"));
+
   const supabase = await createServerSupabase();
   const {
     data: { user },
@@ -54,7 +66,13 @@ export async function GET(request: NextRequest) {
 
   if (!user) {
     const base = getConfiguredSiteOrigin().replace(/\/$/, "");
-    const nextPath = `${request.nextUrl.pathname}${request.nextUrl.search}`;
+    const billingUrl = new URL(`${base}/dashboard/billing`);
+    billingUrl.searchParams.set(
+      "intent",
+      interval === "year" ? "pro_yearly" : "pro_monthly"
+    );
+    billingUrl.searchParams.set("resume", "subscribe");
+    const nextPath = `${billingUrl.pathname}${billingUrl.search}`;
     return NextResponse.redirect(
       `${base}/auth?view=signin&next=${encodeURIComponent(nextPath)}`,
       303
@@ -65,7 +83,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(toBillingUrl("stripe_unavailable"), 303);
   }
 
-  const interval = toInterval(request.nextUrl.searchParams.get("interval"));
   const priceId = getPersonalProPriceIdForInterval(interval);
   if (!priceId) {
     return NextResponse.redirect(toBillingUrl("missing_price_configuration"), 303);
@@ -98,9 +115,17 @@ export async function GET(request: NextRequest) {
       existingSubscriptions.data
     );
     if (manageableSubscriptionId) {
-      const portalUrl = new URL("/api/billing/portal", request.url);
-      portalUrl.searchParams.set("flow", "plan");
-      return NextResponse.redirect(portalUrl, 303);
+      const portalSession = await stripe.billingPortal.sessions.create({
+        customer: customerId,
+        return_url: toBillingUrl(),
+        flow_data: {
+          type: "subscription_update",
+          subscription_update: {
+            subscription: manageableSubscriptionId,
+          },
+        },
+      });
+      return NextResponse.redirect(portalSession.url, 303);
     }
 
     const complimentaryWindow =
@@ -141,6 +166,12 @@ export async function GET(request: NextRequest) {
           ? { trial_end: trialEndUnix }
           : {}),
       },
+    }, {
+      idempotencyKey: buildCheckoutIdempotencyKey({
+        userId: user.id,
+        interval,
+        priceId,
+      }),
     });
 
     if (!checkoutSession.url) {
@@ -152,4 +183,15 @@ export async function GET(request: NextRequest) {
     console.error("Stripe subscription checkout session creation failed:", error);
     return NextResponse.redirect(toBillingUrl("checkout_unavailable"), 303);
   }
+}
+
+export async function GET() {
+  return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
+}
+
+export async function POST(request: NextRequest) {
+  if (!isTrustedRequestOrigin(request)) {
+    return NextResponse.json({ error: "Invalid request origin" }, { status: 403 });
+  }
+  return handleSubscribe(request);
 }

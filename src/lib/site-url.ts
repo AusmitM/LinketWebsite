@@ -12,7 +12,14 @@ function normalizeOrigin(value: string | null | undefined) {
 }
 
 export function getConfiguredSiteOrigin() {
-  return normalizeOrigin(process.env.NEXT_PUBLIC_SITE_URL) ?? DEFAULT_SITE_ORIGIN;
+  const configured = normalizeOrigin(process.env.NEXT_PUBLIC_SITE_URL);
+  if (configured) return configured;
+
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("Missing NEXT_PUBLIC_SITE_URL in production.");
+  }
+
+  return DEFAULT_SITE_ORIGIN;
 }
 
 export function getSiteOrigin() {

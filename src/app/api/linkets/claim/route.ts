@@ -15,7 +15,16 @@ type ClaimPayload = {
 const CLAIMABLE_STATUSES = new Set(["unclaimed", "claimable"]);
 
 function normalizeClaimCode(value: string) {
-  return value.trim().replace(/-/g, "").toUpperCase();
+  return value.trim().replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+}
+
+function buildClaimLookupCandidates(value: string) {
+  const upper = normalizeClaimCode(value);
+  const lower = upper.toLowerCase();
+  return {
+    upper,
+    lower,
+  };
 }
 
 export async function POST(req: NextRequest) {
@@ -34,8 +43,8 @@ export async function POST(req: NextRequest) {
 
   const payload = (await req.json().catch(() => null)) as ClaimPayload | null;
   const rawCode = payload?.chipUid ?? payload?.claimCode ?? "";
-  const normalized = normalizeClaimCode(rawCode || "");
-  if (!normalized) {
+  const candidates = buildClaimLookupCandidates(rawCode || "");
+  if (!candidates.upper) {
     return NextResponse.json({ error: "Claim code is required." }, { status: 400 });
   }
 
@@ -45,7 +54,7 @@ export async function POST(req: NextRequest) {
   const { data: claimTag, error: claimTagError } = await supabaseAdmin
     .from("hardware_tags")
     .select("id,status")
-    .eq("claim_code", normalized)
+    .or(`claim_code.eq.${candidates.upper},claim_code.eq.${candidates.lower}`)
     .maybeSingle();
   if (claimTagError) {
     return NextResponse.json({ error: claimTagError.message }, { status: 500 });
@@ -70,7 +79,9 @@ export async function POST(req: NextRequest) {
     const { data: tokenTag, error: tokenError } = await supabaseAdmin
       .from("hardware_tags")
       .select("id,status")
-      .or(`chip_uid.eq.${normalized},public_token.eq.${normalized}`)
+      .or(
+        `chip_uid.eq.${candidates.upper},chip_uid.eq.${candidates.lower},public_token.eq.${candidates.upper},public_token.eq.${candidates.lower}`
+      )
       .maybeSingle();
     if (tokenError) {
       return NextResponse.json({ error: tokenError.message }, { status: 500 });
@@ -127,7 +138,13 @@ export async function POST(req: NextRequest) {
   await supabaseAdmin.from("tag_events").insert({
     tag_id: tagId,
     event_type: "claim",
-    metadata: { user_id: auth.user.id },
+    metadata: {
+      user_id: auth.user.id,
+      claimer_user_id: auth.user.id,
+      entitlement_user_id: auth.user.id,
+      entitlement_source: "linket_claim",
+      giftable: true,
+    },
   });
 
   return NextResponse.json({ ok: true, assignmentId: assignment?.id ?? null });

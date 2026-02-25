@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import type Stripe from "stripe";
 
 import { getOrCreateStripeCustomerForUser } from "@/lib/billing/dashboard";
+import { isTrustedRequestOrigin } from "@/lib/http-origin";
 import { getConfiguredSiteOrigin } from "@/lib/site-url";
 import {
   getLinketBundleAllowedShippingCountries,
@@ -32,7 +33,7 @@ function toBillingUrl(errorCode?: string) {
 
 function toSuccessUrl() {
   const base = getConfiguredSiteOrigin().replace(/\/$/, "");
-  return `${base}/dashboard/billing?checkout=success&purchase=bundle`;
+  return `${base}/dashboard/billing?checkout=processing&purchase=bundle&session_id={CHECKOUT_SESSION_ID}`;
 }
 
 function toIncompleteUrl() {
@@ -40,7 +41,12 @@ function toIncompleteUrl() {
   return `${base}/dashboard/billing?checkout=incomplete&purchase=bundle`;
 }
 
-export async function GET(request: NextRequest) {
+function buildCheckoutIdempotencyKey(args: { userId: string; priceId: string }) {
+  const slot = Math.floor(Date.now() / 30_000);
+  return `billing-bundle:${args.userId}:${args.priceId}:${slot}`;
+}
+
+async function handleBundleCheckout(request: NextRequest) {
   const supabase = await createServerSupabase();
   const {
     data: { user },
@@ -48,7 +54,10 @@ export async function GET(request: NextRequest) {
 
   if (!user) {
     const base = getConfiguredSiteOrigin().replace(/\/$/, "");
-    const nextPath = `${request.nextUrl.pathname}${request.nextUrl.search}`;
+    const billingUrl = new URL(`${base}/dashboard/billing`);
+    billingUrl.searchParams.set("intent", "bundle");
+    billingUrl.searchParams.set("resume", "bundle_checkout");
+    const nextPath = `${billingUrl.pathname}${billingUrl.search}`;
     return NextResponse.redirect(
       `${base}/auth?view=signin&next=${encodeURIComponent(nextPath)}`,
       303
@@ -100,6 +109,9 @@ export async function GET(request: NextRequest) {
       success_url: toSuccessUrl(),
       cancel_url: toIncompleteUrl(),
       line_items: [{ price: priceId, quantity: 1 }],
+      automatic_tax: {
+        enabled: true,
+      },
       billing_address_collection: "required",
       shipping_address_collection: {
         allowed_countries:
@@ -112,9 +124,12 @@ export async function GET(request: NextRequest) {
       client_reference_id: user.id,
       metadata: {
         user_id: user.id,
+        purchaser_user_id: user.id,
         plan_scope: "personal",
         purchase_type: "web_plus_linket_bundle",
         entitlement_start: "linket_claim",
+        entitlement_owner: "claimer_user",
+        giftable: "true",
       },
       invoice_creation: {
         enabled: true,
@@ -122,11 +137,19 @@ export async function GET(request: NextRequest) {
           metadata: {
             user_id: user.id,
             supabase_user_id: user.id,
+            purchaser_user_id: user.id,
             plan_scope: "personal",
             purchase_type: "web_plus_linket_bundle",
+            entitlement_owner: "claimer_user",
+            giftable: "true",
           },
         },
       },
+    }, {
+      idempotencyKey: buildCheckoutIdempotencyKey({
+        userId: user.id,
+        priceId,
+      }),
     });
 
     if (!checkoutSession.url) {
@@ -138,4 +161,15 @@ export async function GET(request: NextRequest) {
     console.error("Stripe bundle checkout session creation failed:", error);
     return NextResponse.redirect(toBillingUrl("checkout_unavailable"), 303);
   }
+}
+
+export async function GET() {
+  return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
+}
+
+export async function POST(request: NextRequest) {
+  if (!isTrustedRequestOrigin(request)) {
+    return NextResponse.json({ error: "Invalid request origin" }, { status: 403 });
+  }
+  return handleBundleCheckout(request);
 }

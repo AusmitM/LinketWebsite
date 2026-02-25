@@ -20,12 +20,24 @@ import { toast } from "@/components/system/toaster";
 import { useThemeOptional } from "@/components/theme/theme-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { getBrowserCsrfToken, CSRF_HEADER_NAME } from "@/lib/csrf";
 import { cn } from "@/lib/utils";
 
 type SetupIntentResponse = {
   clientSecret?: string;
   error?: string;
 };
+
+function buildJsonHeaders() {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  const csrfToken = getBrowserCsrfToken();
+  if (csrfToken) {
+    headers[CSRF_HEADER_NAME] = csrfToken;
+  }
+  return headers;
+}
 
 const stripePublishableKey =
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?.trim() ?? "";
@@ -123,9 +135,7 @@ export default function BrandedCardEntry() {
 
         const response = await fetch("/api/billing/setup-intent", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: buildJsonHeaders(),
           signal: controller.signal,
         });
         const payload = (await response.json().catch(() => null)) as
@@ -306,9 +316,7 @@ function BrandedCardEntryForm({
 
       const response = await fetch("/api/billing/payment-method/default", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: buildJsonHeaders(),
         body: JSON.stringify({ paymentMethodId }),
       });
       const payload = (await response.json().catch(() => null)) as

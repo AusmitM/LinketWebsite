@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   AlertCircle,
   ExternalLink,
@@ -28,8 +29,15 @@ type LinketsContentProps = {
   variant?: "standalone" | "embedded";
 };
 
+function normalizeClaimInput(value: string | null | undefined) {
+  if (!value) return "";
+  return value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+}
+
 export default function LinketsContent({ variant = "standalone" }: LinketsContentProps) {
   const isEmbedded = variant === "embedded";
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const dashboardUser = useDashboardUser();
   const [userId, setUserId] = useState<string | null>(dashboardUser?.id ?? null);
   const [loading, setLoading] = useState(true);
@@ -38,6 +46,10 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
   const [claimCode, setClaimCode] = useState("");
   const [claiming, setClaiming] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const claimCodeFromQuery = useMemo(
+    () => normalizeClaimInput(searchParams.get("claim")),
+    [searchParams]
+  );
 
   useEffect(() => {
     if (dashboardUser) {
@@ -94,6 +106,11 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
     }
   }, [userId, loadData]);
 
+  useEffect(() => {
+    if (!claimCodeFromQuery) return;
+    setClaimCode((current) => current || claimCodeFromQuery);
+  }, [claimCodeFromQuery]);
+
   const activeProfileOptions = useMemo(() => {
     return profiles.map((profile) => ({
       id: profile.id,
@@ -149,7 +166,8 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
       toast({ title: "Sign in required", variant: "destructive" });
       return;
     }
-    if (!claimCode.trim()) {
+    const normalizedClaimCode = normalizeClaimInput(claimCode);
+    if (!normalizedClaimCode) {
       toast({ title: "Enter a claim code", variant: "destructive" });
       return;
     }
@@ -158,13 +176,21 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
       const response = await fetch("/api/linkets/claim", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, chipUid: claimCode.trim() }),
+        body: JSON.stringify({ userId, chipUid: normalizedClaimCode }),
       });
       if (!response.ok) {
         const body = await response.json().catch(() => null);
         throw new Error((body?.error as string) || "Unable to claim Linket");
       }
       setClaimCode("");
+      if (claimCodeFromQuery) {
+        const params = new URLSearchParams(searchParams.toString());
+        params.delete("claim");
+        const nextQuery = params.toString();
+        router.replace(nextQuery ? `/dashboard/linkets?${nextQuery}` : "/dashboard/linkets", {
+          scroll: false,
+        });
+      }
       toast({ title: "Linket claimed", description: "Assign a profile below.", variant: "success" });
       await loadData(userId);
     } catch (error) {
@@ -226,9 +252,7 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
                 placeholder="e.g., ABC123"
                 value={claimCode}
                 onChange={(event) => {
-                  const nextValue = event.target.value
-                    .toUpperCase()
-                    .replace(/[^A-Z0-9]/g, "");
+                  const nextValue = normalizeClaimInput(event.target.value);
                   setClaimCode(nextValue);
                 }}
                 disabled={claiming}
@@ -237,6 +261,11 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
               <p className="text-xs text-muted-foreground">
                 Use this if you cannot tap the tag right now. Codes are printed with each Linket.
               </p>
+              {claimCodeFromQuery ? (
+                <p className="rounded-xl border border-emerald-300 bg-emerald-50/60 px-2 py-1 text-xs text-emerald-900">
+                  Tap detected. We prefilled your claim code from the Linket URL.
+                </p>
+              ) : null}
             </div>
             <div className="flex items-end justify-end md:justify-start">
               <Button

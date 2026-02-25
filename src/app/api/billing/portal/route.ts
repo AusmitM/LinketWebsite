@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import type Stripe from "stripe";
 
 import { getOrCreateStripeCustomerForUser } from "@/lib/billing/dashboard";
+import { isTrustedRequestOrigin } from "@/lib/http-origin";
 import { getConfiguredSiteOrigin } from "@/lib/site-url";
 import { getStripeSecretKey, getStripeServerClient } from "@/lib/stripe";
 import { createServerSupabase } from "@/lib/supabase/server";
@@ -36,7 +37,6 @@ async function resolveActiveSubscriptionId(
     "active",
     "past_due",
     "unpaid",
-    "incomplete",
     "paused",
   ];
   for (const status of priority) {
@@ -48,7 +48,16 @@ async function resolveActiveSubscriptionId(
   return null;
 }
 
-export async function GET(request: NextRequest) {
+function buildPortalIdempotencyKey(args: {
+  customerId: string;
+  flow: "plan" | null;
+}) {
+  const slot = Math.floor(Date.now() / 30_000);
+  return `billing-portal:${args.customerId}:${args.flow ?? "default"}:${slot}`;
+}
+
+async function handlePortalSession(request: NextRequest) {
+  const portalFlow = toPortalFlow(request.nextUrl.searchParams.get("flow"));
   const supabase = await createServerSupabase();
   const {
     data: { user },
@@ -56,7 +65,12 @@ export async function GET(request: NextRequest) {
 
   if (!user) {
     const base = getConfiguredSiteOrigin().replace(/\/$/, "");
-    const nextPath = `${request.nextUrl.pathname}${request.nextUrl.search}`;
+    const billingUrl = new URL(`${base}/dashboard/billing`);
+    billingUrl.searchParams.set(
+      "resume",
+      portalFlow === "plan" ? "portal_plan" : "portal"
+    );
+    const nextPath = `${billingUrl.pathname}${billingUrl.search}`;
     return NextResponse.redirect(
       `${base}/auth?view=signin&next=${encodeURIComponent(nextPath)}`,
       303
@@ -85,7 +99,6 @@ export async function GET(request: NextRequest) {
 
   try {
     const stripe = getStripeServerClient();
-    const portalFlow = toPortalFlow(request.nextUrl.searchParams.get("flow"));
     const sessionParams: Stripe.BillingPortal.SessionCreateParams = {
       customer: customerId,
       return_url: toBillingUrl(),
@@ -94,9 +107,9 @@ export async function GET(request: NextRequest) {
     if (portalFlow === "plan") {
       const subscriptionId = await resolveActiveSubscriptionId(stripe, customerId);
       if (!subscriptionId) {
-        const subscribeUrl = new URL("/api/billing/subscribe", request.url);
-        subscribeUrl.searchParams.set("interval", "month");
-        return NextResponse.redirect(subscribeUrl, 303);
+        const billingUrl = new URL(toBillingUrl());
+        billingUrl.searchParams.set("intent", "pro_monthly");
+        return NextResponse.redirect(billingUrl.toString(), 303);
       }
       sessionParams.flow_data = {
         type: "subscription_update",
@@ -107,11 +120,28 @@ export async function GET(request: NextRequest) {
     }
 
     const portalSession = await stripe.billingPortal.sessions.create(
-      sessionParams
+      sessionParams,
+      {
+        idempotencyKey: buildPortalIdempotencyKey({
+          customerId,
+          flow: portalFlow,
+        }),
+      }
     );
     return NextResponse.redirect(portalSession.url, 303);
   } catch (error) {
     console.error("Stripe billing portal session creation failed:", error);
     return NextResponse.redirect(toBillingUrl("portal_unavailable"), 303);
   }
+}
+
+export async function GET() {
+  return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
+}
+
+export async function POST(request: NextRequest) {
+  if (!isTrustedRequestOrigin(request)) {
+    return NextResponse.json({ error: "Invalid request origin" }, { status: 403 });
+  }
+  return handlePortalSession(request);
 }

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { toast } from "@/components/system/toaster";
 import { Button } from "@/components/ui/button";
+import { CSRF_HEADER_NAME, getBrowserCsrfToken } from "@/lib/csrf";
 
 type RemovePaymentMethodButtonProps = {
   paymentMethodId: string;
@@ -31,10 +32,12 @@ export default function RemovePaymentMethodButton({
     setPending(true);
 
     try {
+      const csrfToken = getBrowserCsrfToken();
       const response = await fetch("/api/billing/payment-method/remove", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          ...(csrfToken ? { [CSRF_HEADER_NAME]: csrfToken } : {}),
         },
         body: JSON.stringify({ paymentMethodId }),
       });

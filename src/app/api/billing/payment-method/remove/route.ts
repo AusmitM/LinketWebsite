@@ -114,24 +114,16 @@ export async function POST(request: NextRequest) {
     const paymentMethodList = await stripe.paymentMethods.list({
       customer: customerId,
       type: "card",
-      limit: 20,
+      limit: 50,
     });
     const replacementPaymentMethodId =
       paymentMethodList.data.find((method) => method.id !== paymentMethodId)?.id ??
       null;
 
-    if (currentCustomerDefaultPaymentMethodId === paymentMethodId) {
-      await stripe.customers.update(customerId, {
-        invoice_settings: {
-          default_payment_method: replacementPaymentMethodId ?? undefined,
-        },
-      });
-    }
-
     const subscriptions = await stripe.subscriptions.list({
       customer: customerId,
       status: "all",
-      limit: 20,
+      limit: 50,
     });
 
     const updatableStatuses = new Set([
@@ -142,6 +134,27 @@ export async function POST(request: NextRequest) {
       "incomplete",
       "paused",
     ]);
+    const hasManageableSubscription = subscriptions.data.some((subscription) =>
+      updatableStatuses.has(subscription.status)
+    );
+
+    if (!replacementPaymentMethodId && hasManageableSubscription) {
+      return NextResponse.json(
+        {
+          error:
+            "Add another payment method before removing your only card while subscription billing is active.",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (currentCustomerDefaultPaymentMethodId === paymentMethodId) {
+      await stripe.customers.update(customerId, {
+        invoice_settings: {
+          default_payment_method: replacementPaymentMethodId ?? undefined,
+        },
+      });
+    }
 
     await Promise.all(
       subscriptions.data

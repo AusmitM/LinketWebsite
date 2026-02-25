@@ -157,7 +157,13 @@ export async function claimTagForUser(options: {
   await supabaseAdmin.from("tag_events").insert({
     tag_id: tagId,
     event_type: "claim",
-    metadata: { user_id: options.userId },
+    metadata: {
+      user_id: options.userId,
+      claimer_user_id: options.userId,
+      entitlement_user_id: options.userId,
+      entitlement_source: "linket_claim",
+      giftable: true,
+    },
   } satisfies Partial<TagEventRecord>);
 
   const detail = await fetchAssignmentById(assignment.id as string);
@@ -222,4 +228,3 @@ export async function updateAssignmentForUser(options: {
 export async function recordTagEvent(event: Partial<TagEventRecord>) {
   await supabaseAdmin.from("tag_events").insert(event);
 }
-

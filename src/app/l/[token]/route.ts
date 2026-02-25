@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
 import { sanitizeHttpUrl } from "@/lib/security";
+import { createServerSupabaseReadonly } from "@/lib/supabase/server";
 
 const CLAIMABLE_STATUSES = new Set(["unclaimed", "claimable"]);
 
@@ -12,6 +13,23 @@ function normalizeHandle(value: string | null | undefined) {
   const trimmed = value?.trim();
   if (!trimmed) return null;
   return trimmed.startsWith("@") ? trimmed.slice(1) : trimmed;
+}
+
+async function redirectToClaimDestination(req: NextRequest, token: string) {
+  const claimPath = `/dashboard/linkets?claim=${encodeURIComponent(token)}`;
+  const supabase = await createServerSupabaseReadonly();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (user) {
+    return redirectTo(req, claimPath);
+  }
+
+  return redirectTo(
+    req,
+    `/auth?view=signin&next=${encodeURIComponent(claimPath)}`
+  );
 }
 
 type AssignmentLookup = {
@@ -184,7 +202,7 @@ export async function GET(
   }
 
   if (CLAIMABLE_STATUSES.has(tag.status)) {
-    return redirectTo(req, `/dashboard/linkets?claim=${encodeURIComponent(token)}`);
+    return redirectToClaimDestination(req, token);
   }
 
   const { data: assignment, error: assignmentError } = await supabaseAdmin

@@ -58,6 +58,12 @@ type ChargeCompat = Stripe.Charge & {
   invoice?: string | { id: string } | null;
 };
 
+type SubscriptionCompat = Stripe.Subscription & {
+  customer?: string | Stripe.Customer | Stripe.DeletedCustomer | null;
+};
+
+type BillingEventSeverity = "info" | "warning" | "error";
+
 function isUuid(value: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
     value
@@ -118,6 +124,19 @@ function getSubscriptionId(invoice: Stripe.Invoice) {
 
 function getCustomerId(invoice: Stripe.Invoice) {
   const compat = invoice as InvoiceCompat;
+  if (typeof compat.customer === "string") return compat.customer;
+  if (
+    compat.customer &&
+    typeof compat.customer === "object" &&
+    "id" in compat.customer
+  ) {
+    return compat.customer.id;
+  }
+  return null;
+}
+
+function getCustomerIdFromSubscription(subscription: Stripe.Subscription) {
+  const compat = subscription as SubscriptionCompat;
   if (typeof compat.customer === "string") return compat.customer;
   if (
     compat.customer &&
@@ -575,6 +594,220 @@ async function resolveUserIdForCheckoutSession(
   return null;
 }
 
+async function resolveUserIdForSubscription(
+  subscription: Stripe.Subscription,
+  stripe: Stripe
+) {
+  const metadataUserId = readUserIdFromMetadata(subscription.metadata);
+  if (metadataUserId) return metadataUserId;
+
+  const existingSubscriptionUser = await lookupUserIdFromExistingPeriods(
+    "provider_subscription_id",
+    subscription.id
+  );
+  if (existingSubscriptionUser) return existingSubscriptionUser;
+
+  const customerId = getCustomerIdFromSubscription(subscription);
+  if (customerId) {
+    const existingCustomerUser = await lookupUserIdFromExistingPeriods(
+      "provider_customer_id",
+      customerId
+    );
+    if (existingCustomerUser) return existingCustomerUser;
+  }
+
+  if (
+    subscription.customer &&
+    typeof subscription.customer === "object" &&
+    !("deleted" in subscription.customer && subscription.customer.deleted) &&
+    "metadata" in subscription.customer
+  ) {
+    const customerUserId = readUserIdFromMetadata(subscription.customer.metadata);
+    if (customerUserId) return customerUserId;
+  }
+
+  const customerIdForLookup = customerId;
+  if (!customerIdForLookup) return null;
+
+  const customer = await stripe.customers.retrieve(customerIdForLookup);
+  if (
+    customer &&
+    typeof customer === "object" &&
+    "metadata" in customer &&
+    customer.metadata
+  ) {
+    const customerUserId = readUserIdFromMetadata(customer.metadata);
+    if (customerUserId) return customerUserId;
+  }
+
+  return null;
+}
+
+function readChargeReceiptUrl(
+  charge:
+    | Stripe.Charge
+    | {
+        receipt_url?: string | null;
+      }
+    | null
+    | undefined
+) {
+  if (!charge || typeof charge !== "object") return null;
+  if ("receipt_url" in charge && typeof charge.receipt_url === "string") {
+    return charge.receipt_url;
+  }
+  return null;
+}
+
+async function resolveReceiptUrlForCheckoutSession(args: {
+  stripe: Stripe;
+  invoiceId: string | null;
+  paymentIntentId: string | null;
+}) {
+  if (args.invoiceId) {
+    try {
+      const invoice = await args.stripe.invoices.retrieve(args.invoiceId);
+      if (invoice.hosted_invoice_url) return invoice.hosted_invoice_url;
+      if (invoice.invoice_pdf) return invoice.invoice_pdf;
+    } catch (error) {
+      console.warn(
+        `Stripe webhook invoice lookup failed while resolving receipt URL (${args.invoiceId})`,
+        error
+      );
+    }
+  }
+
+  if (args.paymentIntentId) {
+    try {
+      const paymentIntent = await args.stripe.paymentIntents.retrieve(
+        args.paymentIntentId,
+        {
+          expand: ["latest_charge"],
+        }
+      );
+      if (
+        paymentIntent.latest_charge &&
+        typeof paymentIntent.latest_charge === "object"
+      ) {
+        const latestChargeReceiptUrl = readChargeReceiptUrl(
+          paymentIntent.latest_charge
+        );
+        if (latestChargeReceiptUrl) return latestChargeReceiptUrl;
+      }
+      if (typeof paymentIntent.latest_charge === "string") {
+        const charge = await args.stripe.charges.retrieve(
+          paymentIntent.latest_charge
+        );
+        const chargeReceiptUrl = readChargeReceiptUrl(charge);
+        if (chargeReceiptUrl) return chargeReceiptUrl;
+      }
+    } catch (error) {
+      console.warn(
+        `Stripe webhook payment intent lookup failed while resolving receipt URL (${args.paymentIntentId})`,
+        error
+      );
+    }
+  }
+
+  return null;
+}
+
+async function updateBundleOrderAndPurchaseStatusesBySession(args: {
+  checkoutSessionId: string;
+  orderStatus: "pending" | "paid" | "refunded" | "canceled";
+  purchaseStatus: "pending" | "paid" | "refunded" | "canceled";
+  receiptUrl?: string | null;
+}) {
+  const updatedAt = new Date().toISOString();
+
+  const orderUpdate: {
+    status: "pending" | "paid" | "refunded" | "canceled";
+    updated_at: string;
+    receipt_url?: string | null;
+  } = {
+    status: args.orderStatus,
+    updated_at: updatedAt,
+  };
+  if (args.receiptUrl) {
+    orderUpdate.receipt_url = args.receiptUrl;
+  }
+
+  const { data: orderRows, error: orderError } = await supabaseAdmin
+    .from("orders")
+    .update(orderUpdate)
+    .eq("provider", "stripe")
+    .eq("provider_checkout_session_id", args.checkoutSessionId)
+    .select("id");
+
+  if (orderError) {
+    if (isMissingRelationError(orderError.message)) return;
+    throw new Error(orderError.message);
+  }
+
+  const orderIds = (orderRows ?? []).map((row) => row.id);
+  if (orderIds.length === 0) {
+    return;
+  }
+
+  const { error: purchaseError } = await supabaseAdmin
+    .from("bundle_purchases")
+    .update({
+      purchase_status: args.purchaseStatus,
+      updated_at: updatedAt,
+    })
+    .in("order_id", orderIds);
+
+  if (purchaseError) {
+    if (isMissingRelationError(purchaseError.message)) return;
+    throw new Error(purchaseError.message);
+  }
+}
+
+async function markBundleOrderAndPurchaseRefundedByInvoiceId(invoiceId: string) {
+  const updatedAt = new Date().toISOString();
+  const { data: purchaseRows, error: purchaseLookupError } = await supabaseAdmin
+    .from("bundle_purchases")
+    .select("id,order_id")
+    .eq("provider", "stripe")
+    .eq("provider_invoice_id", invoiceId);
+
+  if (purchaseLookupError) {
+    if (isMissingRelationError(purchaseLookupError.message)) return;
+    throw new Error(purchaseLookupError.message);
+  }
+
+  const purchaseIds = (purchaseRows ?? []).map((row) => row.id);
+  const orderIds = (purchaseRows ?? []).map((row) => row.order_id);
+
+  if (purchaseIds.length > 0) {
+    const { error: purchaseUpdateError } = await supabaseAdmin
+      .from("bundle_purchases")
+      .update({
+        purchase_status: "refunded",
+        updated_at: updatedAt,
+      })
+      .in("id", purchaseIds);
+    if (purchaseUpdateError) {
+      if (isMissingRelationError(purchaseUpdateError.message)) return;
+      throw new Error(purchaseUpdateError.message);
+    }
+  }
+
+  if (orderIds.length > 0) {
+    const { error: orderUpdateError } = await supabaseAdmin
+      .from("orders")
+      .update({
+        status: "refunded",
+        updated_at: updatedAt,
+      })
+      .in("id", orderIds);
+    if (orderUpdateError) {
+      if (isMissingRelationError(orderUpdateError.message)) return;
+      throw new Error(orderUpdateError.message);
+    }
+  }
+}
+
 async function processBundleCheckoutSessionCompleted(args: {
   stripe: Stripe;
   eventId: string;
@@ -595,9 +828,15 @@ async function processBundleCheckoutSessionCompleted(args: {
   const createdAtIso = new Date(
     (args.session.created ?? Math.floor(Date.now() / 1000)) * 1000
   ).toISOString();
+  const purchaserUserId = readUserIdFromMetadata(args.session.metadata) ?? userId;
   const customerId = readCheckoutCustomerId(args.session);
   const paymentIntentId = readCheckoutPaymentIntentId(args.session);
   const invoiceId = readCheckoutInvoiceId(args.session);
+  const receiptUrl = await resolveReceiptUrlForCheckoutSession({
+    stripe: args.stripe,
+    invoiceId,
+    paymentIntentId,
+  });
   const shippingRateId = readCheckoutShippingRateId(args.session);
   const shippingAddress =
     args.session.collected_information?.shipping_details?.address ??
@@ -640,11 +879,14 @@ async function processBundleCheckoutSessionCompleted(args: {
 
   const metadata = {
     ...args.session.metadata,
+    purchaser_user_id: purchaserUserId,
     event_id: args.eventId,
     checkout_status: args.session.status ?? null,
     checkout_payment_status: args.session.payment_status ?? null,
     checkout_mode: args.session.mode ?? null,
     entitlement_start: "linket_claim",
+    entitlement_owner: "claimer_user",
+    giftable: "true",
   };
 
   const { data: orderRow, error: orderError } = await supabaseAdmin
@@ -661,6 +903,7 @@ async function processBundleCheckoutSessionCompleted(args: {
         tax_minor: args.session.total_details?.amount_tax ?? 0,
         shipping_minor: args.session.total_details?.amount_shipping ?? 0,
         total_minor: args.session.amount_total ?? 0,
+        receipt_url: receiptUrl,
         metadata,
         updated_at: new Date().toISOString(),
       },
@@ -727,6 +970,179 @@ async function processBundleCheckoutSessionCompleted(args: {
     }
     throw new Error(bundlePurchaseError.message);
   }
+}
+
+function toSubscriptionEventSeverity(
+  status: Stripe.Subscription.Status
+): BillingEventSeverity {
+  if (status === "unpaid" || status === "incomplete_expired") return "error";
+  if (status === "past_due" || status === "incomplete" || status === "canceled") {
+    return "warning";
+  }
+  return "info";
+}
+
+function toInvoiceFailureEventSeverity(invoice: Stripe.Invoice) {
+  const compat = invoice as InvoiceCompat & {
+    attempt_count?: number | null;
+  };
+  const attemptCount =
+    typeof compat.attempt_count === "number" ? compat.attempt_count : 0;
+  if (invoice.status === "uncollectible" || attemptCount >= 3) {
+    return "error" as const;
+  }
+  return "warning" as const;
+}
+
+function getUnixFromStripeTimestamp(value: number | null | undefined) {
+  if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) {
+    return Math.floor(Date.now() / 1000);
+  }
+  return Math.floor(value);
+}
+
+async function upsertSubscriptionBillingEvent(args: {
+  userId: string;
+  providerCustomerId: string | null;
+  providerSubscriptionId: string | null;
+  eventType: string;
+  sourceEventId: string;
+  status: BillingEventSeverity;
+  occurredAtUnix: number;
+  metadata: Record<string, unknown>;
+}) {
+  const { error } = await supabaseAdmin
+    .from("subscription_billing_events")
+    .upsert(
+      {
+        user_id: args.userId,
+        provider: "stripe",
+        provider_customer_id: args.providerCustomerId,
+        provider_subscription_id: args.providerSubscriptionId,
+        event_type: args.eventType,
+        source_event_id: args.sourceEventId,
+        status: args.status,
+        occurred_at: new Date(args.occurredAtUnix * 1000).toISOString(),
+        metadata: args.metadata,
+        updated_at: new Date().toISOString(),
+      },
+      {
+        onConflict: "provider,source_event_id",
+      }
+    );
+
+  if (error) {
+    if (isMissingRelationError(error.message)) {
+      console.warn(
+        "Stripe webhook skipped subscription_billing_events upsert because table is unavailable."
+      );
+      return;
+    }
+    throw new Error(error.message);
+  }
+}
+
+async function processInvoicePaymentFailed(args: {
+  stripe: Stripe;
+  eventId: string;
+  eventType: "invoice.payment_failed";
+  eventCreated: number;
+  invoice: Stripe.Invoice;
+}) {
+  const userId = await resolveUserIdForInvoice(args.invoice, args.stripe);
+  if (!userId) {
+    console.warn(
+      `Stripe webhook skipped ${args.eventType}: missing user_id for invoice ${args.invoice.id}`
+    );
+    return;
+  }
+
+  const compat = args.invoice as InvoiceCompat & {
+    attempt_count?: number | null;
+    attempted?: boolean | null;
+    next_payment_attempt?: number | null;
+  };
+  const subscriptionId = getSubscriptionId(args.invoice);
+  const customerId = getCustomerId(args.invoice);
+
+  await upsertSubscriptionBillingEvent({
+    userId,
+    providerCustomerId: customerId,
+    providerSubscriptionId: subscriptionId,
+    eventType: args.eventType,
+    sourceEventId: args.eventId,
+    status: toInvoiceFailureEventSeverity(args.invoice),
+    occurredAtUnix: getUnixFromStripeTimestamp(args.eventCreated),
+    metadata: {
+      invoice_id: args.invoice.id,
+      invoice_number: args.invoice.number ?? null,
+      invoice_status: args.invoice.status ?? null,
+      amount_due: args.invoice.amount_due ?? null,
+      amount_paid: args.invoice.amount_paid ?? null,
+      amount_remaining: args.invoice.amount_remaining ?? null,
+      attempted:
+        typeof compat.attempted === "boolean" ? compat.attempted : null,
+      attempt_count:
+        typeof compat.attempt_count === "number" ? compat.attempt_count : null,
+      next_payment_attempt:
+        typeof compat.next_payment_attempt === "number"
+          ? compat.next_payment_attempt
+          : null,
+      collection_method: args.invoice.collection_method ?? null,
+      hosted_invoice_url: args.invoice.hosted_invoice_url ?? null,
+      payment_intent_id: getPaymentIntentIdFromInvoice(args.invoice),
+      charge_id: getChargeIdFromInvoice(args.invoice),
+    },
+  });
+}
+
+async function processSubscriptionLifecycleEvent(args: {
+  stripe: Stripe;
+  eventId: string;
+  eventType: "customer.subscription.updated" | "customer.subscription.deleted";
+  eventCreated: number;
+  subscription: Stripe.Subscription;
+}) {
+  const userId = await resolveUserIdForSubscription(args.subscription, args.stripe);
+  if (!userId) {
+    console.warn(
+      `Stripe webhook skipped ${args.eventType}: missing user_id for subscription ${args.subscription.id}`
+    );
+    return;
+  }
+
+  const customerId = getCustomerIdFromSubscription(args.subscription);
+  const firstItem = args.subscription.items.data[0];
+  const firstPriceId =
+    typeof firstItem?.price === "string"
+      ? firstItem.price
+      : firstItem?.price?.id ?? null;
+
+  const severity =
+    args.eventType === "customer.subscription.deleted"
+      ? "warning"
+      : toSubscriptionEventSeverity(args.subscription.status);
+
+  await upsertSubscriptionBillingEvent({
+    userId,
+    providerCustomerId: customerId,
+    providerSubscriptionId: args.subscription.id,
+    eventType: args.eventType,
+    sourceEventId: args.eventId,
+    status: severity,
+    occurredAtUnix: getUnixFromStripeTimestamp(args.eventCreated),
+    metadata: {
+      subscription_status: args.subscription.status,
+      cancel_at_period_end: args.subscription.cancel_at_period_end,
+      cancel_at: args.subscription.cancel_at ?? null,
+      canceled_at: args.subscription.canceled_at ?? null,
+      ended_at: args.subscription.ended_at ?? null,
+      current_period_start: firstItem?.current_period_start ?? null,
+      current_period_end: firstItem?.current_period_end ?? null,
+      price_id: firstPriceId,
+      collection_method: args.subscription.collection_method ?? null,
+    },
+  });
 }
 
 function buildEventMetadata(
@@ -971,11 +1387,21 @@ export async function POST(request: Request) {
   }
 
   try {
-    if (event.type === "checkout.session.completed") {
+    if (
+      event.type === "checkout.session.completed" ||
+      event.type === "checkout.session.async_payment_succeeded"
+    ) {
       await processBundleCheckoutSessionCompleted({
         stripe,
         eventId: event.id,
         session: event.data.object as Stripe.Checkout.Session,
+      });
+    } else if (event.type === "checkout.session.async_payment_failed") {
+      const session = event.data.object as Stripe.Checkout.Session;
+      await updateBundleOrderAndPurchaseStatusesBySession({
+        checkoutSessionId: session.id,
+        orderStatus: "canceled",
+        purchaseStatus: "canceled",
       });
     } else if (
       event.type === "invoice.paid" ||
@@ -994,13 +1420,32 @@ export async function POST(request: Request) {
         eventId: event.id,
         invoice: event.data.object as Stripe.Invoice,
       });
+    } else if (event.type === "invoice.payment_failed") {
+      await processInvoicePaymentFailed({
+        stripe,
+        eventType: event.type,
+        eventId: event.id,
+        eventCreated: event.created,
+        invoice: event.data.object as Stripe.Invoice,
+      });
     } else if (event.type === "charge.refunded") {
       const charge = event.data.object as ChargeCompat;
+      const isFullRefund =
+        charge.refunded ||
+        ((charge.amount_refunded ?? 0) >= Math.max(0, charge.amount ?? 0));
+      if (!isFullRefund) {
+        console.info(
+          `Stripe webhook received partial refund for charge ${charge.id}; leaving billing periods in paid state.`
+        );
+        return NextResponse.json({ received: true, partialRefund: true });
+      }
+
       const invoiceId =
         typeof charge.invoice === "string"
           ? charge.invoice
           : charge.invoice?.id;
       if (invoiceId) {
+        await markBundleOrderAndPurchaseRefundedByInvoiceId(invoiceId);
         const invoice = await stripe.invoices.retrieve(invoiceId, {
           expand: ["customer", "subscription", "lines.data.price"],
         });
@@ -1011,6 +1456,17 @@ export async function POST(request: Request) {
           invoice,
         });
       }
+    } else if (
+      event.type === "customer.subscription.updated" ||
+      event.type === "customer.subscription.deleted"
+    ) {
+      await processSubscriptionLifecycleEvent({
+        stripe,
+        eventType: event.type,
+        eventId: event.id,
+        eventCreated: event.created,
+        subscription: event.data.object as Stripe.Subscription,
+      });
     }
   } catch (error) {
     console.error("Stripe webhook processing failed:", error);

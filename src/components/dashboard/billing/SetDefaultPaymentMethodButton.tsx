@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { toast } from "@/components/system/toaster";
 import { Button } from "@/components/ui/button";
+import { CSRF_HEADER_NAME, getBrowserCsrfToken } from "@/lib/csrf";
 
 type SetDefaultPaymentMethodButtonProps = {
   paymentMethodId: string;
@@ -21,10 +22,12 @@ export default function SetDefaultPaymentMethodButton({
     setPending(true);
 
     try {
+      const csrfToken = getBrowserCsrfToken();
       const response = await fetch("/api/billing/payment-method/default", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          ...(csrfToken ? { [CSRF_HEADER_NAME]: csrfToken } : {}),
         },
         body: JSON.stringify({ paymentMethodId }),
       });

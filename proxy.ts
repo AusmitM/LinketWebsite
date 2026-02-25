@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { CSRF_COOKIE_NAME } from "@/lib/csrf";
 
 const CANONICAL_HOST = "linketconnect.com";
 
@@ -35,6 +36,16 @@ export async function proxy(req: NextRequest) {
   }
 
   const res = NextResponse.next({ request: { headers: req.headers } });
+  if (!req.cookies.get(CSRF_COOKIE_NAME)?.value) {
+    res.cookies.set({
+      name: CSRF_COOKIE_NAME,
+      value: crypto.randomUUID(),
+      sameSite: "lax",
+      secure: url.protocol === "https:",
+      path: "/",
+    });
+  }
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
