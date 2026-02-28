@@ -1044,7 +1044,8 @@ export default function PublicProfileEditorPage() {
     }
     return {
       label: "All changes saved",
-      className: "border-emerald-500/40 bg-emerald-500/10 text-emerald-700",
+      className:
+        "border-emerald-500/55 bg-emerald-500/20 text-emerald-900 shadow-sm shadow-emerald-900/10 dark:border-emerald-400/45 dark:bg-emerald-400/18 dark:text-emerald-100",
     };
   }, [isDirty, saveState, sidebarSavePulse]);
 
