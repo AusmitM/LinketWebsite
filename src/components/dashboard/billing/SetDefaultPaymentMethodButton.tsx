@@ -64,7 +64,7 @@ export default function SetDefaultPaymentMethodButton({
       type="button"
       size="sm"
       variant="outline"
-      className="rounded-full"
+      className="!rounded-full !border !border-slate-300 !bg-none !bg-white !text-slate-900 hover:!bg-slate-100 hover:!text-slate-900"
       onClick={handleClick}
       disabled={pending}
     >

@@ -2,6 +2,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import BrandedCardEntry from "@/components/dashboard/billing/BrandedCardEntry";
+import BillingStripeActionButton from "@/components/dashboard/billing/BillingStripeActionButton";
+import BillingTransientStateCleaner from "@/components/dashboard/billing/BillingTransientStateCleaner";
 import BundlePaymentStatusPoller from "@/components/dashboard/billing/BundlePaymentStatusPoller";
 import RemovePaymentMethodButton from "@/components/dashboard/billing/RemovePaymentMethodButton";
 import SetDefaultPaymentMethodButton from "@/components/dashboard/billing/SetDefaultPaymentMethodButton";
@@ -18,6 +20,11 @@ const DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {
   day: "numeric",
   year: "numeric",
 });
+
+const BILLING_PRIMARY_BUTTON_CLASS =
+  "!rounded-full !border !border-slate-900 !bg-none !bg-slate-900 !text-white hover:!bg-slate-800 hover:!text-white focus-visible:!ring-slate-500";
+const BILLING_SECONDARY_BUTTON_CLASS =
+  "!rounded-full !border !border-slate-300 !bg-none !bg-white !text-slate-900 hover:!bg-slate-100 hover:!text-slate-900 focus-visible:!ring-slate-400";
 
 function formatIsoDate(value: string | null) {
   if (!value) return null;
@@ -54,6 +61,71 @@ function maskMiddle(value: string | null, prefix = 8, suffix = 6) {
   return `${value.slice(0, prefix)}...${value.slice(-suffix)}`;
 }
 
+function readText(value: unknown) {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  return trimmed || null;
+}
+
+function readRecordText(
+  record: Record<string, unknown> | null,
+  keys: string[]
+) {
+  if (!record) return null;
+  for (const key of keys) {
+    const value = readText(record[key]);
+    if (value) return value;
+  }
+  return null;
+}
+
+type ShippingAddressParts = {
+  line1: string | null;
+  line2: string | null;
+  city: string | null;
+  state: string | null;
+  postalCode: string | null;
+  country: string | null;
+};
+
+function readShippingAddressParts(
+  address: Record<string, unknown> | null
+): ShippingAddressParts {
+  return {
+    line1: readRecordText(address, ["line1", "line_1", "address_line1"]),
+    line2: readRecordText(address, ["line2", "line_2", "address_line2"]),
+    city: readRecordText(address, ["city", "locality"]),
+    state: readRecordText(address, ["state", "province", "region"]),
+    postalCode: readRecordText(address, ["postal_code", "postalCode", "zip"]),
+    country: readRecordText(address, ["country", "country_code", "countryCode"]),
+  };
+}
+
+function formatCityStatePostal(parts: ShippingAddressParts) {
+  const city = parts.city ?? "";
+  const state = parts.state ?? "";
+  const postalCode = parts.postalCode ?? "";
+  const cityState = [city, state].filter(Boolean).join(", ");
+  if (!cityState && !postalCode) return null;
+  if (!cityState) return postalCode;
+  if (!postalCode) return cityState;
+  return `${cityState} ${postalCode}`;
+}
+
+function formatShippingAddressLines(address: Record<string, unknown> | null) {
+  if (!address) return null;
+  const parts = readShippingAddressParts(address);
+  const cityStatePostal = formatCityStatePostal(parts);
+  const lines = [parts.line1, parts.line2, cityStatePostal, parts.country].filter(
+    (value): value is string => Boolean(value)
+  );
+  return lines.length > 0 ? lines : null;
+}
+
+function hasStreetAddress(address: Record<string, unknown> | null) {
+  return Boolean(readShippingAddressParts(address).line1);
+}
+
 function getBillingErrorMessage(errorCode: string) {
   switch (errorCode) {
     case "stripe_unavailable":
@@ -64,12 +136,16 @@ function getBillingErrorMessage(errorCode: string) {
       return "Bundle checkout is not configured yet. Contact support to place your order.";
     case "missing_bundle_shipping_configuration":
       return "Bundle shipping rates are not configured yet. Contact support to finish checkout setup.";
+    case "bundle_tax_configuration_required":
+      return "Stripe Tax setup is incomplete. Add your business head-office address in Stripe Tax settings, then retry checkout.";
     case "no_customer":
       return "We could not initialize your billing profile. Please retry or contact support.";
     case "checkout_unavailable":
       return "Checkout could not be started. Please retry in a moment.";
     case "portal_unavailable":
       return "Billing portal is temporarily unavailable. Please try again shortly.";
+    case "invalid_request_origin":
+      return "Request validation failed. Refresh the page and try again.";
     case "no_active_subscription":
       return "No active subscription was found for this account.";
     default:
@@ -123,9 +199,10 @@ export default function BillingContent({
   const subscribeMonthlyHref = "/api/billing/subscribe?interval=month";
   const subscribeYearlyHref = "/api/billing/subscribe?interval=year";
   const bundleCheckoutHref = "/api/billing/bundle-checkout";
+  const portalPlanHref = "/api/billing/portal?flow=plan";
   const cancelSubscriptionActionHref = "/api/billing/subscription/cancel";
   const planActionHref = hasManageableSubscription
-    ? "/api/billing/portal?flow=plan"
+    ? portalPlanHref
     : subscribeMonthlyHref;
   const canManageBilling = stripeEnabled;
   const normalizedBillingErrorCode = billingErrorCode?.trim() || null;
@@ -159,6 +236,10 @@ export default function BillingContent({
     checkoutPurchase === "bundle" &&
     Boolean(normalizedCheckoutSessionId) &&
     bundleCheckoutLifecycleStatus === "processing";
+  const hasBundleProcessingWithoutSessionId =
+    checkoutPurchase === "bundle" &&
+    checkoutStatus === "processing" &&
+    !normalizedCheckoutSessionId;
   const activeBillingWarning = billingWarnings[0] ?? null;
   const fallbackSubscriptionRiskWarning =
     !activeBillingWarning &&
@@ -179,9 +260,22 @@ export default function BillingContent({
       )
     )
   );
+  const complimentaryEndsLabel = formatIsoDate(complimentaryWindow?.endsAt ?? null);
+  const complimentaryStartsLabel = formatIsoDate(complimentaryWindow?.startsAt ?? null);
+  const hasUpcomingComplimentaryWindow =
+    Boolean(complimentaryWindow?.eligible) &&
+    !complimentaryWindow?.active &&
+    typeof complimentaryWindow?.startsInDays === "number" &&
+    complimentaryWindow.startsInDays > 0;
 
   return (
     <div className="space-y-6">
+      <BillingTransientStateCleaner
+        checkoutStatus={checkoutStatus ?? null}
+        checkoutPurchase={checkoutPurchase ?? null}
+        checkoutSessionId={normalizedCheckoutSessionId}
+        billingErrorCode={normalizedBillingErrorCode}
+      />
       {checkoutStatus === "success" ? (
         <p className="rounded-2xl border border-emerald-300 bg-emerald-50/70 px-4 py-3 text-sm text-emerald-900">
           {checkoutPurchase === "bundle" &&
@@ -197,10 +291,29 @@ export default function BillingContent({
       ) : null}
       {checkoutPurchase === "bundle" &&
       bundleCheckoutLifecycleStatus === "processing" &&
-      checkoutStatus !== "success" ? (
+      checkoutStatus !== "success" &&
+      normalizedCheckoutSessionId ? (
         <p className="rounded-2xl border border-blue-300 bg-blue-50/70 px-4 py-3 text-sm text-blue-950">
           Bundle payment is processing. We will confirm it here as soon as Stripe finalizes the charge.
         </p>
+      ) : null}
+      {hasBundleProcessingWithoutSessionId ? (
+        <div className="rounded-2xl border border-amber-300 bg-amber-50/70 px-4 py-3 text-sm text-amber-900">
+          <p className="font-semibold">Bundle status check needs a refresh</p>
+          <p className="mt-1">
+            We could not verify this bundle payment automatically because the
+            checkout session reference is missing. Refresh billing details or
+            restart checkout.
+          </p>
+          <div className="mt-2">
+            <BillingStripeActionButton
+              size="sm"
+              className={BILLING_PRIMARY_BUTTON_CLASS}
+              href={bundleCheckoutHref}
+              idleLabel="Restart bundle checkout"
+            />
+          </div>
+        </div>
       ) : null}
       {checkoutStatus !== "success" &&
       checkoutPurchase === "bundle" &&
@@ -233,25 +346,28 @@ export default function BillingContent({
             {activeBillingWarning?.message ?? fallbackSubscriptionRiskWarning}
           </p>
           {canManageBilling && hasManageableSubscription ? (
-            <form action="/api/billing/portal?flow=plan" method="post" className="mt-2">
-              <Button type="submit" size="sm" variant="outline" className="rounded-full">
-                Update card
-              </Button>
-            </form>
+            <BillingStripeActionButton
+              size="sm"
+              variant="outline"
+              className={`mt-2 ${BILLING_SECONDARY_BUTTON_CLASS}`}
+              href={portalPlanHref}
+              idleLabel="Update card"
+            />
           ) : null}
         </div>
       ) : null}
       {billingResume === "portal_plan" ? (
-        <div className="rounded-2xl border border-blue-300 bg-blue-50/70 px-4 py-3 text-sm text-blue-950">
+        <div className="rounded-2xl border border-slate-300 bg-slate-100/90 px-4 py-3 text-sm text-slate-900">
           <p className="font-semibold">Continue your plan changes</p>
-          <p className="mt-1">
+          <p className="mt-1 text-slate-700">
             You were redirected to sign in. Continue to Stripe billing portal to adjust your plan.
           </p>
-          <form action="/api/billing/portal?flow=plan" method="post" className="mt-2">
-            <Button type="submit" size="sm" className="rounded-full">
-              Continue plan adjustments
-            </Button>
-          </form>
+          <BillingStripeActionButton
+            size="sm"
+            className={`mt-2 ${BILLING_PRIMARY_BUTTON_CLASS}`}
+            href={portalPlanHref}
+            idleLabel="Continue plan adjustments"
+          />
         </div>
       ) : null}
       {normalizedCheckoutSessionId ? (
@@ -267,7 +383,7 @@ export default function BillingContent({
         </p>
       ) : null}
       {billingIntent ? (
-        <div className="rounded-2xl border border-blue-300 bg-blue-50/70 px-4 py-3 text-sm text-blue-950">
+        <div className="rounded-2xl border border-slate-300 bg-slate-100/90 px-4 py-3 text-sm text-slate-900">
           <p className="font-semibold">
             {billingIntent === "bundle"
               ? "You selected the Web + Linket Bundle."
@@ -275,43 +391,43 @@ export default function BillingContent({
                 ? "You selected Paid Web-Only (Pro) yearly."
                 : "You selected Paid Web-Only (Pro) monthly."}
           </p>
-          <p className="mt-1 text-blue-900/90">
+          <p className="mt-1 text-slate-700">
             {billingIntent === "bundle"
-              ? "Complete checkout below. Bundle Pro starts when a Linket is claimed, and the claiming account receives the complimentary period (giftable flow)."
+              ? "Complete checkout below. Complimentary Pro begins when the Linket is claimed; if a paid cycle is already active, it begins at the next renewal boundary."
               : "Complete checkout below to activate this Pro billing interval."}
           </p>
           <div className="mt-2 flex flex-wrap gap-2">
             {billingIntent === "bundle" ? (
-              <form action={bundleCheckoutHref} method="post">
-                <Button type="submit" size="sm" className="rounded-full">
-                  Continue bundle checkout
-                </Button>
-              </form>
+              <BillingStripeActionButton
+                size="sm"
+                className={BILLING_PRIMARY_BUTTON_CLASS}
+                href={bundleCheckoutHref}
+                idleLabel="Continue bundle checkout"
+              />
             ) : billingIntent === "pro_yearly" ? (
               <>
-                <form action={subscribeYearlyHref} method="post">
-                  <Button type="submit" size="sm" className="rounded-full">
-                    Continue yearly checkout
-                  </Button>
-                </form>
-                <form action={subscribeMonthlyHref} method="post">
-                  <Button type="submit" size="sm" variant="outline" className="rounded-full">
-                    Switch to monthly
-                  </Button>
-                </form>
+                <BillingStripeActionButton
+                  size="sm"
+                  className={BILLING_PRIMARY_BUTTON_CLASS}
+                  href={subscribeYearlyHref}
+                  idleLabel="Continue yearly checkout"
+                />
+                <BillingStripeActionButton
+                  size="sm"
+                  variant="outline"
+                  className={BILLING_SECONDARY_BUTTON_CLASS}
+                  href={subscribeMonthlyHref}
+                  idleLabel="Switch to monthly"
+                />
               </>
             ) : (
               <>
-                <form action={subscribeMonthlyHref} method="post">
-                  <Button type="submit" size="sm" className="rounded-full">
-                    Continue monthly checkout
-                  </Button>
-                </form>
-                <form action={subscribeYearlyHref} method="post">
-                  <Button type="submit" size="sm" variant="outline" className="rounded-full">
-                    Switch to yearly
-                  </Button>
-                </form>
+                <BillingStripeActionButton
+                  size="sm"
+                  className={BILLING_PRIMARY_BUTTON_CLASS}
+                  href={subscribeMonthlyHref}
+                  idleLabel="Continue monthly checkout"
+                />
               </>
             )}
           </div>
@@ -330,18 +446,20 @@ export default function BillingContent({
               </p>
             </div>
             {canManageBilling ? (
-              <form action={planActionHref} method="post">
-                <Button
-                  type="submit"
-                  variant="outline"
-                  size="sm"
-                  className="rounded-full"
-                >
-                  Adjust plan
-                </Button>
-              </form>
+              <BillingStripeActionButton
+                variant="outline"
+                size="sm"
+                className={BILLING_SECONDARY_BUTTON_CLASS}
+                href={planActionHref}
+                idleLabel="Adjust plan"
+              />
             ) : (
-              <Button variant="outline" size="sm" className="rounded-full" disabled>
+              <Button
+                variant="outline"
+                size="sm"
+                className={BILLING_SECONDARY_BUTTON_CLASS}
+                disabled
+              >
                 Billing portal unavailable
               </Button>
             )}
@@ -355,6 +473,15 @@ export default function BillingContent({
                   ? ` ${complimentaryWindow.daysRemaining} day${complimentaryWindow.daysRemaining === 1 ? "" : "s"} remaining before billing can start.`
                   : ""}
                 {" "}You can still add a payment method now.
+              </div>
+            ) : hasUpcomingComplimentaryWindow ? (
+              <div className="rounded-2xl border border-blue-300 bg-blue-50/60 px-3 py-2 text-sm text-blue-950">
+                Complimentary Pro is scheduled to begin on{" "}
+                {complimentaryStartsLabel ?? "--"} (next renewal boundary) and
+                continue through {complimentaryEndsLabel ?? "--"}.
+                {typeof complimentaryWindow?.startsInDays === "number"
+                  ? ` Starts in ${complimentaryWindow.startsInDays} day${complimentaryWindow.startsInDays === 1 ? "" : "s"}.`
+                  : ""}
               </div>
             ) : null}
             {summary ? (
@@ -468,16 +595,20 @@ export default function BillingContent({
                   Choose monthly or yearly to activate your paid Pro plan.
                 </p>
                 <div className="mt-2 flex flex-wrap gap-2">
-                  <form action={subscribeMonthlyHref} method="post">
-                    <Button type="submit" size="sm" variant="outline" className="rounded-full">
-                      Monthly
-                    </Button>
-                  </form>
-                  <form action={subscribeYearlyHref} method="post">
-                    <Button type="submit" size="sm" variant="outline" className="rounded-full">
-                      Yearly
-                    </Button>
-                  </form>
+                  <BillingStripeActionButton
+                    size="sm"
+                    variant="outline"
+                    className={BILLING_SECONDARY_BUTTON_CLASS}
+                    href={subscribeMonthlyHref}
+                    idleLabel="Monthly"
+                  />
+                  <BillingStripeActionButton
+                    size="sm"
+                    variant="outline"
+                    className={BILLING_SECONDARY_BUTTON_CLASS}
+                    href={subscribeYearlyHref}
+                    idleLabel="Yearly"
+                  />
                 </div>
               </div>
             ) : null}
@@ -660,6 +791,13 @@ export default function BillingContent({
                   style={{ width: `${loyaltyProgressPercent}%` }}
                 />
               </div>
+              {complimentaryWindow?.active ? (
+                <p className="mt-2 rounded-xl border border-slate-300 bg-slate-100/80 px-2 py-1 text-[11px] text-slate-800">
+                  Loyalty is paused during complimentary Pro until{" "}
+                  {complimentaryEndsLabel ?? "--"}. Paid-day progress resumes
+                  after complimentary coverage ends.
+                </p>
+              ) : null}
             </div>
 
             {personalProLoyalty.eligible ? (
@@ -691,13 +829,27 @@ export default function BillingContent({
 
       <section>
         <Card className="rounded-3xl border bg-card/80 shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold">
-              Bundle orders
-            </CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Track physical-order payment state, shipping details, and receipts. Purchaser and claimant can be different accounts.
-            </p>
+          <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <CardTitle className="text-lg font-semibold">
+                Bundle orders
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Track physical-order payment state, shipping details, and receipts. Purchaser and claimant can be different accounts.
+              </p>
+            </div>
+            {stripeEnabled ? (
+              <BillingStripeActionButton
+                size="sm"
+                className={BILLING_PRIMARY_BUTTON_CLASS}
+                href={bundleCheckoutHref}
+                idleLabel="Get Linket Bundle"
+              />
+            ) : (
+              <Button size="sm" className={BILLING_PRIMARY_BUTTON_CLASS} disabled>
+                Bundle checkout unavailable
+              </Button>
+            )}
           </CardHeader>
           <CardContent className="space-y-2">
             {bundlePurchases.length === 0 ? (
@@ -705,49 +857,124 @@ export default function BillingContent({
                 No bundle orders recorded yet.
               </p>
             ) : (
-              bundlePurchases.map((purchase) => (
-                <div
-                  key={purchase.id}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border px-3 py-2"
-                >
-                  <div>
-                    <div className="font-semibold text-foreground">
-                      {formatMinorAmount(purchase.totalMinor, purchase.currency)} - Qty{" "}
-                      {purchase.quantity}
+              bundlePurchases.map((purchase) => {
+                const etaLabel =
+                  formatIsoDate(purchase.estimatedDeliveryDate) ??
+                  purchase.estimatedDeliveryDate;
+                const shippingAddressLines = formatShippingAddressLines(
+                  purchase.shippingAddress
+                );
+                const shippingAddressLabel = shippingAddressLines
+                  ? shippingAddressLines.join("\n")
+                  : null;
+                const fulfillmentLabel = purchase.fulfillmentStatus
+                  ? formatStatus(purchase.fulfillmentStatus)
+                  : "Pending";
+                const recipientLabel = purchase.shippingName ?? "Not provided";
+                const phoneLabel = purchase.shippingPhone ?? "Not provided";
+                const partialAddress =
+                  Boolean(shippingAddressLines) &&
+                  !hasStreetAddress(purchase.shippingAddress);
+
+                return (
+                  <div
+                    key={purchase.id}
+                    className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border px-3 py-2"
+                  >
+                    <div>
+                      <div className="font-semibold text-foreground">
+                        {formatMinorAmount(purchase.totalMinor, purchase.currency)} - Qty{" "}
+                        {purchase.quantity}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Ordered {formatIsoDate(purchase.purchasedAt) ?? "--"}
+                        {purchase.shippingName ? ` - Ship to ${purchase.shippingName}` : ""}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground">
+                        Session:{" "}
+                        <span
+                          className="block break-all font-mono text-foreground"
+                          title={purchase.checkoutSessionId}
+                        >
+                          {purchase.checkoutSessionId || "--"}
+                        </span>
+                      </p>
+                      <p className="text-[11px] text-muted-foreground">
+                        Recipient: <span className="text-foreground">{recipientLabel}</span>
+                        {" · "}
+                        Phone: <span className="text-foreground">{phoneLabel}</span>
+                      </p>
+                      <p className="text-[11px] text-muted-foreground">
+                        Fulfillment: <span className="text-foreground">{fulfillmentLabel}</span>
+                        {" · "}
+                        {etaLabel ? (
+                          <>
+                            ETA <span className="text-foreground">{etaLabel}</span>
+                          </>
+                        ) : (
+                          "ETA pending"
+                        )}
+                      </p>
+                      {shippingAddressLines ? (
+                        <p className="text-[11px] text-muted-foreground">
+                          Shipping address:{" "}
+                          <span className="mt-1 block whitespace-pre-wrap break-words font-mono text-foreground">
+                            {shippingAddressLabel}
+                          </span>
+                        </p>
+                      ) : (
+                        <p className="text-[11px] text-amber-800">
+                          Shipping address unavailable.
+                        </p>
+                      )}
+                      {partialAddress ? (
+                        <p className="text-[11px] text-amber-800">
+                          Stripe returned a partial shipping address for this
+                          order (street line missing).
+                        </p>
+                      ) : null}
+                      <p className="text-[11px] text-muted-foreground">
+                        {purchase.trackingUrl ? (
+                          <a
+                            href={purchase.trackingUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="font-medium underline underline-offset-2"
+                          >
+                            Track shipment
+                          </a>
+                        ) : purchase.trackingNumber ? (
+                          <>
+                            Tracking:{" "}
+                            <span className="font-mono text-foreground">
+                              {purchase.trackingNumber}
+                            </span>
+                          </>
+                        ) : (
+                          "Tracking pending"
+                        )}
+                      </p>
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      Ordered {formatIsoDate(purchase.purchasedAt) ?? "--"}
-                      {purchase.shippingName ? ` - Ship to ${purchase.shippingName}` : ""}
-                    </p>
-                    <p className="text-[11px] text-muted-foreground">
-                      Session:{" "}
-                      <span
-                        className="font-mono text-foreground"
-                        title={purchase.checkoutSessionId}
-                      >
-                        {maskMiddle(purchase.checkoutSessionId) ?? "--"}
-                      </span>
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary" className="rounded-full">
+                        Purchase {formatStatus(purchase.purchaseStatus)}
+                      </Badge>
+                      <Badge variant="outline" className="rounded-full">
+                        Order {formatStatus(purchase.orderStatus)}
+                      </Badge>
+                      {purchase.receiptUrl ? (
+                        <Button variant="ghost" size="sm" asChild className="rounded-full">
+                          <a href={purchase.receiptUrl} target="_blank" rel="noreferrer">
+                            Receipt
+                          </a>
+                        </Button>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">Receipt pending</span>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className="rounded-full">
-                      Purchase {formatStatus(purchase.purchaseStatus)}
-                    </Badge>
-                    <Badge variant="outline" className="rounded-full">
-                      Order {formatStatus(purchase.orderStatus)}
-                    </Badge>
-                    {purchase.receiptUrl ? (
-                      <Button variant="ghost" size="sm" asChild className="rounded-full">
-                        <a href={purchase.receiptUrl} target="_blank" rel="noreferrer">
-                          Receipt
-                        </a>
-                      </Button>
-                    ) : (
-                      <span className="text-xs text-muted-foreground">Receipt pending</span>
-                    )}
-                  </div>
-                </div>
-              ))
+                );
+              })
             )}
           </CardContent>
         </Card>

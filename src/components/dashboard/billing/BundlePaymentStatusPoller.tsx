@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 type BundlePaymentStatusPollerProps = {
   sessionId: string;
@@ -17,10 +17,13 @@ export default function BundlePaymentStatusPoller({
   enabled,
 }: BundlePaymentStatusPollerProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [status, setStatus] = useState<"processing" | "paid" | "failed">(
     "processing"
   );
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const didClearTransientParamsRef = useRef(false);
 
   const retryHref = useMemo(
     () => "/dashboard/billing?intent=bundle",
@@ -39,6 +42,21 @@ export default function BundlePaymentStatusPoller({
       }
     };
 
+    const clearTransientCheckoutParams = () => {
+      if (didClearTransientParamsRef.current) return;
+      didClearTransientParamsRef.current = true;
+
+      const nextParams = new URLSearchParams(searchParams.toString());
+      nextParams.delete("checkout");
+      nextParams.delete("purchase");
+      nextParams.delete("session_id");
+      const nextPath = nextParams.size
+        ? `${pathname}?${nextParams.toString()}`
+        : pathname;
+
+      router.replace(nextPath, { scroll: false });
+    };
+
     const poll = async () => {
       try {
         const response = await fetch(
@@ -54,7 +72,11 @@ export default function BundlePaymentStatusPoller({
 
         if (payload.status === "paid" || payload.status === "failed") {
           clearPolling();
-          router.refresh();
+          if (payload.status === "paid") {
+            clearTransientCheckoutParams();
+          } else {
+            router.refresh();
+          }
         }
       } catch {
         // Ignore transient polling failures and keep trying.
@@ -74,7 +96,7 @@ export default function BundlePaymentStatusPoller({
       clearTimeout(startTimer);
       clearPolling();
     };
-  }, [enabled, router, sessionId]);
+  }, [enabled, pathname, router, searchParams, sessionId]);
 
   if (!enabled) return null;
 

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
+import { ensureNoChargeDuringComplimentary } from "@/lib/billing/complimentary-subscription";
 import { getLinketBundleComplimentaryWindowForUser } from "@/lib/billing/linket-bundle";
 import { getPersonalProPriceIds, getStripeServerClient, getStripeWebhookSecret } from "@/lib/stripe";
 import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
@@ -318,12 +319,20 @@ function collectInvoicePeriods(invoice: Stripe.Invoice): PeriodWindow[] {
 
 function isWithinComplimentaryWindow(
   periods: PeriodWindow[],
+  complimentaryStartsAt: string | null,
   complimentaryEndsAt: string | null
 ) {
-  if (!complimentaryEndsAt) return false;
+  if (!complimentaryStartsAt || !complimentaryEndsAt) return false;
+  const startsAtMs = new Date(complimentaryStartsAt).getTime();
   const endsAtMs = new Date(complimentaryEndsAt).getTime();
-  if (!Number.isFinite(endsAtMs)) return false;
-  return periods.length > 0 && periods.every((period) => period.start * 1000 < endsAtMs);
+  if (!Number.isFinite(startsAtMs) || !Number.isFinite(endsAtMs)) return false;
+  return (
+    periods.length > 0 &&
+    periods.every(
+      (period) =>
+        period.start * 1000 >= startsAtMs && period.end * 1000 <= endsAtMs
+    )
+  );
 }
 
 async function resolveChargeIdForInvoice(
@@ -529,6 +538,81 @@ function readCheckoutShippingRateId(session: Stripe.Checkout.Session) {
     return shippingRate.id ?? null;
   }
   return null;
+}
+
+type CheckoutShippingDetails = {
+  shippingAddress: Stripe.Address | null;
+  shippingName: string | null;
+  shippingPhone: string | null;
+};
+
+function readCheckoutShippingDetails(
+  session: Stripe.Checkout.Session
+): CheckoutShippingDetails {
+  const shippingDetails = session.collected_information?.shipping_details ?? null;
+  return {
+    shippingAddress:
+      shippingDetails?.address ?? session.customer_details?.address ?? null,
+    shippingName: shippingDetails?.name ?? session.customer_details?.name ?? null,
+    shippingPhone: session.customer_details?.phone ?? null,
+  };
+}
+
+async function resolveCheckoutShippingDetails(args: {
+  stripe: Stripe;
+  session: Stripe.Checkout.Session;
+  customerId: string | null;
+}): Promise<CheckoutShippingDetails> {
+  let details = readCheckoutShippingDetails(args.session);
+
+  if ((!details.shippingAddress || !details.shippingName) && args.session.id) {
+    try {
+      const refreshedSession = await args.stripe.checkout.sessions.retrieve(
+        args.session.id
+      );
+      const refreshedDetails = readCheckoutShippingDetails(refreshedSession);
+      details = {
+        shippingAddress: details.shippingAddress ?? refreshedDetails.shippingAddress,
+        shippingName: details.shippingName ?? refreshedDetails.shippingName,
+        shippingPhone: details.shippingPhone ?? refreshedDetails.shippingPhone,
+      };
+    } catch (error) {
+      console.warn(
+        `Stripe webhook shipping details refresh failed for checkout session ${args.session.id}`,
+        error
+      );
+    }
+  }
+
+  if (
+    (!details.shippingAddress || !details.shippingName || !details.shippingPhone) &&
+    args.customerId
+  ) {
+    try {
+      const customer = await args.stripe.customers.retrieve(args.customerId);
+      if (
+        customer &&
+        typeof customer === "object" &&
+        !("deleted" in customer && customer.deleted)
+      ) {
+        details = {
+          shippingAddress:
+            details.shippingAddress ?? customer.shipping?.address ?? null,
+          shippingName:
+            details.shippingName ?? customer.shipping?.name ?? customer.name ?? null,
+          shippingPhone:
+            details.shippingPhone ?? customer.shipping?.phone ?? customer.phone ?? null,
+        };
+      }
+    } catch (error) {
+      console.warn(
+        `Stripe webhook customer shipping fallback failed for customer ${args.customerId}`,
+        error
+      );
+    }
+  }
+
+  return details;
 }
 
 function mapCheckoutPaymentStatusToOrderStatus(
@@ -838,10 +922,12 @@ async function processBundleCheckoutSessionCompleted(args: {
     paymentIntentId,
   });
   const shippingRateId = readCheckoutShippingRateId(args.session);
-  const shippingAddress =
-    args.session.collected_information?.shipping_details?.address ??
-    args.session.customer_details?.address ??
-    null;
+  const { shippingAddress, shippingName, shippingPhone } =
+    await resolveCheckoutShippingDetails({
+      stripe: args.stripe,
+      session: args.session,
+      customerId,
+    });
   const orderStatus = mapCheckoutPaymentStatusToOrderStatus(
     args.session.payment_status
   );
@@ -947,11 +1033,8 @@ async function processBundleCheckoutSessionCompleted(args: {
         purchase_status: purchaseStatus,
         purchased_at: createdAtIso,
         shipping_rate_id: shippingRateId,
-        shipping_name:
-          args.session.collected_information?.shipping_details?.name ??
-          args.session.customer_details?.name ??
-          null,
-        shipping_phone: args.session.customer_details?.phone ?? null,
+        shipping_name: shippingName,
+        shipping_phone: shippingPhone,
         shipping_address: shippingAddress,
         metadata,
         updated_at: new Date().toISOString(),
@@ -1122,6 +1205,28 @@ async function processSubscriptionLifecycleEvent(args: {
     args.eventType === "customer.subscription.deleted"
       ? "warning"
       : toSubscriptionEventSeverity(args.subscription.status);
+
+  if (args.eventType === "customer.subscription.updated") {
+    try {
+      const complimentaryWindow = await getLinketBundleComplimentaryWindowForUser(
+        userId
+      );
+      if (complimentaryWindow.eligible) {
+        await ensureNoChargeDuringComplimentary({
+          stripe: args.stripe,
+          subscriptionId: args.subscription.id,
+          complimentaryStartsAt: complimentaryWindow.startsAt,
+          complimentaryEndsAt: complimentaryWindow.endsAt,
+          source: "stripe_webhook",
+        });
+      }
+    } catch (error) {
+      console.error(
+        `Stripe webhook failed to enforce complimentary no-charge pause for subscription ${args.subscription.id}:`,
+        error
+      );
+    }
+  }
 
   await upsertSubscriptionBillingEvent({
     userId,
@@ -1329,7 +1434,11 @@ async function processInvoicePeriods(args: {
   const complimentaryInvoice =
     canApplyComplimentaryRefund &&
     complimentaryWindow.active &&
-    isWithinComplimentaryWindow(periods, complimentaryWindow.endsAt);
+    isWithinComplimentaryWindow(
+      periods,
+      complimentaryWindow.startsAt,
+      complimentaryWindow.endsAt
+    );
 
   if (complimentaryInvoice) {
     await refundComplimentaryInvoiceIfNeeded({
@@ -1347,6 +1456,29 @@ async function processInvoicePeriods(args: {
     eventId: args.eventId,
     metadata,
     periods,
+  });
+}
+
+async function processInvoiceUpcoming(args: {
+  stripe: Stripe;
+  invoice: Stripe.Invoice;
+}) {
+  const subscriptionId = getSubscriptionId(args.invoice);
+  if (!subscriptionId) return;
+
+  const userId = await resolveUserIdForInvoice(args.invoice, args.stripe);
+  if (!userId) return;
+
+  const complimentaryWindow =
+    await getLinketBundleComplimentaryWindowForUser(userId);
+  if (!complimentaryWindow.eligible) return;
+
+  await ensureNoChargeDuringComplimentary({
+    stripe: args.stripe,
+    subscriptionId,
+    complimentaryStartsAt: complimentaryWindow.startsAt,
+    complimentaryEndsAt: complimentaryWindow.endsAt,
+    source: "stripe_webhook",
   });
 }
 
@@ -1411,6 +1543,11 @@ export async function POST(request: Request) {
         stripe,
         eventType: event.type,
         eventId: event.id,
+        invoice: event.data.object as Stripe.Invoice,
+      });
+    } else if (event.type === "invoice.upcoming") {
+      await processInvoiceUpcoming({
+        stripe,
         invoice: event.data.object as Stripe.Invoice,
       });
     } else if (event.type === "invoice.voided") {

@@ -163,6 +163,10 @@ export type DashboardBillingBundlePurchase = {
   shippingName: string | null;
   shippingPhone: string | null;
   shippingAddress: Record<string, unknown> | null;
+  trackingNumber: string | null;
+  trackingUrl: string | null;
+  estimatedDeliveryDate: string | null;
+  fulfillmentStatus: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -236,6 +240,31 @@ function toMinorNumber(value: number | string | null | undefined) {
     if (Number.isFinite(parsed)) return parsed;
   }
   return 0;
+}
+
+function readMetadataText(
+  metadata: Record<string, unknown> | null,
+  keys: string[]
+) {
+  if (!metadata) return null;
+  for (const key of keys) {
+    const value = metadata[key];
+    if (typeof value !== "string") continue;
+    const trimmed = value.trim();
+    if (trimmed) return trimmed;
+  }
+  return null;
+}
+
+function mergeMetadata(
+  primary: Record<string, unknown> | null,
+  secondary: Record<string, unknown> | null
+) {
+  if (!primary && !secondary) return null;
+  return {
+    ...(primary ?? {}),
+    ...(secondary ?? {}),
+  } satisfies Record<string, unknown>;
 }
 
 function formatErrorMessage(prefix: string, error: unknown) {
@@ -974,6 +1003,31 @@ export async function getDashboardBillingDataForUser(
   const bundlePurchases: DashboardBillingBundlePurchase[] = bundleRows
     .map((bundleRow) => {
       const orderRow = orderById.get(bundleRow.order_id);
+      const shippingMetadata = mergeMetadata(orderRow?.metadata ?? null, bundleRow.metadata);
+      const trackingNumber = readMetadataText(shippingMetadata, [
+        "tracking_number",
+        "trackingNumber",
+        "shipment_tracking_number",
+      ]);
+      const trackingUrl = readMetadataText(shippingMetadata, [
+        "tracking_url",
+        "trackingUrl",
+        "shipment_tracking_url",
+      ]);
+      const estimatedDeliveryDate = readMetadataText(shippingMetadata, [
+        "estimated_delivery_at",
+        "estimatedDeliveryAt",
+        "estimated_delivery_date",
+        "estimatedDeliveryDate",
+        "eta",
+      ]);
+      const fulfillmentStatus = readMetadataText(shippingMetadata, [
+        "fulfillment_status",
+        "fulfillmentStatus",
+        "shipping_status",
+        "shippingStatus",
+      ]);
+
       return {
         id: bundleRow.id,
         orderId: bundleRow.order_id,
@@ -998,6 +1052,10 @@ export async function getDashboardBillingDataForUser(
         shippingName: bundleRow.shipping_name ?? null,
         shippingPhone: bundleRow.shipping_phone ?? null,
         shippingAddress: bundleRow.shipping_address ?? null,
+        trackingNumber,
+        trackingUrl,
+        estimatedDeliveryDate,
+        fulfillmentStatus,
         createdAt: orderRow?.created_at ?? bundleRow.purchased_at,
         updatedAt: orderRow?.updated_at ?? bundleRow.purchased_at,
       };

@@ -49,7 +49,10 @@ function pickManageableSubscriptionId(subscriptions: Stripe.Subscription[]) {
 
 export async function POST(request: NextRequest) {
   if (!isTrustedRequestOrigin(request)) {
-    return NextResponse.json({ error: "Invalid request origin" }, { status: 403 });
+    return NextResponse.redirect(
+      toBillingUrl({ errorCode: "invalid_request_origin" }),
+      303
+    );
   }
 
   const supabase = await createServerSupabase();

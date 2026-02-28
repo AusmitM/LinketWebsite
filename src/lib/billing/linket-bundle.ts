@@ -10,11 +10,16 @@ type ClaimEventRow = {
   occurred_at: string;
 };
 
+type CoveredPaidPeriodRow = {
+  period_end: string | null;
+};
+
 export type LinketBundleComplimentaryWindow = {
   eligible: boolean;
   startsAt: string | null;
   endsAt: string | null;
   active: boolean;
+  startsInDays: number | null;
   daysRemaining: number | null;
   includedMonths: number;
   source: "linket_claim" | "none" | "unavailable";
@@ -131,6 +136,64 @@ async function fetchEarliestClaimAt(userId: string) {
   return { value, source };
 }
 
+async function fetchDeferredComplimentaryStartAt(
+  userId: string,
+  claimAt: string
+) {
+  const execute = async (
+    db: typeof supabaseAdmin | Awaited<ReturnType<typeof createServerSupabaseReadonly>>
+  ) => {
+    const { data, error } = await db
+      .from("subscription_billing_periods")
+      .select("period_end")
+      .eq("user_id", userId)
+      .eq("provider", "stripe")
+      .eq("status", "paid")
+      .lte("period_start", claimAt)
+      .gt("period_end", claimAt)
+      .order("period_end", { ascending: true })
+      .limit(1)
+      .maybeSingle()
+      .returns<CoveredPaidPeriodRow | null>();
+
+    if (error) throw error;
+    return data?.period_end ?? null;
+  };
+
+  if (isSupabaseAdminAvailable) {
+    try {
+      return await execute(supabaseAdmin);
+    } catch (error) {
+      if (
+        error &&
+        typeof error === "object" &&
+        "message" in error &&
+        typeof error.message === "string" &&
+        isMissingRelationError(error.message)
+      ) {
+        return null;
+      }
+      throw error;
+    }
+  }
+
+  const supabase = await createServerSupabaseReadonly();
+  try {
+    return await execute(supabase);
+  } catch (error) {
+    if (
+      error &&
+      typeof error === "object" &&
+      "message" in error &&
+      typeof error.message === "string" &&
+      isMissingRelationError(error.message)
+    ) {
+      return null;
+    }
+    throw error;
+  }
+}
+
 export async function getLinketBundleComplimentaryWindowForUser(
   userId: string
 ): Promise<LinketBundleComplimentaryWindow> {
@@ -141,6 +204,7 @@ export async function getLinketBundleComplimentaryWindowForUser(
     startsAt: null,
     endsAt: null,
     active: false,
+    startsInDays: null,
     daysRemaining: null,
     includedMonths: includesProMonths,
     source: "none",
@@ -154,7 +218,12 @@ export async function getLinketBundleComplimentaryWindowForUser(
     };
   }
 
-  const endsAt = addUtcMonths(claim.value, includesProMonths);
+  const deferredStartAt = await fetchDeferredComplimentaryStartAt(
+    userId,
+    claim.value
+  );
+  const startsAt = deferredStartAt ?? claim.value;
+  const endsAt = addUtcMonths(startsAt, includesProMonths);
   if (!endsAt) {
     return {
       ...defaultResponse,
@@ -163,8 +232,17 @@ export async function getLinketBundleComplimentaryWindowForUser(
   }
 
   const nowMs = Date.now();
+  const startsAtMs = toMs(startsAt);
   const endsAtMs = toMs(endsAt);
-  const active = endsAtMs !== null && nowMs < endsAtMs;
+  const active =
+    startsAtMs !== null &&
+    endsAtMs !== null &&
+    nowMs >= startsAtMs &&
+    nowMs < endsAtMs;
+  const startsInDays =
+    startsAtMs !== null && nowMs < startsAtMs
+      ? Math.max(1, Math.ceil((startsAtMs - nowMs) / MS_PER_DAY))
+      : null;
   const daysRemaining =
     active && endsAtMs !== null
       ? Math.max(1, Math.ceil((endsAtMs - nowMs) / MS_PER_DAY))
@@ -172,9 +250,10 @@ export async function getLinketBundleComplimentaryWindowForUser(
 
   return {
     eligible: true,
-    startsAt: claim.value,
+    startsAt,
     endsAt,
     active,
+    startsInDays,
     daysRemaining,
     includedMonths: includesProMonths,
     source: "linket_claim",

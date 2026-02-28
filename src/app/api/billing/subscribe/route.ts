@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import type Stripe from "stripe";
 
+import {
+  ensureNoChargeDuringComplimentary,
+  pickManageableSubscriptionId,
+} from "@/lib/billing/complimentary-subscription";
 import { getOrCreateStripeCustomerForUser } from "@/lib/billing/dashboard";
 import { getLinketBundleComplimentaryWindowForUser } from "@/lib/billing/linket-bundle";
 import { isTrustedRequestOrigin } from "@/lib/http-origin";
@@ -34,17 +38,6 @@ function toSuccessUrl() {
 function toCancelUrl() {
   const base = getConfiguredSiteOrigin().replace(/\/$/, "");
   return `${base}/dashboard/billing?checkout=cancel`;
-}
-
-function pickManageableSubscriptionId(
-  subscriptions: Stripe.Subscription[]
-) {
-  const priority = ["trialing", "active", "past_due", "unpaid", "paused"] as const;
-  for (const status of priority) {
-    const match = subscriptions.find((subscription) => subscription.status === status);
-    if (match) return match.id;
-  }
-  return null;
 }
 
 function buildCheckoutIdempotencyKey(args: {
@@ -106,6 +99,8 @@ async function handleSubscribe(request: NextRequest) {
 
   try {
     const stripe = getStripeServerClient();
+    const complimentaryWindow =
+      await getLinketBundleComplimentaryWindowForUser(user.id);
     const existingSubscriptions = await stripe.subscriptions.list({
       customer: customerId,
       status: "all",
@@ -115,6 +110,23 @@ async function handleSubscribe(request: NextRequest) {
       existingSubscriptions.data
     );
     if (manageableSubscriptionId) {
+      if (complimentaryWindow.eligible) {
+        try {
+          await ensureNoChargeDuringComplimentary({
+            stripe,
+            subscriptionId: manageableSubscriptionId,
+            complimentaryStartsAt: complimentaryWindow.startsAt,
+            complimentaryEndsAt: complimentaryWindow.endsAt,
+            source: "billing_subscribe",
+          });
+        } catch (pauseError) {
+          console.error(
+            "Failed to enforce complimentary no-charge pause for existing subscription:",
+            pauseError
+          );
+        }
+      }
+
       const portalSession = await stripe.billingPortal.sessions.create({
         customer: customerId,
         return_url: toBillingUrl(),
@@ -128,8 +140,6 @@ async function handleSubscribe(request: NextRequest) {
       return NextResponse.redirect(portalSession.url, 303);
     }
 
-    const complimentaryWindow =
-      await getLinketBundleComplimentaryWindowForUser(user.id);
     const trialEndMs =
       complimentaryWindow.active && complimentaryWindow.endsAt
         ? new Date(complimentaryWindow.endsAt).getTime()
@@ -185,13 +195,16 @@ async function handleSubscribe(request: NextRequest) {
   }
 }
 
-export async function GET() {
-  return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
+export async function GET(request: NextRequest) {
+  if (!isTrustedRequestOrigin(request)) {
+    return NextResponse.redirect(toBillingUrl("invalid_request_origin"), 303);
+  }
+  return handleSubscribe(request);
 }
 
 export async function POST(request: NextRequest) {
   if (!isTrustedRequestOrigin(request)) {
-    return NextResponse.json({ error: "Invalid request origin" }, { status: 403 });
+    return NextResponse.redirect(toBillingUrl("invalid_request_origin"), 303);
   }
   return handleSubscribe(request);
 }

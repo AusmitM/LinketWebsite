@@ -135,13 +135,16 @@ async function handlePortalSession(request: NextRequest) {
   }
 }
 
-export async function GET() {
-  return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
+export async function GET(request: NextRequest) {
+  if (!isTrustedRequestOrigin(request)) {
+    return NextResponse.redirect(toBillingUrl("invalid_request_origin"), 303);
+  }
+  return handlePortalSession(request);
 }
 
 export async function POST(request: NextRequest) {
   if (!isTrustedRequestOrigin(request)) {
-    return NextResponse.json({ error: "Invalid request origin" }, { status: 403 });
+    return NextResponse.redirect(toBillingUrl("invalid_request_origin"), 303);
   }
   return handlePortalSession(request);
 }

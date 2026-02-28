@@ -1,6 +1,7 @@
 import "server-only";
 
 import { supabaseAdmin, isSupabaseAdminAvailable } from "@/lib/supabase-admin";
+import { getLinketBundleComplimentaryWindowForUser } from "@/lib/billing/linket-bundle";
 import {
   buildDefaultPersonalProLoyaltyStatus,
   type PersonalProLoyaltyStatus,
@@ -20,6 +21,7 @@ function isMissingRelationError(message: string) {
 type SubscriptionBillingPeriodRow = {
   period_start: string | null;
   period_end: string | null;
+  metadata: Record<string, unknown> | null;
 };
 
 type MergedPeriod = {
@@ -32,6 +34,19 @@ function parseIsoToMs(value: string | null) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return null;
   return date.getTime();
+}
+
+function parseIsoToMsFromUnknown(value: unknown) {
+  return typeof value === "string" ? parseIsoToMs(value) : null;
+}
+
+function parseBooleanFromUnknown(value: unknown) {
+  if (typeof value === "boolean") return value;
+  if (typeof value !== "string") return null;
+  const normalized = value.trim().toLowerCase();
+  if (normalized === "true") return true;
+  if (normalized === "false") return false;
+  return null;
 }
 
 function mergeIntervals(intervals: MergedPeriod[]): MergedPeriod[] {
@@ -49,6 +64,61 @@ function mergeIntervals(intervals: MergedPeriod[]): MergedPeriod[] {
   return merged;
 }
 
+function buildIntervalFromBounds(startMs: number, endMs: number): MergedPeriod | null {
+  if (!Number.isFinite(startMs) || !Number.isFinite(endMs)) return null;
+  if (endMs <= startMs) return null;
+  return { startMs, endMs };
+}
+
+function subtractWindowFromInterval(
+  interval: MergedPeriod,
+  window: MergedPeriod
+): MergedPeriod[] {
+  if (interval.endMs <= window.startMs || interval.startMs >= window.endMs) {
+    return [interval];
+  }
+
+  if (interval.startMs >= window.startMs && interval.endMs <= window.endMs) {
+    return [];
+  }
+
+  const result: MergedPeriod[] = [];
+  if (interval.startMs < window.startMs) {
+    const left = buildIntervalFromBounds(interval.startMs, window.startMs);
+    if (left) result.push(left);
+  }
+  if (interval.endMs > window.endMs) {
+    const right = buildIntervalFromBounds(window.endMs, interval.endMs);
+    if (right) result.push(right);
+  }
+  return result;
+}
+
+function subtractWindowFromIntervals(
+  intervals: MergedPeriod[],
+  window: MergedPeriod | null
+) {
+  if (!window) return intervals;
+  return mergeIntervals(
+    intervals.flatMap((interval) => subtractWindowFromInterval(interval, window))
+  );
+}
+
+function readComplimentaryWindowFromMetadata(
+  metadata: Record<string, unknown> | null
+): MergedPeriod | null {
+  if (!metadata) return null;
+  const active = parseBooleanFromUnknown(metadata.complimentary_window_active);
+  if (active !== true) return null;
+
+  const startMs = parseIsoToMsFromUnknown(
+    metadata.complimentary_window_starts_at
+  );
+  const endMs = parseIsoToMsFromUnknown(metadata.complimentary_window_ends_at);
+  if (startMs === null || endMs === null) return null;
+  return buildIntervalFromBounds(startMs, endMs);
+}
+
 export async function getPersonalProLoyaltyStatusForUser(
   userId: string
 ): Promise<PersonalProLoyaltyStatus> {
@@ -60,7 +130,7 @@ export async function getPersonalProLoyaltyStatusForUser(
 
   const { data, error } = await supabaseAdmin
     .from("subscription_billing_periods")
-    .select("period_start,period_end")
+    .select("period_start,period_end,metadata")
     .eq("user_id", userId)
     .eq("provider", "stripe")
     .eq("status", "paid")
@@ -83,22 +153,6 @@ export async function getPersonalProLoyaltyStatusForUser(
   }
 
   const nowMs = Date.now();
-  const earliestStartMs = rows
-    .map((row) => parseIsoToMs(row.period_start))
-    .filter((value): value is number => value !== null)
-    .reduce<number | null>(
-      (current, value) =>
-        current === null ? value : Math.min(current, value),
-      null
-    );
-
-  if (earliestStartMs === null) {
-    return {
-      ...base,
-      source: "none",
-    };
-  }
-
   const mergedIntervals = mergeIntervals(
     rows
       .map((row) => {
@@ -118,15 +172,45 @@ export async function getPersonalProLoyaltyStatusForUser(
     return {
       ...base,
       source: "none",
-      startedAt: new Date(earliestStartMs).toISOString(),
     };
   }
+
+  const complimentaryWindow = await getLinketBundleComplimentaryWindowForUser(userId);
+  const complimentaryWindowInterval = buildIntervalFromBounds(
+    parseIsoToMs(complimentaryWindow.startsAt) ?? Number.NaN,
+    parseIsoToMs(complimentaryWindow.endsAt) ?? Number.NaN
+  );
+  const metadataComplimentaryWindows = mergeIntervals(
+    rows
+      .map((row) => readComplimentaryWindowFromMetadata(row.metadata))
+      .filter((value): value is MergedPeriod => value !== null)
+  );
+
+  let effectiveIntervals = subtractWindowFromIntervals(
+    mergedIntervals,
+    complimentaryWindowInterval
+  );
+  for (const window of metadataComplimentaryWindows) {
+    effectiveIntervals = subtractWindowFromIntervals(effectiveIntervals, window);
+  }
+
+  if (effectiveIntervals.length === 0) {
+    return {
+      ...base,
+      source: "none",
+    };
+  }
+
+  const earliestStartMs = effectiveIntervals.reduce<number>(
+    (current, interval) => Math.min(current, interval.startMs),
+    effectiveIntervals[0].startMs
+  );
 
   const requiredPaidMs = base.requiredPaidDays * MS_PER_DAY;
   let totalPaidMs = 0;
   let eligibilityReachedAtMs: number | null = null;
 
-  for (const interval of mergedIntervals) {
+  for (const interval of effectiveIntervals) {
     const intervalMs = interval.endMs - interval.startMs;
     if (
       eligibilityReachedAtMs === null &&
@@ -141,12 +225,9 @@ export async function getPersonalProLoyaltyStatusForUser(
   const totalPaidDays = Math.floor(totalPaidMs / MS_PER_DAY);
   const eligible = totalPaidMs >= requiredPaidMs;
 
-  const isActivePaidNow = rows.some((row) => {
-    const startMs = parseIsoToMs(row.period_start);
-    const endMs = parseIsoToMs(row.period_end);
-    if (startMs === null || endMs === null) return false;
-    return startMs <= nowMs && nowMs < endMs;
-  });
+  const isActivePaidNow = effectiveIntervals.some(
+    (interval) => interval.startMs <= nowMs && nowMs < interval.endMs
+  );
 
   let eligibleOn: string | null = null;
   let daysUntilEligible: number | null = null;

@@ -46,6 +46,20 @@ function buildCheckoutIdempotencyKey(args: { userId: string; priceId: string }) 
   return `billing-bundle:${args.userId}:${args.priceId}:${slot}`;
 }
 
+function isAutomaticTaxSetupError(error: unknown) {
+  if (!error || typeof error !== "object") return false;
+  const message =
+    "message" in error && typeof error.message === "string"
+      ? error.message.toLowerCase()
+      : "";
+  if (!message) return false;
+  return (
+    (message.includes("automatic tax") &&
+      message.includes("head office address")) ||
+    (message.includes("automatic tax") && message.includes("settings/tax"))
+  );
+}
+
 async function handleBundleCheckout(request: NextRequest) {
   const supabase = await createServerSupabase();
   const {
@@ -105,6 +119,19 @@ async function handleBundleCheckout(request: NextRequest) {
     const checkoutSession = await stripe.checkout.sessions.create({
       mode: "payment",
       customer: customerId,
+      // Keep checkout in the full hosted form so shipping fields and shipping
+      // costs are shown directly on the page instead of Link fast checkout.
+      payment_method_types: ["card"],
+      wallet_options: {
+        // Force standard hosted checkout flow so shipping fields and shipping
+        // cost rows are visible in-session for physical bundle purchases.
+        link: { display: "never" },
+      },
+      customer_update: {
+        address: "auto",
+        name: "auto",
+        shipping: "auto",
+      },
       allow_promotion_codes: true,
       success_url: toSuccessUrl(),
       cancel_url: toIncompleteUrl(),
@@ -159,17 +186,26 @@ async function handleBundleCheckout(request: NextRequest) {
     return NextResponse.redirect(checkoutSession.url, 303);
   } catch (error) {
     console.error("Stripe bundle checkout session creation failed:", error);
+    if (isAutomaticTaxSetupError(error)) {
+      return NextResponse.redirect(
+        toBillingUrl("bundle_tax_configuration_required"),
+        303
+      );
+    }
     return NextResponse.redirect(toBillingUrl("checkout_unavailable"), 303);
   }
 }
 
-export async function GET() {
-  return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
+export async function GET(request: NextRequest) {
+  if (!isTrustedRequestOrigin(request)) {
+    return NextResponse.redirect(toBillingUrl("invalid_request_origin"), 303);
+  }
+  return handleBundleCheckout(request);
 }
 
 export async function POST(request: NextRequest) {
   if (!isTrustedRequestOrigin(request)) {
-    return NextResponse.json({ error: "Invalid request origin" }, { status: 403 });
+    return NextResponse.redirect(toBillingUrl("invalid_request_origin"), 303);
   }
   return handleBundleCheckout(request);
 }

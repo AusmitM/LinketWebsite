@@ -1,5 +1,12 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import {
+  ensureNoChargeDuringComplimentary,
+  pickManageableSubscriptionId,
+} from "@/lib/billing/complimentary-subscription";
+import { getOrCreateStripeCustomerForUser } from "@/lib/billing/dashboard";
+import { getLinketBundleComplimentaryWindowForUser } from "@/lib/billing/linket-bundle";
+import { getStripeSecretKey, getStripeServerClient } from "@/lib/stripe";
 import { createServerSupabaseReadonly } from "@/lib/supabase/server";
 import { getActiveProfileForUser } from "@/lib/profile-service";
 import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
@@ -146,6 +153,54 @@ export async function POST(req: NextRequest) {
       giftable: true,
     },
   });
+
+  if (getStripeSecretKey()) {
+    try {
+      const complimentaryWindow = await getLinketBundleComplimentaryWindowForUser(
+        auth.user.id
+      );
+      if (complimentaryWindow.eligible) {
+        const customerId = await getOrCreateStripeCustomerForUser({
+          userId: auth.user.id,
+          email: auth.user.email ?? null,
+          fullName:
+            (auth.user.user_metadata?.full_name as string | null | undefined) ??
+            (auth.user.user_metadata?.name as string | null | undefined) ??
+            null,
+          firstName:
+            (auth.user.user_metadata?.first_name as string | null | undefined) ??
+            null,
+          lastName:
+            (auth.user.user_metadata?.last_name as string | null | undefined) ??
+            null,
+        });
+
+        if (customerId) {
+          const stripe = getStripeServerClient();
+          const subscriptions = await stripe.subscriptions.list({
+            customer: customerId,
+            status: "all",
+            limit: 20,
+          });
+          const subscriptionId = pickManageableSubscriptionId(subscriptions.data);
+          if (subscriptionId) {
+            await ensureNoChargeDuringComplimentary({
+              stripe,
+              subscriptionId,
+              complimentaryStartsAt: complimentaryWindow.startsAt,
+              complimentaryEndsAt: complimentaryWindow.endsAt,
+              source: "linket_claim_api",
+            });
+          }
+        }
+      }
+    } catch (error) {
+      console.error(
+        "Linket claim completed but failed to enforce complimentary no-charge pause:",
+        error
+      );
+    }
+  }
 
   return NextResponse.json({ ok: true, assignmentId: assignment?.id ?? null });
 }

@@ -88,8 +88,6 @@ function buildCardElementOptions(): StripeCardElementOptions {
 
 export default function BrandedCardEntry() {
   const { theme } = useThemeOptional();
-  const isHookEmOrAggieTheme =
-    theme === "burnt-orange" || theme === "maroon";
   const [intentStarted, setIntentStarted] = useState(false);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [stripeClient, setStripeClient] = useState<StripeClient | null>(null);
@@ -184,10 +182,7 @@ export default function BrandedCardEntry() {
           type="button"
           size="sm"
           variant="outline"
-          className={cn(
-            "rounded-full !bg-none !bg-background !border-border hover:!bg-accent",
-            isHookEmOrAggieTheme ? "!text-white" : "!text-[var(--foreground)]"
-          )}
+          className="!rounded-full !border !border-slate-900 !bg-none !bg-slate-900 !text-white hover:!bg-slate-800 hover:!text-white"
           onClick={() => {
             setIntentStarted(true);
             setReloadNonce((value) => value + 1);
@@ -215,7 +210,7 @@ export default function BrandedCardEntry() {
           type="button"
           size="sm"
           variant="outline"
-          className="rounded-full"
+          className="!rounded-full !border !border-slate-300 !bg-none !bg-white !text-slate-900 hover:!bg-slate-100 hover:!text-slate-900"
           onClick={() => setReloadNonce((value) => value + 1)}
         >
           Retry card form
@@ -410,11 +405,11 @@ function BrandedCardEntryForm({
         <Button
           type="submit"
           size="sm"
-          variant={canSubmit ? "default" : "outline"}
+          variant="outline"
           className={cn(
-            "rounded-full",
+            "!rounded-full !border !border-slate-900 !bg-none !bg-slate-900 !text-white hover:!bg-slate-800 hover:!text-white",
             !canSubmit &&
-              "disabled:!opacity-100 disabled:!bg-muted disabled:!text-foreground disabled:!border-border"
+              "!border-slate-300 !bg-none !bg-slate-100 !text-slate-500 hover:!bg-slate-100 hover:!text-slate-500 disabled:opacity-100"
           )}
           disabled={!canSubmit}
         >
@@ -427,8 +422,8 @@ function BrandedCardEntryForm({
         <Button
           type="button"
           size="sm"
-          variant="ghost"
-          className="rounded-full"
+          variant="outline"
+          className="!rounded-full !border !border-slate-300 !bg-none !bg-white !text-slate-900 hover:!bg-slate-100 hover:!text-slate-900"
           onClick={onRetry}
         >
           Reset

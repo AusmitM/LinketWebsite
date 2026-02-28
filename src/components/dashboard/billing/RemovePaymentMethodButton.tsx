@@ -72,7 +72,7 @@ export default function RemovePaymentMethodButton({
       type="button"
       size="sm"
       variant="outline"
-      className="rounded-full border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
+      className="!rounded-full !border !border-red-300 !bg-none !bg-red-50 !text-red-700 hover:!bg-red-100 hover:!text-red-800"
       onClick={handleClick}
       disabled={pending}
     >
