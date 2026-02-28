@@ -155,7 +155,7 @@ function getBillingErrorMessage(errorCode: string) {
 
 type BillingContentProps = {
   pricing: PublicPricingSnapshot;
-  personalProLoyalty: PersonalProLoyaltyStatus;
+  personalProLoyalty: PersonalProLoyaltyStatus | null;
   billingData: DashboardBillingData | null;
   checkoutStatus?: "success" | "cancel" | "incomplete" | "processing" | null;
   checkoutPurchase?: "bundle" | null;
@@ -178,11 +178,20 @@ export default function BillingContent({
   billingResume,
   subscriptionNotice,
 }: BillingContentProps) {
-  const loyaltyEligibleOnLabel = formatIsoDate(personalProLoyalty.eligibleOn);
-  const initialRateLabel = `${formatMonthly(personalProLoyalty.initialRate.monthly)} or ${formatYearly(personalProLoyalty.initialRate.yearly)}`;
-  const loyaltyRateLabel = `${formatMonthly(personalProLoyalty.loyaltyRate.monthly)} or ${formatYearly(personalProLoyalty.loyaltyRate.yearly)}`;
-  const discountDays =
-    pricing.individual.paidWebOnlyPro.loyalty.requiredPaidDays;
+  const loyaltyDefault = pricing.individual.paidWebOnlyPro;
+  const loyaltySnapshot = personalProLoyalty;
+  const hasLoyaltyStatus = loyaltySnapshot !== null;
+  const initialRate = loyaltySnapshot?.initialRate ?? loyaltyDefault.initial;
+  const loyaltyRate = loyaltySnapshot?.loyaltyRate ?? loyaltyDefault.loyalty.rate;
+  const requiredPaidDays =
+    loyaltySnapshot?.requiredPaidDays ?? loyaltyDefault.loyalty.requiredPaidDays;
+  const totalPaidDays = loyaltySnapshot?.totalPaidDays ?? 0;
+  const loyaltyEligible = loyaltySnapshot?.eligible ?? false;
+  const loyaltyDaysUntilEligible = loyaltySnapshot?.daysUntilEligible ?? null;
+  const loyaltyEligibleOnLabel = formatIsoDate(loyaltySnapshot?.eligibleOn ?? null);
+  const initialRateLabel = `${formatMonthly(initialRate.monthly)} or ${formatYearly(initialRate.yearly)}`;
+  const loyaltyRateLabel = `${formatMonthly(loyaltyRate.monthly)} or ${formatYearly(loyaltyRate.yearly)}`;
+  const discountDays = loyaltyDefault.loyalty.requiredPaidDays;
 
   const summary = billingData?.summary ?? null;
   const complimentaryWindow = billingData?.complimentaryWindow ?? null;
@@ -249,17 +258,15 @@ export default function BillingContent({
     billingData?.subscription?.status === "incomplete_expired")
       ? "A recent renewal attempt needs attention. Update your payment method to avoid interruption."
       : null;
-  const loyaltyProgressPercent = Math.max(
-    0,
-    Math.min(
-      100,
-      Math.round(
-        (personalProLoyalty.totalPaidDays /
-          Math.max(1, personalProLoyalty.requiredPaidDays)) *
-          100
+  const loyaltyProgressPercent = hasLoyaltyStatus
+    ? Math.max(
+        0,
+        Math.min(
+          100,
+          Math.round((totalPaidDays / Math.max(1, requiredPaidDays)) * 100)
+        )
       )
-    )
-  );
+    : 0;
   const complimentaryEndsLabel = formatIsoDate(complimentaryWindow?.endsAt ?? null);
   const complimentaryStartsLabel = formatIsoDate(complimentaryWindow?.startsAt ?? null);
   const hasUpcomingComplimentaryWindow =
@@ -748,10 +755,10 @@ export default function BillingContent({
               </p>
             </div>
             <Badge
-              variant={personalProLoyalty.eligible ? "secondary" : "outline"}
+              variant={loyaltyEligible ? "secondary" : "outline"}
               className="rounded-full"
             >
-              {personalProLoyalty.eligible ? "Active" : "Pending"}
+              {hasLoyaltyStatus ? (loyaltyEligible ? "Active" : "Pending") : "Unavailable"}
             </Badge>
           </CardHeader>
           <CardContent className="space-y-3 text-xs text-muted-foreground">
@@ -779,11 +786,14 @@ export default function BillingContent({
                 <p className="font-semibold text-foreground">
                   Progress
                 </p>
-                <p>
-                  {personalProLoyalty.totalPaidDays}/
-                  {personalProLoyalty.requiredPaidDays} paid days (
-                  {loyaltyProgressPercent}%)
-                </p>
+                {hasLoyaltyStatus ? (
+                  <p>
+                    {totalPaidDays}/{requiredPaidDays} paid days (
+                    {loyaltyProgressPercent}%)
+                  </p>
+                ) : (
+                  <p>Loyalty data unavailable</p>
+                )}
               </div>
               <div className="mt-2 h-2 rounded-full bg-muted">
                 <div
@@ -800,15 +810,20 @@ export default function BillingContent({
               ) : null}
             </div>
 
-            {personalProLoyalty.eligible ? (
+            {!hasLoyaltyStatus ? (
+              <p className="rounded-2xl border border-amber-300 bg-amber-50/60 px-3 py-2 text-amber-900">
+                Loyalty status is temporarily unavailable. Refresh billing
+                details in a moment.
+              </p>
+            ) : loyaltyEligible ? (
               <p className="rounded-2xl border border-emerald-300 bg-emerald-50/60 px-3 py-2 text-emerald-900">
                 Loyalty discount is active for your personal Pro renewal rate.
               </p>
             ) : loyaltyEligibleOnLabel ? (
               <p className="rounded-2xl border bg-card/50 px-3 py-2">
                 Eligible on {loyaltyEligibleOnLabel}
-                {typeof personalProLoyalty.daysUntilEligible === "number"
-                  ? ` (${personalProLoyalty.daysUntilEligible} day${personalProLoyalty.daysUntilEligible === 1 ? "" : "s"} remaining).`
+                {typeof loyaltyDaysUntilEligible === "number"
+                  ? ` (${loyaltyDaysUntilEligible} day${loyaltyDaysUntilEligible === 1 ? "" : "s"} remaining).`
                   : "."}
               </p>
             ) : (

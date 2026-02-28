@@ -1,10 +1,7 @@
 import BillingContent from "@/components/dashboard/billing/BillingContent";
 import { getDashboardBillingDataForUser } from "@/lib/billing/dashboard";
 import { getPersonalProLoyaltyStatusForUser } from "@/lib/billing/loyalty";
-import {
-  buildDefaultPersonalProLoyaltyStatus,
-  getPublicPricingSnapshot,
-} from "@/lib/billing/pricing";
+import { getPublicPricingSnapshot } from "@/lib/billing/pricing";
 import { createServerSupabaseReadonly } from "@/lib/supabase/server";
 
 export const metadata = {
@@ -102,7 +99,7 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  let personalProLoyalty = buildDefaultPersonalProLoyaltyStatus();
+  let personalProLoyalty = null;
   let billingData = null;
 
   if (user?.id) {

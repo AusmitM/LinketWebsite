@@ -121,11 +121,11 @@ function readComplimentaryWindowFromMetadata(
 
 export async function getPersonalProLoyaltyStatusForUser(
   userId: string
-): Promise<PersonalProLoyaltyStatus> {
+): Promise<PersonalProLoyaltyStatus | null> {
   const base = buildDefaultPersonalProLoyaltyStatus();
 
   if (!isSupabaseAdminAvailable) {
-    return base;
+    return null;
   }
 
   const { data, error } = await supabaseAdmin
@@ -139,7 +139,7 @@ export async function getPersonalProLoyaltyStatusForUser(
 
   if (error) {
     if (isMissingRelationError(error.message)) {
-      return base;
+      return null;
     }
     throw new Error(`Unable to resolve loyalty eligibility: ${error.message}`);
   }

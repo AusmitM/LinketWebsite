@@ -1,10 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { createServerSupabase } from "@/lib/supabase/server";
-import {
-  buildDefaultPersonalProLoyaltyStatus,
-  getPublicPricingSnapshot,
-} from "@/lib/billing/pricing";
+import { getPublicPricingSnapshot } from "@/lib/billing/pricing";
 import { getPersonalProLoyaltyStatusForUser } from "@/lib/billing/loyalty";
 
 export const dynamic = "force-dynamic";
@@ -23,7 +20,7 @@ export async function GET() {
     });
   }
 
-  let personalProLoyalty = buildDefaultPersonalProLoyaltyStatus();
+  let personalProLoyalty = null;
   try {
     personalProLoyalty = await getPersonalProLoyaltyStatusForUser(user.id);
   } catch (error) {

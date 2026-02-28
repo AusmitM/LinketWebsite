@@ -232,35 +232,6 @@ export const automationTasks = [
   { id: "auto-3", title: "VIP reorder reminder", schedule: "Monthly", status: "Active" },
 ];
 
-export const billingSummary = {
-  currentPlan: { name: "Launch", price: "$49/mo", seats: 5, renewsOn: "Sep 12, 2025" },
-  usage: { taps: 12840, analyticsSeats: 5, automations: 12 },
-  forecast: { nextMonth: "$72", note: "Adds 3 team seats and automation upgrade" },
-};
-
-export const invoices = [
-  { id: "INV-2043", period: "Aug 2025", amount: "$49.00", status: "Paid", url: "/receipts/INV-2043" },
-  { id: "INV-2042", period: "Jul 2025", amount: "$49.00", status: "Paid", url: "/receipts/INV-2042" },
-  { id: "INV-2041", period: "Jun 2025", amount: "$68.00", status: "Paid", url: "/receipts/INV-2041" },
-];
-
-export const paymentMethods = [
-  { id: "pm-1", brand: "Visa", last4: "4242", expiry: "04/28", primary: true },
-  { id: "pm-2", brand: "Amex", last4: "3014", expiry: "11/27", primary: false },
-];
-
-export const addOnCatalog = [
-  { id: "addon-analytics", name: "Advanced analytics", price: "$19", description: "Funnels, cohorts, Slack digests" },
-  { id: "addon-journeys", name: "Tap Journeys Pro", price: "$29", description: "Automations, personalization tokens" },
-  { id: "addon-hardware", name: "Hardware warranty", price: "$12", description: "24h replacements, asset tracking" },
-];
-
-export const walletPasses = [
-  { id: "apple", label: "Apple Wallet pass", availability: "Production ready" },
-  { id: "google", label: "Google Wallet card", availability: "In review" },
-  { id: "pdf", label: "Offline PDF card", availability: "Download anytime" },
-];
-
 export const localizedFields = [
   { locale: "English", completeness: 100 },
   { locale: "Spanish", completeness: 76 },
