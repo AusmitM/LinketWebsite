@@ -62,8 +62,8 @@ const THEME_OPTIONS: Array<{
   {
     id: "forest",
     label: "Forest",
-    description: "Verdant greens inspired by lush canopies",
-    preview: "linear-gradient(135deg, #252d33 0%, #7e9585 100%)",
+    description: "Moody woodland neutrals with ember accents",
+    preview: "linear-gradient(135deg, #273529 0%, #4a5d4f 55%, #a45b3e 100%)",
     textTone: "light",
   },
   {

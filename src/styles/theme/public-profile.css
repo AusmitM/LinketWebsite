@@ -430,12 +430,12 @@
 
 .theme-forest.public-profile-shell,
 .theme-forest .public-profile-shell {
-  background-color: #223028;
+  background-color: #273529;
   background-image:
-    radial-gradient(124% 90% at 50% -10%, rgba(196, 217, 171, 0.16) 0%, transparent 70%),
-    linear-gradient(180deg, rgba(44, 61, 51, 0.08) 0%, rgba(26, 39, 31, 0.12) 56%, rgba(18, 28, 22, 0.16) 100%),
+    radial-gradient(124% 90% at 50% -10%, rgba(199, 156, 126, 0.2) 0%, transparent 70%),
+    linear-gradient(180deg, rgba(70, 89, 74, 0.08) 0%, rgba(39, 53, 41, 0.11) 56%, rgba(27, 18, 21, 0.14) 100%),
     var(--forest-tree-pattern),
-    linear-gradient(180deg, #2f3d35 0%, #1e2823 100%);
+    linear-gradient(180deg, #44584a 0%, #273529 58%, #1b1215 100%);
   background-size:
     auto,
     100% 100%,
@@ -456,8 +456,8 @@
 .theme-forest .public-profile-backdrop {
   background: linear-gradient(
     180deg,
-    color-mix(in srgb, #314136 90%, transparent),
-    color-mix(in srgb, #243128 95%, transparent)
+    color-mix(in srgb, #44584a 90%, transparent),
+    color-mix(in srgb, #1b1215 95%, transparent)
   );
 }
 

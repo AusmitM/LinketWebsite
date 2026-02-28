@@ -164,41 +164,41 @@
 
 /* Forest theme token mapping */
 .theme-forest {
-  --background: #252d33;
-  --foreground: #f2efe3;
-  --card: rgba(63, 80, 69, 0.94);
-  --card-foreground: #f2efe3;
-  --popover: rgba(63, 80, 69, 0.97);
-  --popover-foreground: #f2efe3;
-  --primary: #7c5c48;
-  --primary-foreground: #ffffff;
-  --secondary: #7e9585;
-  --secondary-foreground: #27312b;
-  --muted: #7e9585;
-  --muted-foreground: #9aa35c;
-  --accent: #9aa35c;
-  --accent-foreground: #1e2522;
-  --destructive: #f27474;
-  --border: #3f5045;
-  --input: #3f5045;
-  --ring: #9aa35c;
+  --background: #273529;
+  --foreground: #c0ae9a;
+  --card: rgba(70, 89, 74, 0.94);
+  --card-foreground: #c0ae9a;
+  --popover: rgba(70, 89, 74, 0.97);
+  --popover-foreground: #c0ae9a;
+  --primary: #a45b3e;
+  --primary-foreground: #0f0407;
+  --secondary: #4a5d4f;
+  --secondary-foreground: #c0ae9a;
+  --muted: #4a5d4f;
+  --muted-foreground: #c0ae9a;
+  --accent: #c79c7e;
+  --accent-foreground: #0f0407;
+  --destructive: #a45b3e;
+  --border: #516556;
+  --input: #516556;
+  --ring: #a45b3e;
   --avatar-border: var(--ring);
-  --sidebar: #252d33;
-  --sidebar-foreground: #f2efe3;
-  --sidebar-primary: #7c5c48;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #7e9585;
-  --sidebar-accent-foreground: #27312b;
-  --sidebar-border: #3f5045;
-  --sidebar-ring: #9aa35c;
-  --premium-gradient: linear-gradient(180deg, #2b3731 0%, #1a241f 100%);
-  --premium-card-gradient: linear-gradient(180deg, rgba(63, 81, 70, 0.96) 0%, rgba(45, 60, 51, 0.92) 100%);
-  --premium-topbar-gradient: linear-gradient(90deg, rgba(42, 54, 46, 0.96) 0%, rgba(31, 42, 36, 0.92) 100%);
-  --premium-border: rgba(242, 239, 227, 0.1);
-  --premium-shadow: 0 18px 45px -30px rgba(17, 24, 20, 0.75);
-  --premium-glow: 0 0 0 1px rgba(36, 46, 40, 0.6);
-  --premium-hairline: rgba(242, 239, 227, 0.12);
-  --premium-inset: 0 1px 0 rgba(255, 255, 255, 0.08) inset;
+  --sidebar: #273529;
+  --sidebar-foreground: #c0ae9a;
+  --sidebar-primary: #a45b3e;
+  --sidebar-primary-foreground: #0f0407;
+  --sidebar-accent: #4a5d4f;
+  --sidebar-accent-foreground: #c0ae9a;
+  --sidebar-border: #516556;
+  --sidebar-ring: #a45b3e;
+  --premium-gradient: linear-gradient(180deg, #44584a 0%, #273529 58%, #1b1215 100%);
+  --premium-card-gradient: linear-gradient(180deg, rgba(70, 89, 74, 0.96) 0%, rgba(39, 53, 41, 0.92) 100%);
+  --premium-topbar-gradient: linear-gradient(90deg, rgba(70, 89, 74, 0.96) 0%, rgba(39, 53, 41, 0.94) 52%, rgba(27, 18, 21, 0.9) 100%);
+  --premium-border: rgba(199, 156, 126, 0.22);
+  --premium-shadow: 0 18px 45px -30px rgba(15, 4, 7, 0.68);
+  --premium-glow: 0 0 0 1px rgba(199, 156, 126, 0.22);
+  --premium-hairline: rgba(199, 156, 126, 0.28);
+  --premium-inset: 0 1px 0 rgba(199, 156, 126, 0.16) inset;
   --forest-tree-pattern: url("/illustrations/forest-trees.svg");
   --forest-tree-size-x: 960px;
   --forest-tree-size-y: 460px;
@@ -207,8 +207,8 @@
 
 /* Forest theme border emphasis */
 #dashboard-theme-scope.theme-forest .border {
-  border-color: rgba(38, 57, 35, 0.45);
-  box-shadow: 0 0 0 1px rgba(23, 35, 21, 0.45);
+  border-color: rgba(199, 156, 126, 0.34);
+  box-shadow: 0 0 0 1px rgba(27, 18, 21, 0.44);
 }
 
 /* Forest theme: keep lead form add-field text readable */
@@ -484,10 +484,10 @@
 /* Forest theme: subtle tree line in preview backgrounds */
 .public-profile-preview.theme-forest {
   background-image:
-    radial-gradient(124% 90% at 50% -10%, rgba(196, 217, 171, 0.16) 0%, transparent 70%),
-    linear-gradient(180deg, rgba(44, 61, 51, 0.08) 0%, rgba(26, 39, 31, 0.12) 56%, rgba(18, 28, 22, 0.16) 100%),
+    radial-gradient(124% 90% at 50% -10%, rgba(199, 156, 126, 0.2) 0%, transparent 70%),
+    linear-gradient(180deg, rgba(70, 89, 74, 0.08) 0%, rgba(39, 53, 41, 0.11) 56%, rgba(27, 18, 21, 0.14) 100%),
     var(--forest-tree-pattern),
-    linear-gradient(180deg, #2f3d35 0%, #1e2823 100%);
+    linear-gradient(180deg, #44584a 0%, #273529 58%, #1b1215 100%);
   background-size:
     auto,
     100% 100%,
@@ -503,8 +503,8 @@
     no-repeat,
     repeat-x,
     no-repeat;
-  border-color: rgba(152, 184, 129, 0.26);
-  box-shadow: 0 24px 44px -34px rgba(10, 19, 14, 0.6), 0 0 0 1px rgba(194, 214, 177, 0.14);
+  border-color: rgba(199, 156, 126, 0.3);
+  box-shadow: 0 24px 44px -34px rgba(27, 18, 21, 0.52), 0 0 0 1px rgba(199, 156, 126, 0.18);
 }
 
 /* Theme-specific light highlight for top bars */
