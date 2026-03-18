@@ -1,7 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+
+import { requireRouteAccess } from "@/lib/api-authorization";
 import { deleteProfileForUser } from "@/lib/profile-service";
+import { validateSearchParams } from "@/lib/request-validation";
 import { isSupabaseAdminAvailable } from "@/lib/supabase-admin";
 import { createServerSupabase } from "@/lib/supabase/server";
+
+const deleteProfileQuerySchema = z.object({
+  userId: z.string().uuid(),
+});
 
 export async function DELETE(
   request: NextRequest,
@@ -9,15 +17,14 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const searchParams = request.nextUrl.searchParams;
-    const userId = searchParams.get("userId");
-
-    if (!userId) {
-      return NextResponse.json(
-        { error: "userId parameter is required" },
-        { status: 400 }
-      );
+    const parsedQuery = validateSearchParams(
+      request.nextUrl.searchParams,
+      deleteProfileQuerySchema
+    );
+    if (!parsedQuery.ok) {
+      return parsedQuery.response;
     }
+    const { userId } = parsedQuery.data;
 
     if (!id) {
       return NextResponse.json(
@@ -26,14 +33,13 @@ export async function DELETE(
       );
     }
 
+    const access = await requireRouteAccess("DELETE /api/linket-profiles/[id]", {
+      resourceUserId: userId,
+    });
+    if (access instanceof NextResponse) {
+      return access;
+    }
     const supabase = await createServerSupabase();
-    const { data, error } = await supabase.auth.getUser();
-    if (error || !data.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    if (data.user.id !== userId) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
 
     let adminSucceeded = false;
     if (isSupabaseAdminAvailable) {

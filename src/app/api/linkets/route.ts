@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerSupabaseReadonly } from "@/lib/supabase/server";
+import { z } from "zod";
+
+import { requireRouteAccess } from "@/lib/api-authorization";
 import { getAssignmentsForUser } from "@/lib/linket-tags";
 import { isSupabaseAdminAvailable } from "@/lib/supabase-admin";
+
+const linketsQuerySchema = z.object({
+  userId: z.string().uuid().optional(),
+});
 
 export async function GET(req: NextRequest) {
   if (!isSupabaseAdminAvailable) {
@@ -11,19 +17,25 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const supabase = await createServerSupabaseReadonly();
-  const { data: auth, error: authError } = await supabase.auth.getUser();
-  if (authError || !auth.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const access = await requireRouteAccess("GET /api/linkets");
+  if (access instanceof NextResponse) {
+    return access;
   }
 
-  const requestedUserId = req.nextUrl.searchParams.get("userId");
-  if (requestedUserId && requestedUserId !== auth.user.id) {
+  const parsedQuery = linketsQuerySchema.safeParse(
+    Object.fromEntries(req.nextUrl.searchParams.entries())
+  );
+  if (!parsedQuery.success) {
+    return NextResponse.json({ error: "Invalid userId." }, { status: 400 });
+  }
+
+  const requestedUserId = parsedQuery.data.userId;
+  if (requestedUserId && requestedUserId !== access.user.id) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   try {
-    const assignments = await getAssignmentsForUser(auth.user.id);
+    const assignments = await getAssignmentsForUser(access.user.id);
     return NextResponse.json(assignments);
   } catch (error) {
     const message =

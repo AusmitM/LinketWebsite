@@ -70,6 +70,11 @@ Optional:
 
 - `NEXT_PUBLIC_SITE_URL` for sitemap/robots and OpenGraph base (defaults to http://localhost:3000)
 - `SUPABASE_SERVICE_ROLE_KEY` for server-side billing/lead update workflows
+- `INTERNAL_SECRET` required in production for request signing, salted identifiers, and security middleware
+- `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` required in production when API rate limiting is enabled
+- `RATE_LIMIT_*` environment variables to tune public, authenticated, and webhook API quotas
+- `CORS_ALLOWED_ORIGINS_DEVELOPMENT`, `CORS_ALLOWED_ORIGINS_STAGING`, `CORS_ALLOWED_ORIGINS_PRODUCTION` for environment-specific trusted origins
+- `CORS_ALLOW_CREDENTIALS`, `CORS_ALLOWED_HEADERS`, and `CORS_ALLOWED_METHODS` for strict API CORS behavior
 - `STRIPE_SECRET_KEY` for Stripe API/webhook processing
 - `STRIPE_WEBHOOK_SECRET` for Stripe signature verification
 - `STRIPE_PERSONAL_PRO_PRICE_IDS` comma-separated Stripe Price IDs that should count toward personal Pro loyalty accrual
@@ -183,6 +188,13 @@ Notes
 ### Security headers
 
 The app sets standard security headers (CSP, X-Frame-Options, Referrer-Policy, Permissions-Policy) in `next.config.ts`. If your Supabase URL changes, rebuild to refresh the CSP allowlist.
+
+### API security defaults
+
+- All `/api/*` routes are rate limited at the edge. Public APIs default to `100 requests / 60s` per IP.
+- Privileged APIs use dual limits: a broader IP ceiling plus a per-user ceiling once the caller is authenticated.
+- Protected API routes accept either the Supabase session cookie used by the web app or `Authorization: Bearer <access-token>`.
+- CORS is deny-by-default. Production only enables cross-origin API access for explicitly allowlisted origins.
 
 ### Private Preview (Password Gate)
 

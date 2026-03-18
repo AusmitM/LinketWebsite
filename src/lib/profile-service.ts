@@ -93,6 +93,7 @@ grant select on table public.profile_links to anon;
 
 import { supabaseAdmin, isSupabaseAdminAvailable } from "@/lib/supabase-admin";
 import { createClient } from "@supabase/supabase-js";
+import { sanitizePublicLinkUrl } from "@/lib/security";
 import { normalizeThemeName, type ThemeName } from "@/lib/themes";
 import type { ProfileLinkRecord, UserProfileRecord } from "@/types/db";
 
@@ -313,7 +314,12 @@ function normalizeIncomingLinksForSave(
   }
 
   return indexed.map((link, index) => {
-    const existing = isUuid(link.id) ? existingById.get(link.id) : undefined;
+    const suppliedId = isUuid(link.id) ? link.id : undefined;
+    if (suppliedId && !existingById.has(suppliedId)) {
+      throw new Error("Profile link id is not owned by this profile.");
+    }
+
+    const existing = suppliedId ? existingById.get(suppliedId) : undefined;
     const isOverride = index === overrideIndex;
     const hasExplicitActive = typeof link.isActive === "boolean";
     const isActive = isOverride
@@ -322,9 +328,9 @@ function normalizeIncomingLinksForSave(
       ? Boolean(link.isActive)
       : existing?.is_active ?? true;
     return {
-      id: link.id,
+      id: suppliedId,
       title: link.title,
-      url: link.url,
+      url: sanitizePublicLinkUrl(link.url),
       order_index: index,
       isActive,
       isOverride,

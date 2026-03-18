@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createServerSupabaseReadonly } from "@/lib/supabase/server";
+import { requireRouteAccess } from "@/lib/api-authorization";
 import { supabaseAdmin, isSupabaseAdminAvailable } from "@/lib/supabase-admin";
 
 async function removeStorageFolder(bucket: string, prefix: string) {
@@ -91,13 +91,12 @@ export async function POST() {
     );
   }
 
-  const supabase = await createServerSupabaseReadonly();
-  const { data: auth, error: authError } = await supabase.auth.getUser();
-  if (authError || !auth.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const access = await requireRouteAccess("POST /api/account/delete");
+  if (access instanceof NextResponse) {
+    return access;
   }
 
-  const userId = auth.user.id;
+  const userId = access.user.id;
 
   try {
     await releaseUserTagAssignments(userId);

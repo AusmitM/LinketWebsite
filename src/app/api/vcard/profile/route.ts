@@ -1,4 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+
+import { requireRouteAccess } from "@/lib/api-authorization";
+import { validateJsonBody, validateSearchParams } from "@/lib/request-validation";
 import { createServerSupabase } from "@/lib/supabase/server";
 
 type VCardFields = {
@@ -34,6 +38,30 @@ const EMPTY_FIELDS: VCardFields = {
   photoData: null,
   photoName: null,
 };
+
+const vcardQuerySchema = z.object({
+  userId: z.string().uuid(),
+});
+
+const vcardBodySchema = z.object({
+  fields: z.object({
+    addressCity: z.string().max(240),
+    addressCountry: z.string().max(240),
+    addressLine1: z.string().max(240),
+    addressLine2: z.string().max(240),
+    addressPostal: z.string().max(64),
+    addressRegion: z.string().max(240),
+    company: z.string().max(240),
+    email: z.string().max(320),
+    fullName: z.string().max(240),
+    note: z.string().max(4000),
+    phone: z.string().max(64),
+    photoData: z.string().nullable(),
+    photoName: z.string().max(255).nullable(),
+    title: z.string().max(240),
+  }),
+  userId: z.string().uuid(),
+});
 
 function serializeAddress(fields: VCardFields) {
   const payload = {
@@ -92,28 +120,25 @@ function parseAddress(value: string | null) {
   };
 }
 
-async function requireUser(supabase: Awaited<ReturnType<typeof createServerSupabase>>) {
-  const { data, error } = await supabase.auth.getUser();
-  if (error || !data.user) return null;
-  return data.user;
-}
-
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createServerSupabase();
-    const user = await requireUser(supabase);
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const parsedQuery = validateSearchParams(
+      request.nextUrl.searchParams,
+      vcardQuerySchema
+    );
+    if (!parsedQuery.ok) {
+      return parsedQuery.response;
+    }
+    const { userId } = parsedQuery.data;
+
+    const access = await requireRouteAccess("GET /api/vcard/profile", {
+      resourceUserId: userId,
+    });
+    if (access instanceof NextResponse) {
+      return access;
     }
 
-    const params = request.nextUrl.searchParams;
-    const userId = params.get("userId");
-    if (!userId) {
-      return NextResponse.json({ error: "userId is required" }, { status: 400 });
-    }
-    if (user.id !== userId) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+    const supabase = await createServerSupabase();
 
     const { data, error } = await supabase
       .from("vcard_profiles")
@@ -147,26 +172,23 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createServerSupabase();
-    const user = await requireUser(supabase);
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const parsedBody = await validateJsonBody(request, vcardBodySchema);
+    if (!parsedBody.ok) {
+      return parsedBody.response;
     }
-
-    const body = (await request.json()) as {
-      userId?: string;
-      fields?: VCardFields;
+    const body = parsedBody.data as {
+      fields: VCardFields;
+      userId: string;
     };
 
-    if (!body.userId || !body.fields) {
-      return NextResponse.json(
-        { error: "userId and fields are required" },
-        { status: 400 }
-      );
+    const access = await requireRouteAccess("POST /api/vcard/profile", {
+      resourceUserId: body.userId,
+    });
+    if (access instanceof NextResponse) {
+      return access;
     }
-    if (body.userId !== user.id) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+
+    const supabase = await createServerSupabase();
 
     const { fields } = body;
     const payload = {

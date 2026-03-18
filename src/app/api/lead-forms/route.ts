@@ -1,4 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+
+import { requireRouteAccess } from "@/lib/api-authorization";
+import { validateJsonBody, validateSearchParams } from "@/lib/request-validation";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
 import {
@@ -9,6 +13,19 @@ import type {
   LeadFormConfig,
   LeadFormField,
 } from "@/types/lead-form";
+
+const leadFormsQuerySchema = z.object({
+  handle: z.string().trim().max(120).optional(),
+  profileId: z.string().uuid().optional(),
+  userId: z.string().uuid(),
+});
+
+const leadFormsPutSchema = z.object({
+  config: z.object({}).passthrough(),
+  handle: z.string().trim().min(1).max(120),
+  profileId: z.string().uuid().nullable().optional(),
+  userId: z.string().uuid(),
+});
 
 type LeadFormRow = {
   id: string;
@@ -22,18 +39,6 @@ type LeadFormRow = {
   created_at: string;
   updated_at: string;
 };
-
-async function ensureAuthedUser(userId: string) {
-  const supabase = await createServerSupabase();
-  const { data, error } = await supabase.auth.getUser();
-  if (error || !data.user) {
-    return { supabase, ok: false, error: "Unauthorized" };
-  }
-  if (data.user.id !== userId) {
-    return { supabase, ok: false, error: "Forbidden" };
-  }
-  return { supabase, ok: true };
-}
 
 function buildLegacyConfig(
   handle: string,
@@ -168,20 +173,29 @@ async function getResponseStats(
 
 export async function GET(request: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams;
-    const userId = searchParams.get("userId");
-    const handle = searchParams.get("handle");
-    const profileId = searchParams.get("profileId");
+    const parsedQuery = validateSearchParams(
+      request.nextUrl.searchParams,
+      leadFormsQuerySchema
+    );
+    if (!parsedQuery.ok) {
+      return parsedQuery.response;
+    }
 
-    if (!userId || (!handle && !profileId)) {
+    const { userId, handle, profileId } = parsedQuery.data;
+    if (!handle && !profileId) {
       return NextResponse.json(
         { error: "userId and handle or profileId are required" },
         { status: 400 }
       );
     }
 
-    const { supabase, ok, error } = await ensureAuthedUser(userId);
-    if (!ok) return NextResponse.json({ error }, { status: 401 });
+    const access = await requireRouteAccess("GET /api/lead-forms", {
+      resourceUserId: userId,
+    });
+    if (access instanceof NextResponse) {
+      return access;
+    }
+    const supabase = await createServerSupabase();
 
     let query = supabase.from("lead_forms").select("*").eq("user_id", userId);
     if (profileId) query = query.eq("profile_id", profileId);
@@ -258,28 +272,29 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const body = await request.json();
+    const parsedBody = await validateJsonBody(request, leadFormsPutSchema);
+    if (!parsedBody.ok) {
+      return parsedBody.response;
+    }
     const {
       userId,
       handle,
       profileId,
       config,
-    } = body as {
-      userId?: string;
-      handle?: string;
+    } = parsedBody.data as {
+      config: LeadFormConfig;
+      handle: string;
       profileId?: string | null;
-      config?: LeadFormConfig;
+      userId: string;
     };
 
-    if (!userId || !handle || !config) {
-      return NextResponse.json(
-        { error: "userId, handle, and config are required" },
-        { status: 400 }
-      );
+    const access = await requireRouteAccess("PUT /api/lead-forms", {
+      resourceUserId: userId,
+    });
+    if (access instanceof NextResponse) {
+      return access;
     }
-
-    const { supabase, ok, error } = await ensureAuthedUser(userId);
-    if (!ok) return NextResponse.json({ error }, { status: 401 });
+    const supabase = await createServerSupabase();
 
     const now = new Date().toISOString();
     const normalized = normalizeLeadFormConfig(config, config.id || handle);

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { resolveCorsHeaders } from "@/lib/cors";
 import { createServerSupabase, createServerSupabaseReadonly } from "@/lib/supabase/server";
 import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
 import { limitRequest } from "@/lib/rate-limit";
@@ -72,10 +73,34 @@ async function resolveAttributedUserId(
   return (data?.user_id as string | null) ?? null;
 }
 
+function jsonWithCors(request: NextRequest, body: unknown, init?: ResponseInit) {
+  const response = NextResponse.json(body, init);
+  const headers = resolveCorsHeaders(request.headers.get("origin"), {
+    allowMethods: ["OPTIONS", "POST"],
+  });
+  if (headers) {
+    Object.entries(headers).forEach(([key, value]) => {
+      response.headers.set(key, value);
+    });
+  }
+  return response;
+}
+
+export async function OPTIONS(request: NextRequest) {
+  const headers = resolveCorsHeaders(request.headers.get("origin"), {
+    allowMethods: ["OPTIONS", "POST"],
+  });
+  if (!headers) {
+    return new NextResponse(null, { status: 204 });
+  }
+  return new NextResponse(null, { status: 204, headers });
+}
+
 export async function POST(request: NextRequest) {
   try {
     if (await limitRequest(request, "analytics-events", 120, 60_000)) {
-      return NextResponse.json(
+      return jsonWithCors(
+        request,
         { error: "Too many requests. Please try again later." },
         { status: 429 }
       );
@@ -84,7 +109,7 @@ export async function POST(request: NextRequest) {
     const body = (await request.json().catch(() => ({}))) as AnalyticsEventBody;
     const eventId = sanitizeString(body.id, 120);
     if (!eventId) {
-      return NextResponse.json({ error: "id is required" }, { status: 400 });
+      return jsonWithCors(request, { error: "id is required" }, { status: 400 });
     }
 
     const resolvedUserId = await resolveAttributedUserId(
@@ -124,9 +149,10 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({ ok: true });
+    return jsonWithCors(request, { ok: true });
   } catch (error) {
-    return NextResponse.json(
+    return jsonWithCors(
+      request,
       {
         ok: false,
         error: error instanceof Error ? error.message : "Unable to record analytics event",

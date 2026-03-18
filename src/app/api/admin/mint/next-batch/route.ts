@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerSupabaseReadonly } from "@/lib/supabase/server";
+import { z } from "zod";
+
+import { requireRouteAccess } from "@/lib/api-authorization";
+import { validateSearchParams } from "@/lib/request-validation";
 import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
 
 const LABEL_MAX = 64;
+const nextBatchQuerySchema = z.object({
+  label: z.string().trim().max(LABEL_MAX).optional().default(""),
+});
 
 function sanitizeLabel(raw: string) {
   return raw.trim().slice(0, LABEL_MAX);
@@ -25,23 +31,17 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const supabase = await createServerSupabaseReadonly();
-  const { data: auth, error: authError } = await supabase.auth.getUser();
-  if (authError || !auth.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const access = await requireRouteAccess("GET /api/admin/mint/next-batch");
+  if (access instanceof NextResponse) {
+    return access;
   }
 
-  const { data: adminRows, error: adminError } = await supabaseAdmin
-    .from("admin_users")
-    .select("user_id")
-    .eq("user_id", auth.user.id)
-    .limit(1);
-  if (adminError || !adminRows || adminRows.length === 0) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const parsedQuery = validateSearchParams(req.nextUrl.searchParams, nextBatchQuerySchema);
+  if (!parsedQuery.ok) {
+    return parsedQuery.response;
   }
 
-  const { searchParams } = new URL(req.url);
-  const rawLabel = sanitizeLabel(searchParams.get("label") ?? "");
+  const rawLabel = sanitizeLabel(parsedQuery.data.label);
   const dateHint = rawLabel || new Date().toISOString().slice(0, 10);
   const bounds = getUtcDayBounds(dateHint);
   if (!bounds) {

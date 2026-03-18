@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerSupabaseReadonly } from "@/lib/supabase/server";
+import { requireRouteAccess } from "@/lib/api-authorization";
+import { uuidParamSchema } from "@/lib/request-validation";
+import { sanitizeAttachmentFilename } from "@/lib/security";
 import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
 import { getConfiguredSiteOrigin } from "@/lib/site-url";
 
@@ -68,26 +70,17 @@ export async function GET(
     );
   }
 
-  const supabase = await createServerSupabaseReadonly();
-  const { data: auth, error: authError } = await supabase.auth.getUser();
-  if (authError || !auth.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const { data: adminRows, error: adminError } = await supabaseAdmin
-    .from("admin_users")
-    .select("user_id")
-    .eq("user_id", auth.user.id)
-    .limit(1);
-  if (adminError || !adminRows || adminRows.length === 0) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const access = await requireRouteAccess("GET /api/admin/mint/batch/[batchId]");
+  if (access instanceof NextResponse) {
+    return access;
   }
 
   const { batchId: rawBatchId } = await params;
-  const batchId = rawBatchId?.trim();
-  if (!batchId) {
-    return NextResponse.json({ error: "Batch id is required." }, { status: 400 });
+  const parsedBatchId = uuidParamSchema.safeParse(rawBatchId?.trim());
+  if (!parsedBatchId.success) {
+    return NextResponse.json({ error: "Valid batch id is required." }, { status: 400 });
   }
+  const batchId = parsedBatchId.data;
 
   const { data: batch, error: batchError } = await supabaseAdmin
     .from("hardware_tag_batches")
@@ -156,7 +149,10 @@ export async function GET(
 
   const batchIndex = await getBatchIndexForDay(batch.id, batch.created_at);
   const suffix = batchIndex ? `_b${String(batchIndex).padStart(2, "0")}` : "";
-  const filename = `linkets_${safeLabel.replace(/\s+/g, "_")}${suffix}_${rows.length}.csv`;
+  const filename = sanitizeAttachmentFilename(
+    `linkets_${safeLabel.replace(/\s+/g, "_")}${suffix}_${rows.length}.csv`,
+    "linkets_batch.csv"
+  );
 
   return new NextResponse(csv, {
     status: 200,

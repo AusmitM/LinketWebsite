@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { createServerSupabaseReadonly } from "@/lib/supabase/server";
+import { requireRouteAccess } from "@/lib/api-authorization";
+import { sanitizeAttachmentFilename } from "@/lib/security";
 import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
 import { getConfiguredSiteOrigin } from "@/lib/site-url";
 
@@ -114,19 +115,9 @@ export async function GET() {
     );
   }
 
-  const supabase = await createServerSupabaseReadonly();
-  const { data: auth, error: authError } = await supabase.auth.getUser();
-  if (authError || !auth.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const { data: adminRows, error: adminError } = await supabaseAdmin
-    .from("admin_users")
-    .select("user_id")
-    .eq("user_id", auth.user.id)
-    .limit(1);
-  if (adminError || !adminRows || adminRows.length === 0) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const access = await requireRouteAccess("GET /api/admin/mint/master-log");
+  if (access instanceof NextResponse) {
+    return access;
   }
 
   const { data: batches, error: batchesError } = await fetchAllBatches();
@@ -183,7 +174,10 @@ export async function GET() {
   ].join("\n");
 
   const today = new Date().toISOString().slice(0, 10);
-  const filename = `linkets_master_log_${today}.csv`;
+  const filename = sanitizeAttachmentFilename(
+    `linkets_master_log_${today}.csv`,
+    "linkets_master_log.csv"
+  );
 
   return new NextResponse(csv, {
     status: 200,

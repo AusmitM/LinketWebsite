@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import type Stripe from "stripe";
+import { z } from "zod";
 
+import { requireRouteAccess } from "@/lib/api-authorization";
 import { getStripeSecretKey, getStripeServerClient } from "@/lib/stripe";
-import { createServerSupabase } from "@/lib/supabase/server";
+import { validateSearchParams } from "@/lib/request-validation";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+const bundleSessionQuerySchema = z.object({
+  session_id: z.string().trim().min(1).max(255),
+});
 
 type BundleSessionLifecycleStatus = "processing" | "paid" | "failed";
 
@@ -73,21 +79,24 @@ function readReceiptUrlFromSessionInvoice(
 }
 
 export async function GET(request: NextRequest) {
-  const checkoutSessionId = sanitizeCheckoutSessionId(
-    request.nextUrl.searchParams.get("session_id")
+  const parsedQuery = validateSearchParams(
+    request.nextUrl.searchParams,
+    bundleSessionQuerySchema
   );
+  if (!parsedQuery.ok) {
+    return parsedQuery.response;
+  }
+
+  const checkoutSessionId = sanitizeCheckoutSessionId(parsedQuery.data.session_id);
   if (!checkoutSessionId) {
     return NextResponse.json({ error: "session_id is required" }, { status: 400 });
   }
 
-  const supabase = await createServerSupabase();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const access = await requireRouteAccess("GET /api/billing/bundle-session-status");
+  if (access instanceof NextResponse) {
+    return access;
   }
+  const user = access.user;
 
   if (!getStripeSecretKey()) {
     return NextResponse.json(

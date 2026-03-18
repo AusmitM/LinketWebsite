@@ -108,7 +108,7 @@ const NOTIFICATIONS_LAST_READ_STORAGE_KEY_PREFIX =
   "linket:dashboard-notifications:last-read-at";
 const NOTIFICATIONS_OPENED_AT_STORAGE_KEY_PREFIX =
   "linket:dashboard-notifications:opened-at";
-const NOTIFICATIONS_INBOX_RETENTION_MS = 2 * 24 * 60 * 60 * 1000;
+const NOTIFICATIONS_INBOX_RETENTION_MS = 3 * 24 * 60 * 60 * 1000;
 
 function toUserLite(
   value: {

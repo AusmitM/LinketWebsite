@@ -1,5 +1,6 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
+import { requireRouteAccess } from "@/lib/api-authorization";
 import {
   ANNOUNCEMENT_MESSAGE_MAX_LENGTH,
   ANNOUNCEMENT_TITLE_MAX_LENGTH,
@@ -8,6 +9,7 @@ import {
   isAnnouncementSeverity,
   normalizeAnnouncementInput,
 } from "@/lib/dashboard-notifications";
+import { isTrustedRequestOrigin } from "@/lib/http-origin";
 import { createServerSupabaseReadonly } from "@/lib/supabase/server";
 import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
 
@@ -37,24 +39,14 @@ function isMissingRelationError(error: { code?: string; message?: string } | nul
 }
 
 async function requireAdminContext(): Promise<AuthContext | NextResponse> {
+  const access = await requireRouteAccess("GET /api/admin/notifications");
+  if (access instanceof NextResponse) {
+    return access;
+  }
+
   const supabase = await createServerSupabaseReadonly();
-  const { data: auth, error: authError } = await supabase.auth.getUser();
-  if (authError || !auth.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const adminLookupClient = isSupabaseAdminAvailable ? supabaseAdmin : supabase;
-  const { data: adminRows, error: adminError } = await adminLookupClient
-    .from("admin_users")
-    .select("user_id")
-    .eq("user_id", auth.user.id)
-    .limit(1);
-  if (adminError || !adminRows || adminRows.length === 0) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
   return {
-    userId: auth.user.id,
+    userId: access.user.id,
     dbClient: isSupabaseAdminAvailable ? supabaseAdmin : supabase,
   };
 }
@@ -134,7 +126,7 @@ function sanitizePatchPayload(payload: Record<string, unknown>) {
   return { ok: true as const, value: updates };
 }
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   const authContext = await requireAdminContext();
   if (authContext instanceof NextResponse) return authContext;
 
@@ -164,8 +156,20 @@ export async function GET(request: Request) {
   return NextResponse.json((data ?? []) as DashboardAnnouncementRecord[]);
 }
 
-export async function POST(request: Request) {
-  const authContext = await requireAdminContext();
+export async function POST(request: NextRequest) {
+  if (!isTrustedRequestOrigin(request)) {
+    return NextResponse.json({ error: "Invalid request origin." }, { status: 403 });
+  }
+
+  const access = await requireRouteAccess("POST /api/admin/notifications");
+  if (access instanceof NextResponse) return access;
+
+  const authContext = {
+    userId: access.user.id,
+    dbClient: isSupabaseAdminAvailable
+      ? supabaseAdmin
+      : await createServerSupabaseReadonly(),
+  } satisfies AuthContext;
   if (authContext instanceof NextResponse) return authContext;
 
   const body = await request.json().catch(() => null);
@@ -216,8 +220,20 @@ export async function POST(request: Request) {
   return NextResponse.json(data as DashboardAnnouncementRecord, { status: 201 });
 }
 
-export async function PATCH(request: Request) {
-  const authContext = await requireAdminContext();
+export async function PATCH(request: NextRequest) {
+  if (!isTrustedRequestOrigin(request)) {
+    return NextResponse.json({ error: "Invalid request origin." }, { status: 403 });
+  }
+
+  const access = await requireRouteAccess("PATCH /api/admin/notifications");
+  if (access instanceof NextResponse) return access;
+
+  const authContext = {
+    userId: access.user.id,
+    dbClient: isSupabaseAdminAvailable
+      ? supabaseAdmin
+      : await createServerSupabaseReadonly(),
+  } satisfies AuthContext;
   if (authContext instanceof NextResponse) return authContext;
 
   const body = await request.json().catch(() => null);

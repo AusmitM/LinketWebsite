@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import type Stripe from "stripe";
 
+import { requireRouteAccess } from "@/lib/api-authorization";
 import { getOrCreateStripeCustomerForUser } from "@/lib/billing/dashboard";
 import { isTrustedRequestOrigin } from "@/lib/http-origin";
 import { getConfiguredSiteOrigin } from "@/lib/site-url";
@@ -11,7 +12,6 @@ import {
   getStripeSecretKey,
   getStripeServerClient,
 } from "@/lib/stripe";
-import { createServerSupabase } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -61,10 +61,12 @@ function isAutomaticTaxSetupError(error: unknown) {
 }
 
 async function handleBundleCheckout(request: NextRequest) {
-  const supabase = await createServerSupabase();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const access = await requireRouteAccess(
+    request.method === "POST"
+      ? "POST /api/billing/bundle-checkout"
+      : "GET /api/billing/bundle-checkout"
+  );
+  const user = access instanceof NextResponse ? null : access.user;
 
   if (!user) {
     const base = getConfiguredSiteOrigin().replace(/\/$/, "");

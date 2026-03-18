@@ -3,6 +3,7 @@
 import { useCallback, useState, type CSSProperties } from "react";
 import { ArrowUpRight } from "lucide-react";
 import { emitAnalyticsEvent } from "@/lib/analytics";
+import { sanitizePublicLinkUrl } from "@/lib/security";
 import type { ProfileLinkRecord } from "@/types/db";
 
 function faviconForUrl(url: string) {
@@ -62,6 +63,19 @@ export default function PublicProfileLinksList({
   links: ProfileLinkRecord[];
   trackClicks?: boolean;
 }) {
+  const safeLinks = links
+    .map((link) => {
+      try {
+        return {
+          ...link,
+          url: sanitizePublicLinkUrl(link.url),
+        };
+      } catch {
+        return null;
+      }
+    })
+    .filter((link): link is ProfileLinkRecord => Boolean(link));
+
   const trackClick = useCallback(
     (linkId: string) => {
       if (!trackClicks) return;
@@ -87,7 +101,7 @@ export default function PublicProfileLinksList({
 
   return (
     <div className="grid gap-3">
-      {links.map((link, index) => (
+      {safeLinks.map((link, index) => (
         <a
           key={link.id}
           href={link.url}

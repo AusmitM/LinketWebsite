@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { resolveCorsHeaders } from "@/lib/cors";
 import { forwardClientErrorToSentry } from "@/lib/sentry-forwarder";
 
 type ClientErrorBody = {
@@ -18,12 +19,39 @@ function sanitize(value: unknown, max = 2000): string {
   return value.trim().slice(0, max);
 }
 
+function jsonWithCors(request: NextRequest, body: unknown, init?: ResponseInit) {
+  const response = NextResponse.json(body, init);
+  const headers = resolveCorsHeaders(request.headers.get("origin"), {
+    allowMethods: ["OPTIONS", "POST"],
+  });
+  if (headers) {
+    Object.entries(headers).forEach(([key, value]) => {
+      response.headers.set(key, value);
+    });
+  }
+  return response;
+}
+
+export async function OPTIONS(request: NextRequest) {
+  const headers = resolveCorsHeaders(request.headers.get("origin"), {
+    allowMethods: ["OPTIONS", "POST"],
+  });
+  if (!headers) {
+    return new NextResponse(null, { status: 204 });
+  }
+  return new NextResponse(null, { status: 204, headers });
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = (await request.json().catch(() => ({}))) as ClientErrorBody;
     const message = sanitize(body.message, 2000);
     if (!message) {
-      return NextResponse.json({ ok: false, error: "message is required" }, { status: 400 });
+      return jsonWithCors(
+        request,
+        { ok: false, error: "message is required" },
+        { status: 400 }
+      );
     }
 
     const payload = {
@@ -54,9 +82,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ ok: true });
+    return jsonWithCors(request, { ok: true });
   } catch (error) {
-    return NextResponse.json(
+    return jsonWithCors(
+      request,
       { ok: false, error: error instanceof Error ? error.message : "Unable to process client error" },
       { status: 500 }
     );

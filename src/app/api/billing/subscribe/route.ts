@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import type Stripe from "stripe";
 
+import { requireRouteAccess } from "@/lib/api-authorization";
 import {
   ensureNoChargeDuringComplimentary,
   pickManageableSubscriptionId,
@@ -15,7 +16,6 @@ import {
   getStripeServerClient,
   type BillingInterval,
 } from "@/lib/stripe";
-import { createServerSupabase } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -51,11 +51,12 @@ function buildCheckoutIdempotencyKey(args: {
 
 async function handleSubscribe(request: NextRequest) {
   const interval = toInterval(request.nextUrl.searchParams.get("interval"));
-
-  const supabase = await createServerSupabase();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const access = await requireRouteAccess(
+    request.method === "POST"
+      ? "POST /api/billing/subscribe"
+      : "GET /api/billing/subscribe"
+  );
+  const user = access instanceof NextResponse ? null : access.user;
 
   if (!user) {
     const base = getConfiguredSiteOrigin().replace(/\/$/, "");

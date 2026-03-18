@@ -154,27 +154,6 @@ export default function AuthPage() {
   );
 
   useEffect(() => {
-    let active = true;
-
-    const syncSession = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (!active) return;
-      if (data.session) {
-        setAwaitingVerificationAutoSignIn(false);
-        const destination = await resolveRedirect(data.session);
-        if (!destination || !active) return;
-        router.replace(destination);
-      }
-    };
-
-    void syncSession();
-
-    return () => {
-      active = false;
-    };
-  }, [supabase, router, resolveRedirect]);
-
-  useEffect(() => {
     if (!awaitingVerificationAutoSignIn || !isSignUp || !email || !password) {
       return;
     }
@@ -401,19 +380,31 @@ export default function AuthPage() {
       setError(null);
       setAwaitingVerificationAutoSignIn(false);
 
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
           redirectTo: `${siteUrl}/auth/callback?next=${encodeURIComponent(
             next
           )}`,
+          queryParams:
+            provider === "google" ? { prompt: "select_account" } : undefined,
+          skipBrowserRedirect: true,
         },
       });
 
       if (error) {
         setError(friendlyAuthError(error.message, getAuthErrorCode(error)));
         setPending(false);
+        return;
       }
+
+      if (!data?.url) {
+        setError("Unable to start Google sign-in. Please try again.");
+        setPending(false);
+        return;
+      }
+
+      window.location.assign(data.url);
     },
     [supabase, next, siteUrl, view]
   );

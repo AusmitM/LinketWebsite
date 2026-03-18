@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import type Stripe from "stripe";
 
+import { requireRouteAccess } from "@/lib/api-authorization";
 import { getOrCreateStripeCustomerForUser } from "@/lib/billing/dashboard";
 import { isTrustedRequestOrigin } from "@/lib/http-origin";
 import { getConfiguredSiteOrigin } from "@/lib/site-url";
 import { getStripeSecretKey, getStripeServerClient } from "@/lib/stripe";
-import { createServerSupabase } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -58,10 +58,12 @@ function buildPortalIdempotencyKey(args: {
 
 async function handlePortalSession(request: NextRequest) {
   const portalFlow = toPortalFlow(request.nextUrl.searchParams.get("flow"));
-  const supabase = await createServerSupabase();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const access = await requireRouteAccess(
+    request.method === "POST"
+      ? "POST /api/billing/portal"
+      : "GET /api/billing/portal"
+  );
+  const user = access instanceof NextResponse ? null : access.user;
 
   if (!user) {
     const base = getConfiguredSiteOrigin().replace(/\/$/, "");

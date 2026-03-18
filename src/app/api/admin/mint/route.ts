@@ -1,10 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerSupabaseReadonly } from "@/lib/supabase/server";
+import { z } from "zod";
+
+import { requireRouteAccess } from "@/lib/api-authorization";
+import { isTrustedRequestOrigin } from "@/lib/http-origin";
+import { validateJsonBody } from "@/lib/request-validation";
+import { sanitizeAttachmentFilename } from "@/lib/security";
 import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
 
 const MIN_QTY = 1;
 const MAX_QTY = 20000;
 const LABEL_MAX = 64;
+
+const mintRequestSchema = z.object({
+  label: z.string().trim().max(LABEL_MAX).optional().default(""),
+  qty: z.coerce.number().int().min(MIN_QTY).max(MAX_QTY),
+});
 
 function sanitizeLabel(raw: string) {
   return raw.trim().slice(0, LABEL_MAX);
@@ -47,6 +57,13 @@ function csvEscape(value: unknown) {
 }
 
 export async function GET(req: NextRequest) {
+  return NextResponse.json(
+    { error: "Use POST for minting operations." },
+    { status: 405, headers: { Allow: "POST" } }
+  );
+}
+
+export async function POST(req: NextRequest) {
   if (!isSupabaseAdminAvailable) {
     return NextResponse.json(
       { error: "Admin minting is not configured." },
@@ -54,37 +71,25 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const supabase = await createServerSupabaseReadonly();
-  const { data: auth, error: authError } = await supabase.auth.getUser();
-  if (authError || !auth.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!isTrustedRequestOrigin(req)) {
+    return NextResponse.json({ error: "Invalid request origin." }, { status: 403 });
   }
 
-  const { data: adminRows, error: adminError } = await supabaseAdmin
-    .from("admin_users")
-    .select("user_id")
-    .eq("user_id", auth.user.id)
-    .limit(1);
-  if (adminError || !adminRows || adminRows.length === 0) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const access = await requireRouteAccess("POST /api/admin/mint");
+  if (access instanceof NextResponse) {
+    return access;
   }
 
-  const { searchParams } = new URL(req.url);
-  const qtyRaw = searchParams.get("qty");
-  const labelRaw = searchParams.get("label") ?? "";
-  const qtyParsed = Number(qtyRaw);
-  if (!Number.isFinite(qtyParsed) || qtyParsed < MIN_QTY || qtyParsed > MAX_QTY) {
-    return NextResponse.json(
-      { error: `Quantity must be between ${MIN_QTY} and ${MAX_QTY}.` },
-      { status: 400 }
-    );
+  const parsedBody = await validateJsonBody(req, mintRequestSchema);
+  if (!parsedBody.ok) {
+    return parsedBody.response;
   }
 
-  const label = sanitizeLabel(labelRaw);
+  const label = sanitizeLabel(parsedBody.data.label);
   const safeLabel = label || new Date().toISOString().slice(0, 10);
 
   const { data, error } = await supabaseAdmin.rpc("mint_linkets_csv", {
-    p_qty: Math.trunc(qtyParsed),
+    p_qty: Math.trunc(parsedBody.data.qty),
     p_batch_label: label || null,
   });
   if (error) {
@@ -126,7 +131,10 @@ export async function GET(req: NextRequest) {
   }
 
   const suffix = batchIndex ? `_b${String(batchIndex).padStart(2, "0")}` : "";
-  const filename = `linkets_${safeLabel.replace(/\s+/g, "_")}${suffix}_${Math.trunc(qtyParsed)}.csv`;
+  const filename = sanitizeAttachmentFilename(
+    `linkets_${safeLabel.replace(/\s+/g, "_")}${suffix}_${Math.trunc(parsedBody.data.qty)}.csv`,
+    "linkets.csv"
+  );
 
   return new NextResponse(csv, {
     status: 200,

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { requireRouteAccess } from "@/lib/api-authorization";
 import type {
   DashboardAnnouncementRecord,
   DashboardNotificationItem,
@@ -28,18 +29,18 @@ function isMissingRelationError(error: { code?: string; message?: string } | nul
 }
 
 export async function GET(request: Request) {
-  const supabase = await createServerSupabaseReadonly();
-  const { data: auth, error: authError } = await supabase.auth.getUser();
-  if (authError || !auth.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const access = await requireRouteAccess("GET /api/dashboard/notifications");
+  if (access instanceof NextResponse) {
+    return access;
   }
+  const supabase = await createServerSupabaseReadonly();
 
   const limit = parseLimit(new URL(request.url).searchParams.get("limit"));
   const adminLookupClient = isSupabaseAdminAvailable ? supabaseAdmin : supabase;
   const { data: adminRows, error: adminError } = await adminLookupClient
     .from("admin_users")
     .select("user_id")
-    .eq("user_id", auth.user.id)
+    .eq("user_id", access.user.id)
     .limit(1);
   const isAdmin =
     !adminError && Array.isArray(adminRows) && adminRows.length > 0;

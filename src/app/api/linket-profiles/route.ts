@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+
+import { requireRouteAccess } from "@/lib/api-authorization";
 import {
   getProfilesForUser,
   saveProfileForUser,
   isHandleConflictError,
   type ProfilePayload,
 } from "@/lib/profile-service";
+import { validateJsonBody, validateSearchParams } from "@/lib/request-validation";
+import { sanitizePublicLinkUrl } from "@/lib/security";
 import { normalizeThemeName } from "@/lib/themes";
 import { isSupabaseAdminAvailable } from "@/lib/supabase-admin";
 import { createServerSupabase } from "@/lib/supabase/server";
@@ -16,6 +21,15 @@ const DEFAULT_PROFILE_LINK_URL = "https://www.LinketConnect.com";
 const DEFAULT_PROFILE_NAME = "Linket Public Profile";
 const DEFAULT_THEME = normalizeThemeName("autumn", "autumn");
 const DEFAULT_LINK_HOST = "linketconnect.com";
+
+const linketProfilesQuerySchema = z.object({
+  userId: z.string().uuid(),
+});
+
+const linketProfilesPostSchema = z.object({
+  profile: z.object({}).passthrough(),
+  userId: z.string().uuid(),
+});
 
 function normalizeHandle(handle: string) {
   return handle.trim().toLowerCase();
@@ -308,7 +322,12 @@ function normalizeIncomingLinksForSave(
   }
 
   return indexed.map((link, index) => {
-    const existing = isUuid(link.id) ? existingById.get(link.id) : undefined;
+    const suppliedId = isUuid(link.id) ? link.id : undefined;
+    if (suppliedId && !existingById.has(suppliedId)) {
+      throw new Error("Profile link id is not owned by this profile.");
+    }
+
+    const existing = suppliedId ? existingById.get(suppliedId) : undefined;
     const isOverride = index === overrideIndex;
     const hasExplicitActive = typeof link.isActive === "boolean";
     const isActive = isOverride
@@ -317,26 +336,14 @@ function normalizeIncomingLinksForSave(
       ? Boolean(link.isActive)
       : existing?.is_active ?? true;
     return {
-      id: link.id,
+      id: suppliedId,
       title: link.title,
-      url: link.url,
+      url: sanitizePublicLinkUrl(link.url),
       order_index: index,
       isActive,
       isOverride,
     };
   });
-}
-
-async function ensureAuthedUser(userId: string) {
-  const supabase = await createServerSupabase();
-  const { data, error } = await supabase.auth.getUser();
-  if (error || !data.user) {
-    return { supabase, ok: false, error: "Unauthorized" };
-  }
-  if (data.user.id !== userId) {
-    return { supabase, ok: false, error: "Forbidden" };
-  }
-  return { supabase, ok: true };
 }
 
 async function ensureHasActiveProfile(
@@ -386,23 +393,22 @@ async function suggestHandles(
 
 export async function GET(request: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams;
-    const userId = searchParams.get("userId");
-
-    if (!userId) {
-      return NextResponse.json(
-        { error: "userId parameter is required" },
-        { status: 400 }
-      );
+    const parsedQuery = validateSearchParams(
+      request.nextUrl.searchParams,
+      linketProfilesQuerySchema
+    );
+    if (!parsedQuery.ok) {
+      return parsedQuery.response;
     }
+    const { userId } = parsedQuery.data;
 
-    const { supabase, ok, error } = await ensureAuthedUser(userId);
-    if (!ok) {
-      return NextResponse.json(
-        { error },
-        { status: error === "Forbidden" ? 403 : 401 }
-      );
+    const access = await requireRouteAccess("GET /api/linket-profiles", {
+      resourceUserId: userId,
+    });
+    if (access instanceof NextResponse) {
+      return access;
     }
+    const supabase = await createServerSupabase();
 
     if (isSupabaseAdminAvailable) {
       try {
@@ -479,33 +485,22 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { userId, profile } = body as {
-      userId?: string;
-      profile?: ProfilePayload;
+    const parsedBody = await validateJsonBody(request, linketProfilesPostSchema);
+    if (!parsedBody.ok) {
+      return parsedBody.response;
+    }
+    const { profile, userId } = parsedBody.data as {
+      profile: ProfilePayload;
+      userId: string;
     };
 
-    if (!userId) {
-      return NextResponse.json(
-        { error: "userId is required" },
-        { status: 400 }
-      );
+    const access = await requireRouteAccess("POST /api/linket-profiles", {
+      resourceUserId: userId,
+    });
+    if (access instanceof NextResponse) {
+      return access;
     }
-
-    if (!profile) {
-      return NextResponse.json(
-        { error: "profile payload is required" },
-        { status: 400 }
-      );
-    }
-
-    const { supabase, ok, error } = await ensureAuthedUser(userId);
-    if (!ok) {
-      return NextResponse.json(
-        { error },
-        { status: error === "Forbidden" ? 403 : 401 }
-      );
-    }
+    const supabase = await createServerSupabase();
 
     if (isSupabaseAdminAvailable) {
       try {

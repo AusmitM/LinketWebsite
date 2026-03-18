@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { requireRouteAccess } from "@/lib/api-authorization";
 import { getOrCreateStripeCustomerForUser } from "@/lib/billing/dashboard";
 import { isTrustedRequestOrigin } from "@/lib/http-origin";
 import { getStripeSecretKey, getStripeServerClient } from "@/lib/stripe";
-import { createServerSupabase } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -13,14 +13,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid request origin" }, { status: 403 });
   }
 
-  const supabase = await createServerSupabase();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const access = await requireRouteAccess("POST /api/billing/setup-intent");
+  if (access instanceof NextResponse) {
+    return access;
   }
+  const user = access.user;
 
   if (!getStripeSecretKey()) {
     return NextResponse.json(

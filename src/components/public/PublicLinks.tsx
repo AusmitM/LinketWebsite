@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
+import { sanitizePublicLinkUrl } from "@/lib/security";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
 import type { ProfileLinkRecord } from "@/types/db";
@@ -41,7 +42,21 @@ function byOrder(a: ProfileLinkRecord, b: ProfileLinkRecord) {
 }
 
 function filterLinks(list: ProfileLinkRecord[]) {
-  return (list || []).filter((item) => item.is_active).slice().sort(byOrder);
+  return (list || [])
+    .filter((item) => item.is_active)
+    .map((item) => {
+      try {
+        return {
+          ...item,
+          url: sanitizePublicLinkUrl(item.url),
+        };
+      } catch {
+        return null;
+      }
+    })
+    .filter((item): item is ProfileLinkRecord => Boolean(item))
+    .slice()
+    .sort(byOrder);
 }
 
 function useFilteredLinks(initial: ProfileLinkRecord[]) {

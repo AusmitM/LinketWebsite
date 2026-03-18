@@ -94,6 +94,26 @@ export async function getAssignmentsForUser(userId: string): Promise<TagAssignme
   return (data ?? []).map(mapAssignmentRow);
 }
 
+export async function assertOwnedProfileId(
+  userId: string,
+  profileId: string | null | undefined
+) {
+  if (!profileId) return null;
+
+  const { data, error } = await supabaseAdmin
+    .from("user_profiles")
+    .select("id")
+    .eq("id", profileId)
+    .eq("user_id", userId)
+    .limit(1)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data?.id) {
+    throw new Error("Profile is not owned by the current user");
+  }
+  return data.id as string;
+}
+
 export async function claimTagForUser(options: {
   userId: string;
   chipUid: string;
@@ -141,6 +161,7 @@ export async function claimTagForUser(options: {
       console.warn("claimTagForUser:getActiveProfileForUser", error);
     }
   }
+  profileId = await assertOwnedProfileId(options.userId, profileId);
 
   const { data: assignment, error: assignmentError } = await supabaseAdmin
     .from("tag_assignments")
@@ -211,7 +232,7 @@ export async function updateAssignmentForUser(options: {
     payload.nickname = options.nickname;
   }
   if (options.profileId !== undefined) {
-    payload.profile_id = options.profileId;
+    payload.profile_id = await assertOwnedProfileId(options.userId, options.profileId);
   }
 
   if (Object.keys(payload).length > 0) {

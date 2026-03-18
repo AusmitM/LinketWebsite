@@ -1,11 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+
+import { requireRouteAccess } from "@/lib/api-authorization";
 import { setActiveProfileForUser } from "@/lib/profile-service";
+import { validateSearchParams } from "@/lib/request-validation";
 import { isSupabaseAdminAvailable } from "@/lib/supabase-admin";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { recordConversionEvent } from "@/lib/server-conversion-events";
 import type { ProfileLinkRecord, UserProfileRecord } from "@/types/db";
 
 type ProfileWithLinks = UserProfileRecord & { links: ProfileLinkRecord[] };
+
+const activateProfileQuerySchema = z.object({
+  userId: z.string().uuid(),
+});
 
 function sortLinks(links: ProfileLinkRecord[] | null | undefined) {
   return (links ?? [])
@@ -23,15 +31,14 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
-    const searchParams = request.nextUrl.searchParams;
-    const userId = searchParams.get("userId");
-
-    if (!userId) {
-      return NextResponse.json(
-        { error: "userId parameter is required" },
-        { status: 400 }
-      );
+    const parsedQuery = validateSearchParams(
+      request.nextUrl.searchParams,
+      activateProfileQuerySchema
+    );
+    if (!parsedQuery.ok) {
+      return parsedQuery.response;
     }
+    const { userId } = parsedQuery.data;
 
     if (!id) {
       return NextResponse.json(
@@ -40,14 +47,13 @@ export async function POST(
       );
     }
 
+    const access = await requireRouteAccess("POST /api/linket-profiles/[id]/activate", {
+      resourceUserId: userId,
+    });
+    if (access instanceof NextResponse) {
+      return access;
+    }
     const supabase = await createServerSupabase();
-    const { data, error } = await supabase.auth.getUser();
-    if (error || !data.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    if (data.user.id !== userId) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
 
     if (isSupabaseAdminAvailable) {
       try {
@@ -116,4 +122,3 @@ export async function POST(
     );
   }
 }
-

@@ -101,14 +101,16 @@ export default function MintControls({ defaultQty, defaultLabel }: MintControlsP
 
     setPending(true);
     try {
-      const params = new URLSearchParams({
-        qty: String(safeQty),
-        label: safeLabel,
-      });
-
-      const response = await fetch(`/api/admin/mint?${params.toString()}`, {
-        method: "GET",
+      const response = await fetch("/api/admin/mint", {
+        method: "POST",
         credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          qty: safeQty,
+          label: safeLabel,
+        }),
       });
 
       if (!response.ok) {

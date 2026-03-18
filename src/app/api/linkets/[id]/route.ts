@@ -1,14 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerSupabaseReadonly } from "@/lib/supabase/server";
+import { z } from "zod";
+
+import { requireRouteAccess } from "@/lib/api-authorization";
 import { updateAssignmentForUser } from "@/lib/linket-tags";
+import { validateJsonBody, uuidParamSchema } from "@/lib/request-validation";
 import { isSupabaseAdminAvailable } from "@/lib/supabase-admin";
 
 type PatchPayload = {
-  userId?: string;
   profileId?: string | null;
   nickname?: string | null;
   action?: "release" | "retire";
 };
+
+const patchPayloadSchema = z.object({
+  action: z.enum(["release", "retire"]).optional(),
+  nickname: z.string().trim().max(120).nullable().optional(),
+  profileId: z.string().uuid().nullable().optional(),
+});
 
 export async function PATCH(
   req: NextRequest,
@@ -21,29 +29,30 @@ export async function PATCH(
     );
   }
 
-  const supabase = await createServerSupabaseReadonly();
-  const { data: auth, error: authError } = await supabase.auth.getUser();
-  if (authError || !auth.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const access = await requireRouteAccess("PATCH /api/linkets/[id]");
+  if (access instanceof NextResponse) {
+    return access;
   }
 
   const { id: assignmentId } = await params;
-  if (!assignmentId) {
+  const parsedAssignmentId = uuidParamSchema.safeParse(assignmentId?.trim());
+  if (!parsedAssignmentId.success) {
     return NextResponse.json({ error: "Missing assignment id." }, { status: 400 });
   }
 
-  const payload = (await req.json().catch(() => null)) as PatchPayload | null;
-  if (!payload) {
-    return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
+  const parsedBody = await validateJsonBody(req, patchPayloadSchema);
+  if (!parsedBody.ok) {
+    return parsedBody.response;
   }
+  const payload = parsedBody.data as PatchPayload;
 
   const hasProfileId = Object.prototype.hasOwnProperty.call(payload, "profileId");
   const hasNickname = Object.prototype.hasOwnProperty.call(payload, "nickname");
 
   try {
     const updated = await updateAssignmentForUser({
-      assignmentId,
-      userId: auth.user.id,
+      assignmentId: parsedAssignmentId.data,
+      userId: access.user.id,
       action: payload.action,
       profileId: hasProfileId ? payload.profileId ?? null : undefined,
       nickname: hasNickname ? payload.nickname ?? null : undefined,

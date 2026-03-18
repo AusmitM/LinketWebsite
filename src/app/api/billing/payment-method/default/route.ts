@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { requireRouteAccess } from "@/lib/api-authorization";
 import { getOrCreateStripeCustomerForUser } from "@/lib/billing/dashboard";
 import { isTrustedRequestOrigin } from "@/lib/http-origin";
 import { getStripeSecretKey, getStripeServerClient } from "@/lib/stripe";
-import { createServerSupabase } from "@/lib/supabase/server";
+import { validateJsonBody } from "@/lib/request-validation";
+import { z } from "zod";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -11,6 +13,10 @@ export const dynamic = "force-dynamic";
 type Payload = {
   paymentMethodId?: string;
 };
+
+const paymentMethodBodySchema = z.object({
+  paymentMethodId: z.string().trim().min(1).max(255),
+});
 
 function sanitizePaymentMethodId(value: string | undefined) {
   const trimmed = value?.trim() ?? "";
@@ -24,14 +30,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid request origin" }, { status: 403 });
   }
 
-  const supabase = await createServerSupabase();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const access = await requireRouteAccess("POST /api/billing/payment-method/default");
+  if (access instanceof NextResponse) {
+    return access;
   }
+  const user = access.user;
 
   if (!getStripeSecretKey()) {
     return NextResponse.json(
@@ -40,8 +43,13 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const payload = (await request.json().catch(() => null)) as Payload | null;
-  const paymentMethodId = sanitizePaymentMethodId(payload?.paymentMethodId);
+  const parsedBody = await validateJsonBody(request, paymentMethodBodySchema);
+  if (!parsedBody.ok) {
+    return parsedBody.response;
+  }
+  const paymentMethodId = sanitizePaymentMethodId(
+    (parsedBody.data as Payload).paymentMethodId
+  );
   if (!paymentMethodId) {
     return NextResponse.json(
       { error: "Valid paymentMethodId is required" },

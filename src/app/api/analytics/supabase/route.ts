@@ -1,8 +1,12 @@
 // app/api/analytics/supabase/route.ts
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+
+import { requireRouteAccess } from "@/lib/api-authorization";
 import { getUserAnalytics } from "@/lib/analytics-service";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { isSupabaseAdminAvailable } from "@/lib/supabase-admin";
+import { validateSearchParams } from "@/lib/request-validation";
 
 const MINUTE_MS = 60_000;
 const DAY_MS = 86_400_000;
@@ -126,33 +130,42 @@ function buildEmptyOnboarding() {
   };
 }
 
+const analyticsQuerySchema = z.object({
+  days: z.coerce.number().int().min(1).max(90).optional().default(30),
+  tzOffsetMinutes: z.coerce.number().int().min(-840).max(840).optional().default(0),
+  userId: z.string().uuid(),
+});
+
+type LeadRow = {
+  company: string | null;
+  created_at: string;
+  email: string | null;
+  id: string;
+  message: string | null;
+  name: string | null;
+  phone: string | null;
+};
+
 export async function GET(request: NextRequest) {
-  const searchParams = request.nextUrl.searchParams;
-  const parsedDays = parseInt(searchParams.get("days") || "30", 10);
-  const days = Number.isFinite(parsedDays)
-    ? Math.max(1, Math.min(parsedDays, 90))
-    : 30;
+  const parsedQuery = validateSearchParams(
+    request.nextUrl.searchParams,
+    analyticsQuerySchema
+  );
+  if (!parsedQuery.ok) {
+    return parsedQuery.response;
+  }
+
+  const { days, tzOffsetMinutes, userId } = parsedQuery.data;
   const timezoneOffsetMinutes = normalizeTimezoneOffsetMinutes(
-    searchParams.get("tzOffsetMinutes")
+    String(tzOffsetMinutes)
   );
 
   try {
-    const userId = searchParams.get("userId");
-
-    if (!userId) {
-      return NextResponse.json(
-        { error: "userId parameter is required" },
-        { status: 400 }
-      );
-    }
-
-    const supabase = await createServerSupabase();
-    const { data: auth, error: authError } = await supabase.auth.getUser();
-    if (authError || !auth.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    if (auth.user.id !== userId) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    const access = await requireRouteAccess("GET /api/analytics/supabase", {
+      resourceUserId: userId,
+    });
+    if (access instanceof NextResponse) {
+      return access;
     }
 
     if (isSupabaseAdminAvailable) {
@@ -167,6 +180,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    const supabase = await createServerSupabase();
     const { data: leads, error: leadsError } = await supabase
       .from("leads")
       .select("id,name,email,phone,company,message,created_at")
@@ -191,7 +205,7 @@ export async function GET(request: NextRequest) {
       timeline: buildEmptyTimeline(days, timezoneOffsetMinutes),
       topProfiles: [],
       topLinks: [],
-      recentLeads: (leads ?? []).map((lead) => ({
+      recentLeads: ((leads ?? []) as LeadRow[]).map((lead) => ({
         id: lead.id,
         name: lead.name ?? null,
         email: lead.email ?? null,

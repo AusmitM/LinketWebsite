@@ -1,27 +1,33 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+
+import { requireRouteAccess } from "@/lib/api-authorization";
+import { validateSearchParams } from "@/lib/request-validation";
 import { createServerSupabase } from "@/lib/supabase/server";
+
+const leadFormResponsesQuerySchema = z.object({
+  formId: z.string().trim().min(1).max(120),
+  userId: z.string().uuid(),
+});
 
 export async function GET(request: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams;
-    const userId = searchParams.get("userId");
-    const formId = searchParams.get("formId");
-
-    if (!userId || !formId) {
-      return NextResponse.json(
-        { error: "userId and formId are required" },
-        { status: 400 }
-      );
+    const parsedQuery = validateSearchParams(
+      request.nextUrl.searchParams,
+      leadFormResponsesQuerySchema
+    );
+    if (!parsedQuery.ok) {
+      return parsedQuery.response;
     }
+    const { formId, userId } = parsedQuery.data;
 
+    const access = await requireRouteAccess("GET /api/lead-forms/responses", {
+      resourceUserId: userId,
+    });
+    if (access instanceof NextResponse) {
+      return access;
+    }
     const supabase = await createServerSupabase();
-    const { data: authData, error: authError } = await supabase.auth.getUser();
-    if (authError || !authData.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    if (authData.user.id !== userId) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
 
     const { data, error } = await supabase
       .from("lead_form_responses")

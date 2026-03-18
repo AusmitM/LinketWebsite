@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { resolveCorsHeaders } from "@/lib/cors";
 import { createServerSupabaseReadonly } from "@/lib/supabase/server";
 import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
 import { limitRequest } from "@/lib/rate-limit";
@@ -111,10 +112,34 @@ async function parsePayload(request: NextRequest): Promise<ConsultPayload> {
   };
 }
 
+function jsonWithCors(request: NextRequest, body: unknown, init?: ResponseInit) {
+  const response = NextResponse.json(body, init);
+  const headers = resolveCorsHeaders(request.headers.get("origin"), {
+    allowMethods: ["OPTIONS", "POST"],
+  });
+  if (headers) {
+    Object.entries(headers).forEach(([key, value]) => {
+      response.headers.set(key, value);
+    });
+  }
+  return response;
+}
+
+export async function OPTIONS(request: NextRequest) {
+  const headers = resolveCorsHeaders(request.headers.get("origin"), {
+    allowMethods: ["OPTIONS", "POST"],
+  });
+  if (!headers) {
+    return new NextResponse(null, { status: 204 });
+  }
+  return new NextResponse(null, { status: 204, headers });
+}
+
 export async function POST(request: NextRequest) {
   try {
     if (await limitRequest(request, "consult-submit", 8, 60_000)) {
-      return NextResponse.json(
+      return jsonWithCors(
+        request,
         { error: "Too many requests. Please try again later." },
         { status: 429 }
       );
@@ -124,23 +149,25 @@ export async function POST(request: NextRequest) {
     const { workEmail, teamSize, notes } = payload;
 
     if (payload.website) {
-      return NextResponse.json({ ok: true });
+      return jsonWithCors(request, { ok: true });
     }
 
     if (!workEmail || !EMAIL_RE.test(workEmail)) {
-      return NextResponse.json(
+      return jsonWithCors(
+        request,
         { error: "A valid work email is required." },
         { status: 400 }
       );
     }
     if (!teamSize) {
-      return NextResponse.json(
+      return jsonWithCors(
+        request,
         { error: "Team size is required." },
         { status: 400 }
       );
     }
     if (!notes) {
-      return NextResponse.json({ error: "Notes are required." }, { status: 400 });
+      return jsonWithCors(request, { error: "Notes are required." }, { status: 400 });
     }
 
     const insertPayload = {
@@ -166,10 +193,11 @@ export async function POST(request: NextRequest) {
 
     await sendConsultEmail(payload);
 
-    return NextResponse.json({ ok: true });
+    return jsonWithCors(request, { ok: true });
   } catch (error) {
     console.error("Consult request error:", error);
-    return NextResponse.json(
+    return jsonWithCors(
+      request,
       { error: "Unable to submit consult request." },
       { status: 500 }
     );

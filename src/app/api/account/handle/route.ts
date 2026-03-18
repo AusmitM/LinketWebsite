@@ -1,7 +1,15 @@
 import { NextResponse } from "next/server";
-import { supabaseAdmin, isSupabaseAdminAvailable } from "@/lib/supabase-admin";
+import { z } from "zod";
+
+import { requireRouteAccess } from "@/lib/api-authorization";
+import { validateSearchParams } from "@/lib/request-validation";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { getAccountHandleForUser } from "@/lib/profile-service";
+import { supabaseAdmin, isSupabaseAdminAvailable } from "@/lib/supabase-admin";
+
+const accountHandleQuerySchema = z.object({
+  userId: z.string().uuid(),
+});
 
 function normalizeHandle(handle: string) {
   return handle.trim().toLowerCase();
@@ -28,20 +36,23 @@ async function fetchActiveProfileHandle(
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  const userId = url.searchParams.get("userId");
-  if (!userId) {
-    return NextResponse.json({ error: "userId is required" }, { status: 400 });
+  const parsedQuery = validateSearchParams(
+    url.searchParams,
+    accountHandleQuerySchema
+  );
+  if (!parsedQuery.ok) {
+    return parsedQuery.response;
   }
+  const { userId } = parsedQuery.data;
 
   try {
+    const access = await requireRouteAccess("GET /api/account/handle", {
+      resourceUserId: userId,
+    });
+    if (access instanceof NextResponse) {
+      return access;
+    }
     const supabase = await createServerSupabase();
-    const { data: auth, error: authError } = await supabase.auth.getUser();
-    if (authError || !auth.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    if (auth.user.id !== userId) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
 
     if (isSupabaseAdminAvailable) {
       try {

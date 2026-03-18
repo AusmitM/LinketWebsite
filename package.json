@@ -9,7 +9,11 @@
     "build:plain": "next build",
     "start": "next start",
     "lint": "eslint",
-    "check:a11y": "node scripts/check-accessibility.mjs"
+    "check:a11y": "node scripts/check-accessibility.mjs",
+    "check:hidden-unicode": "node scripts/check-hidden-unicode.mjs",
+    "check:secrets": "node scripts/check-secrets.mjs",
+    "check:security:repo": "npm run check:hidden-unicode && npm run check:secrets",
+    "test:security": "node --test --experimental-strip-types --loader ./scripts/ts-path-loader.mjs ./test/security/api-authorization.test.ts ./test/security/security-helpers.test.ts ./test/security/rate-limit.test.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

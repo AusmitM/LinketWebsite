@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { buildVCard } from "@/lib/vcard/buildVCard";
 import { getActiveProfileForPublicHandle } from "@/lib/profile-service";
 import type { ContactProfile } from "@/lib/profile.store";
+import { sanitizeAttachmentFilename } from "@/lib/security";
 import { createClient } from "@supabase/supabase-js";
 
 export const dynamic = "force-dynamic";
@@ -155,7 +156,10 @@ export async function GET(
       status: 200,
       headers: {
         "Content-Type": "text/vcard; charset=utf-8",
-        "Content-Disposition": `attachment; filename=\"${handle}.vcf\"`,
+        "Content-Disposition": `attachment; filename="${sanitizeAttachmentFilename(
+          `${handle}.vcf`,
+          "contact.vcf"
+        )}"`,
         "Cache-Control": "no-store, max-age=0",
         Pragma: "no-cache",
         Expires: "0",
