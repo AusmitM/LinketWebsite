@@ -144,7 +144,7 @@ export default function ConsultForm() {
           autoComplete="email"
           required
           disabled={submitting}
-          className="mt-2 w-full rounded-2xl border border-white/15 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:border-[#ff9776] focus:outline-none focus:ring-2 focus:ring-[#ff9776]/40"
+          className="mt-2 w-full rounded-2xl border border-white/35 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/50 focus:border-[#ff9776] focus:outline-none focus-visible:border-[#ff9776] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white focus-visible:ring-0"
           placeholder="name@company.com"
         />
       </div>
@@ -162,7 +162,7 @@ export default function ConsultForm() {
           onChange={updateField("teamSize")}
           required
           disabled={submitting}
-          className="mt-2 w-full rounded-2xl border border-white/15 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:border-[#5dd6f7] focus:outline-none focus:ring-2 focus:ring-[#5dd6f7]/40"
+          className="mt-2 w-full rounded-2xl border border-white/35 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/50 focus:border-[#5dd6f7] focus:outline-none focus-visible:border-[#5dd6f7] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white focus-visible:ring-0"
           placeholder="e.g. 25 reps"
         />
       </div>
@@ -180,7 +180,7 @@ export default function ConsultForm() {
           onChange={updateField("notes")}
           required
           disabled={submitting}
-          className="mt-2 w-full rounded-2xl border border-white/15 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:border-[#ff9776] focus:outline-none focus:ring-2 focus:ring-[#ff9776]/40"
+          className="mt-2 w-full rounded-2xl border border-white/35 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/50 focus:border-[#ff9776] focus:outline-none focus-visible:border-[#ff9776] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white focus-visible:ring-0"
           placeholder="Share timelines or hardware goals..."
         />
       </div>

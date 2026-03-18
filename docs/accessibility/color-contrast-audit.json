@@ -1,0 +1,1403 @@
+{
+  "meta": {
+    "wcag_version_targets": [
+      "WCAG 2.1",
+      "WCAG 2.2"
+    ],
+    "conformance_levels": [
+      "AA baseline",
+      "AAA deltas"
+    ],
+    "audit_timestamp": "2026-03-18T18:25:25.029Z",
+    "tool_assumptions": [
+      "Large-text heuristic uses 96 CSS px per inch (18pt = 24px, 14pt bold = 18.67px).",
+      "Alpha values were composited with source-over math before luminance and contrast were computed.",
+      "Gradient findings use worst-stop sampling from explicit source values.",
+      "No screenshot pixel sampling was performed in this run.",
+      "Mock controls were treated as user-visible when focusable in the DOM."
+    ]
+  },
+  "findings": [
+    {
+      "id": "F-001",
+      "page_or_story": "/",
+      "component": "Hero CTA",
+      "selector": "#hero [data-analytics-id=\"hero_cta_click\"]",
+      "state": "default",
+      "role": "text",
+      "font_size_px": 16,
+      "font_weight": 600,
+      "large_text": false,
+      "status": "patched",
+      "severity": "critical",
+      "fg": {
+        "hex": "#ffffff",
+        "rgba": "rgba(255, 255, 255, 1)",
+        "alpha": 1
+      },
+      "bg": {
+        "hex": "#5dd6f7",
+        "rgba": "rgba(93, 214, 247, 1)",
+        "alpha": 1,
+        "layers": [
+          "#5dd6f7"
+        ]
+      },
+      "computed": {
+        "contrast_ratio": 1.69,
+        "luminance_fg": 1,
+        "luminance_bg": 0.5714,
+        "method": "sampled"
+      },
+      "wcag": {
+        "sc": "1.4.3",
+        "level": "AA",
+        "pass": false
+      },
+      "recommendation": {
+        "fix_type": "css",
+        "before_hex": "#ffffff",
+        "after_hex": "#0f172a",
+        "delta": "foreground only: #ffffff -> #0f172a",
+        "rationale": "Darken CTA text on light gradient stops."
+      },
+      "effort": {
+        "size": "S",
+        "notes": "One class swap."
+      },
+      "patch": {
+        "file": "src/app/page.tsx",
+        "css_snippet": "text-white -> text-slate-900"
+      },
+      "confidence": {
+        "level": "high",
+        "reasons": [
+          "Worst stop sampled from source."
+        ]
+      },
+      "needs_manual_review": false,
+      "false_positive_risk": false
+    },
+    {
+      "id": "F-002",
+      "page_or_story": "/",
+      "component": "Hero logotype",
+      "selector": "#hero h1 > span.block",
+      "state": "default",
+      "role": "text",
+      "font_size_px": 84,
+      "font_weight": 900,
+      "large_text": true,
+      "status": "patched",
+      "severity": "high",
+      "fg": {
+        "hex": "#ffd27f",
+        "rgba": "rgba(255, 210, 127, 1)",
+        "alpha": 1
+      },
+      "bg": {
+        "hex": "#ffffff",
+        "rgba": "rgba(255, 255, 255, 1)",
+        "alpha": 1,
+        "layers": [
+          "#ffffff"
+        ]
+      },
+      "computed": {
+        "contrast_ratio": 1.42,
+        "luminance_fg": 0.6889,
+        "luminance_bg": 1,
+        "method": "sampled"
+      },
+      "wcag": {
+        "sc": "1.4.3",
+        "level": "AA",
+        "pass": false
+      },
+      "recommendation": {
+        "fix_type": "css",
+        "before_hex": "#ffd27f",
+        "after_hex": "#b45309",
+        "delta": "gradient stops darkened for light background use",
+        "rationale": "Shift light-background wordmark gradient to darker stops."
+      },
+      "effort": {
+        "size": "S",
+        "notes": "One gradient class update."
+      },
+      "patch": {
+        "file": "src/app/page.tsx",
+        "css_snippet": "update hero gradient stops"
+      },
+      "confidence": {
+        "level": "medium",
+        "reasons": [
+          "Gradient stop sample from source.",
+          "Still flagged for manual review because anti-aliasing can vary."
+        ]
+      },
+      "needs_manual_review": true,
+      "false_positive_risk": false
+    },
+    {
+      "id": "F-003",
+      "page_or_story": "/auth",
+      "component": "Auth placeholders",
+      "selector": "input#email::placeholder, input#password::placeholder",
+      "state": "default",
+      "role": "text",
+      "font_size_px": 14,
+      "font_weight": 400,
+      "large_text": false,
+      "status": "patched",
+      "severity": "medium",
+      "fg": {
+        "hex": "#94a3b8",
+        "rgba": "rgba(148, 163, 184, 1)",
+        "alpha": 1
+      },
+      "bg": {
+        "hex": "#ffffff",
+        "rgba": "rgba(255, 255, 255, 1)",
+        "alpha": 1,
+        "layers": [
+          "#ffffff"
+        ]
+      },
+      "computed": {
+        "contrast_ratio": 2.56,
+        "luminance_fg": 0.3595,
+        "luminance_bg": 1,
+        "method": "computed"
+      },
+      "wcag": {
+        "sc": "1.4.3",
+        "level": "AA",
+        "pass": false
+      },
+      "recommendation": {
+        "fix_type": "css",
+        "before_hex": "#94a3b8",
+        "after_hex": "#64748b",
+        "delta": "placeholder:text-slate-400 -> placeholder:text-slate-500",
+        "rationale": "Raise placeholder contrast without matching body text."
+      },
+      "effort": {
+        "size": "S",
+        "notes": "Utility-only change."
+      },
+      "patch": {
+        "file": "src/app/(auth)/auth/page.tsx",
+        "css_snippet": "placeholder:text-slate-400 -> placeholder:text-slate-500"
+      },
+      "confidence": {
+        "level": "high",
+        "reasons": [
+          "Solid source colors."
+        ]
+      },
+      "needs_manual_review": false,
+      "false_positive_risk": false
+    },
+    {
+      "id": "F-004",
+      "page_or_story": "/auth",
+      "component": "Auth input focus",
+      "selector": "input#email, input#password",
+      "state": "focus-visible",
+      "role": "ui",
+      "font_size_px": null,
+      "font_weight": null,
+      "large_text": false,
+      "status": "patched",
+      "severity": "medium",
+      "fg": {
+        "hex": "#ff9776",
+        "rgba": "rgba(255, 151, 118, 0.3)",
+        "alpha": 0.3
+      },
+      "bg": {
+        "hex": "#ffffff",
+        "rgba": "rgba(255, 255, 255, 1)",
+        "alpha": 1,
+        "layers": [
+          "#ffffff"
+        ]
+      },
+      "computed": {
+        "contrast_ratio": 2.11,
+        "luminance_fg": 0.447,
+        "luminance_bg": 1,
+        "method": "computed"
+      },
+      "wcag": {
+        "sc": "2.4.13",
+        "level": "AAA",
+        "pass": false
+      },
+      "recommendation": {
+        "fix_type": "css",
+        "before_hex": "rgba(255, 151, 118, 0.30)",
+        "after_hex": "#2563eb",
+        "delta": "pastel ring -> solid outline token",
+        "rationale": "Use the ring token for a clear 2px focus perimeter."
+      },
+      "effort": {
+        "size": "S",
+        "notes": "Utility-only change."
+      },
+      "patch": {
+        "file": "src/app/(auth)/auth/page.tsx",
+        "css_snippet": "focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+      },
+      "confidence": {
+        "level": "high",
+        "reasons": [
+          "Old ring color and white background are explicit."
+        ]
+      },
+      "needs_manual_review": false,
+      "false_positive_risk": false,
+      "wcag_additional": [
+        {
+          "sc": "2.4.7",
+          "level": "AA",
+          "pass": true
+        },
+        {
+          "sc": "2.4.11",
+          "level": "AA",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "F-005",
+      "page_or_story": "/",
+      "component": "Consult placeholders",
+      "selector": "#custom-email::placeholder, #custom-team::placeholder, #custom-notes::placeholder",
+      "state": "default",
+      "role": "text",
+      "font_size_px": 14,
+      "font_weight": 400,
+      "large_text": false,
+      "status": "patched",
+      "severity": "medium",
+      "fg": {
+        "hex": "#68696e",
+        "rgba": "rgba(104, 105, 110, 1)",
+        "alpha": 0.4
+      },
+      "bg": {
+        "hex": "#03050d",
+        "rgba": "rgba(3, 5, 13, 1)",
+        "alpha": 0.4,
+        "layers": [
+          "#050816",
+          "rgba(0, 0, 0, 0.40)"
+        ]
+      },
+      "computed": {
+        "contrast_ratio": 3.71,
+        "luminance_fg": 0.1413,
+        "luminance_bg": 0.0015,
+        "method": "computed"
+      },
+      "wcag": {
+        "sc": "1.4.3",
+        "level": "AA",
+        "pass": false
+      },
+      "recommendation": {
+        "fix_type": "css",
+        "before_hex": "rgba(255, 255, 255, 0.40)",
+        "after_hex": "rgba(255, 255, 255, 0.50)",
+        "delta": "placeholder:text-white/40 -> placeholder:text-white/50",
+        "rationale": "Lift dark-panel placeholder contrast."
+      },
+      "effort": {
+        "size": "S",
+        "notes": "Utility-only change."
+      },
+      "patch": {
+        "file": "src/components/landing/ConsultForm.tsx",
+        "css_snippet": "placeholder:text-white/40 -> placeholder:text-white/50"
+      },
+      "confidence": {
+        "level": "high",
+        "reasons": [
+          "Exact alpha composition from source layers."
+        ]
+      },
+      "needs_manual_review": false,
+      "false_positive_risk": false
+    },
+    {
+      "id": "F-006",
+      "page_or_story": "/",
+      "component": "Consult field boundary",
+      "selector": "#custom-email, #custom-team, #custom-notes",
+      "state": "default",
+      "role": "ui",
+      "font_size_px": null,
+      "font_weight": null,
+      "large_text": false,
+      "status": "patched",
+      "severity": "medium",
+      "fg": {
+        "hex": "#2b2d39",
+        "rgba": "rgba(43, 45, 57, 1)",
+        "alpha": 0.15
+      },
+      "bg": {
+        "hex": "#03050d",
+        "rgba": "rgba(3, 5, 13, 1)",
+        "alpha": 0.4,
+        "layers": [
+          "#050816",
+          "rgba(0, 0, 0, 0.40)"
+        ]
+      },
+      "computed": {
+        "contrast_ratio": 1.49,
+        "luminance_fg": 0.0268,
+        "luminance_bg": 0.0015,
+        "method": "computed"
+      },
+      "wcag": {
+        "sc": "1.4.11",
+        "level": "AA",
+        "pass": false
+      },
+      "recommendation": {
+        "fix_type": "css",
+        "before_hex": "rgba(255, 255, 255, 0.15)",
+        "after_hex": "rgba(255, 255, 255, 0.35)",
+        "delta": "border-white/15 -> border-white/35",
+        "rationale": "Make the boundary distinct from the dark translucent fill."
+      },
+      "effort": {
+        "size": "S",
+        "notes": "Utility-only change."
+      },
+      "patch": {
+        "file": "src/components/landing/ConsultForm.tsx",
+        "css_snippet": "border-white/15 -> border-white/35"
+      },
+      "confidence": {
+        "level": "high",
+        "reasons": [
+          "Exact alpha composition from source layers."
+        ]
+      },
+      "needs_manual_review": false,
+      "false_positive_risk": false
+    },
+    {
+      "id": "F-007",
+      "page_or_story": "/",
+      "component": "Consult focus",
+      "selector": "#custom-email, #custom-team, #custom-notes",
+      "state": "focus-visible",
+      "role": "ui",
+      "font_size_px": null,
+      "font_weight": null,
+      "large_text": false,
+      "status": "patched",
+      "severity": "medium",
+      "fg": {
+        "hex": "#69413c",
+        "rgba": "rgba(105, 65, 60, 1)",
+        "alpha": 0.4
+      },
+      "bg": {
+        "hex": "#03050d",
+        "rgba": "rgba(3, 5, 13, 1)",
+        "alpha": 0.4,
+        "layers": [
+          "#050816",
+          "rgba(0, 0, 0, 0.40)"
+        ]
+      },
+      "computed": {
+        "contrast_ratio": 2.36,
+        "luminance_fg": 0.0714,
+        "luminance_bg": 0.0015,
+        "method": "computed"
+      },
+      "wcag": {
+        "sc": "2.4.13",
+        "level": "AAA",
+        "pass": false
+      },
+      "recommendation": {
+        "fix_type": "css",
+        "before_hex": "rgba(255, 151, 118, 0.40)",
+        "after_hex": "#ffffff",
+        "delta": "soft pastel ring -> white outline",
+        "rationale": "White outline is the most reliable focus indicator on the dark panel."
+      },
+      "effort": {
+        "size": "S",
+        "notes": "Utility-only change."
+      },
+      "patch": {
+        "file": "src/components/landing/ConsultForm.tsx",
+        "css_snippet": "focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+      },
+      "confidence": {
+        "level": "high",
+        "reasons": [
+          "Exact alpha composition from source layers."
+        ]
+      },
+      "needs_manual_review": false,
+      "false_positive_risk": false,
+      "wcag_additional": [
+        {
+          "sc": "2.4.7",
+          "level": "AA",
+          "pass": true
+        },
+        {
+          "sc": "2.4.11",
+          "level": "AA",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "F-008",
+      "page_or_story": "/",
+      "component": "Adaptive nav focus",
+      "selector": "button[role=\"tab\"]",
+      "state": "focus-visible",
+      "role": "ui",
+      "font_size_px": null,
+      "font_weight": null,
+      "large_text": false,
+      "status": "patched",
+      "severity": "medium",
+      "fg": {
+        "hex": "#febf9b",
+        "rgba": "rgba(254, 191, 155, 1)",
+        "alpha": 1
+      },
+      "bg": {
+        "hex": "#ffffff",
+        "rgba": "rgba(255, 255, 255, 1)",
+        "alpha": 1,
+        "layers": [
+          "#ffffff"
+        ]
+      },
+      "computed": {
+        "contrast_ratio": 1.6,
+        "luminance_fg": 0.607,
+        "luminance_bg": 1,
+        "method": "computed"
+      },
+      "wcag": {
+        "sc": "2.4.13",
+        "level": "AAA",
+        "pass": false
+      },
+      "recommendation": {
+        "fix_type": "css",
+        "before_hex": "#febf9b",
+        "after_hex": "#0f4c81",
+        "delta": "outline color swap",
+        "rationale": "Use a darker outline on white glass surfaces."
+      },
+      "effort": {
+        "size": "S",
+        "notes": "One utility change."
+      },
+      "patch": {
+        "file": "src/components/ui/3d-adaptive-navigation-bar.tsx",
+        "css_snippet": "focus-visible:outline-[#0f4c81]"
+      },
+      "confidence": {
+        "level": "high",
+        "reasons": [
+          "Explicit source color."
+        ]
+      },
+      "needs_manual_review": false,
+      "false_positive_risk": false,
+      "wcag_additional": [
+        {
+          "sc": "2.4.7",
+          "level": "AA",
+          "pass": true
+        },
+        {
+          "sc": "2.4.11",
+          "level": "AA",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "F-009",
+      "page_or_story": "/",
+      "component": "Creative pricing warm accents",
+      "selector": ".popular badge, .popular CTA, .tier icon",
+      "state": "default",
+      "role": "text",
+      "font_size_px": 12,
+      "font_weight": 600,
+      "large_text": false,
+      "status": "patched",
+      "severity": "critical",
+      "fg": {
+        "hex": "#ffffff",
+        "rgba": "rgba(255, 255, 255, 1)",
+        "alpha": 1
+      },
+      "bg": {
+        "hex": "#fdba74",
+        "rgba": "rgba(253, 186, 116, 1)",
+        "alpha": 1,
+        "layers": [
+          "#fdba74"
+        ]
+      },
+      "computed": {
+        "contrast_ratio": 1.69,
+        "luminance_fg": 1,
+        "luminance_bg": 0.5726,
+        "method": "sampled"
+      },
+      "wcag": {
+        "sc": "1.4.3",
+        "level": "AA",
+        "pass": false
+      },
+      "recommendation": {
+        "fix_type": "css",
+        "before_hex": "#ffffff",
+        "after_hex": "#0f172a",
+        "delta": "text-white -> text-[#0f172a]",
+        "rationale": "Warm gradients need a dark foreground."
+      },
+      "effort": {
+        "size": "S",
+        "notes": "Single component update."
+      },
+      "patch": {
+        "file": "src/components/ui/creative-pricing.tsx",
+        "css_snippet": "text-white -> text-[#0f172a]"
+      },
+      "confidence": {
+        "level": "high",
+        "reasons": [
+          "Worst stop sampled from source."
+        ]
+      },
+      "needs_manual_review": false,
+      "false_positive_risk": false
+    },
+    {
+      "id": "F-010",
+      "page_or_story": "/",
+      "component": "Creative pricing business surfaces",
+      "selector": ".popular business badge, .popular business CTA",
+      "state": "default",
+      "role": "text",
+      "font_size_px": 12,
+      "font_weight": 600,
+      "large_text": false,
+      "status": "patched",
+      "severity": "high",
+      "fg": {
+        "hex": "#ffffff",
+        "rgba": "rgba(255, 255, 255, 1)",
+        "alpha": 1
+      },
+      "bg": {
+        "hex": "#60a5fa",
+        "rgba": "rgba(96, 165, 250, 1)",
+        "alpha": 1,
+        "layers": [
+          "#60a5fa"
+        ]
+      },
+      "computed": {
+        "contrast_ratio": 2.54,
+        "luminance_fg": 1,
+        "luminance_bg": 0.363,
+        "method": "sampled"
+      },
+      "wcag": {
+        "sc": "1.4.3",
+        "level": "AA",
+        "pass": false
+      },
+      "recommendation": {
+        "fix_type": "css",
+        "before_hex": "#60a5fa",
+        "after_hex": "#2563eb",
+        "delta": "darken the lightest gradient stop while keeping white text",
+        "rationale": "Business CTA stays white text but the lighter blue stop is darkened."
+      },
+      "effort": {
+        "size": "S",
+        "notes": "Single component update."
+      },
+      "patch": {
+        "file": "src/components/ui/creative-pricing.tsx",
+        "css_snippet": "from-[#2563eb] to-[#60a5fa] -> from-[#1d4ed8] to-[#2563eb]"
+      },
+      "confidence": {
+        "level": "high",
+        "reasons": [
+          "Worst stop sampled from source."
+        ]
+      },
+      "needs_manual_review": false,
+      "false_positive_risk": false
+    },
+    {
+      "id": "F-011",
+      "page_or_story": "theme-dark + .dark",
+      "component": "Primary/sidebar-primary tokens",
+      "selector": ".dark, .theme-dark",
+      "state": "default",
+      "role": "text",
+      "font_size_px": 14,
+      "font_weight": 500,
+      "large_text": false,
+      "status": "patched",
+      "severity": "high",
+      "fg": {
+        "hex": "#ffffff",
+        "rgba": "rgba(255, 255, 255, 1)",
+        "alpha": 1
+      },
+      "bg": {
+        "hex": "#63a8ff",
+        "rgba": "rgba(99, 168, 255, 1)",
+        "alpha": 1,
+        "layers": [
+          "#63a8ff"
+        ]
+      },
+      "computed": {
+        "contrast_ratio": 2.45,
+        "luminance_fg": 1,
+        "luminance_bg": 0.3788,
+        "method": "computed"
+      },
+      "wcag": {
+        "sc": "1.4.3",
+        "level": "AA",
+        "pass": false
+      },
+      "recommendation": {
+        "fix_type": "token",
+        "before_hex": "#ffffff",
+        "after_hex": "#0f172a",
+        "delta": "--primary-foreground / --sidebar-primary-foreground -> #0f172a",
+        "rationale": "Use darker foreground text on light blue primary tokens."
+      },
+      "effort": {
+        "size": "S",
+        "notes": "Token-only change."
+      },
+      "patch": {
+        "file": "src/styles/theme/base.css, src/styles/theme/variants.css",
+        "css_snippet": "--primary-foreground: #0f172a; --sidebar-primary-foreground: #0f172a;"
+      },
+      "confidence": {
+        "level": "high",
+        "reasons": [
+          "Explicit theme tokens."
+        ]
+      },
+      "needs_manual_review": false,
+      "false_positive_risk": false
+    },
+    {
+      "id": "F-012",
+      "page_or_story": "theme-midnight",
+      "component": "Primary/sidebar-primary tokens",
+      "selector": ".theme-midnight",
+      "state": "default",
+      "role": "text",
+      "font_size_px": 14,
+      "font_weight": 500,
+      "large_text": false,
+      "status": "patched",
+      "severity": "medium",
+      "fg": {
+        "hex": "#ffffff",
+        "rgba": "rgba(255, 255, 255, 1)",
+        "alpha": 1
+      },
+      "bg": {
+        "hex": "#8d5fff",
+        "rgba": "rgba(141, 95, 255, 1)",
+        "alpha": 1,
+        "layers": [
+          "#8d5fff"
+        ]
+      },
+      "computed": {
+        "contrast_ratio": 4.03,
+        "luminance_fg": 1,
+        "luminance_bg": 0.2107,
+        "method": "computed"
+      },
+      "wcag": {
+        "sc": "1.4.3",
+        "level": "AA",
+        "pass": false
+      },
+      "recommendation": {
+        "fix_type": "token",
+        "before_hex": "#ffffff",
+        "after_hex": "#050816",
+        "delta": "--primary-foreground / --sidebar-primary-foreground -> #050816",
+        "rationale": "Lift primary button contrast without changing the purple base."
+      },
+      "effort": {
+        "size": "S",
+        "notes": "Token-only change."
+      },
+      "patch": {
+        "file": "src/styles/theme/variants.css",
+        "css_snippet": "--primary-foreground: #050816; --sidebar-primary-foreground: #050816;"
+      },
+      "confidence": {
+        "level": "high",
+        "reasons": [
+          "Explicit theme tokens."
+        ]
+      },
+      "needs_manual_review": false,
+      "false_positive_risk": false
+    },
+    {
+      "id": "F-013",
+      "page_or_story": "theme-gilded",
+      "component": "Primary/sidebar-primary tokens",
+      "selector": ".theme-gilded",
+      "state": "default",
+      "role": "text",
+      "font_size_px": 14,
+      "font_weight": 500,
+      "large_text": false,
+      "status": "patched",
+      "severity": "medium",
+      "fg": {
+        "hex": "#ffffff",
+        "rgba": "rgba(255, 255, 255, 1)",
+        "alpha": 1
+      },
+      "bg": {
+        "hex": "#b16c04",
+        "rgba": "rgba(177, 108, 4, 1)",
+        "alpha": 1,
+        "layers": [
+          "#b16c04"
+        ]
+      },
+      "computed": {
+        "contrast_ratio": 4.19,
+        "luminance_fg": 1,
+        "luminance_bg": 0.2008,
+        "method": "computed"
+      },
+      "wcag": {
+        "sc": "1.4.3",
+        "level": "AA",
+        "pass": false
+      },
+      "recommendation": {
+        "fix_type": "token",
+        "before_hex": "#ffffff",
+        "after_hex": "#050816",
+        "delta": "--primary-foreground / --sidebar-primary-foreground -> #050816",
+        "rationale": "Use darker text on the gold primary token."
+      },
+      "effort": {
+        "size": "S",
+        "notes": "Token-only change."
+      },
+      "patch": {
+        "file": "src/styles/theme/variants.css",
+        "css_snippet": "--primary-foreground: #050816; --sidebar-primary-foreground: #050816;"
+      },
+      "confidence": {
+        "level": "high",
+        "reasons": [
+          "Explicit theme tokens."
+        ]
+      },
+      "needs_manual_review": false,
+      "false_positive_risk": false
+    },
+    {
+      "id": "F-014",
+      "page_or_story": "theme-rose",
+      "component": "Primary/sidebar-primary tokens",
+      "selector": ".theme-rose",
+      "state": "default",
+      "role": "text",
+      "font_size_px": 14,
+      "font_weight": 500,
+      "large_text": false,
+      "status": "patched",
+      "severity": "high",
+      "fg": {
+        "hex": "#fff4ec",
+        "rgba": "rgba(255, 244, 236, 1)",
+        "alpha": 1
+      },
+      "bg": {
+        "hex": "#df4d3a",
+        "rgba": "rgba(223, 77, 58, 1)",
+        "alpha": 1,
+        "layers": [
+          "#df4d3a"
+        ]
+      },
+      "computed": {
+        "contrast_ratio": 3.69,
+        "luminance_fg": 0.9202,
+        "luminance_bg": 0.213,
+        "method": "computed"
+      },
+      "wcag": {
+        "sc": "1.4.3",
+        "level": "AA",
+        "pass": false
+      },
+      "recommendation": {
+        "fix_type": "token",
+        "before_hex": "#fff4ec",
+        "after_hex": "#050816",
+        "delta": "--primary-foreground / --sidebar-primary-foreground -> #050816",
+        "rationale": "Use darker text on the rose primary token."
+      },
+      "effort": {
+        "size": "S",
+        "notes": "Token-only change."
+      },
+      "patch": {
+        "file": "src/styles/theme/variants.css",
+        "css_snippet": "--primary-foreground: #050816; --sidebar-primary-foreground: #050816;"
+      },
+      "confidence": {
+        "level": "high",
+        "reasons": [
+          "Explicit theme tokens."
+        ]
+      },
+      "needs_manual_review": false,
+      "false_positive_risk": false
+    },
+    {
+      "id": "F-015",
+      "page_or_story": "theme-forest",
+      "component": "Card/secondary text tokens",
+      "selector": ".theme-forest",
+      "state": "default",
+      "role": "text",
+      "font_size_px": 14,
+      "font_weight": 500,
+      "large_text": false,
+      "status": "patched",
+      "severity": "high",
+      "fg": {
+        "hex": "#c0ae9a",
+        "rgba": "rgba(192, 174, 154, 1)",
+        "alpha": 1
+      },
+      "bg": {
+        "hex": "#4a5d4f",
+        "rgba": "rgba(74, 93, 79, 1)",
+        "alpha": 1,
+        "layers": [
+          "#4a5d4f"
+        ]
+      },
+      "computed": {
+        "contrast_ratio": 3.29,
+        "luminance_fg": 0.4381,
+        "luminance_bg": 0.0985,
+        "method": "computed"
+      },
+      "wcag": {
+        "sc": "1.4.3",
+        "level": "AA",
+        "pass": false
+      },
+      "recommendation": {
+        "fix_type": "token",
+        "before_hex": "#c0ae9a",
+        "after_hex": "#f7f0e2",
+        "delta": "card/secondary/muted foreground tokens -> #f7f0e2",
+        "rationale": "Use a lighter shared foreground token on forest secondary and card surfaces."
+      },
+      "effort": {
+        "size": "M",
+        "notes": "Shared token sweep inside the forest theme."
+      },
+      "patch": {
+        "file": "src/styles/theme/variants.css",
+        "css_snippet": "--card-foreground: #f7f0e2; --secondary-foreground: #f7f0e2; --muted-foreground: #f7f0e2;"
+      },
+      "confidence": {
+        "level": "high",
+        "reasons": [
+          "Explicit theme tokens."
+        ]
+      },
+      "needs_manual_review": false,
+      "false_positive_risk": false
+    },
+    {
+      "id": "F-016",
+      "page_or_story": "theme-forest",
+      "component": "Focus ring token",
+      "selector": ".theme-forest",
+      "state": "focus-visible",
+      "role": "ui",
+      "font_size_px": null,
+      "font_weight": null,
+      "large_text": false,
+      "status": "patched",
+      "severity": "medium",
+      "fg": {
+        "hex": "#a45b3e",
+        "rgba": "rgba(164, 91, 62, 1)",
+        "alpha": 1
+      },
+      "bg": {
+        "hex": "#273529",
+        "rgba": "rgba(39, 53, 41, 1)",
+        "alpha": 1,
+        "layers": [
+          "#273529"
+        ]
+      },
+      "computed": {
+        "contrast_ratio": 2.55,
+        "luminance_fg": 0.1572,
+        "luminance_bg": 0.0314,
+        "method": "computed"
+      },
+      "wcag": {
+        "sc": "1.4.11",
+        "level": "AA",
+        "pass": false
+      },
+      "recommendation": {
+        "fix_type": "token",
+        "before_hex": "#a45b3e",
+        "after_hex": "#c79c7e",
+        "delta": "--ring / --sidebar-ring -> #c79c7e",
+        "rationale": "Use a lighter ring that works on dark forest surfaces."
+      },
+      "effort": {
+        "size": "S",
+        "notes": "Token-only change."
+      },
+      "patch": {
+        "file": "src/styles/theme/variants.css",
+        "css_snippet": "--ring: #c79c7e; --sidebar-ring: #c79c7e;"
+      },
+      "confidence": {
+        "level": "high",
+        "reasons": [
+          "Explicit theme tokens."
+        ]
+      },
+      "needs_manual_review": false,
+      "false_positive_risk": false
+    },
+    {
+      "id": "F-017",
+      "page_or_story": "theme-rose/theme-autumn/theme-honey",
+      "component": "Warm-theme ring sweep",
+      "selector": ".theme-rose, .theme-autumn, .theme-honey",
+      "state": "focus-visible",
+      "role": "ui",
+      "font_size_px": null,
+      "font_weight": null,
+      "large_text": false,
+      "status": "patched",
+      "severity": "medium",
+      "fg": {
+        "hex": "#ec6a43",
+        "rgba": "rgba(236, 106, 67, 1)",
+        "alpha": 1
+      },
+      "bg": {
+        "hex": "#ffe0d2",
+        "rgba": "rgba(255, 224, 210, 1)",
+        "alpha": 1,
+        "layers": [
+          "#ffe0d2"
+        ]
+      },
+      "computed": {
+        "contrast_ratio": 2.51,
+        "luminance_fg": 0.2855,
+        "luminance_bg": 0.7922,
+        "method": "computed"
+      },
+      "wcag": {
+        "sc": "1.4.11",
+        "level": "AA",
+        "pass": false
+      },
+      "recommendation": {
+        "fix_type": "token",
+        "before_hex": "#ec6a43 / #cb6539 / #df6206",
+        "after_hex": "#9a3412",
+        "delta": "--ring / --sidebar-ring -> #9a3412",
+        "rationale": "Use one darker warm ring token across the warm family."
+      },
+      "effort": {
+        "size": "S",
+        "notes": "Shared token update across three themes."
+      },
+      "patch": {
+        "file": "src/styles/theme/variants.css",
+        "css_snippet": "--ring: #9a3412; --sidebar-ring: #9a3412;"
+      },
+      "confidence": {
+        "level": "high",
+        "reasons": [
+          "Explicit theme tokens."
+        ]
+      },
+      "needs_manual_review": false,
+      "false_positive_risk": false
+    },
+    {
+      "id": "F-018",
+      "page_or_story": "theme-burnt-orange",
+      "component": "Global foreground/focus tokens",
+      "selector": ".theme-burnt-orange",
+      "state": "default / focus-visible",
+      "role": "text",
+      "font_size_px": 16,
+      "font_weight": 500,
+      "large_text": false,
+      "status": "open",
+      "severity": "critical",
+      "fg": {
+        "hex": "#7a3a00",
+        "rgba": "rgba(122, 58, 0, 1)",
+        "alpha": 1
+      },
+      "bg": {
+        "hex": "#c05600",
+        "rgba": "rgba(192, 86, 0, 1)",
+        "alpha": 1,
+        "layers": [
+          "#c05600"
+        ]
+      },
+      "computed": {
+        "contrast_ratio": 1.88,
+        "luminance_fg": 0.0716,
+        "luminance_bg": 0.1786,
+        "method": "computed"
+      },
+      "wcag": {
+        "sc": "1.4.3",
+        "level": "AA",
+        "pass": false
+      },
+      "recommendation": {
+        "fix_type": "token",
+        "before_hex": "#7a3a00",
+        "after_hex": "#fff6ed",
+        "delta": "split page/card/focus tokens by surface",
+        "rationale": "Theme needs separate page-surface and card-surface foreground/focus tokens."
+      },
+      "effort": {
+        "size": "L",
+        "notes": "Requires a broader burnt-orange token audit."
+      },
+      "patch": {
+        "file": "src/styles/theme/variants.css",
+        "css_snippet": "introduce --page-foreground, --card-foreground, --focus-ring-inner, --focus-ring-outer"
+      },
+      "confidence": {
+        "level": "high",
+        "reasons": [
+          "Explicit theme tokens."
+        ]
+      },
+      "needs_manual_review": false,
+      "false_positive_risk": false
+    },
+    {
+      "id": "F-019",
+      "page_or_story": "theme-maroon",
+      "component": "Global foreground/focus tokens",
+      "selector": ".theme-maroon",
+      "state": "default / focus-visible",
+      "role": "text",
+      "font_size_px": 16,
+      "font_weight": 500,
+      "large_text": false,
+      "status": "open",
+      "severity": "critical",
+      "fg": {
+        "hex": "#500000",
+        "rgba": "rgba(80, 0, 0, 1)",
+        "alpha": 1
+      },
+      "bg": {
+        "hex": "#500000",
+        "rgba": "rgba(80, 0, 0, 1)",
+        "alpha": 1,
+        "layers": [
+          "#500000"
+        ]
+      },
+      "computed": {
+        "contrast_ratio": 1,
+        "luminance_fg": 0.0171,
+        "luminance_bg": 0.0171,
+        "method": "computed"
+      },
+      "wcag": {
+        "sc": "1.4.3",
+        "level": "AA",
+        "pass": false
+      },
+      "recommendation": {
+        "fix_type": "token",
+        "before_hex": "#500000",
+        "after_hex": "#fff1f1",
+        "delta": "split page/card/focus tokens by surface",
+        "rationale": "Theme needs separate page-surface and card-surface foreground/focus tokens."
+      },
+      "effort": {
+        "size": "L",
+        "notes": "Requires a broader maroon token audit."
+      },
+      "patch": {
+        "file": "src/styles/theme/variants.css",
+        "css_snippet": "introduce --page-foreground, --card-foreground, --focus-ring-inner, --focus-ring-outer"
+      },
+      "confidence": {
+        "level": "high",
+        "reasons": [
+          "Explicit theme tokens."
+        ]
+      },
+      "needs_manual_review": false,
+      "false_positive_risk": false
+    },
+    {
+      "id": "F-020",
+      "page_or_story": "design-system sweep",
+      "component": "Border/input boundary tokens",
+      "selector": ":root, .theme-light, .theme-dark, .theme-dream, .theme-honey",
+      "state": "default",
+      "role": "ui",
+      "font_size_px": null,
+      "font_weight": null,
+      "large_text": false,
+      "status": "open",
+      "severity": "high",
+      "fg": {
+        "hex": "#d7deed",
+        "rgba": "rgba(215, 222, 237, 1)",
+        "alpha": 1
+      },
+      "bg": {
+        "hex": "#ffffff",
+        "rgba": "rgba(255, 255, 255, 1)",
+        "alpha": 1,
+        "layers": [
+          "#ffffff"
+        ]
+      },
+      "computed": {
+        "contrast_ratio": 1.35,
+        "luminance_fg": 0.728,
+        "luminance_bg": 1,
+        "method": "computed"
+      },
+      "wcag": {
+        "sc": "1.4.11",
+        "level": "AA",
+        "pass": false
+      },
+      "recommendation": {
+        "fix_type": "token",
+        "before_hex": "#d7deed",
+        "after_hex": "#94a3b8",
+        "delta": "darken --border/--input or add component boundary tokens",
+        "rationale": "Current border tokens are too light to define boundaries consistently."
+      },
+      "effort": {
+        "size": "L",
+        "notes": "Needs a dedicated border-token sweep and visual verification."
+      },
+      "patch": {
+        "file": "src/styles/theme/base.css, src/styles/theme/variants.css",
+        "css_snippet": "prototype darker --border/--input values or component-scoped boundary tokens"
+      },
+      "confidence": {
+        "level": "medium",
+        "reasons": [
+          "Token ratios are concrete.",
+          "Some components may also rely on shadows or fills."
+        ]
+      },
+      "needs_manual_review": true,
+      "false_positive_risk": true
+    }
+  ],
+  "summary": {
+    "totals_by_sc": {
+      "1.4.3": 13,
+      "2.4.13": 3,
+      "1.4.11": 4
+    },
+    "totals_by_severity": {
+      "critical": 4,
+      "high": 6,
+      "medium": 10
+    },
+    "top_components": [
+      {
+        "component": "Primary/sidebar-primary tokens",
+        "count": 4
+      },
+      {
+        "component": "Global foreground/focus tokens",
+        "count": 2
+      },
+      {
+        "component": "Hero CTA",
+        "count": 1
+      },
+      {
+        "component": "Hero logotype",
+        "count": 1
+      },
+      {
+        "component": "Auth placeholders",
+        "count": 1
+      },
+      {
+        "component": "Auth input focus",
+        "count": 1
+      }
+    ],
+    "status_totals": {
+      "patched": 17,
+      "open": 3
+    }
+  },
+  "test_cases": [
+    {
+      "fg": "#0f172a",
+      "bg": "#ff9776",
+      "ratio": 8.45,
+      "expected": "Pass AA + AAA for normal text"
+    },
+    {
+      "fg": "#ffffff",
+      "bg": "#ffb866",
+      "ratio": 1.71,
+      "expected": "Fail AA + AAA for normal text"
+    },
+    {
+      "fg": "#050816",
+      "bg": "#df4d3a",
+      "ratio": 5,
+      "expected": "Pass AA, fail AAA for normal text"
+    },
+    {
+      "fg": "#ffffff",
+      "bg": "#60a5fa",
+      "ratio": 2.54,
+      "expected": "Fail AA + AAA for normal text"
+    },
+    {
+      "fg": "#c79c7e",
+      "bg": "#273529",
+      "ratio": 5.21,
+      "expected": "Pass AA for non-text and text; fail AAA for normal text"
+    },
+    {
+      "fg": "rgba(255,255,255,0.35)",
+      "bg": "rgba(0,0,0,0.40) over #050816",
+      "ratio": 3.18,
+      "expected": "Pass AA for non-text component boundary"
+    }
+  ],
+  "sample_finding": {
+    "id": "F-001",
+    "page_or_story": "/",
+    "component": "Hero CTA",
+    "selector": "#hero [data-analytics-id=\"hero_cta_click\"]",
+    "state": "default",
+    "role": "text",
+    "font_size_px": 16,
+    "font_weight": 600,
+    "large_text": false,
+    "status": "patched",
+    "severity": "critical",
+    "fg": {
+      "hex": "#ffffff",
+      "rgba": "rgba(255, 255, 255, 1)",
+      "alpha": 1
+    },
+    "bg": {
+      "hex": "#5dd6f7",
+      "rgba": "rgba(93, 214, 247, 1)",
+      "alpha": 1,
+      "layers": [
+        "#5dd6f7"
+      ]
+    },
+    "computed": {
+      "contrast_ratio": 1.69,
+      "luminance_fg": 1,
+      "luminance_bg": 0.5714,
+      "method": "sampled"
+    },
+    "wcag": {
+      "sc": "1.4.3",
+      "level": "AA",
+      "pass": false
+    },
+    "recommendation": {
+      "fix_type": "css",
+      "before_hex": "#ffffff",
+      "after_hex": "#0f172a",
+      "delta": "foreground only: #ffffff -> #0f172a",
+      "rationale": "Darken CTA text on light gradient stops."
+    },
+    "effort": {
+      "size": "S",
+      "notes": "One class swap."
+    },
+    "patch": {
+      "file": "src/app/page.tsx",
+      "css_snippet": "text-white -> text-slate-900"
+    },
+    "confidence": {
+      "level": "high",
+      "reasons": [
+        "Worst stop sampled from source."
+      ]
+    },
+    "needs_manual_review": false,
+    "false_positive_risk": false
+  }
+}

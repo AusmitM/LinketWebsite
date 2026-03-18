@@ -577,7 +577,7 @@ function HeroSection() {
           {/* Primary headline + brand callout. */}
           <h1 className="landing-fade-up landing-delay-1 mt-8 text-[2rem] font-semibold leading-tight tracking-tight text-slate-900 sm:mt-10 sm:text-5xl lg:text-[4.5rem] lg:leading-[1.1]">
             <span className="landing-alt-font">Don&apos;t just share it...</span>{" "}
-            <span className="block text-6xl font-black italic leading-[0.92] tracking-tight sm:text-8xl lg:text-[5.25rem] bg-[linear-gradient(100deg,_#ff9776_0%,_#ffd27f_40%,_#7dd3fc_70%,_#2f80ed_100%)] bg-clip-text text-transparent">
+            <span className="block bg-[linear-gradient(100deg,_#c2410c_0%,_#b45309_38%,_#0f4c81_68%,_#1d4ed8_100%)] bg-clip-text text-6xl font-black italic leading-[0.92] tracking-tight text-transparent sm:text-8xl lg:text-[5.25rem]">
               LINKET!
             </span>
           </h1>
@@ -592,7 +592,7 @@ function HeroSection() {
             <Button
               asChild
               size="lg"
-              className="rounded-full bg-gradient-to-r from-[#ff9776] via-[#ffb866] to-[#5dd6f7] px-7 py-5 text-sm font-semibold text-white shadow-[0_20px_50px_rgba(255,151,118,0.35)] transition-transform duration-300 hover:-translate-y-1 hover:shadow-[0_28px_65px_rgba(255,151,118,0.45)] sm:px-10 sm:py-6 sm:text-base"
+              className="rounded-full bg-gradient-to-r from-[#ff9776] via-[#ffb866] to-[#5dd6f7] px-7 py-5 text-sm font-semibold text-slate-900 shadow-[0_20px_50px_rgba(255,151,118,0.35)] transition-transform duration-300 hover:-translate-y-1 hover:shadow-[0_28px_65px_rgba(255,151,118,0.45)] sm:px-10 sm:py-6 sm:text-base"
             >
               <Link
                 href="/auth"
@@ -644,7 +644,7 @@ function HeroDashboardPreview() {
       {/* Top bar: user badge, tabs, search, date range, and download CTA. */}
       <div className="flex flex-col gap-4 border-b border-orange-100 pb-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex max-w-full items-center gap-3 rounded-full border border-[#ffd4c2] bg-[#fff6ef] px-3 py-2 sm:px-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#ff9776] to-[#ffd27f] text-sm font-semibold text-white">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#ff9776] to-[#ffd27f] text-sm font-semibold text-slate-900">
             PK
           </div>
           <div className="min-w-0">
@@ -1319,6 +1319,5 @@ function LandingFooter() {
     </footer>
   );
 }
-
 
 

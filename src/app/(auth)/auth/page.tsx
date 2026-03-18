@@ -128,9 +128,9 @@ export default function AuthPage() {
   const showPasswordStrengthState = isSignUp && password.length > 0;
   const passwordInputBorderClass = showPasswordStrengthState
     ? passwordStrengthValid
-      ? "border-emerald-400 focus:border-emerald-500 focus:ring-emerald-200"
-      : "border-red-400 focus:border-red-500 focus:ring-red-200"
-    : "border-slate-200 focus:border-[#5dd6f7] focus:ring-[#5dd6f7]/30";
+      ? "border-emerald-500 focus-visible:border-emerald-600 focus-visible:outline-emerald-600"
+      : "border-red-500 focus-visible:border-red-600 focus-visible:outline-red-600"
+    : "border-slate-300 focus-visible:border-[color:var(--ring)] focus-visible:outline-[color:var(--ring)]";
 
   const resolveRedirect = useCallback(
     async (session: unknown): Promise<string | null> => {
@@ -476,7 +476,7 @@ export default function AuthPage() {
                     value={email}
                     autoComplete="email"
                     onChange={(event) => setEmail(event.target.value)}
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#ff9776] focus:outline-none focus:ring-2 focus:ring-[#ff9776]/30"
+                    className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-500 focus:outline-none focus-visible:border-[color:var(--ring)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)] focus-visible:ring-0"
                     placeholder="you@example.com"
                     required
                   />
@@ -502,7 +502,7 @@ export default function AuthPage() {
                         setError(null);
                       }
                     }}
-                    className={`w-full rounded-2xl border bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 ${passwordInputBorderClass}`}
+                    className={`w-full rounded-2xl border bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-500 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:ring-0 ${passwordInputBorderClass}`}
                     placeholder={
                       isSignUp
                         ? "Create a password (6+ characters)"

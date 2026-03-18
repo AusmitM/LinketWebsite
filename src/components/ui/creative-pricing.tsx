@@ -92,8 +92,8 @@ function CreativePricing({
                 className={cn(
                   "pointer-events-none absolute left-1/2 top-0 z-10 inline-flex -translate-x-1/2 -translate-y-1/2 items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-semibold shadow-lg sm:text-xs",
                   businessTheme
-                    ? "border-[#bfdbfe] bg-gradient-to-r from-[#2563eb] to-[#60a5fa] text-white shadow-[0_10px_25px_rgba(37,99,235,0.35)]"
-                    : "border-[#ffd7c0] bg-gradient-to-r from-[#f97316] via-[#fb923c] to-[#fdba74] text-white shadow-[0_10px_25px_rgba(249,115,22,0.35)]"
+                    ? "border-[#bfdbfe] bg-gradient-to-r from-[#1d4ed8] to-[#2563eb] text-white shadow-[0_10px_25px_rgba(37,99,235,0.35)]"
+                    : "border-[#ffd7c0] bg-gradient-to-r from-[#f97316] via-[#fb923c] to-[#fdba74] text-[#0f172a] shadow-[0_10px_25px_rgba(249,115,22,0.35)]"
                 )}
               >
                 <Sparkles className="h-3.5 w-3.5" aria-hidden />
@@ -101,7 +101,7 @@ function CreativePricing({
               </div>
             )}
             <div className="flex items-start gap-3 pt-1 sm:items-center sm:gap-4 sm:pt-2">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#ff9776] via-[#ffd27f] to-[#7dd3fc] text-white">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#ff9776] via-[#ffd27f] to-[#7dd3fc] text-[#0f172a]">
                 {tier.icon}
               </div>
               <div className="min-w-0">
@@ -165,8 +165,8 @@ function CreativePricing({
                       : "border border-[#ffd7c0]",
                     tier.popular &&
                       (businessTheme
-                        ? "border-transparent bg-gradient-to-r from-[#2563eb] to-[#60a5fa] text-white shadow-[0_18px_45px_rgba(37,99,235,0.35)]"
-                        : "border-transparent bg-gradient-to-r from-[#ff9776] via-[#ffb866] to-[#5dd6f7] text-white shadow-[0_18px_45px_rgba(255,151,118,0.35)]")
+                        ? "border-transparent bg-gradient-to-r from-[#1d4ed8] to-[#2563eb] text-white shadow-[0_18px_45px_rgba(37,99,235,0.35)]"
+                        : "border-transparent bg-gradient-to-r from-[#ff9776] via-[#ffb866] to-[#5dd6f7] text-[#0f172a] shadow-[0_18px_45px_rgba(255,151,118,0.35)]")
                   )}
                 >
                   <Link
