@@ -7,10 +7,15 @@ import BillingTransientStateCleaner from "@/components/dashboard/billing/Billing
 import BundlePaymentStatusPoller from "@/components/dashboard/billing/BundlePaymentStatusPoller";
 import RemovePaymentMethodButton from "@/components/dashboard/billing/RemovePaymentMethodButton";
 import SetDefaultPaymentMethodButton from "@/components/dashboard/billing/SetDefaultPaymentMethodButton";
-import type { DashboardBillingData } from "@/lib/billing/dashboard";
+import type {
+  DashboardBillingData,
+  DashboardBillingInvoice,
+  DashboardBillingPaymentMethod,
+} from "@/lib/billing/dashboard";
 import {
   formatMonthly,
   formatYearly,
+  type MonthlyYearlyRate,
   type PersonalProLoyaltyStatus,
   type PublicPricingSnapshot,
 } from "@/lib/billing/pricing";
@@ -61,6 +66,70 @@ function maskMiddle(value: string | null, prefix = 8, suffix = 6) {
   return `${value.slice(0, prefix)}...${value.slice(-suffix)}`;
 }
 
+function formatDateRange(start: string | null, end: string | null) {
+  const startLabel = formatIsoDate(start);
+  const endLabel = formatIsoDate(end);
+  if (startLabel && endLabel) return `${startLabel} to ${endLabel}`;
+  return startLabel ?? endLabel ?? null;
+}
+
+function toTimestampMs(value: string | null | undefined) {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.getTime();
+}
+
+function sortByDateDesc<T>(
+  items: T[],
+  pickDate: (item: T) => string | null | undefined
+) {
+  return [...items].sort((left, right) => {
+    const rightTime = toTimestampMs(pickDate(right)) ?? 0;
+    const leftTime = toTimestampMs(pickDate(left)) ?? 0;
+    return rightTime - leftTime;
+  });
+}
+
+function formatCardBrand(value: string | null | undefined) {
+  if (!value) return "Card";
+  return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
+}
+
+function formatPaymentMethodLabel(
+  paymentMethod: DashboardBillingPaymentMethod | null | undefined
+) {
+  if (!paymentMethod) return "No card on file";
+  return `${formatCardBrand(paymentMethod.brand)} ending in ${
+    paymentMethod.last4 ?? "----"
+  }`;
+}
+
+function formatPaymentMethodExpiry(
+  month: number | null,
+  year: number | null
+) {
+  if (!month || !year) return "--/--";
+  return `${String(month).padStart(2, "0")}/${year}`;
+}
+
+function inferRenewalRateLabel(
+  hints: Array<string | null | undefined>,
+  initialRate: MonthlyYearlyRate,
+  fallbackLabel: string
+) {
+  const joined = hints.map((value) => value?.toLowerCase() ?? "").join(" ");
+  if (joined.includes("year")) return formatYearly(initialRate.yearly);
+  if (joined.includes("month")) return formatMonthly(initialRate.monthly);
+  return fallbackLabel;
+}
+
+function getInvoiceAmountMinor(invoice: DashboardBillingInvoice) {
+  return invoice.amountPaidMinor > 0
+    ? invoice.amountPaidMinor
+    : invoice.amountDueMinor;
+}
+
 function readText(value: unknown) {
   if (typeof value !== "string") return null;
   const trimmed = value.trim();
@@ -102,14 +171,11 @@ function readShippingAddressParts(
 }
 
 function formatCityStatePostal(parts: ShippingAddressParts) {
-  const city = parts.city ?? "";
-  const state = parts.state ?? "";
-  const postalCode = parts.postalCode ?? "";
-  const cityState = [city, state].filter(Boolean).join(", ");
-  if (!cityState && !postalCode) return null;
-  if (!cityState) return postalCode;
-  if (!postalCode) return cityState;
-  return `${cityState} ${postalCode}`;
+  const cityState = [parts.city, parts.state].filter(Boolean).join(", ");
+  if (!cityState && !parts.postalCode) return null;
+  if (!cityState) return parts.postalCode;
+  if (!parts.postalCode) return cityState;
+  return `${cityState} ${parts.postalCode}`;
 }
 
 function formatShippingAddressLines(address: Record<string, unknown> | null) {
@@ -189,11 +255,15 @@ export default function BillingContent({
   const loyaltyEligible = loyaltySnapshot?.eligible ?? false;
   const loyaltyDaysUntilEligible = loyaltySnapshot?.daysUntilEligible ?? null;
   const loyaltyEligibleOnLabel = formatIsoDate(loyaltySnapshot?.eligibleOn ?? null);
-  const initialRateLabel = `${formatMonthly(initialRate.monthly)} or ${formatYearly(initialRate.yearly)}`;
-  const loyaltyRateLabel = `${formatMonthly(loyaltyRate.monthly)} or ${formatYearly(loyaltyRate.yearly)}`;
-  const discountDays = loyaltyDefault.loyalty.requiredPaidDays;
+  const initialRateLabel = `${formatMonthly(initialRate.monthly)} or ${formatYearly(
+    initialRate.yearly
+  )}`;
+  const loyaltyRateLabel = `${formatMonthly(loyaltyRate.monthly)} or ${formatYearly(
+    loyaltyRate.yearly
+  )}`;
 
   const summary = billingData?.summary ?? null;
+  const subscription = billingData?.subscription ?? null;
   const complimentaryWindow = billingData?.complimentaryWindow ?? null;
   const paymentMethods = billingData?.paymentMethods ?? [];
   const invoices = billingData?.invoices ?? [];
@@ -253,9 +323,9 @@ export default function BillingContent({
   const fallbackSubscriptionRiskWarning =
     !activeBillingWarning &&
     (billingData?.subscription?.status === "past_due" ||
-    billingData?.subscription?.status === "unpaid" ||
-    billingData?.subscription?.status === "incomplete" ||
-    billingData?.subscription?.status === "incomplete_expired")
+      billingData?.subscription?.status === "unpaid" ||
+      billingData?.subscription?.status === "incomplete" ||
+      billingData?.subscription?.status === "incomplete_expired")
       ? "A recent renewal attempt needs attention. Update your payment method to avoid interruption."
       : null;
   const loyaltyProgressPercent = hasLoyaltyStatus
@@ -274,6 +344,100 @@ export default function BillingContent({
     !complimentaryWindow?.active &&
     typeof complimentaryWindow?.startsInDays === "number" &&
     complimentaryWindow.startsInDays > 0;
+  const sortedPaymentMethods = [...paymentMethods].sort(
+    (left, right) => Number(right.isDefault) - Number(left.isDefault)
+  );
+  const defaultPaymentMethod =
+    sortedPaymentMethods.find((paymentMethod) => paymentMethod.isDefault) ??
+    sortedPaymentMethods[0] ??
+    null;
+  const sortedInvoices = sortByDateDesc(
+    invoices,
+    (invoice) => invoice.createdAt ?? invoice.periodEnd ?? invoice.periodStart
+  );
+  const sortedBundlePurchases = sortByDateDesc(
+    bundlePurchases,
+    (purchase) => purchase.purchasedAt ?? purchase.createdAt
+  );
+  const sortedPeriods = sortByDateDesc(
+    periods,
+    (period) => period.periodStart ?? period.createdAt
+  );
+  const planName = summary?.planName ?? "No plan on file";
+  const accessThroughDate = complimentaryWindow?.active
+    ? complimentaryWindow.endsAt
+    : summary?.renewsOn ?? summary?.currentPeriodEnd ?? null;
+  const accessThroughLabel = formatIsoDate(accessThroughDate);
+  const billingCycleLabel = formatDateRange(
+    summary?.currentPeriodStart ?? null,
+    summary?.currentPeriodEnd ?? null
+  );
+  const autoRenewLabel =
+    summary?.autoRenews === null ? "Unknown" : summary?.autoRenews ? "On" : "Off";
+  const paymentMethodSummaryLabel = formatPaymentMethodLabel(defaultPaymentMethod);
+  const renewalRateLabel = inferRenewalRateLabel(
+    [subscription?.priceNickname, subscription?.planName, summary?.planName],
+    initialRate,
+    initialRateLabel
+  );
+  const stripeCustomerId = summary?.customerId ?? billingData?.stripe.customerId ?? null;
+
+  let billingStatusLabel = summary ? formatStatus(summary.status) : "Not set up";
+  if (complimentaryWindow?.active) billingStatusLabel = "Active";
+  if (activeBillingWarning || fallbackSubscriptionRiskWarning) {
+    billingStatusLabel = "Needs attention";
+  }
+
+  let billingStatusCopy =
+    "Status first, actions second, history last, and raw Stripe data only on demand.";
+  if (complimentaryWindow?.active && complimentaryEndsLabel) {
+    billingStatusCopy = `Complimentary Pro is active through ${complimentaryEndsLabel}. Billing is paused until complimentary access ends.`;
+  } else if (
+    hasUpcomingComplimentaryWindow &&
+    complimentaryStartsLabel &&
+    complimentaryEndsLabel
+  ) {
+    billingStatusCopy = `Complimentary Pro begins on ${complimentaryStartsLabel} and continues through ${complimentaryEndsLabel}.`;
+  } else if (summary?.autoRenews === false && accessThroughLabel) {
+    billingStatusCopy = `Your plan will end on ${accessThroughLabel} and will not renew automatically.`;
+  } else if (summary?.autoRenews && accessThroughLabel) {
+    billingStatusCopy = `Your plan stays active through ${accessThroughLabel} while auto-renew remains on.`;
+  } else if (summary) {
+    billingStatusCopy = "Billing details are active and update automatically from Stripe.";
+  }
+
+  let nextChargeLabel = "No charge scheduled";
+  let nextChargeAmountLabel = "$0";
+  let nextChargeStatusLabel = "No future charge is scheduled";
+  let nextChargeReason =
+    "Add a payment method when you are ready. Stripe fields load only on demand.";
+  if (complimentaryWindow?.active && complimentaryEndsLabel) {
+    nextChargeLabel = `No charge until ${complimentaryEndsLabel}`;
+    nextChargeStatusLabel = "Billing is paused";
+    nextChargeReason = `Complimentary Pro is active through ${complimentaryEndsLabel}.`;
+  } else if (hasUpcomingComplimentaryWindow && complimentaryStartsLabel) {
+    nextChargeLabel = complimentaryStartsLabel;
+    nextChargeStatusLabel = "Complimentary access scheduled";
+    nextChargeReason = `Complimentary Pro begins on ${complimentaryStartsLabel} at the next renewal boundary.`;
+  } else if (summary?.autoRenews === false) {
+    nextChargeLabel = "None scheduled";
+    nextChargeStatusLabel = "Auto-renew is off";
+    nextChargeReason =
+      accessThroughLabel !== null
+        ? `Service access remains active through ${accessThroughLabel}.`
+        : "Your plan will not renew until auto-renew is turned back on.";
+  } else if (summary?.renewsOn) {
+    nextChargeLabel = formatIsoDate(summary.renewsOn) ?? "Scheduled";
+    nextChargeAmountLabel = renewalRateLabel;
+    nextChargeStatusLabel = "Auto-renew is on";
+    nextChargeReason =
+      "Your plan is set to renew automatically while your current billing setup remains active.";
+  } else if (hasManageableSubscription) {
+    nextChargeLabel = "Stripe will confirm after the next sync";
+    nextChargeAmountLabel = renewalRateLabel;
+    nextChargeStatusLabel = "Subscription active";
+    nextChargeReason = "Manage your plan in Stripe to confirm upcoming charges.";
+  }
 
   return (
     <div className="space-y-6">
@@ -291,9 +455,9 @@ export default function BillingContent({
             : checkoutPurchase === "bundle" &&
                 bundleCheckoutLifecycleStatus === "failed"
               ? "Bundle payment did not complete. No successful charge was recorded. You can restart checkout anytime."
-            : checkoutPurchase === "bundle"
-              ? "Bundle checkout completed successfully. Your receipt should be available shortly."
-              : "Checkout completed successfully. Billing details may take up to a minute to refresh."}
+              : checkoutPurchase === "bundle"
+                ? "Bundle checkout completed successfully. Your receipt should be available shortly."
+                : "Checkout completed successfully. Billing details may take up to a minute to refresh."}
         </p>
       ) : null}
       {checkoutPurchase === "bundle" &&
@@ -428,208 +592,93 @@ export default function BillingContent({
                 />
               </>
             ) : (
-              <>
-                <BillingStripeActionButton
-                  size="sm"
-                  className={BILLING_PRIMARY_BUTTON_CLASS}
-                  href={subscribeMonthlyHref}
-                  idleLabel="Continue monthly checkout"
-                />
-              </>
+              <BillingStripeActionButton
+                size="sm"
+                className={BILLING_PRIMARY_BUTTON_CLASS}
+                href={subscribeMonthlyHref}
+                idleLabel="Continue monthly checkout"
+              />
             )}
           </div>
         </div>
       ) : null}
 
-      <section className="grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
+      <section id="billing-summary">
         <Card className="rounded-3xl border bg-card/80 shadow-sm">
-          <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <CardTitle className="text-lg font-semibold">
-                Plan overview
-              </CardTitle>
-              <p className="text-sm text-muted-foreground">
-                See your current plan, renewal timing, and support references.
+          <CardHeader className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <CardTitle className="text-xl font-semibold">{planName}</CardTitle>
+                <Badge variant="secondary" className="rounded-full">
+                  {billingStatusLabel}
+                </Badge>
+                {complimentaryWindow?.active ? (
+                  <Badge variant="outline" className="rounded-full">
+                    Complimentary access
+                  </Badge>
+                ) : null}
+              </div>
+              <p className="max-w-3xl text-sm text-muted-foreground">
+                {billingStatusCopy}
               </p>
             </div>
-            {canManageBilling ? (
-              <BillingStripeActionButton
-                variant="outline"
-                size="sm"
-                className={BILLING_SECONDARY_BUTTON_CLASS}
-                href={planActionHref}
-                idleLabel="Adjust plan"
-              />
-            ) : (
+            <div className="flex flex-wrap gap-2">
+              {canManageBilling ? (
+                <BillingStripeActionButton
+                  size="sm"
+                  className={BILLING_PRIMARY_BUTTON_CLASS}
+                  href={planActionHref}
+                  idleLabel={hasManageableSubscription ? "Manage plan" : "Start paid plan"}
+                />
+              ) : (
+                <Button
+                  size="sm"
+                  className={BILLING_PRIMARY_BUTTON_CLASS}
+                  disabled
+                >
+                  Billing portal unavailable
+                </Button>
+              )}
               <Button
-                variant="outline"
+                asChild
                 size="sm"
+                variant="outline"
                 className={BILLING_SECONDARY_BUTTON_CLASS}
-                disabled
               >
-                Billing portal unavailable
+                <a href="#payment-methods">Add payment method</a>
               </Button>
-            )}
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            {complimentaryWindow?.active ? (
-              <div className="rounded-2xl border border-emerald-300 bg-emerald-50/60 px-3 py-2 text-sm text-emerald-900">
-                Complimentary Pro is active through{" "}
-                {formatIsoDate(complimentaryWindow.endsAt) ?? "--"}.
-                {typeof complimentaryWindow.daysRemaining === "number"
-                  ? ` ${complimentaryWindow.daysRemaining} day${complimentaryWindow.daysRemaining === 1 ? "" : "s"} remaining before billing can start.`
-                  : ""}
-                {" "}You can still add a payment method now.
-              </div>
-            ) : hasUpcomingComplimentaryWindow ? (
-              <div className="rounded-2xl border border-blue-300 bg-blue-50/60 px-3 py-2 text-sm text-blue-950">
-                Complimentary Pro is scheduled to begin on{" "}
-                {complimentaryStartsLabel ?? "--"} (next renewal boundary) and
-                continue through {complimentaryEndsLabel ?? "--"}.
-                {typeof complimentaryWindow?.startsInDays === "number"
-                  ? ` Starts in ${complimentaryWindow.startsInDays} day${complimentaryWindow.startsInDays === 1 ? "" : "s"}.`
-                  : ""}
-              </div>
-            ) : null}
-            {summary ? (
-              <div className="space-y-4 rounded-2xl border p-4">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="space-y-1">
-                    <p className="text-base font-semibold text-foreground">
-                      {summary.planName}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Current billing status
-                    </p>
-                  </div>
-                  <Badge variant="secondary" className="rounded-full">
-                    {formatStatus(summary.status)}
-                  </Badge>
-                </div>
-                <dl className="grid gap-2 text-xs text-muted-foreground sm:grid-cols-2 xl:grid-cols-4">
-                  <div className="rounded-xl border bg-card/35 p-3">
-                    <dt className="font-semibold text-foreground">
-                      Current period
-                    </dt>
-                    <dd className="mt-1 text-sm">
-                      {formatIsoDate(summary.currentPeriodStart) ?? "--"} to{" "}
-                      {formatIsoDate(summary.currentPeriodEnd) ?? "--"}
-                    </dd>
-                  </div>
-                  <div className="rounded-xl border bg-card/35 p-3">
-                    <dt className="font-semibold text-foreground">Renews on</dt>
-                    <dd className="mt-1 text-sm">
-                      {formatIsoDate(summary.renewsOn) ?? "--"}
-                    </dd>
-                  </div>
-                  <div className="rounded-xl border bg-card/35 p-3">
-                    <dt className="font-semibold text-foreground">Auto renew</dt>
-                    <dd className="mt-1 text-sm">
-                      {summary.autoRenews === null
-                        ? "Unknown"
-                        : summary.autoRenews
-                          ? "On"
-                          : "Off"}
-                    </dd>
-                  </div>
-                  <div className="rounded-xl border bg-card/35 p-3">
-                    <dt className="font-semibold text-foreground">
-                      Billing provider
-                    </dt>
-                    <dd className="mt-1 text-sm">
-                      {stripeEnabled ? "Stripe connected" : "Stripe unavailable"}
-                    </dd>
-                  </div>
-                </dl>
-
-                <div className="rounded-xl border bg-card/30 p-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-                    Support references
-                  </p>
-                  <p className="text-[11px] text-muted-foreground">
-                    Share these only with Linket support when troubleshooting
-                    billing.
-                  </p>
-                  <dl className="mt-2 grid gap-3 text-xs text-muted-foreground sm:grid-cols-2">
-                    <div className="rounded-lg border bg-card/45 p-2.5">
-                      <dt className="font-semibold text-foreground">
-                        Subscription reference
-                      </dt>
-                      <dd>
-                        <span
-                          className="block break-all font-mono text-foreground"
-                          title={summary.activeSubscriptionId ?? undefined}
-                        >
-                          {summary.activeSubscriptionId ?? "Not available yet"}
-                        </span>
-                        <span className="mt-1 block text-[11px] leading-relaxed">
-                          Stripe subscription ID used only for billing support.
-                        </span>
-                      </dd>
-                    </div>
-                    <div className="rounded-lg border bg-card/45 p-2.5">
-                      <dt className="font-semibold text-foreground">
-                        Billing profile reference
-                      </dt>
-                      <dd>
-                        <span
-                          className="block break-all font-mono text-foreground"
-                          title={summary.customerId ?? undefined}
-                        >
-                          {summary.customerId ?? "Not available yet"}
-                        </span>
-                        <span className="mt-1 block text-[11px] leading-relaxed">
-                          Stripe customer ID for your account&apos;s billing
-                          profile.
-                        </span>
-                      </dd>
-                    </div>
-                  </dl>
-                </div>
-              </div>
-            ) : (
-              <div className="rounded-2xl border p-4 text-sm text-muted-foreground">
-                Billing data is not available yet for this account.
-              </div>
-            )}
-
-            {canManageBilling && !hasManageableSubscription ? (
-              <div className="rounded-2xl border border-dashed px-3 py-3 text-xs text-muted-foreground">
-                <p className="font-semibold text-foreground">
-                  Ready to start paid billing?
-                </p>
-                <p className="mt-1">
-                  Choose monthly or yearly to activate your paid Pro plan.
-                </p>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  <BillingStripeActionButton
-                    size="sm"
-                    variant="outline"
-                    className={BILLING_SECONDARY_BUTTON_CLASS}
-                    href={subscribeMonthlyHref}
-                    idleLabel="Monthly"
-                  />
-                  <BillingStripeActionButton
-                    size="sm"
-                    variant="outline"
-                    className={BILLING_SECONDARY_BUTTON_CLASS}
-                    href={subscribeYearlyHref}
-                    idleLabel="Yearly"
-                  />
-                </div>
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              <SummaryFact label="Current plan" value={planName} />
+              <SummaryFact label="Access through" value={accessThroughLabel ?? "--"} />
+              <SummaryFact label="Next charge" value={nextChargeLabel} />
+              <SummaryFact label="Auto-renew" value={autoRenewLabel} />
+              <SummaryFact
+                label="Payment method"
+                value={paymentMethodSummaryLabel}
+              />
+              <SummaryFact label="Billing status" value={nextChargeStatusLabel} />
+            </div>
+            {billingCycleLabel ? (
+              <div className="rounded-2xl border bg-card/40 px-4 py-3 text-sm text-muted-foreground">
+                <span className="font-semibold text-foreground">Stripe billing cycle:</span>{" "}
+                {billingCycleLabel}
               </div>
             ) : null}
           </CardContent>
         </Card>
+      </section>
 
+      <section id="payment-methods">
         <Card className="rounded-3xl border bg-card/80 shadow-sm">
           <CardHeader>
-            <div>
-              <CardTitle className="text-lg font-semibold">
-                Payment methods
-              </CardTitle>
+            <div className="space-y-1">
+              <CardTitle className="text-lg font-semibold">Payment methods</CardTitle>
               <p className="text-sm text-muted-foreground">
-                Add, replace, or remove cards directly on this page.
+                Keep cards near the top of the page so card management is one scan
+                away. Secure Stripe fields load only after you choose to add one.
               </p>
             </div>
           </CardHeader>
@@ -640,73 +689,600 @@ export default function BillingContent({
                 Stripe billing is currently unavailable for this account.
               </p>
             ) : null}
-            <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-                Saved payment methods
+            {sortedPaymentMethods.length === 0 ? (
+              <p className="rounded-2xl border p-3 text-sm text-muted-foreground">
+                No card details available for this account yet.
               </p>
-              {paymentMethods.length === 0 ? (
-                <p className="rounded-2xl border p-3 text-sm text-muted-foreground">
-                  No card details available for this account yet.
-                </p>
-              ) : (
-                paymentMethods.map((method) => (
+            ) : (
+              <div className="space-y-3">
+                {sortedPaymentMethods.map((paymentMethod) => (
                   <div
-                    key={method.id}
-                    className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border bg-card/60 p-3 text-sm shadow-sm"
+                    key={paymentMethod.id}
+                    className="flex flex-col gap-4 rounded-2xl border bg-card/60 p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between"
                   >
-                    <div>
-                      <div className="font-semibold text-foreground">
-                        {(method.brand ?? "Card").toUpperCase()} ending in{" "}
-                        {method.last4 ?? "----"}
+                    <div className="space-y-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="font-semibold text-foreground">
+                          {formatPaymentMethodLabel(paymentMethod)}
+                        </p>
+                        <Badge
+                          variant={paymentMethod.isDefault ? "outline" : "secondary"}
+                          className="rounded-full"
+                        >
+                          {paymentMethod.isDefault ? "Default" : "Backup"}
+                        </Badge>
                       </div>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-sm text-muted-foreground">
                         Expires{" "}
-                        {method.expMonth && method.expYear
-                          ? `${String(method.expMonth).padStart(2, "0")}/${method.expYear}`
-                          : "--/--"}
-                      </p>
-                      <p className="text-[11px] text-muted-foreground">
-                        Reference:{" "}
-                        <span className="font-mono">
-                          {maskMiddle(method.id) ?? "--"}
-                        </span>
+                        {formatPaymentMethodExpiry(
+                          paymentMethod.expMonth,
+                          paymentMethod.expYear
+                        )}
                       </p>
                     </div>
-                    <div className="flex items-center gap-2">
-                      {method.isDefault ? (
-                        <Badge variant="outline" className="rounded-full">
-                          Default
-                        </Badge>
-                      ) : (
-                        <>
-                          <Badge variant="secondary" className="rounded-full">
-                            Backup
-                          </Badge>
-                          <SetDefaultPaymentMethodButton paymentMethodId={method.id} />
-                        </>
-                      )}
+                    <div className="flex flex-wrap gap-2">
+                      {!paymentMethod.isDefault ? (
+                        <SetDefaultPaymentMethodButton
+                          paymentMethodId={paymentMethod.id}
+                        />
+                      ) : null}
                       <RemovePaymentMethodButton
-                        paymentMethodId={method.id}
-                        isDefault={method.isDefault}
+                        paymentMethodId={paymentMethod.id}
+                        isDefault={paymentMethod.isDefault}
                       />
                     </div>
                   </div>
-                ))
-              )}
+                ))}
+              </div>
+            )}
+            <p className="text-xs text-muted-foreground">
+              Technical payment method references are kept in Support and technical
+              references at the bottom of the page.
+            </p>
+          </CardContent>
+        </Card>
+      </section>
+
+      <section className="grid gap-6 xl:grid-cols-2">
+        <Card id="plan-details" className="rounded-3xl border bg-card/80 shadow-sm">
+          <CardHeader>
+            <div className="space-y-1">
+              <CardTitle className="text-lg font-semibold">Plan details</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Plain-language plan status, timing, and billing provider details.
+              </p>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <DetailItem label="Plan name" value={planName} />
+              <DetailItem label="Access through" value={accessThroughLabel ?? "--"} />
+              <DetailItem
+                label="Billing cycle"
+                value={billingCycleLabel ?? "No active cycle recorded yet"}
+              />
+              <DetailItem label="Auto-renew" value={autoRenewLabel} />
+              <DetailItem
+                label="Payments"
+                value={stripeEnabled ? "Powered by Stripe" : "Stripe unavailable"}
+              />
+              <DetailItem
+                label="Complimentary status"
+                value={
+                  complimentaryWindow?.active
+                    ? `Active through ${complimentaryEndsLabel ?? "--"}`
+                    : hasUpcomingComplimentaryWindow
+                      ? `Starts ${complimentaryStartsLabel ?? "--"}`
+                      : "Not active"
+                }
+              />
+            </div>
+
+            {complimentaryWindow?.active ? (
+              <p className="rounded-2xl border border-emerald-300 bg-emerald-50/60 px-4 py-3 text-sm text-emerald-900">
+                Complimentary Pro is active through {complimentaryEndsLabel ?? "--"}.
+                {typeof complimentaryWindow.daysRemaining === "number"
+                  ? ` ${complimentaryWindow.daysRemaining} day${
+                      complimentaryWindow.daysRemaining === 1 ? "" : "s"
+                    } remaining.`
+                  : ""}
+              </p>
+            ) : hasUpcomingComplimentaryWindow ? (
+              <p className="rounded-2xl border border-blue-300 bg-blue-50/60 px-4 py-3 text-sm text-blue-950">
+                Complimentary Pro begins on {complimentaryStartsLabel ?? "--"} and
+                continues through {complimentaryEndsLabel ?? "--"}.
+              </p>
+            ) : summary?.autoRenews === false ? (
+              <p className="rounded-2xl border border-amber-300 bg-amber-50/60 px-4 py-3 text-sm text-amber-900">
+                Your plan will end on {accessThroughLabel ?? "--"} and will not
+                renew automatically.
+              </p>
+            ) : summary ? (
+              <p className="rounded-2xl border bg-card/40 px-4 py-3 text-sm text-muted-foreground">
+                Your plan renews automatically while auto-renew remains on.
+              </p>
+            ) : (
+              <p className="rounded-2xl border bg-card/40 px-4 py-3 text-sm text-muted-foreground">
+                Billing data is not available yet for this account.
+              </p>
+            )}
+
+            {canManageBilling && hasManageableSubscription ? (
+              summary?.autoRenews !== false ? (
+                <div className="rounded-2xl border border-amber-300 bg-amber-50/70 px-4 py-4 text-sm text-amber-900">
+                  <p className="font-semibold">Need to stop future payments?</p>
+                  <p className="mt-1">
+                    You can turn off renewal anytime. Access stays active through{" "}
+                    {accessThroughLabel ?? "the end of the current billing cycle"}.
+                  </p>
+                  <form
+                    action={cancelSubscriptionActionHref}
+                    method="post"
+                    className="mt-3"
+                  >
+                    <button
+                      type="submit"
+                      className="inline-flex h-9 items-center justify-center rounded-full border border-[#b91c1c] bg-[#dc2626] px-3 text-sm font-medium text-white transition-colors hover:bg-[#b91c1c] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ef4444] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent disabled:pointer-events-none disabled:opacity-50"
+                    >
+                      Cancel future renewals
+                    </button>
+                  </form>
+                </div>
+              ) : (
+                <p className="rounded-2xl border border-amber-300 bg-amber-50/60 px-4 py-3 text-sm text-amber-900">
+                  Your plan will end on {accessThroughLabel ?? "--"} and will not
+                  renew automatically.
+                </p>
+              )
+            ) : canManageBilling ? (
+              <div className="rounded-2xl border border-dashed px-4 py-4 text-sm text-muted-foreground">
+                <p className="font-semibold text-foreground">
+                  Ready to start paid billing?
+                </p>
+                <p className="mt-1">
+                  Choose monthly or yearly to activate your paid Pro plan.
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <BillingStripeActionButton
+                    size="sm"
+                    variant="outline"
+                    className={BILLING_SECONDARY_BUTTON_CLASS}
+                    href={subscribeMonthlyHref}
+                    idleLabel="Choose monthly"
+                  />
+                  <BillingStripeActionButton
+                    size="sm"
+                    variant="outline"
+                    className={BILLING_SECONDARY_BUTTON_CLASS}
+                    href={subscribeYearlyHref}
+                    idleLabel="Choose yearly"
+                  />
+                </div>
+              </div>
+            ) : null}
+          </CardContent>
+        </Card>
+
+        <Card id="upcoming-charges" className="rounded-3xl border bg-card/80 shadow-sm">
+          <CardHeader>
+            <div className="space-y-1">
+              <CardTitle className="text-lg font-semibold">Upcoming charges</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Answer the main question directly: will you be charged soon?
+              </p>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <DetailItem label="Next charge" value={nextChargeLabel} />
+              <DetailItem label="Next charge amount" value={nextChargeAmountLabel} />
+              <DetailItem label="Billing status" value={nextChargeStatusLabel} />
+              <DetailItem
+                label="Future renewal rate"
+                value={`${renewalRateLabel} now, ${loyaltyRateLabel} after ${requiredPaidDays} paid days`}
+              />
+            </div>
+
+            <div className="space-y-3 rounded-2xl border bg-card/40 p-4 text-sm text-muted-foreground">
+              <p>
+                <span className="font-semibold text-foreground">Reason:</span>{" "}
+                {nextChargeReason}
+              </p>
+              <p>
+                <span className="font-semibold text-foreground">After that:</span>{" "}
+                Renewals drop from {renewalRateLabel} to {loyaltyRateLabel} after{" "}
+                {requiredPaidDays} cumulative paid days.
+              </p>
             </div>
           </CardContent>
         </Card>
       </section>
 
-      <section className="grid gap-6 lg:grid-cols-2">
+      <section id="loyalty-discount">
+        <Card className="rounded-3xl border bg-card/80 shadow-sm">
+          <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="space-y-1">
+              <CardTitle className="text-lg font-semibold">
+                Loyalty discount
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                A simple progress view instead of a long explanation.
+              </p>
+            </div>
+            <Badge
+              variant={loyaltyEligible ? "secondary" : "outline"}
+              className="rounded-full"
+            >
+              {!hasLoyaltyStatus
+                ? "Unavailable"
+                : complimentaryWindow?.active
+                  ? "Paused"
+                  : loyaltyEligible
+                    ? "Active"
+                    : "Pending"}
+            </Badge>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,0.6fr)]">
+              <div className="rounded-2xl border bg-card/50 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="font-semibold text-foreground">
+                    Progress to loyalty pricing
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {totalPaidDays} of {requiredPaidDays} paid days
+                  </p>
+                </div>
+                <div className="mt-3 h-2 rounded-full bg-muted">
+                  <div
+                    className="h-2 rounded-full bg-primary"
+                    style={{ width: `${loyaltyProgressPercent}%` }}
+                  />
+                </div>
+                <div className="mt-3 space-y-2 text-sm text-muted-foreground">
+                  {complimentaryWindow?.active ? (
+                    <p>
+                      Paused until {complimentaryEndsLabel ?? "--"}. Paid-day
+                      progress resumes after complimentary access ends.
+                    </p>
+                  ) : loyaltyEligible ? (
+                    <p>Loyalty pricing is already active for future renewals.</p>
+                  ) : loyaltyEligibleOnLabel ? (
+                    <p>
+                      Estimated eligibility: {loyaltyEligibleOnLabel}
+                      {typeof loyaltyDaysUntilEligible === "number"
+                        ? ` (${loyaltyDaysUntilEligible} day${
+                            loyaltyDaysUntilEligible === 1 ? "" : "s"
+                          } remaining).`
+                        : "."}
+                    </p>
+                  ) : (
+                    <p>
+                      Paid time is cumulative, so canceled and restarted paid
+                      periods still count.
+                    </p>
+                  )}
+                  {!hasLoyaltyStatus ? (
+                    <p className="text-amber-900">
+                      Loyalty status is temporarily unavailable. Refresh billing
+                      details in a moment.
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="grid gap-3">
+                <DetailItem label="Current renewal rate" value={renewalRateLabel} />
+                <DetailItem label="Loyalty renewal rate" value={loyaltyRateLabel} />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </section>
+
+      <section id="orders-shipping">
+        <Card className="rounded-3xl border bg-card/80 shadow-sm">
+          <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="space-y-1">
+              <CardTitle className="text-lg font-semibold">
+                Orders & shipping
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Keep physical product orders separate from subscription billing.
+              </p>
+            </div>
+            {stripeEnabled ? (
+              <BillingStripeActionButton
+                size="sm"
+                className={BILLING_PRIMARY_BUTTON_CLASS}
+                href={bundleCheckoutHref}
+                idleLabel="Get Linket Bundle"
+              />
+            ) : (
+              <Button size="sm" className={BILLING_PRIMARY_BUTTON_CLASS} disabled>
+                Bundle checkout unavailable
+              </Button>
+            )}
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {sortedBundlePurchases.length === 0 ? (
+              <p className="rounded-2xl border p-3 text-sm text-muted-foreground">
+                No bundle orders recorded yet.
+              </p>
+            ) : (
+              sortedBundlePurchases.map((purchase) => {
+                const orderDateLabel =
+                  formatIsoDate(purchase.purchasedAt) ??
+                  formatIsoDate(purchase.createdAt) ??
+                  "--";
+                const shippingAddressLines = formatShippingAddressLines(
+                  purchase.shippingAddress
+                );
+                const estimatedDeliveryLabel =
+                  formatIsoDate(purchase.estimatedDeliveryDate) ??
+                  purchase.estimatedDeliveryDate;
+                const partialAddress =
+                  Boolean(shippingAddressLines) &&
+                  !hasStreetAddress(purchase.shippingAddress);
+
+                return (
+                  <div
+                    key={purchase.id}
+                    className="rounded-2xl border bg-card/60 p-4 shadow-sm"
+                  >
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                      <div className="space-y-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="font-semibold text-foreground">
+                            Linket Bundle x{purchase.quantity}
+                          </p>
+                          <Badge variant="secondary" className="rounded-full">
+                            {formatStatus(purchase.purchaseStatus)}
+                          </Badge>
+                          <Badge variant="outline" className="rounded-full">
+                            {purchase.fulfillmentStatus
+                              ? formatStatus(purchase.fulfillmentStatus)
+                              : "Pending"}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Ordered {orderDateLabel} |{" "}
+                          {formatMinorAmount(purchase.totalMinor, purchase.currency)} total
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Tracking status:{" "}
+                          {purchase.trackingUrl
+                            ? "Tracking link available"
+                            : purchase.trackingNumber
+                              ? "Tracking number available"
+                              : "Tracking pending"}
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {purchase.trackingUrl ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            asChild
+                            className="rounded-full"
+                          >
+                            <a
+                              href={purchase.trackingUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              Track package
+                            </a>
+                          </Button>
+                        ) : null}
+                        {purchase.receiptUrl ? (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            asChild
+                            className="rounded-full"
+                          >
+                            <a
+                              href={purchase.receiptUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              Receipt
+                            </a>
+                          </Button>
+                        ) : (
+                          <span className="inline-flex items-center text-xs text-muted-foreground">
+                            Receipt pending
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                      <DetailItem
+                        label="Product"
+                        value={
+                          purchase.quantity === 1
+                            ? "Linket Bundle"
+                            : `Linket Bundle x${purchase.quantity}`
+                        }
+                      />
+                      <DetailItem
+                        label="Order total"
+                        value={formatMinorAmount(
+                          purchase.totalMinor,
+                          purchase.currency
+                        )}
+                      />
+                      <DetailItem label="Order date" value={orderDateLabel} />
+                      <DetailItem
+                        label="Tracking"
+                        value={
+                          purchase.trackingNumber
+                            ? purchase.trackingNumber
+                            : purchase.trackingUrl
+                              ? "Tracking link available"
+                              : "Pending"
+                        }
+                      />
+                    </div>
+
+                    <details className="mt-4 rounded-2xl border bg-background/70 p-4">
+                      <summary className="cursor-pointer list-none font-semibold text-foreground [&::-webkit-details-marker]:hidden">
+                        Shipping and order details
+                      </summary>
+                      <div className="mt-4 grid gap-4 lg:grid-cols-2">
+                        <div className="space-y-2 text-sm text-muted-foreground">
+                          <p>
+                            <span className="font-semibold text-foreground">
+                              Recipient:
+                            </span>{" "}
+                            {purchase.shippingName ?? "Not provided"}
+                          </p>
+                          <p>
+                            <span className="font-semibold text-foreground">
+                              Phone:
+                            </span>{" "}
+                            {purchase.shippingPhone ?? "Not provided"}
+                          </p>
+                          <p>
+                            <span className="font-semibold text-foreground">
+                              Estimated delivery:
+                            </span>{" "}
+                            {estimatedDeliveryLabel ?? "Pending"}
+                          </p>
+                          <p>
+                            <span className="font-semibold text-foreground">
+                              Order status:
+                            </span>{" "}
+                            {formatStatus(purchase.orderStatus)}
+                          </p>
+                        </div>
+                        <div className="space-y-2 text-sm text-muted-foreground">
+                          <p className="font-semibold text-foreground">
+                            Shipping address
+                          </p>
+                          {shippingAddressLines ? (
+                            <div className="rounded-2xl border bg-card/50 p-3 font-mono text-xs text-foreground">
+                              {shippingAddressLines.map((line) => (
+                                <div key={line}>{line}</div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p>Shipping address unavailable.</p>
+                          )}
+                          {partialAddress ? (
+                            <p className="text-amber-900">
+                              Stripe returned a partial shipping address for this
+                              order.
+                            </p>
+                          ) : null}
+                        </div>
+                      </div>
+                    </details>
+                  </div>
+                );
+              })
+            )}
+          </CardContent>
+        </Card>
+      </section>
+
+      <section id="invoices">
         <Card className="rounded-3xl border bg-card/80 shadow-sm">
           <CardHeader>
-            <CardTitle className="text-lg font-semibold">
-              Billing health
-            </CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Quick totals from Stripe billing periods.
-            </p>
+            <div className="space-y-1">
+              <CardTitle className="text-lg font-semibold">Invoices</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Receipts and charge status in a clean scan-friendly table.
+              </p>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {sortedInvoices.length === 0 ? (
+              <p className="rounded-2xl border p-3 text-sm text-muted-foreground">
+                No invoices available yet.
+              </p>
+            ) : (
+              <div className="overflow-x-auto rounded-2xl border">
+                <table className="min-w-[640px] w-full text-left text-sm">
+                  <thead className="bg-card/60 text-xs uppercase tracking-[0.08em] text-muted-foreground">
+                    <tr>
+                      <th className="px-4 py-3 font-semibold">Invoice</th>
+                      <th className="px-4 py-3 font-semibold">Date</th>
+                      <th className="px-4 py-3 font-semibold">Amount</th>
+                      <th className="px-4 py-3 font-semibold">Status</th>
+                      <th className="px-4 py-3 font-semibold text-right">Receipt</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sortedInvoices.map((invoice) => {
+                      const invoiceLink =
+                        invoice.hostedInvoiceUrl ?? invoice.invoicePdfUrl;
+                      const invoiceDateLabel =
+                        formatIsoDate(invoice.createdAt) ??
+                        formatIsoDate(invoice.periodEnd) ??
+                        "--";
+
+                      return (
+                        <tr key={invoice.id} className="border-t bg-background/80">
+                          <td className="px-4 py-3 font-medium text-foreground">
+                            {invoice.number ?? maskMiddle(invoice.id) ?? invoice.id}
+                          </td>
+                          <td className="px-4 py-3 text-muted-foreground">
+                            {invoiceDateLabel}
+                          </td>
+                          <td className="px-4 py-3 text-foreground">
+                            {formatMinorAmount(
+                              getInvoiceAmountMinor(invoice),
+                              invoice.currency
+                            )}
+                          </td>
+                          <td className="px-4 py-3">
+                            <Badge variant="secondary" className="rounded-full">
+                              {formatStatus(invoice.status)}
+                            </Badge>
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            {invoiceLink ? (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                asChild
+                                className="rounded-full"
+                              >
+                                <a href={invoiceLink} target="_blank" rel="noreferrer">
+                                  View
+                                </a>
+                              </Button>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">
+                                No receipt
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </section>
+
+      <section id="billing-history">
+        <Card className="rounded-3xl border bg-card/80 shadow-sm">
+          <CardHeader>
+            <div className="space-y-1">
+              <CardTitle className="text-lg font-semibold">
+                Billing history
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Recorded billing activity in a simple timeline.
+              </p>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-3 sm:grid-cols-3">
@@ -727,405 +1303,212 @@ export default function BillingContent({
               />
             </div>
 
-            {stripeErrors.length > 0 ? (
-              <div className="rounded-2xl border border-amber-300 bg-amber-50/50 px-3 py-2 text-xs text-amber-900">
-                <p className="font-semibold">Stripe sync warnings</p>
-                <ul className="mt-1 space-y-1">
-                  {stripeErrors.map((message) => (
-                    <li key={message}>{message}</li>
-                  ))}
-                </ul>
-              </div>
-            ) : (
-              <p className="rounded-2xl border bg-card/50 px-3 py-2 text-xs text-muted-foreground">
-                No Stripe sync warnings right now.
-              </p>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-3xl border bg-card/80 shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between gap-3">
-            <div>
-              <CardTitle className="text-lg font-semibold">
-                Personal Pro loyalty discount
-              </CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Your renewal rate drops after enough paid time.
-              </p>
-            </div>
-            <Badge
-              variant={loyaltyEligible ? "secondary" : "outline"}
-              className="rounded-full"
-            >
-              {hasLoyaltyStatus ? (loyaltyEligible ? "Active" : "Pending") : "Unavailable"}
-            </Badge>
-          </CardHeader>
-          <CardContent className="space-y-3 text-xs text-muted-foreground">
-            <div className="grid gap-2 sm:grid-cols-2">
-              <div className="rounded-2xl border bg-card/60 p-3">
-                <p className="text-[11px] uppercase tracking-[0.08em]">
-                  Initial renewal rate
-                </p>
-                <p className="mt-1 text-sm font-semibold text-foreground">
-                  {initialRateLabel}
-                </p>
-              </div>
-              <div className="rounded-2xl border bg-card/60 p-3">
-                <p className="text-[11px] uppercase tracking-[0.08em]">
-                  Loyalty renewal rate
-                </p>
-                <p className="mt-1 text-sm font-semibold text-foreground">
-                  {loyaltyRateLabel}
-                </p>
-              </div>
-            </div>
-
-            <div className="rounded-2xl border bg-card/50 p-3">
-              <div className="flex items-center justify-between gap-2">
-                <p className="font-semibold text-foreground">
-                  Progress
-                </p>
-                {hasLoyaltyStatus ? (
-                  <p>
-                    {totalPaidDays}/{requiredPaidDays} paid days (
-                    {loyaltyProgressPercent}%)
-                  </p>
-                ) : (
-                  <p>Loyalty data unavailable</p>
-                )}
-              </div>
-              <div className="mt-2 h-2 rounded-full bg-muted">
-                <div
-                  className="h-2 rounded-full bg-primary"
-                  style={{ width: `${loyaltyProgressPercent}%` }}
-                />
-              </div>
-              {complimentaryWindow?.active ? (
-                <p className="mt-2 rounded-xl border border-slate-300 bg-slate-100/80 px-2 py-1 text-[11px] text-slate-800">
-                  Loyalty is paused during complimentary Pro until{" "}
-                  {complimentaryEndsLabel ?? "--"}. Paid-day progress resumes
-                  after complimentary coverage ends.
-                </p>
-              ) : null}
-            </div>
-
-            {!hasLoyaltyStatus ? (
-              <p className="rounded-2xl border border-amber-300 bg-amber-50/60 px-3 py-2 text-amber-900">
-                Loyalty status is temporarily unavailable. Refresh billing
-                details in a moment.
-              </p>
-            ) : loyaltyEligible ? (
-              <p className="rounded-2xl border border-emerald-300 bg-emerald-50/60 px-3 py-2 text-emerald-900">
-                Loyalty discount is active for your personal Pro renewal rate.
-              </p>
-            ) : loyaltyEligibleOnLabel ? (
-              <p className="rounded-2xl border bg-card/50 px-3 py-2">
-                Eligible on {loyaltyEligibleOnLabel}
-                {typeof loyaltyDaysUntilEligible === "number"
-                  ? ` (${loyaltyDaysUntilEligible} day${loyaltyDaysUntilEligible === 1 ? "" : "s"} remaining).`
-                  : "."}
-              </p>
-            ) : (
-              <p className="rounded-2xl border bg-card/50 px-3 py-2">
-                Paid time is cumulative, so canceled and restarted paid periods
-                still count toward loyalty.
-              </p>
-            )}
-
-            <p>
-              After {discountDays} total paid days (continuous or
-              discontinuous), renewals move from {initialRateLabel} to{" "}
-              {loyaltyRateLabel}.
-            </p>
-          </CardContent>
-        </Card>
-      </section>
-
-      <section>
-        <Card className="rounded-3xl border bg-card/80 shadow-sm">
-          <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <CardTitle className="text-lg font-semibold">
-                Bundle orders
-              </CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Track physical-order payment state, shipping details, and receipts. Purchaser and claimant can be different accounts.
-              </p>
-            </div>
-            {stripeEnabled ? (
-              <BillingStripeActionButton
-                size="sm"
-                className={BILLING_PRIMARY_BUTTON_CLASS}
-                href={bundleCheckoutHref}
-                idleLabel="Get Linket Bundle"
-              />
-            ) : (
-              <Button size="sm" className={BILLING_PRIMARY_BUTTON_CLASS} disabled>
-                Bundle checkout unavailable
-              </Button>
-            )}
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {bundlePurchases.length === 0 ? (
-              <p className="rounded-2xl border p-3 text-sm text-muted-foreground">
-                No bundle orders recorded yet.
-              </p>
-            ) : (
-              bundlePurchases.map((purchase) => {
-                const etaLabel =
-                  formatIsoDate(purchase.estimatedDeliveryDate) ??
-                  purchase.estimatedDeliveryDate;
-                const shippingAddressLines = formatShippingAddressLines(
-                  purchase.shippingAddress
-                );
-                const shippingAddressLabel = shippingAddressLines
-                  ? shippingAddressLines.join("\n")
-                  : null;
-                const fulfillmentLabel = purchase.fulfillmentStatus
-                  ? formatStatus(purchase.fulfillmentStatus)
-                  : "Pending";
-                const recipientLabel = purchase.shippingName ?? "Not provided";
-                const phoneLabel = purchase.shippingPhone ?? "Not provided";
-                const partialAddress =
-                  Boolean(shippingAddressLines) &&
-                  !hasStreetAddress(purchase.shippingAddress);
-
-                return (
-                  <div
-                    key={purchase.id}
-                    className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border px-3 py-2"
-                  >
-                    <div>
-                      <div className="font-semibold text-foreground">
-                        {formatMinorAmount(purchase.totalMinor, purchase.currency)} - Qty{" "}
-                        {purchase.quantity}
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        Ordered {formatIsoDate(purchase.purchasedAt) ?? "--"}
-                        {purchase.shippingName ? ` - Ship to ${purchase.shippingName}` : ""}
-                      </p>
-                      <p className="text-[11px] text-muted-foreground">
-                        Session:{" "}
-                        <span
-                          className="block break-all font-mono text-foreground"
-                          title={purchase.checkoutSessionId}
-                        >
-                          {purchase.checkoutSessionId || "--"}
-                        </span>
-                      </p>
-                      <p className="text-[11px] text-muted-foreground">
-                        Recipient: <span className="text-foreground">{recipientLabel}</span>
-                        {" · "}
-                        Phone: <span className="text-foreground">{phoneLabel}</span>
-                      </p>
-                      <p className="text-[11px] text-muted-foreground">
-                        Fulfillment: <span className="text-foreground">{fulfillmentLabel}</span>
-                        {" · "}
-                        {etaLabel ? (
-                          <>
-                            ETA <span className="text-foreground">{etaLabel}</span>
-                          </>
-                        ) : (
-                          "ETA pending"
-                        )}
-                      </p>
-                      {shippingAddressLines ? (
-                        <p className="text-[11px] text-muted-foreground">
-                          Shipping address:{" "}
-                          <span className="mt-1 block whitespace-pre-wrap break-words font-mono text-foreground">
-                            {shippingAddressLabel}
-                          </span>
-                        </p>
-                      ) : (
-                        <p className="text-[11px] text-amber-800">
-                          Shipping address unavailable.
-                        </p>
-                      )}
-                      {partialAddress ? (
-                        <p className="text-[11px] text-amber-800">
-                          Stripe returned a partial shipping address for this
-                          order (street line missing).
-                        </p>
-                      ) : null}
-                      <p className="text-[11px] text-muted-foreground">
-                        {purchase.trackingUrl ? (
-                          <a
-                            href={purchase.trackingUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="font-medium underline underline-offset-2"
-                          >
-                            Track shipment
-                          </a>
-                        ) : purchase.trackingNumber ? (
-                          <>
-                            Tracking:{" "}
-                            <span className="font-mono text-foreground">
-                              {purchase.trackingNumber}
-                            </span>
-                          </>
-                        ) : (
-                          "Tracking pending"
-                        )}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="secondary" className="rounded-full">
-                        Purchase {formatStatus(purchase.purchaseStatus)}
-                      </Badge>
-                      <Badge variant="outline" className="rounded-full">
-                        Order {formatStatus(purchase.orderStatus)}
-                      </Badge>
-                      {purchase.receiptUrl ? (
-                        <Button variant="ghost" size="sm" asChild className="rounded-full">
-                          <a href={purchase.receiptUrl} target="_blank" rel="noreferrer">
-                            Receipt
-                          </a>
-                        </Button>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">Receipt pending</span>
-                      )}
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </CardContent>
-        </Card>
-      </section>
-
-      <section className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-        <Card className="rounded-3xl border bg-card/80 shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold">Invoices</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Receipts and charge status from Stripe.
-            </p>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            {invoices.length === 0 ? (
-              <p className="rounded-2xl border p-3 text-sm text-muted-foreground">
-                No invoices available yet.
-              </p>
-            ) : (
-              invoices.map((invoice) => {
-                const invoiceLink =
-                  invoice.hostedInvoiceUrl ?? invoice.invoicePdfUrl;
-                const periodLabel =
-                  formatIsoDate(invoice.periodStart) && formatIsoDate(invoice.periodEnd)
-                    ? `${formatIsoDate(invoice.periodStart)} - ${formatIsoDate(invoice.periodEnd)}`
-                    : formatIsoDate(invoice.createdAt) ?? "Unknown period";
-
-                return (
-                  <div
-                    key={invoice.id}
-                    className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border px-3 py-2"
-                  >
-                    <div>
-                      <div className="font-semibold text-foreground">
-                        {invoice.number ?? invoice.id}
-                      </div>
-                      <p className="text-xs text-muted-foreground">{periodLabel}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-foreground">
-                        {formatMinorAmount(invoice.amountPaidMinor, invoice.currency)}
-                      </span>
-                      <Badge variant="secondary" className="rounded-full">
-                        {formatStatus(invoice.status)}
-                      </Badge>
-                      {invoiceLink ? (
-                        <Button variant="ghost" size="sm" asChild className="rounded-full">
-                          <a href={invoiceLink} target="_blank" rel="noreferrer">
-                            Receipt
-                          </a>
-                        </Button>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">No receipt</span>
-                      )}
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-3xl border bg-card/80 shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold">
-              Billing period history
-            </CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Stripe periods recorded by webhook events.
-            </p>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {periods.length === 0 ? (
+            {sortedPeriods.length === 0 ? (
               <p className="rounded-2xl border p-3 text-sm text-muted-foreground">
                 No Stripe billing periods recorded yet.
               </p>
             ) : (
-              periods.map((period) => (
-                <div
-                  key={period.id}
-                  className="rounded-2xl border p-3 text-sm text-muted-foreground"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="font-semibold text-foreground">
-                      {formatIsoDate(period.periodStart) ?? "--"} to{" "}
-                      {formatIsoDate(period.periodEnd) ?? "--"}
-                    </span>
-                    <Badge variant="outline" className="rounded-full">
-                      {formatStatus(period.status)}
-                    </Badge>
+              <div className="space-y-3">
+                {sortedPeriods.map((period) => (
+                  <div
+                    key={period.id}
+                    className="rounded-2xl border bg-card/50 p-4 text-sm"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="font-semibold text-foreground">
+                        {formatDateRange(period.periodStart, period.periodEnd) ?? "--"}
+                      </p>
+                      <Badge variant="outline" className="rounded-full">
+                        {formatStatus(period.status)}
+                      </Badge>
+                    </div>
+                    <p className="mt-2 text-muted-foreground">
+                      {formatIsoDate(period.createdAt)
+                        ? `Recorded on ${formatIsoDate(period.createdAt)}.`
+                        : "Recorded billing activity from Stripe."}
+                    </p>
                   </div>
-                  <p className="mt-1 text-xs">
-                    Subscription reference:{" "}
-                    <span
-                      className="font-mono text-foreground"
-                      title={period.subscriptionId}
-                    >
-                      {maskMiddle(period.subscriptionId) ?? "--"}
-                    </span>
-                  </p>
-                </div>
-              ))
+                ))}
+              </div>
             )}
           </CardContent>
         </Card>
       </section>
 
-      {canManageBilling && hasManageableSubscription ? (
-        <section className="space-y-3">
-          {summary?.autoRenews !== false ? (
-            <div className="rounded-2xl border border-amber-300 bg-amber-50/70 px-3 py-3 text-xs text-amber-900">
-              <p className="font-semibold">Need to stop future payments?</p>
-              <p className="mt-1">
-                You can cancel renewal anytime. Access remains active until the
-                current period ends.
+      <section id="support-references">
+        <Card className="rounded-3xl border bg-card/80 shadow-sm">
+          <CardHeader>
+            <div className="space-y-1">
+              <CardTitle className="text-lg font-semibold">
+                Support and technical references
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Raw Stripe identifiers stay hidden by default. Only share these
+                with Linket support.
               </p>
-              <form
-                action={cancelSubscriptionActionHref}
-                method="post"
-                className="mt-2"
-              >
-                <button
-                  type="submit"
-                  className="inline-flex h-9 items-center justify-center rounded-full border border-[#b91c1c] bg-[#dc2626] px-3 text-sm font-medium text-white transition-colors hover:bg-[#b91c1c] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ef4444] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent disabled:pointer-events-none disabled:opacity-50"
-                >
-                  Cancel future renewals
-                </button>
-              </form>
             </div>
-          ) : (
-            <p className="rounded-2xl border border-amber-300 bg-amber-50/60 px-3 py-2 text-xs text-amber-900">
-              Cancellation is already scheduled for your current subscription.
-            </p>
-          )}
-        </section>
-      ) : null}
+          </CardHeader>
+          <CardContent>
+            <details className="rounded-2xl border bg-card/40 p-4">
+              <summary className="cursor-pointer list-none font-semibold text-foreground [&::-webkit-details-marker]:hidden">
+                Show technical references
+              </summary>
+              <div className="mt-4 grid gap-3 xl:grid-cols-2">
+                <div className="rounded-2xl border bg-background/70 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                    Subscription reference
+                  </p>
+                  <p className="mt-2 break-all font-mono text-sm text-foreground">
+                    {summary?.activeSubscriptionId ?? "Not available yet"}
+                  </p>
+                </div>
+                <div className="rounded-2xl border bg-background/70 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                    Billing profile reference
+                  </p>
+                  <p className="mt-2 break-all font-mono text-sm text-foreground">
+                    {stripeCustomerId ?? "Not available yet"}
+                  </p>
+                </div>
+                <div className="rounded-2xl border bg-background/70 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                    Payment method references
+                  </p>
+                  {sortedPaymentMethods.length === 0 ? (
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      No payment method references yet.
+                    </p>
+                  ) : (
+                    <div className="mt-3 space-y-3">
+                      {sortedPaymentMethods.map((paymentMethod) => (
+                        <div
+                          key={paymentMethod.id}
+                          className="rounded-2xl border bg-card/50 p-3"
+                        >
+                          <p className="text-sm font-semibold text-foreground">
+                            {formatPaymentMethodLabel(paymentMethod)}
+                            {paymentMethod.isDefault ? " (default)" : ""}
+                          </p>
+                          <p className="mt-2 break-all font-mono text-xs text-foreground">
+                            {paymentMethod.id}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="rounded-2xl border bg-background/70 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                    Order and checkout references
+                  </p>
+                  {sortedBundlePurchases.length === 0 ? (
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      No bundle order references yet.
+                    </p>
+                  ) : (
+                    <div className="mt-3 space-y-3">
+                      {sortedBundlePurchases.map((purchase) => (
+                        <div
+                          key={purchase.id}
+                          className="rounded-2xl border bg-card/50 p-3"
+                        >
+                          <p className="text-sm font-semibold text-foreground">
+                            Order {maskMiddle(purchase.id) ?? purchase.id}
+                          </p>
+                          <div className="mt-2 space-y-1 font-mono text-xs text-foreground">
+                            <div className="break-all">
+                              Checkout session: {purchase.checkoutSessionId || "--"}
+                            </div>
+                            <div className="break-all">
+                              Payment intent: {purchase.paymentIntentId ?? "--"}
+                            </div>
+                            <div className="break-all">
+                              Invoice: {purchase.invoiceId ?? "--"}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="rounded-2xl border bg-background/70 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                    Stripe sync warnings
+                  </p>
+                  {stripeErrors.length === 0 ? (
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      No Stripe sync warnings right now.
+                    </p>
+                  ) : (
+                    <ul className="mt-3 space-y-2 text-sm text-amber-900">
+                      {stripeErrors.map((message) => (
+                        <li key={message} className="rounded-2xl border bg-amber-50/70 p-3">
+                          {message}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+                <div className="rounded-2xl border bg-background/70 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                    Billing period references
+                  </p>
+                  {sortedPeriods.length === 0 ? (
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      No billing period references yet.
+                    </p>
+                  ) : (
+                    <div className="mt-3 space-y-3">
+                      {sortedPeriods.map((period) => (
+                        <div
+                          key={period.id}
+                          className="rounded-2xl border bg-card/50 p-3"
+                        >
+                          <p className="text-sm font-semibold text-foreground">
+                            {formatDateRange(period.periodStart, period.periodEnd) ??
+                              maskMiddle(period.id) ??
+                              period.id}
+                          </p>
+                          <div className="mt-2 space-y-1 font-mono text-xs text-foreground">
+                            <div className="break-all">
+                              Subscription: {period.subscriptionId}
+                            </div>
+                            <div className="break-all">
+                              Customer: {period.customerId ?? "--"}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </details>
+          </CardContent>
+        </Card>
+      </section>
+    </div>
+  );
+}
+
+function SummaryFact({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border bg-card/50 p-4">
+      <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+        {label}
+      </p>
+      <p className="mt-2 text-base font-semibold text-foreground">{value}</p>
+    </div>
+  );
+}
+
+function DetailItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border bg-card/50 p-4">
+      <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+        {label}
+      </p>
+      <p className="mt-2 text-sm text-foreground">{value}</p>
     </div>
   );
 }
@@ -1147,4 +1530,3 @@ function UsageStat({
     </div>
   );
 }
-
