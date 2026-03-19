@@ -2,14 +2,16 @@
 
 ## Executive Summary
 
-AA baseline status: partially met after remediation. I audited the public landing flow, auth flow, high-traffic marketing components, and theme token variants using WCAG 2.1/2.2 contrast math with alpha compositing. Seventeen findings are already patched in the current working tree. Three AA risks remain open: \`theme-burnt-orange\`, \`theme-maroon\`, and the low-contrast global \`--border\` / \`--input\` token family.
+AA baseline status: partially met after remediation. I audited the public landing flow, auth flow, high-traffic marketing components, and theme token variants using WCAG 2.1/2.2 contrast math with alpha compositing. Seventeen findings are already patched in the current working tree. The original sampled audit still has three open AA risks: \`theme-burnt-orange\`, \`theme-maroon\`, and the low-contrast global \`--border\` / \`--input\` token family.
+
+Full theme coverage is now documented in \`docs/accessibility/theme-contrast-matrix.md\` and \`docs/accessibility/theme-contrast-matrix.json\`. That full token sweep covers every declared theme scope in \`base.css\` and \`variants.css\`, and it adds one contextual AA risk outside the original 20-finding sample: \`.theme-forest\` falls to 3.62:1 when \`--foreground\` is reused on \`--card\` instead of \`--card-foreground\`.
 
 Top technical risks were light marketing gradients using white text, custom focus indicators that were too faint for WCAG 2.2 section 2.4.13, and alternate themes whose primary/ring tokens drifted below AA thresholds. ADA Title III relevance: these are technical accessibility findings about perceivable and operable UI barriers on customer-facing UI, not legal advice.
 
 ## Scope
 
 - Pages/components in scope: \`/\`, \`/auth\`, \`HeroSection\`, \`CreativePricing\`, \`ConsultForm\`, \`AdaptiveNavPill\`, auth inputs, theme token variants.
-- Themes sampled: default light, \`.dark\`, \`.theme-dark\`, \`.theme-midnight\`, \`.theme-forest\`, \`.theme-gilded\`, \`.theme-rose\`, \`.theme-autumn\`, \`.theme-honey\`, \`.theme-burnt-orange\`, \`.theme-maroon\`.
+- Theme token coverage: \`:root\`, \`.dark\`, \`.theme-light\`, \`.theme-dark\`, \`.theme-midnight\`, \`.theme-dream\`, \`.theme-forest\`, \`.theme-gilded\`, \`.theme-rose\`, \`.theme-autumn\`, \`.theme-honey\`, \`.theme-burnt-orange\`, \`.theme-maroon\`.
 - Breakpoints: mobile-first source review plus desktop token sweep.
 - Target: AA baseline with AAA delta notes.
 - Sampling strategy: WCAG-EM-style targeted sample of critical public flows, highest-traffic components, and highest-risk alternate themes.

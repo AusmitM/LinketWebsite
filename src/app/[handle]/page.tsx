@@ -355,7 +355,7 @@ export default async function PublicProfilePage({ params }: Props) {
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center gap-3 public-profile-load public-profile-load-3">
+              <div className="public-profile-actions flex flex-wrap items-center gap-3 public-profile-load public-profile-load-3">
                 {hasContactDetails ? (
                   <VCardDownload
                     handle={publicHandle}

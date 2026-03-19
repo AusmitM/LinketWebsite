@@ -309,8 +309,8 @@ export default function PublicProfilePreview({
                 <div
                   className={
                     forceMobile
-                      ? "flex flex-wrap items-center justify-center gap-3"
-                      : "flex flex-wrap items-center justify-center gap-3 sm:justify-start"
+                      ? "public-profile-actions flex flex-wrap items-center justify-center gap-3"
+                      : "public-profile-actions flex flex-wrap items-center justify-center gap-3 sm:justify-start"
                   }
                 >
                   {contactEnabled ? (
@@ -502,7 +502,7 @@ export default function PublicProfilePreview({
                 </div>
               )}
 
-                <div className="flex flex-wrap items-center gap-3">
+                <div className="public-profile-actions flex flex-wrap items-center gap-3">
                   {contactEnabled ? (
                     <VCardDownload
                       handle={publicHandle}

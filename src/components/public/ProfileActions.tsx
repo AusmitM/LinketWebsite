@@ -31,7 +31,7 @@ export function ProfileActions({ username, profileUrl, className }: Props) {
       </Button>
       <Button
         variant="outline"
-        className="w-full rounded-2xl text-foreground hover:text-foreground dark:text-background dark:hover:text-background sm:w-auto"
+        className="w-full rounded-2xl sm:w-auto"
         aria-label="Save vCard"
         onClick={() => {
           const href = `/api/vcard/${encodeURIComponent(username)}?download=${Date.now()}`;
@@ -41,7 +41,7 @@ export function ProfileActions({ username, profileUrl, className }: Props) {
         Save vCard
       </Button>
       <details className="group relative w-full sm:w-auto">
-        <summary className="flex cursor-pointer select-none items-center justify-center gap-2 rounded-2xl border border-transparent px-4 py-2 text-sm text-[color:var(--muted-foreground)] transition hover:border-[color:var(--border)] hover:bg-[color:var(--muted)]/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]">
+        <summary className="flex cursor-pointer select-none items-center justify-center gap-2 rounded-2xl border px-4 py-2 text-sm text-[color:var(--button-subtle-foreground)] transition [border-color:var(--button-subtle-border)] hover:bg-[color:var(--muted)]/50 hover:text-[color:var(--button-subtle-foreground-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]">
           <QrCode className="h-4 w-4" aria-hidden /> QR code
         </summary>
         <div className="absolute right-0 z-10 mt-2 w-48 rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] p-3 shadow-[0_20px_45px_-35px_var(--ring)]">

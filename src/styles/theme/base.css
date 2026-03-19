@@ -67,6 +67,10 @@
   --sidebar-accent-foreground: #1f2937;
   --sidebar-border: #d7deed;
   --sidebar-ring: var(--ring);
+  --button-subtle-foreground: #23458f;
+  --button-subtle-foreground-hover: #1c3773;
+  --button-subtle-border: rgba(84, 120, 198, 0.34);
+  --button-solid-outline: rgba(193, 216, 255, 0.56);
 
   /* Premium dashboard surfaces */
   --premium-gradient: radial-gradient(120% 120% at 20% 0%, rgba(37, 99, 235, 0.12) 0%, transparent 60%),
@@ -130,6 +134,10 @@
   --sidebar-accent-foreground: #d4e2ff;
   --sidebar-border: #1f2b45;
   --sidebar-ring: #60a5fa;
+  --button-subtle-foreground: #dce7ff;
+  --button-subtle-foreground-hover: #f5f7ff;
+  --button-subtle-border: rgba(99, 168, 255, 0.36);
+  --button-solid-outline: rgba(191, 219, 254, 0.44);
 }
 
 @keyframes landing-fade-up {
