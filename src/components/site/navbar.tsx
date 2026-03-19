@@ -1344,30 +1344,10 @@ export function Navbar() {
             anchorRef={accountButtonRef}
             align="end"
             title="Account menu"
-        >
+          >
             <div className="dashboard-account-menu-content space-y-2 text-sm">
-              <div className="dashboard-account-menu-email flex flex-col items-center gap-3 rounded-2xl border border-border/60 bg-card/80 px-4 py-4 text-center">
-                <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-2 border-[var(--accent)] bg-muted text-lg font-semibold text-muted-foreground">
-                  {avatarUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={avatarUrl}
-                      alt="Account avatar"
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    getUserInitials(user.fullName ?? user.email ?? "PK")
-                  )}
-                </div>
-                <div className="space-y-1">
-                  <div className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                    Account
-                  </div>
-                  <div className="break-all text-sm font-semibold text-foreground">
-                    {user?.email ?? "Not signed in"}
-                  </div>
-                  <div className="text-xs text-muted-foreground">Signed in</div>
-                </div>
+              <div className="dashboard-account-menu-email rounded-lg border border-border/60 bg-card/80 px-3 py-2 text-xs text-muted-foreground">
+                {user?.email ?? "Not signed in"}
               </div>
               <MenuLink href="/dashboard/settings">Account settings</MenuLink>
               <MenuLink href="/dashboard/billing">Billing</MenuLink>
