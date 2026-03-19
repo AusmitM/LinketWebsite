@@ -2,11 +2,20 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  AlertTriangle,
+  Clock3,
+  Mail,
+  ShieldCheck,
+  User,
+} from "lucide-react";
+
+import { SignOutButton } from "@/components/auth/SignOutButton";
+import { useDashboardUser } from "@/components/dashboard/DashboardSessionContext";
 import { toast } from "@/components/system/toaster";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -15,45 +24,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { SignOutButton } from "@/components/auth/SignOutButton";
-import { useDashboardUser } from "@/components/dashboard/DashboardSessionContext";
-import { supabase } from "@/lib/supabase";
 import { getSignedAvatarUrl } from "@/lib/avatar-client";
-import { Phone } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
-type VCardFields = {
-  fullName: string;
-  title: string;
-  email: string;
-  phone: string;
-  company: string;
-  addressLine1: string;
-  addressLine2: string;
-  addressCity: string;
-  addressRegion: string;
-  addressPostal: string;
-  addressCountry: string;
-  note: string;
-  photoData: string | null;
-  photoName: string | null;
-};
-
-const EMPTY_FIELDS: VCardFields = {
-  fullName: "",
-  title: "",
-  email: "",
-  phone: "",
-  company: "",
-  addressLine1: "",
-  addressLine2: "",
-  addressCity: "",
-  addressRegion: "",
-  addressPostal: "",
-  addressCountry: "",
-  note: "",
-  photoData: null,
-  photoName: null,
-};
+const DATE_TIME_FORMATTER = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+});
 
 export default function SettingsContent() {
   const router = useRouter();
@@ -62,12 +42,11 @@ export default function SettingsContent() {
   const [deleting, setDeleting] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [avatarLoading, setAvatarLoading] = useState(true);
-  const [phone, setPhone] = useState("");
-  const [phoneLoading, setPhoneLoading] = useState(true);
-  const [savingPhone, setSavingPhone] = useState(false);
-  const [vcardFields, setVcardFields] = useState<VCardFields>(EMPTY_FIELDS);
 
   const email = user?.email ?? "";
+  const emailVerified = Boolean(user?.email_confirmed_at);
+  const lastSignInLabel = formatDateTime(user?.last_sign_in_at ?? null);
+  const memberSinceLabel = formatDateTime(user?.created_at ?? null);
   const initials = useMemo(() => {
     if (email) return email.slice(0, 1).toUpperCase();
     return "L";
@@ -75,6 +54,7 @@ export default function SettingsContent() {
 
   useEffect(() => {
     if (!user?.id) return;
+
     let active = true;
     (async () => {
       setAvatarLoading(true);
@@ -100,34 +80,7 @@ export default function SettingsContent() {
         if (active) setAvatarLoading(false);
       }
     })();
-    return () => {
-      active = false;
-    };
-  }, [user?.id]);
 
-  useEffect(() => {
-    if (!user?.id) return;
-    let active = true;
-    (async () => {
-      setPhoneLoading(true);
-      try {
-        const response = await fetch(
-          `/api/vcard/profile?userId=${encodeURIComponent(user.id)}`,
-          { cache: "no-store" }
-        );
-        if (!response.ok) throw new Error("Unable to load phone");
-        const payload = (await response.json()) as { fields?: VCardFields };
-        if (!active) return;
-        const fields = payload.fields ?? EMPTY_FIELDS;
-        setVcardFields(fields);
-        setPhone(fields.phone ?? "");
-      } catch (error) {
-        if (!active) return;
-        console.warn("Settings phone load failed:", error);
-      } finally {
-        if (active) setPhoneLoading(false);
-      }
-    })();
     return () => {
       active = false;
     };
@@ -152,128 +105,140 @@ export default function SettingsContent() {
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Unable to delete account";
-      toast({ title: "Delete failed", description: message, variant: "destructive" });
+      toast({
+        title: "Delete failed",
+        description: message,
+        variant: "destructive",
+      });
     } finally {
       setDeleting(false);
     }
   };
 
-  const handleSavePhone = async () => {
-    if (!user?.id || savingPhone) return;
-    setSavingPhone(true);
-    try {
-      const payload: VCardFields = {
-        ...vcardFields,
-        phone: phone.trim(),
-      };
-      const response = await fetch("/api/vcard/profile", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user.id, fields: payload }),
-      });
-      if (!response.ok) {
-        const info = await response.json().catch(() => ({}));
-        throw new Error(info?.error || "Unable to update phone");
-      }
-      setVcardFields(payload);
-      toast({ title: "Phone updated", variant: "success" });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unable to update phone";
-      toast({ title: "Save failed", description: message, variant: "destructive" });
-    } finally {
-      setSavingPhone(false);
-    }
-  };
-
   return (
     <div className="space-y-6">
-      <Card className="rounded-3xl border bg-card/80 shadow-sm" data-tour="settings-account">
-        <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <CardTitle className="text-2xl font-semibold">Settings</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Manage your account details and contact info.
+      <Card
+        className="rounded-3xl border bg-card/80 shadow-sm"
+        data-tour="settings-account"
+      >
+        <CardHeader className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <CardTitle className="text-2xl font-semibold">Settings</CardTitle>
+              <Badge variant="secondary" className="rounded-full">
+                Account only
+              </Badge>
+            </div>
+            <p className="max-w-3xl text-sm text-muted-foreground">
+              Settings is reserved for account access, security, and destructive
+              account actions.
             </p>
           </div>
-          <SignOutButton />
+          <SignOutButton className="shrink-0" />
         </CardHeader>
-        <CardContent className="grid gap-6 lg:grid-cols-[minmax(0,0.55fr)_minmax(0,1.45fr)]">
-          <div className="flex items-center gap-4 rounded-2xl border border-border/60 bg-background/60 p-4">
-            <div className="relative h-20 w-20 overflow-hidden rounded-full border-2 border-[var(--accent)] bg-muted">
-              {avatarLoading ? (
-                <div className="dashboard-skeleton h-full w-full animate-pulse bg-muted" data-skeleton />
-              ) : avatarUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={avatarUrl} alt="Profile" className="h-full w-full object-cover" />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center text-lg font-semibold text-muted-foreground">
-                  {initials}
+        <CardContent>
+          <div className="rounded-3xl border border-border/60 bg-background/70 p-5">
+            <div className="flex items-center gap-4">
+              <div className="relative h-24 w-24 overflow-hidden rounded-full border-2 border-[var(--accent)] bg-muted">
+                {avatarLoading ? (
+                  <div className="h-full w-full animate-pulse bg-muted" />
+                ) : avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={avatarUrl}
+                    alt="Profile"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-xl font-semibold text-muted-foreground">
+                    {initials}
+                  </div>
+                )}
+              </div>
+              <div className="space-y-2">
+                <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                  Account overview
                 </div>
-              )}
-            </div>
-            <div className="space-y-1">
-              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                Account
-              </div>
-              <div className="text-sm font-semibold text-foreground">
-                {email || "Email unavailable"}
-              </div>
-              <div className="text-xs text-muted-foreground">Signed in</div>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <div className="rounded-2xl border border-border/60 bg-background/60 p-4">
-              <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                <Phone className="h-4 w-4 text-muted-foreground" />
-                Phone number
-              </div>
-              <div className="mt-3 space-y-2">
-                <Label htmlFor="settings-phone" className="text-xs text-muted-foreground">
-                  This is used for your contact card.
-                </Label>
-                <Input
-                  id="settings-phone"
-                  type="tel"
-                  inputMode="tel"
-                  value={phone}
-                  onChange={(event) => setPhone(formatPhoneNumber(event.target.value))}
-                  onBlur={(event) => setPhone(formatPhoneNumber(event.target.value))}
-                  placeholder="(555) 123 - 4567"
-                  disabled={phoneLoading || !user?.id}
-                />
-                <Button
-                  onClick={handleSavePhone}
-                  disabled={phoneLoading || savingPhone || !user?.id}
-                  className="rounded-full"
-                >
-                  {savingPhone ? "Saving..." : "Save phone"}
-                </Button>
+                <div className="text-lg font-semibold text-foreground">
+                  {email || "Email unavailable"}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Badge variant="outline" className="rounded-full">
+                    {emailVerified ? "Email verified" : "Verification pending"}
+                  </Badge>
+                </div>
               </div>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <Card className="rounded-3xl border border-destructive/20 bg-card/80 shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold text-destructive">
-            Danger zone
-          </CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Permanently delete your account and all associated data.
-          </p>
-        </CardHeader>
-        <CardContent className="flex flex-wrap items-center gap-3">
-          <Button
-            variant="destructive"
-            className="rounded-full"
-            onClick={() => setDeleteOpen(true)}
-          >
-            Delete account
-          </Button>
-        </CardContent>
-      </Card>
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
+        <Card className="rounded-3xl border bg-card/80 shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-lg font-semibold">
+              Security & session
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Account access details stay here. Public profile editing does not.
+            </p>
+          </CardHeader>
+          <CardContent className="grid gap-3 sm:grid-cols-2">
+            <SettingsFact
+              icon={Mail}
+              label="Authentication email"
+              value={email || "--"}
+              helper="This is your actual sign-in address."
+            />
+            <SettingsFact
+              icon={ShieldCheck}
+              label="Email verification"
+              value={emailVerified ? "Verified" : "Pending"}
+              helper="Verification reduces account recovery issues."
+            />
+            <SettingsFact
+              icon={Clock3}
+              label="Last sign in"
+              value={lastSignInLabel ?? "Unavailable"}
+              helper="Most recent successful dashboard session."
+            />
+            <SettingsFact
+              icon={User}
+              label="Member since"
+              value={memberSinceLabel ?? "Unavailable"}
+              helper="Account creation timestamp from your auth profile."
+            />
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-3xl border border-destructive/20 bg-card/80 shadow-sm">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" aria-hidden />
+              <CardTitle className="text-lg font-semibold text-destructive">
+                Danger zone
+              </CardTitle>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Permanent actions live on their own so they never compete with
+              normal account controls.
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="rounded-2xl border border-destructive/15 bg-destructive/5 p-4 text-sm text-muted-foreground">
+              Deleting your account removes your profile, links, lead forms, stored
+              images, and related records. This cannot be undone.
+            </div>
+            <Button
+              variant="destructive"
+              className="rounded-full"
+              onClick={() => setDeleteOpen(true)}
+            >
+              Delete account
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
 
       <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <DialogContent>
@@ -288,7 +253,11 @@ export default function SettingsContent() {
             <Button variant="outline" onClick={() => setDeleteOpen(false)}>
               Cancel
             </Button>
-            <Button variant="destructive" onClick={handleDeleteAccount} disabled={deleting}>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteAccount}
+              disabled={deleting}
+            >
               {deleting ? "Deleting..." : "Delete account"}
             </Button>
           </DialogFooter>
@@ -298,12 +267,32 @@ export default function SettingsContent() {
   );
 }
 
-function formatPhoneNumber(input: string) {
-  const digits = input.replace(/\D/g, "").slice(0, 10);
-  if (!digits) return "";
-  if (digits.length <= 3) return `(${digits}`;
-  if (digits.length <= 6) {
-    return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
-  }
-  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)} - ${digits.slice(6)}`;
+function SettingsFact({
+  icon: Icon,
+  label,
+  value,
+  helper,
+}: {
+  icon: typeof Mail;
+  label: string;
+  value: string;
+  helper: string;
+}) {
+  return (
+    <div className="rounded-2xl border bg-background/70 p-4">
+      <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+        <Icon className="h-4 w-4" aria-hidden="true" />
+        {label}
+      </div>
+      <p className="mt-2 text-sm font-semibold text-foreground">{value}</p>
+      <p className="mt-1 text-xs text-muted-foreground">{helper}</p>
+    </div>
+  );
+}
+
+function formatDateTime(value: string | null | undefined) {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return DATE_TIME_FORMATTER.format(date);
 }
