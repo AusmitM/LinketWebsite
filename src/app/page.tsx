@@ -591,8 +591,9 @@ function HeroSection() {
           <div className="landing-fade-up landing-delay-3 mt-10 flex justify-center">
             <Button
               asChild
+              variant="landingPrimary"
               size="lg"
-              className="rounded-full bg-gradient-to-r from-[#ff9776] via-[#ffb866] to-[#5dd6f7] px-7 py-5 text-sm font-semibold text-slate-900 shadow-[0_20px_50px_rgba(255,151,118,0.35)] transition-transform duration-300 hover:-translate-y-1 hover:shadow-[0_28px_65px_rgba(255,151,118,0.45)] sm:px-10 sm:py-6 sm:text-base"
+              className="rounded-full px-7 py-5 text-sm font-semibold transition-transform duration-300 hover:-translate-y-1 sm:px-10 sm:py-6 sm:text-base"
             >
               <Link
                 href="/auth"
@@ -1319,4 +1320,3 @@ function LandingFooter() {
     </footer>
   );
 }
-

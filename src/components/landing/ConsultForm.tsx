@@ -186,10 +186,11 @@ export default function ConsultForm() {
       </div>
       <Button
         type="submit"
+        variant="landingPrimary"
         disabled={submitting || submitted}
         data-analytics-id="consult_submit_click"
         data-analytics-meta='{"source":"landing_consult"}'
-        className="w-full rounded-2xl bg-gradient-to-r from-[#ff9776] via-[#ffb866] to-[#5dd6f7] text-base font-semibold text-slate-900 shadow-[0_15px_45px_rgba(255,151,118,0.35)] disabled:opacity-70"
+        className="w-full rounded-2xl text-base font-semibold disabled:opacity-70"
       >
         {submitted ? "Request sent" : "Book your consult"}
       </Button>

@@ -11,6 +11,10 @@ const buttonVariants = cva(
       variant: {
         default:
           "[background:var(--color-button-primary-bg)] [color:var(--color-button-primary-fg)] border-[color:var(--color-button-primary-border)] shadow-[0_14px_30px_-24px_rgba(15,23,42,0.45)] hover:[background:var(--color-button-primary-bg-hover)] active:[background:var(--color-button-primary-bg-active)] active:scale-[0.98]",
+        landingPrimary:
+          "button-landing-primary active:scale-[0.985]",
+        landingSecondary:
+          "button-landing-secondary",
         destructive:
           "[background:var(--color-button-destructive-bg)] [color:var(--color-button-destructive-fg)] border-[color:var(--color-button-destructive-border)] shadow-[0_14px_30px_-24px_var(--color-button-destructive-shadow)] hover:[background:var(--color-button-destructive-bg-hover)] active:[background:var(--color-button-destructive-bg-active)] active:scale-[0.98]",
         success:
@@ -21,6 +25,8 @@ const buttonVariants = cva(
           "[background:var(--color-button-secondary-bg)] [color:var(--color-button-secondary-fg)] border-[color:var(--color-button-secondary-border)] shadow-[0_10px_24px_-22px_rgba(15,23,42,0.34)] hover:[background:var(--color-button-secondary-bg-hover)] hover:[color:var(--color-button-secondary-fg-hover)] active:[background:var(--color-button-secondary-bg-active)] active:scale-[0.98]",
         ghost:
           "[background:var(--color-button-ghost-bg)] [color:var(--color-button-ghost-fg)] border-[color:var(--color-button-ghost-border)] shadow-[0_8px_20px_-24px_rgba(15,23,42,0.28)] hover:[background:var(--color-button-ghost-bg-hover)] hover:[color:var(--color-button-ghost-fg-hover)] active:[background:var(--color-button-ghost-bg-active)]",
+        custom:
+          "border-transparent bg-transparent text-current shadow-none",
         link: "border-transparent bg-transparent p-0 [color:var(--color-button-link-fg)] shadow-none underline decoration-[color:var(--color-button-link-underline)] underline-offset-4 hover:[color:var(--color-button-link-fg-hover)] hover:decoration-[color:var(--color-button-link-fg-hover)]",
       },
       size: {

@@ -999,13 +999,16 @@ export function Navbar() {
   ) : (
     <Button
       asChild
+      variant={isLandingPage ? "landingSecondary" : undefined}
       className={cn(
         "h-10 rounded-full px-4 text-xs font-semibold uppercase tracking-[0.08em] md:h-12 md:px-6 md:text-sm",
-        isDashboard
-          ? "border border-foreground/20 bg-background text-foreground hover:bg-foreground/5"
-          : overlayMode
-          ? "bg-white text-slate-900 shadow-[0_18px_35px_rgba(15,23,42,0.25)] hover:bg-white/90"
-          : "bg-white text-[#0b1220] shadow-[0_12px_30px_rgba(15,23,42,0.12)] hover:bg-white/95"
+        isLandingPage
+          ? "backdrop-blur-sm"
+          : isDashboard
+            ? "border border-foreground/20 bg-background text-foreground hover:bg-foreground/5"
+            : overlayMode
+              ? "bg-white text-slate-900 shadow-[0_18px_35px_rgba(15,23,42,0.25)] hover:bg-white/90"
+              : "bg-white text-[#0b1220] shadow-[0_12px_30px_rgba(15,23,42,0.12)] hover:bg-white/95"
       )}
       aria-label="Sign in"
     >
@@ -1016,13 +1019,16 @@ export function Navbar() {
   const primaryCta = (
     <Button
       asChild
+      variant={isLandingPage ? "landingPrimary" : undefined}
       className={cn(
         "h-10 rounded-full px-4 text-xs font-semibold uppercase tracking-[0.08em] md:h-12 md:px-6 md:text-sm",
-        isDashboard
-          ? "shadow-[0_12px_40px_rgba(16,200,120,0.15)] hover:shadow-[0_18px_45px_rgba(16,200,120,0.22)]"
-          : overlayMode
-          ? "bg-white text-slate-900 shadow-[0_22px_50px_rgba(15,23,42,0.35)] hover:bg-white/90"
-          : "bg-gradient-to-r from-[#7fc8e8] via-[#5fb7f5] to-[#a5f3fc] text-[#0b1220] shadow-[0_20px_45px_rgba(125,200,232,0.35)] hover:bg-gradient-to-r hover:from-[#ff9776] hover:via-[#ffb166] hover:to-[#ffd27f]"
+        isLandingPage
+          ? "shadow-[0_22px_48px_-28px_rgba(236,132,78,0.45)]"
+          : isDashboard
+            ? "shadow-[0_12px_40px_rgba(16,200,120,0.15)] hover:shadow-[0_18px_45px_rgba(16,200,120,0.22)]"
+            : overlayMode
+              ? "bg-white text-slate-900 shadow-[0_22px_50px_rgba(15,23,42,0.35)] hover:bg-white/90"
+              : "bg-gradient-to-r from-[#7fc8e8] via-[#5fb7f5] to-[#a5f3fc] text-[#0b1220] shadow-[0_20px_45px_rgba(125,200,232,0.35)] hover:bg-gradient-to-r hover:from-[#ff9776] hover:via-[#ffb166] hover:to-[#ffd27f]"
       )}
     >
       <Link href="/#pricing" aria-label="Buy Linket">
