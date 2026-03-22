@@ -8,7 +8,7 @@
       "AA baseline",
       "AAA deltas"
     ],
-    "audit_timestamp": "2026-03-18T19:07:13.233Z",
+    "audit_timestamp": "2026-03-22T20:04:19.192Z",
     "tool_assumptions": [
       "All audited theme selectors were read from src/styles/theme/base.css and src/styles/theme/variants.css.",
       "Contrast ratio uses WCAG relative luminance and source-over alpha compositing before luminance is computed.",
@@ -228,14 +228,11 @@
       "label": ".theme-forest",
       "source_file": "src/styles/theme/variants.css",
       "audited_pairs": 13,
-      "aa_fail_count": 1,
+      "aa_fail_count": 0,
       "aaa_only_count": 10,
       "near_threshold_count": 0,
-      "aa_fail_pairs": [
-        "foreground/card"
-      ],
+      "aa_fail_pairs": [],
       "aaa_only_pairs": [
-        "foreground/background",
         "card-foreground/card",
         "popover-foreground/popover",
         "primary-foreground/primary",
@@ -244,9 +241,10 @@
         "sidebar-foreground/sidebar",
         "sidebar-primary-foreground/sidebar-primary",
         "sidebar-accent-foreground/sidebar-accent",
-        "muted-foreground/card"
+        "muted-foreground/card",
+        "foreground/card"
       ],
-      "status": "aa-failures"
+      "status": "aa-pass"
     },
     {
       "selector": ".theme-gilded",
@@ -319,39 +317,34 @@
       "label": ".theme-burnt-orange",
       "source_file": "src/styles/theme/variants.css",
       "audited_pairs": 13,
-      "aa_fail_count": 3,
-      "aaa_only_count": 4,
-      "near_threshold_count": 2,
-      "aa_fail_pairs": [
+      "aa_fail_count": 0,
+      "aaa_only_count": 5,
+      "near_threshold_count": 4,
+      "aa_fail_pairs": [],
+      "aaa_only_pairs": [
         "foreground/background",
+        "primary-foreground/primary",
         "accent-foreground/accent",
+        "sidebar-primary-foreground/sidebar-primary",
         "muted-foreground/background"
       ],
-      "aaa_only_pairs": [
-        "primary-foreground/primary",
-        "muted-foreground/muted",
-        "sidebar-primary-foreground/sidebar-primary",
-        "muted-foreground/card"
-      ],
-      "status": "aa-failures"
+      "status": "aa-pass"
     },
     {
       "selector": ".theme-maroon",
       "label": ".theme-maroon",
       "source_file": "src/styles/theme/variants.css",
       "audited_pairs": 13,
-      "aa_fail_count": 2,
-      "aaa_only_count": 2,
-      "near_threshold_count": 0,
-      "aa_fail_pairs": [
-        "foreground/background",
-        "muted-foreground/background"
-      ],
+      "aa_fail_count": 0,
+      "aaa_only_count": 3,
+      "near_threshold_count": 1,
+      "aa_fail_pairs": [],
       "aaa_only_pairs": [
         "muted-foreground/muted",
+        "muted-foreground/background",
         "muted-foreground/card"
       ],
-      "status": "aa-failures"
+      "status": "aa-pass"
     }
   ],
   "pairings": [
@@ -4653,9 +4646,9 @@
       "role": "text",
       "fg": {
         "token": "--foreground",
-        "raw": "#c0ae9a",
-        "hex": "#c0ae9a",
-        "rgba": "rgba(192, 174, 154, 1)",
+        "raw": "#f7f0e2",
+        "hex": "#f7f0e2",
+        "rgba": "rgba(247, 240, 226, 1)",
         "alpha": 1
       },
       "bg": {
@@ -4674,8 +4667,8 @@
         ]
       },
       "computed": {
-        "contrast_ratio": 6,
-        "luminance_fg": 0.4381,
+        "contrast_ratio": 11.38,
+        "luminance_fg": 0.8759,
         "luminance_bg": 0.0314,
         "method": "computed"
       },
@@ -4685,12 +4678,12 @@
           "1.4.6"
         ],
         "aa_pass": true,
-        "aaa_pass": false,
-        "status": "AA only"
+        "aaa_pass": true,
+        "status": "AAA pass"
       },
       "notes": [
         "Default page text on page background.",
-        "AA passes. Raise contrast further if AAA is a project goal."
+        "No text contrast change required for this pairing."
       ]
     },
     {
@@ -5313,9 +5306,9 @@
       "role": "text",
       "fg": {
         "token": "--foreground",
-        "raw": "#c0ae9a",
-        "hex": "#c0ae9a",
-        "rgba": "rgba(192, 174, 154, 1)",
+        "raw": "#f7f0e2",
+        "hex": "#f7f0e2",
+        "rgba": "rgba(247, 240, 226, 1)",
         "alpha": 1
       },
       "bg": {
@@ -5341,8 +5334,8 @@
         ]
       },
       "computed": {
-        "contrast_ratio": 3.62,
-        "luminance_fg": 0.4381,
+        "contrast_ratio": 6.86,
+        "luminance_fg": 0.8759,
         "luminance_bg": 0.0849,
         "method": "computed"
       },
@@ -5351,13 +5344,13 @@
           "1.4.3",
           "1.4.6"
         ],
-        "aa_pass": false,
+        "aa_pass": true,
         "aaa_pass": false,
-        "status": "AA fail"
+        "status": "AA only"
       },
       "notes": [
         "Generic page text token reused on card surface.",
-        "Prefer var(--card-foreground) for card descendants instead of reusing the page foreground token."
+        "AA passes. Raise contrast further if AAA is a project goal."
       ]
     },
     {
@@ -8228,30 +8221,30 @@
       "role": "text",
       "fg": {
         "token": "--foreground",
-        "raw": "#7a3a00",
-        "hex": "#7a3a00",
-        "rgba": "rgba(122, 58, 0, 1)",
+        "raw": "#2d1508",
+        "hex": "#2d1508",
+        "rgba": "rgba(45, 21, 8, 1)",
         "alpha": 1
       },
       "bg": {
         "token": "--background",
-        "hex": "#c05600",
-        "rgba": "rgba(192, 86, 0, 1)",
+        "hex": "#d06a12",
+        "rgba": "rgba(208, 106, 18, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--background",
-            "raw": "#c05600",
-            "hex": "#c05600",
-            "rgba": "rgba(192, 86, 0, 1)",
+            "raw": "#d06a12",
+            "hex": "#d06a12",
+            "rgba": "rgba(208, 106, 18, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 1.88,
-        "luminance_fg": 0.0716,
-        "luminance_bg": 0.1786,
+        "contrast_ratio": 4.71,
+        "luminance_fg": 0.0111,
+        "luminance_bg": 0.2376,
         "method": "computed"
       },
       "wcag": {
@@ -8259,13 +8252,13 @@
           "1.4.3",
           "1.4.6"
         ],
-        "aa_pass": false,
+        "aa_pass": true,
         "aaa_pass": false,
-        "status": "AA fail"
+        "status": "AA only"
       },
       "notes": [
         "Default page text on page background.",
-        "Split page-surface text tokens from card-surface text tokens; the brand background is too close to the shared page foreground."
+        "AA passes. Raise contrast further if AAA is a project goal."
       ]
     },
     {
@@ -8276,9 +8269,9 @@
       "role": "text",
       "fg": {
         "token": "--card-foreground",
-        "raw": "#7a3a00",
-        "hex": "#7a3a00",
-        "rgba": "rgba(122, 58, 0, 1)",
+        "raw": "#2d1508",
+        "hex": "#2d1508",
+        "rgba": "rgba(45, 21, 8, 1)",
         "alpha": 1
       },
       "bg": {
@@ -8296,16 +8289,16 @@
           },
           {
             "token": "--background",
-            "raw": "#c05600",
-            "hex": "#c05600",
-            "rgba": "rgba(192, 86, 0, 1)",
+            "raw": "#d06a12",
+            "hex": "#d06a12",
+            "rgba": "rgba(208, 106, 18, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 8.63,
-        "luminance_fg": 0.0716,
+        "contrast_ratio": 17.18,
+        "luminance_fg": 0.0111,
         "luminance_bg": 1,
         "method": "computed"
       },
@@ -8331,15 +8324,15 @@
       "role": "text",
       "fg": {
         "token": "--popover-foreground",
-        "raw": "#7a3a00",
-        "hex": "#7a3a00",
-        "rgba": "rgba(122, 58, 0, 1)",
+        "raw": "#2d1508",
+        "hex": "#2d1508",
+        "rgba": "rgba(45, 21, 8, 1)",
         "alpha": 1
       },
       "bg": {
         "token": "--popover",
-        "hex": "#fef4eb",
-        "rgba": "rgba(254, 244, 235, 1)",
+        "hex": "#fef4ec",
+        "rgba": "rgba(254, 244, 236, 1)",
         "alpha": 1,
         "layers": [
           {
@@ -8351,17 +8344,17 @@
           },
           {
             "token": "--background",
-            "raw": "#c05600",
-            "hex": "#c05600",
-            "rgba": "rgba(192, 86, 0, 1)",
+            "raw": "#d06a12",
+            "hex": "#d06a12",
+            "rgba": "rgba(208, 106, 18, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 7.94,
-        "luminance_fg": 0.0716,
-        "luminance_bg": 0.916,
+        "contrast_ratio": 15.86,
+        "luminance_fg": 0.0111,
+        "luminance_bg": 0.9192,
         "method": "computed"
       },
       "wcag": {
@@ -8406,9 +8399,9 @@
           },
           {
             "token": "--background",
-            "raw": "#c05600",
-            "hex": "#c05600",
-            "rgba": "rgba(192, 86, 0, 1)",
+            "raw": "#d06a12",
+            "hex": "#d06a12",
+            "rgba": "rgba(208, 106, 18, 1)",
             "alpha": 1
           }
         ]
@@ -8461,9 +8454,9 @@
           },
           {
             "token": "--background",
-            "raw": "#c05600",
-            "hex": "#c05600",
-            "rgba": "rgba(192, 86, 0, 1)",
+            "raw": "#d06a12",
+            "hex": "#d06a12",
+            "rgba": "rgba(208, 106, 18, 1)",
             "alpha": 1
           }
         ]
@@ -8496,37 +8489,37 @@
       "role": "text",
       "fg": {
         "token": "--accent-foreground",
-        "raw": "#fff6ed",
-        "hex": "#fff6ed",
-        "rgba": "rgba(255, 246, 237, 1)",
+        "raw": "#241106",
+        "hex": "#241106",
+        "rgba": "rgba(36, 17, 6, 1)",
         "alpha": 1
       },
       "bg": {
         "token": "--accent",
-        "hex": "#c05600",
-        "rgba": "rgba(192, 86, 0, 1)",
+        "hex": "#d06a12",
+        "rgba": "rgba(208, 106, 18, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--accent",
-            "raw": "#c05600",
-            "hex": "#c05600",
-            "rgba": "rgba(192, 86, 0, 1)",
+            "raw": "#d06a12",
+            "hex": "#d06a12",
+            "rgba": "rgba(208, 106, 18, 1)",
             "alpha": 1
           },
           {
             "token": "--background",
-            "raw": "#c05600",
-            "hex": "#c05600",
-            "rgba": "rgba(192, 86, 0, 1)",
+            "raw": "#d06a12",
+            "hex": "#d06a12",
+            "rgba": "rgba(208, 106, 18, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 4.3,
-        "luminance_fg": 0.9329,
-        "luminance_bg": 0.1786,
+        "contrast_ratio": 4.97,
+        "luminance_fg": 0.0079,
+        "luminance_bg": 0.2376,
         "method": "computed"
       },
       "wcag": {
@@ -8534,13 +8527,13 @@
           "1.4.3",
           "1.4.6"
         ],
-        "aa_pass": false,
+        "aa_pass": true,
         "aaa_pass": false,
-        "status": "AA fail"
+        "status": "AA only"
       },
       "notes": [
         "Accent text on accent surface.",
-        "Split page-surface text tokens from card-surface text tokens; the brand background is too close to the shared page foreground."
+        "AA passes. Raise contrast further if AAA is a project goal."
       ]
     },
     {
@@ -8551,9 +8544,9 @@
       "role": "text",
       "fg": {
         "token": "--muted-foreground",
-        "raw": "#8a4a10",
-        "hex": "#8a4a10",
-        "rgba": "rgba(138, 74, 16, 1)",
+        "raw": "#311708",
+        "hex": "#311708",
+        "rgba": "rgba(49, 23, 8, 1)",
         "alpha": 1
       },
       "bg": {
@@ -8571,16 +8564,16 @@
           },
           {
             "token": "--background",
-            "raw": "#c05600",
-            "hex": "#c05600",
-            "rgba": "rgba(192, 86, 0, 1)",
+            "raw": "#d06a12",
+            "hex": "#d06a12",
+            "rgba": "rgba(208, 106, 18, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 5.71,
-        "luminance_fg": 0.1034,
+        "contrast_ratio": 13.95,
+        "luminance_fg": 0.0128,
         "luminance_bg": 0.8266,
         "method": "computed"
       },
@@ -8590,12 +8583,12 @@
           "1.4.6"
         ],
         "aa_pass": true,
-        "aaa_pass": false,
-        "status": "AA only"
+        "aaa_pass": true,
+        "status": "AAA pass"
       },
       "notes": [
         "Muted text on muted surface.",
-        "AA passes. Raise contrast further if AAA is a project goal."
+        "No text contrast change required for this pairing."
       ]
     },
     {
@@ -8626,9 +8619,9 @@
           },
           {
             "token": "--background",
-            "raw": "#c05600",
-            "hex": "#c05600",
-            "rgba": "rgba(192, 86, 0, 1)",
+            "raw": "#d06a12",
+            "hex": "#d06a12",
+            "rgba": "rgba(208, 106, 18, 1)",
             "alpha": 1
           }
         ]
@@ -8688,9 +8681,9 @@
           },
           {
             "token": "--background",
-            "raw": "#c05600",
-            "hex": "#c05600",
-            "rgba": "rgba(192, 86, 0, 1)",
+            "raw": "#d06a12",
+            "hex": "#d06a12",
+            "rgba": "rgba(208, 106, 18, 1)",
             "alpha": 1
           }
         ]
@@ -8750,9 +8743,9 @@
           },
           {
             "token": "--background",
-            "raw": "#c05600",
-            "hex": "#c05600",
-            "rgba": "rgba(192, 86, 0, 1)",
+            "raw": "#d06a12",
+            "hex": "#d06a12",
+            "rgba": "rgba(208, 106, 18, 1)",
             "alpha": 1
           }
         ]
@@ -8785,85 +8778,30 @@
       "role": "text",
       "fg": {
         "token": "--muted-foreground",
-        "raw": "#8a4a10",
-        "hex": "#8a4a10",
-        "rgba": "rgba(138, 74, 16, 1)",
+        "raw": "#311708",
+        "hex": "#311708",
+        "rgba": "rgba(49, 23, 8, 1)",
         "alpha": 1
       },
       "bg": {
         "token": "--background",
-        "hex": "#c05600",
-        "rgba": "rgba(192, 86, 0, 1)",
+        "hex": "#d06a12",
+        "rgba": "rgba(208, 106, 18, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--background",
-            "raw": "#c05600",
-            "hex": "#c05600",
-            "rgba": "rgba(192, 86, 0, 1)",
+            "raw": "#d06a12",
+            "hex": "#d06a12",
+            "rgba": "rgba(208, 106, 18, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 1.49,
-        "luminance_fg": 0.1034,
-        "luminance_bg": 0.1786,
-        "method": "computed"
-      },
-      "wcag": {
-        "sc": [
-          "1.4.3",
-          "1.4.6"
-        ],
-        "aa_pass": false,
-        "aaa_pass": false,
-        "status": "AA fail"
-      },
-      "notes": [
-        "Muted text directly on page background.",
-        "Split page-surface text tokens from card-surface text tokens; the brand background is too close to the shared page foreground."
-      ]
-    },
-    {
-      "theme": ".theme-burnt-orange",
-      "theme_selector": ".theme-burnt-orange",
-      "source_file": "src/styles/theme/variants.css",
-      "pair": "muted-foreground/card",
-      "role": "text",
-      "fg": {
-        "token": "--muted-foreground",
-        "raw": "#8a4a10",
-        "hex": "#8a4a10",
-        "rgba": "rgba(138, 74, 16, 1)",
-        "alpha": 1
-      },
-      "bg": {
-        "token": "--card",
-        "hex": "#ffffff",
-        "rgba": "rgba(255, 255, 255, 1)",
-        "alpha": 1,
-        "layers": [
-          {
-            "token": "--card",
-            "raw": "rgb(255, 255, 255)",
-            "hex": "#ffffff",
-            "rgba": "rgba(255, 255, 255, 1)",
-            "alpha": 1
-          },
-          {
-            "token": "--background",
-            "raw": "#c05600",
-            "hex": "#c05600",
-            "rgba": "rgba(192, 86, 0, 1)",
-            "alpha": 1
-          }
-        ]
-      },
-      "computed": {
-        "contrast_ratio": 6.85,
-        "luminance_fg": 0.1034,
-        "luminance_bg": 1,
+        "contrast_ratio": 4.58,
+        "luminance_fg": 0.0128,
+        "luminance_bg": 0.2376,
         "method": "computed"
       },
       "wcag": {
@@ -8876,7 +8814,7 @@
         "status": "AA only"
       },
       "notes": [
-        "Muted text directly on card surface.",
+        "Muted text directly on page background.",
         "AA passes. Raise contrast further if AAA is a project goal."
       ]
     },
@@ -8884,13 +8822,13 @@
       "theme": ".theme-burnt-orange",
       "theme_selector": ".theme-burnt-orange",
       "source_file": "src/styles/theme/variants.css",
-      "pair": "foreground/card",
+      "pair": "muted-foreground/card",
       "role": "text",
       "fg": {
-        "token": "--foreground",
-        "raw": "#7a3a00",
-        "hex": "#7a3a00",
-        "rgba": "rgba(122, 58, 0, 1)",
+        "token": "--muted-foreground",
+        "raw": "#311708",
+        "hex": "#311708",
+        "rgba": "rgba(49, 23, 8, 1)",
         "alpha": 1
       },
       "bg": {
@@ -8908,16 +8846,71 @@
           },
           {
             "token": "--background",
-            "raw": "#c05600",
-            "hex": "#c05600",
-            "rgba": "rgba(192, 86, 0, 1)",
+            "raw": "#d06a12",
+            "hex": "#d06a12",
+            "rgba": "rgba(208, 106, 18, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 8.63,
-        "luminance_fg": 0.0716,
+        "contrast_ratio": 16.71,
+        "luminance_fg": 0.0128,
+        "luminance_bg": 1,
+        "method": "computed"
+      },
+      "wcag": {
+        "sc": [
+          "1.4.3",
+          "1.4.6"
+        ],
+        "aa_pass": true,
+        "aaa_pass": true,
+        "status": "AAA pass"
+      },
+      "notes": [
+        "Muted text directly on card surface.",
+        "No text contrast change required for this pairing."
+      ]
+    },
+    {
+      "theme": ".theme-burnt-orange",
+      "theme_selector": ".theme-burnt-orange",
+      "source_file": "src/styles/theme/variants.css",
+      "pair": "foreground/card",
+      "role": "text",
+      "fg": {
+        "token": "--foreground",
+        "raw": "#2d1508",
+        "hex": "#2d1508",
+        "rgba": "rgba(45, 21, 8, 1)",
+        "alpha": 1
+      },
+      "bg": {
+        "token": "--card",
+        "hex": "#ffffff",
+        "rgba": "rgba(255, 255, 255, 1)",
+        "alpha": 1,
+        "layers": [
+          {
+            "token": "--card",
+            "raw": "rgb(255, 255, 255)",
+            "hex": "#ffffff",
+            "rgba": "rgba(255, 255, 255, 1)",
+            "alpha": 1
+          },
+          {
+            "token": "--background",
+            "raw": "#d06a12",
+            "hex": "#d06a12",
+            "rgba": "rgba(208, 106, 18, 1)",
+            "alpha": 1
+          }
+        ]
+      },
+      "computed": {
+        "contrast_ratio": 17.18,
+        "luminance_fg": 0.0111,
         "luminance_bg": 1,
         "method": "computed"
       },
@@ -8950,23 +8943,23 @@
       },
       "bg": {
         "token": "--background",
-        "hex": "#500000",
-        "rgba": "rgba(80, 0, 0, 1)",
+        "hex": "#ead0d0",
+        "rgba": "rgba(234, 208, 208, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--background",
-            "raw": "#500000",
-            "hex": "#500000",
-            "rgba": "rgba(80, 0, 0, 1)",
+            "raw": "#ead0d0",
+            "hex": "#ead0d0",
+            "rgba": "rgba(234, 208, 208, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 1,
+        "contrast_ratio": 10.76,
         "luminance_fg": 0.0171,
-        "luminance_bg": 0.0171,
+        "luminance_bg": 0.6716,
         "method": "computed"
       },
       "wcag": {
@@ -8974,13 +8967,13 @@
           "1.4.3",
           "1.4.6"
         ],
-        "aa_pass": false,
-        "aaa_pass": false,
-        "status": "AA fail"
+        "aa_pass": true,
+        "aaa_pass": true,
+        "status": "AAA pass"
       },
       "notes": [
         "Default page text on page background.",
-        "Split page-surface text tokens from card-surface text tokens; the brand background is too close to the shared page foreground."
+        "No text contrast change required for this pairing."
       ]
     },
     {
@@ -9011,9 +9004,9 @@
           },
           {
             "token": "--background",
-            "raw": "#500000",
-            "hex": "#500000",
-            "rgba": "rgba(80, 0, 0, 1)",
+            "raw": "#ead0d0",
+            "hex": "#ead0d0",
+            "rgba": "rgba(234, 208, 208, 1)",
             "alpha": 1
           }
         ]
@@ -9053,8 +9046,8 @@
       },
       "bg": {
         "token": "--popover",
-        "hex": "#fbf2f2",
-        "rgba": "rgba(251, 242, 242, 1)",
+        "hex": "#fff6f6",
+        "rgba": "rgba(255, 246, 246, 1)",
         "alpha": 1,
         "layers": [
           {
@@ -9066,17 +9059,17 @@
           },
           {
             "token": "--background",
-            "raw": "#500000",
-            "hex": "#500000",
-            "rgba": "rgba(80, 0, 0, 1)",
+            "raw": "#ead0d0",
+            "hex": "#ead0d0",
+            "rgba": "rgba(234, 208, 208, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 14.25,
+        "contrast_ratio": 14.75,
         "luminance_fg": 0.0171,
-        "luminance_bg": 0.9056,
+        "luminance_bg": 0.9389,
         "method": "computed"
       },
       "wcag": {
@@ -9121,9 +9114,9 @@
           },
           {
             "token": "--background",
-            "raw": "#500000",
-            "hex": "#500000",
-            "rgba": "rgba(80, 0, 0, 1)",
+            "raw": "#ead0d0",
+            "hex": "#ead0d0",
+            "rgba": "rgba(234, 208, 208, 1)",
             "alpha": 1
           }
         ]
@@ -9176,9 +9169,9 @@
           },
           {
             "token": "--background",
-            "raw": "#500000",
-            "hex": "#500000",
-            "rgba": "rgba(80, 0, 0, 1)",
+            "raw": "#ead0d0",
+            "hex": "#ead0d0",
+            "rgba": "rgba(234, 208, 208, 1)",
             "alpha": 1
           }
         ]
@@ -9231,9 +9224,9 @@
           },
           {
             "token": "--background",
-            "raw": "#500000",
-            "hex": "#500000",
-            "rgba": "rgba(80, 0, 0, 1)",
+            "raw": "#ead0d0",
+            "hex": "#ead0d0",
+            "rgba": "rgba(234, 208, 208, 1)",
             "alpha": 1
           }
         ]
@@ -9286,9 +9279,9 @@
           },
           {
             "token": "--background",
-            "raw": "#500000",
-            "hex": "#500000",
-            "rgba": "rgba(80, 0, 0, 1)",
+            "raw": "#ead0d0",
+            "hex": "#ead0d0",
+            "rgba": "rgba(234, 208, 208, 1)",
             "alpha": 1
           }
         ]
@@ -9341,9 +9334,9 @@
           },
           {
             "token": "--background",
-            "raw": "#500000",
-            "hex": "#500000",
-            "rgba": "rgba(80, 0, 0, 1)",
+            "raw": "#ead0d0",
+            "hex": "#ead0d0",
+            "rgba": "rgba(234, 208, 208, 1)",
             "alpha": 1
           }
         ]
@@ -9403,9 +9396,9 @@
           },
           {
             "token": "--background",
-            "raw": "#500000",
-            "hex": "#500000",
-            "rgba": "rgba(80, 0, 0, 1)",
+            "raw": "#ead0d0",
+            "hex": "#ead0d0",
+            "rgba": "rgba(234, 208, 208, 1)",
             "alpha": 1
           }
         ]
@@ -9465,9 +9458,9 @@
           },
           {
             "token": "--background",
-            "raw": "#500000",
-            "hex": "#500000",
-            "rgba": "rgba(80, 0, 0, 1)",
+            "raw": "#ead0d0",
+            "hex": "#ead0d0",
+            "rgba": "rgba(234, 208, 208, 1)",
             "alpha": 1
           }
         ]
@@ -9507,23 +9500,23 @@
       },
       "bg": {
         "token": "--background",
-        "hex": "#500000",
-        "rgba": "rgba(80, 0, 0, 1)",
+        "hex": "#ead0d0",
+        "rgba": "rgba(234, 208, 208, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--background",
-            "raw": "#500000",
-            "hex": "#500000",
-            "rgba": "rgba(80, 0, 0, 1)",
+            "raw": "#ead0d0",
+            "hex": "#ead0d0",
+            "rgba": "rgba(234, 208, 208, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 2.36,
+        "contrast_ratio": 4.57,
         "luminance_fg": 0.108,
-        "luminance_bg": 0.0171,
+        "luminance_bg": 0.6716,
         "method": "computed"
       },
       "wcag": {
@@ -9531,13 +9524,13 @@
           "1.4.3",
           "1.4.6"
         ],
-        "aa_pass": false,
+        "aa_pass": true,
         "aaa_pass": false,
-        "status": "AA fail"
+        "status": "AA only"
       },
       "notes": [
         "Muted text directly on page background.",
-        "Split page-surface text tokens from card-surface text tokens; the brand background is too close to the shared page foreground."
+        "AA passes. Raise contrast further if AAA is a project goal."
       ]
     },
     {
@@ -9568,9 +9561,9 @@
           },
           {
             "token": "--background",
-            "raw": "#500000",
-            "hex": "#500000",
-            "rgba": "rgba(80, 0, 0, 1)",
+            "raw": "#ead0d0",
+            "hex": "#ead0d0",
+            "rgba": "rgba(234, 208, 208, 1)",
             "alpha": 1
           }
         ]
@@ -9623,9 +9616,9 @@
           },
           {
             "token": "--background",
-            "raw": "#500000",
-            "hex": "#500000",
-            "rgba": "rgba(80, 0, 0, 1)",
+            "raw": "#ead0d0",
+            "hex": "#ead0d0",
+            "rgba": "rgba(234, 208, 208, 1)",
             "alpha": 1
           }
         ]
@@ -9662,23 +9655,16 @@
       ".theme-dark",
       ".theme-midnight",
       ".theme-dream",
+      ".theme-forest",
       ".theme-gilded",
       ".theme-rose",
       ".theme-autumn",
-      ".theme-honey"
-    ],
-    "aa_fail_themes": [
-      ".theme-forest",
+      ".theme-honey",
       ".theme-burnt-orange",
       ".theme-maroon"
     ],
-    "contextual_risks": [
-      {
-        "theme": ".theme-forest",
-        "pair": "foreground/card",
-        "contrast_ratio": 3.62
-      }
-    ],
+    "aa_fail_themes": [],
+    "contextual_risks": [],
     "near_threshold_pairs": [
       {
         "theme": ".theme-gilded",
@@ -9702,6 +9688,11 @@
       },
       {
         "theme": ".theme-burnt-orange",
+        "pair": "foreground/background",
+        "contrast_ratio": 4.71
+      },
+      {
+        "theme": ".theme-burnt-orange",
         "pair": "primary-foreground/primary",
         "contrast_ratio": 4.59
       },
@@ -9709,6 +9700,16 @@
         "theme": ".theme-burnt-orange",
         "pair": "sidebar-primary-foreground/sidebar-primary",
         "contrast_ratio": 4.59
+      },
+      {
+        "theme": ".theme-burnt-orange",
+        "pair": "muted-foreground/background",
+        "contrast_ratio": 4.58
+      },
+      {
+        "theme": ".theme-maroon",
+        "pair": "muted-foreground/background",
+        "contrast_ratio": 4.57
       }
     ]
   }

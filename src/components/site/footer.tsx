@@ -77,7 +77,7 @@ export function Footer() {
                     {brand.name}
                   </p>
                   <p className="text-2xl font-bold text-white">
-                    Tap once. Stay remembered.
+                    Stay Connected.
                   </p>
                 </div>
               </div>

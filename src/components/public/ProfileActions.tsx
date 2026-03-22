@@ -41,7 +41,7 @@ export function ProfileActions({ username, profileUrl, className }: Props) {
         Save vCard
       </Button>
       <details className="group relative w-full sm:w-auto">
-        <summary className="flex cursor-pointer select-none items-center justify-center gap-2 rounded-2xl border px-4 py-2 text-sm text-[color:var(--button-subtle-foreground)] transition [border-color:var(--button-subtle-border)] hover:bg-[color:var(--muted)]/50 hover:text-[color:var(--button-subtle-foreground-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]">
+        <summary className="flex cursor-pointer select-none items-center justify-center gap-2 rounded-2xl border px-4 py-2 text-sm transition [background:var(--color-button-outline-bg)] [border-color:var(--color-button-outline-border)] [color:var(--color-button-outline-fg)] hover:[background:var(--color-button-outline-bg-hover)] hover:[color:var(--color-button-outline-fg-hover)] focus-visible:outline-none focus-visible:[box-shadow:0_0_0_2px_var(--color-button-focus-offset),0_0_0_5px_var(--color-button-focus-ring)]">
           <QrCode className="h-4 w-4" aria-hidden /> QR code
         </summary>
         <div className="absolute right-0 z-10 mt-2 w-48 rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] p-3 shadow-[0_20px_45px_-35px_var(--ring)]">

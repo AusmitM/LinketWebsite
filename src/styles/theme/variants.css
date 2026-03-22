@@ -1,3 +1,70 @@
+/* Recompute semantic button/status tokens inside each theme scope.
+   Root-level custom properties are inherited as computed values, so nested
+   themed shells must redefine these tokens locally to avoid falling back to
+   the default light palette. */
+.theme-light,
+.theme-dark,
+.theme-midnight,
+.theme-dream,
+.theme-forest,
+.theme-gilded,
+.theme-rose,
+.theme-autumn,
+.theme-honey,
+.theme-burnt-orange,
+.theme-maroon {
+  --danger: color-mix(in srgb, #9f1239 84%, var(--primary) 16%);
+  --danger-foreground: #fff7fb;
+  --success: color-mix(in srgb, #166534 84%, var(--primary) 16%);
+  --success-foreground: #f4fffb;
+  --color-button-focus-ring: color-mix(in srgb, var(--button-subtle-foreground) 78%, var(--ring) 22%);
+  --color-button-focus-offset: color-mix(in srgb, var(--card) 88%, var(--background) 12%);
+  --color-button-primary-bg: var(--primary);
+  --color-button-primary-bg-hover: var(--primary);
+  --color-button-primary-bg-active: color-mix(in srgb, var(--primary) 94%, #0f172a 6%);
+  --color-button-primary-fg: var(--primary-foreground);
+  --color-button-primary-border: color-mix(in srgb, var(--primary) 42%, white 58%);
+  --color-button-secondary-bg: color-mix(in srgb, var(--secondary) 78%, var(--card) 22%);
+  --color-button-secondary-bg-hover: color-mix(in srgb, var(--secondary) 86%, var(--card) 14%);
+  --color-button-secondary-bg-active: color-mix(in srgb, var(--secondary) 92%, var(--card) 8%);
+  --color-button-secondary-fg: var(--button-subtle-foreground);
+  --color-button-secondary-fg-hover: var(--button-subtle-foreground-hover);
+  --color-button-secondary-border: color-mix(in srgb, var(--button-subtle-foreground) 72%, var(--card) 28%);
+  --color-button-outline-bg: color-mix(in srgb, var(--card) 92%, var(--secondary) 8%);
+  --color-button-outline-bg-hover: color-mix(in srgb, var(--card) 70%, var(--secondary) 30%);
+  --color-button-outline-bg-active: color-mix(in srgb, var(--card) 56%, var(--secondary) 44%);
+  --color-button-outline-fg: var(--button-subtle-foreground);
+  --color-button-outline-fg-hover: var(--button-subtle-foreground-hover);
+  --color-button-outline-border: color-mix(in srgb, var(--button-subtle-foreground) 76%, var(--card) 24%);
+  --color-button-ghost-bg: color-mix(in srgb, var(--secondary) 56%, var(--card) 44%);
+  --color-button-ghost-bg-hover: color-mix(in srgb, var(--secondary) 70%, var(--card) 30%);
+  --color-button-ghost-bg-active: color-mix(in srgb, var(--secondary) 82%, var(--card) 18%);
+  --color-button-ghost-fg: var(--button-subtle-foreground);
+  --color-button-ghost-fg-hover: var(--button-subtle-foreground-hover);
+  --color-button-ghost-border: color-mix(in srgb, var(--button-subtle-foreground) 76%, var(--card) 24%);
+  --color-button-link-fg: var(--button-subtle-foreground);
+  --color-button-link-fg-hover: var(--button-subtle-foreground-hover);
+  --color-button-link-underline: color-mix(in srgb, var(--button-subtle-foreground) 46%, transparent);
+  --color-button-destructive-bg: var(--danger);
+  --color-button-destructive-bg-hover: color-mix(in srgb, var(--danger) 90%, #0f172a 10%);
+  --color-button-destructive-bg-active: color-mix(in srgb, var(--danger) 82%, #0f172a 18%);
+  --color-button-destructive-fg: var(--danger-foreground);
+  --color-button-destructive-border: color-mix(in srgb, var(--foreground) 58%, var(--danger) 42%);
+  --color-button-destructive-shadow: color-mix(in srgb, var(--danger) 42%, transparent);
+  --color-button-success-bg: var(--success);
+  --color-button-success-bg-hover: color-mix(in srgb, var(--success) 90%, #0f172a 10%);
+  --color-button-success-bg-active: color-mix(in srgb, var(--success) 82%, #0f172a 18%);
+  --color-button-success-fg: var(--success-foreground);
+  --color-button-success-border: color-mix(in srgb, var(--foreground) 58%, var(--success) 42%);
+  --color-button-success-shadow: color-mix(in srgb, var(--success) 42%, transparent);
+  --color-button-disabled-bg: color-mix(in srgb, var(--muted) 78%, var(--card) 22%);
+  --color-button-disabled-fg: color-mix(in srgb, var(--foreground) 68%, var(--muted-foreground) 32%);
+  --color-button-disabled-border: color-mix(in srgb, var(--muted-foreground) 76%, var(--card) 24%);
+  --color-button-selected-bg: var(--color-button-primary-bg);
+  --color-button-selected-fg: var(--color-button-primary-fg);
+  --color-button-selected-border: var(--color-button-primary-border);
+}
+
 /* Light theme token mapping */
 .theme-light {
   --background: #f5f7fb;
@@ -181,7 +248,7 @@
 /* Forest theme token mapping */
 .theme-forest {
   --background: #273529;
-  --foreground: #c0ae9a;
+  --foreground: #f7f0e2;
   --card: rgba(70, 89, 74, 0.94);
   --card-foreground: #f7f0e2;
   --popover: rgba(70, 89, 74, 0.97);
@@ -211,6 +278,7 @@
   --button-subtle-foreground-hover: #fff7ec;
   --button-subtle-border: rgba(199, 156, 126, 0.36);
   --button-solid-outline: rgba(247, 240, 226, 0.48);
+  --color-button-disabled-fg: #f7f0e2;
   --premium-gradient: linear-gradient(180deg, #44584a 0%, #273529 58%, #1b1215 100%);
   --premium-card-gradient: linear-gradient(180deg, rgba(70, 89, 74, 0.96) 0%, rgba(39, 53, 41, 0.92) 100%);
   --premium-topbar-gradient: linear-gradient(90deg, rgba(70, 89, 74, 0.96) 0%, rgba(39, 53, 41, 0.94) 52%, rgba(27, 18, 21, 0.9) 100%);
@@ -272,6 +340,7 @@
   --button-subtle-foreground-hover: #f7f0e2;
   --button-subtle-border: rgba(211, 172, 44, 0.36);
   --button-solid-outline: rgba(247, 240, 226, 0.4);
+  --color-button-primary-bg-active: var(--primary);
   --premium-gradient: radial-gradient(120% 120% at 20% 0%, rgba(209, 172, 44, 0.22) 0%, transparent 60%),
     radial-gradient(120% 120% at 80% 0%, rgba(177, 108, 4, 0.18) 0%, transparent 55%),
     linear-gradient(180deg, #0c0b0a 0%, #12100f 100%);
@@ -408,6 +477,9 @@
   --button-subtle-foreground-hover: #5a2908;
   --button-subtle-border: rgba(176, 110, 32, 0.36);
   --button-solid-outline: rgba(255, 220, 154, 0.56);
+  --color-button-primary-bg-active: var(--primary);
+  --color-button-primary-border: #6b2b00;
+  --color-button-selected-border: #6b2b00;
   --premium-gradient: radial-gradient(130% 120% at 12% 0%, rgba(255, 231, 166, 0.5) 0%, transparent 52%),
     radial-gradient(125% 120% at 88% -4%, rgba(191, 113, 25, 0.22) 0%, transparent 56%),
     linear-gradient(180deg, #fff8ea 0%, #f6ddb1 62%, #efcd8d 100%);
@@ -833,20 +905,20 @@
 
 /* Burnt Orange theme token mapping (UT Austin) 192 86 0*/
 .theme-burnt-orange {
-  --background: #c05600;
-  --foreground: #7a3a00;
+  --background: #d06a12;
+  --foreground: #2d1508;
   --card: rgb(255, 255, 255);
-  --card-foreground: #7a3a00;
+  --card-foreground: #2d1508;
   --popover: rgba(255, 247, 240, 0.98);
-  --popover-foreground: #7a3a00;
+  --popover-foreground: #2d1508;
   --primary: #c05600 ; 
   --primary-foreground: #ffffff;
   --secondary: #ffe6d5;
   --secondary-foreground: #4a2312;
   --muted: #ffe6d5;
-  --muted-foreground: #8a4a10;
-  --accent: #c05600;
-  --accent-foreground: #fff6ed;
+  --muted-foreground: #311708;
+  --accent: #d06a12;
+  --accent-foreground: #241106;
   --destructive: #ef4444;
   --border: #f2d2bf;
   --input: #f2d2bf;
@@ -864,6 +936,13 @@
   --button-subtle-foreground-hover: #5f2a00;
   --button-subtle-border: rgba(122, 58, 0, 0.32);
   --button-solid-outline: rgba(255, 214, 181, 0.6);
+  --color-button-primary-border: #fff2dd;
+  --color-button-selected-border: #fff2dd;
+  --color-button-destructive-border: #fff1f1;
+  --color-button-success-border: #ecfccb;
+  --color-button-link-fg: #2f1305;
+  --color-button-link-fg-hover: #1d0b02;
+  --color-button-focus-ring: #4a2312;
   --premium-gradient: radial-gradient(120% 120% at 18% 0%, rgba(192, 86, 0, 0.18) 0%, transparent 60%),
     radial-gradient(120% 120% at 82% 0%, rgba(255, 214, 181, 0.35) 0%, transparent 55%),
     linear-gradient(180deg, #fffaf6 0%, #fff1e6 100%);
@@ -917,31 +996,31 @@
   color: var(--card-foreground);
 }
 
-/* Hook 'Em: mirror Aggie navbar button styling */
+/* Hook 'Em: keep navbar buttons on the shared secondary button palette */
 .theme-burnt-orange .dashboard-navbar .dashboard-copy-link-button {
-  background: #ffffff;
-  color: var(--button-subtle-foreground);
-  border-color: var(--button-subtle-border);
+  background: var(--color-button-secondary-bg);
+  color: var(--color-button-secondary-fg);
+  border-color: var(--color-button-secondary-border);
 }
 
 .theme-burnt-orange .dashboard-navbar .dashboard-copy-link-button:hover {
-  background: #fff6ed;
-  color: var(--button-subtle-foreground-hover);
+  background: var(--color-button-secondary-bg-hover);
+  color: var(--color-button-secondary-fg-hover);
 }
 
 .theme-burnt-orange .dashboard-navbar .dashboard-view-profile-button {
-  background: #ffffff;
-  color: var(--button-subtle-foreground);
-  border-color: var(--button-subtle-border);
+  background: var(--color-button-secondary-bg);
+  color: var(--color-button-secondary-fg);
+  border-color: var(--color-button-secondary-border);
 }
 
 .theme-burnt-orange .dashboard-navbar .dashboard-view-profile-button:hover {
-  background: #fff6ed;
-  color: var(--button-subtle-foreground-hover);
+  background: var(--color-button-secondary-bg-hover);
+  color: var(--color-button-secondary-fg-hover);
 }
 
 .theme-burnt-orange .dashboard-new-linket-button {
-  border-color: var(--button-solid-outline);
+  border-color: var(--color-button-primary-border);
   box-shadow: 0 20px 40px -28px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.4), var(--premium-inset);
 }
 
@@ -1056,7 +1135,7 @@
 
 /* Aggie theme token mapping (copy of Hook 'Em with maroon) */
 .theme-maroon {
-  --background: #500000;
+  --background: #ead0d0;
   --foreground: #500000;
   --card: #ffffff;
   --card-foreground: #500000;
@@ -1087,6 +1166,7 @@
   --button-subtle-foreground-hover: #3b0000;
   --button-subtle-border: rgba(80, 0, 0, 0.34);
   --button-solid-outline: rgba(255, 214, 214, 0.6);
+  --color-button-disabled-border: #8f5d5d;
   --premium-gradient: radial-gradient(120% 120% at 18% 0%, rgba(80, 0, 0, 0.18) 0%, transparent 60%),
     radial-gradient(120% 120% at 82% 0%, rgba(240, 198, 198, 0.35) 0%, transparent 55%),
     linear-gradient(180deg, #fff7f7 0%, #fff1f1 100%);
@@ -1167,31 +1247,31 @@
   border-color: rgba(255, 255, 255, 0.52);
 }
 
-/* Aggie: white copy-link buttons + white outline for New Linket */
+/* Aggie: keep navbar buttons on the shared secondary button palette */
 .theme-maroon .dashboard-navbar .dashboard-copy-link-button {
-  background: #ffffff;
-  color: var(--button-subtle-foreground);
-  border-color: var(--button-subtle-border);
+  background: var(--color-button-secondary-bg);
+  color: var(--color-button-secondary-fg);
+  border-color: var(--color-button-secondary-border);
 }
 
 .theme-maroon .dashboard-navbar .dashboard-copy-link-button:hover {
-  background: #fff1f1;
-  color: var(--button-subtle-foreground-hover);
+  background: var(--color-button-secondary-bg-hover);
+  color: var(--color-button-secondary-fg-hover);
 }
 
 .theme-maroon .dashboard-navbar .dashboard-view-profile-button {
-  background: #ffffff;
-  color: var(--button-subtle-foreground);
-  border-color: var(--button-subtle-border);
+  background: var(--color-button-secondary-bg);
+  color: var(--color-button-secondary-fg);
+  border-color: var(--color-button-secondary-border);
 }
 
 .theme-maroon .dashboard-navbar .dashboard-view-profile-button:hover {
-  background: #fff1f1;
-  color: var(--button-subtle-foreground-hover);
+  background: var(--color-button-secondary-bg-hover);
+  color: var(--color-button-secondary-fg-hover);
 }
 
 .theme-maroon .dashboard-new-linket-button {
-  border-color: var(--button-solid-outline);
+  border-color: var(--color-button-primary-border);
   box-shadow: 0 20px 40px -28px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.4), var(--premium-inset);
 }
 

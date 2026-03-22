@@ -577,7 +577,7 @@ function HeroSection() {
           {/* Primary headline + brand callout. */}
           <h1 className="landing-fade-up landing-delay-1 mt-8 text-[2rem] font-semibold leading-tight tracking-tight text-slate-900 sm:mt-10 sm:text-5xl lg:text-[4.5rem] lg:leading-[1.1]">
             <span className="landing-alt-font">Don&apos;t just share it...</span>{" "}
-            <span className="block bg-[linear-gradient(100deg,_#c2410c_0%,_#b45309_38%,_#0f4c81_68%,_#1d4ed8_100%)] bg-clip-text text-6xl font-black italic leading-[0.92] tracking-tight text-transparent sm:text-8xl lg:text-[5.25rem]">
+            <span className="block bg-[linear-gradient(100deg,_#ff9776_0%,_#ffd27f_40%,_#7dd3fc_70%,_#2f80ed_100%)] bg-clip-text text-6xl font-black italic leading-[0.92] tracking-tight text-transparent sm:text-8xl lg:text-[5.25rem]">
               LINKET!
             </span>
           </h1>
@@ -1204,7 +1204,7 @@ function LandingFooter() {
                   {brand.name}
                 </p>
                 <p className="text-xl font-bold text-white sm:text-2xl">
-                  Tap once. Stay remembered.
+                  Stay Connected.
                 </p>
               </div>
             </div>
@@ -1319,5 +1319,4 @@ function LandingFooter() {
     </footer>
   );
 }
-
 

@@ -63,7 +63,7 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
 }
 
 #dashboard-theme-scope :is(a[href], button, [role="button"], summary):focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--ring) 70%, transparent);
+  outline: 2px solid var(--color-button-focus-ring);
   outline-offset: 2px;
 }
 
@@ -103,11 +103,11 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
 }
 
 #dashboard-theme-scope [data-slot=input]:focus-visible {
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.7), 0 0 0 4px rgba(37, 99, 235, 0.35);
+  box-shadow: 0 0 0 2px var(--color-button-focus-offset), 0 0 0 4px var(--color-button-focus-ring);
 }
 
 #dashboard-theme-scope [data-slot=button]:focus-visible {
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.7), 0 0 0 5px rgba(37, 99, 235, 0.35);
+  box-shadow: 0 0 0 2px var(--color-button-focus-offset), 0 0 0 5px var(--color-button-focus-ring);
 }
 
 #dashboard-theme-scope .dashboard-nav-link,
@@ -123,7 +123,7 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
 
 #dashboard-theme-scope .dashboard-nav-link:focus-visible,
 .dashboard-nav-link:focus-visible {
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.7), 0 0 0 4px rgba(37, 99, 235, 0.35);
+  box-shadow: 0 0 0 2px var(--color-button-focus-offset), 0 0 0 4px var(--color-button-focus-ring);
 }
 
 #dashboard-theme-scope .dashboard-drag-item:hover {
@@ -441,10 +441,10 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
 .dashboard-navbar button[aria-label="Close navigation"] {
   position: relative;
   overflow: hidden;
-  background: color-mix(in srgb, var(--card) 82%, transparent);
-  color: var(--button-subtle-foreground);
-  border-color: var(--button-subtle-border);
-  box-shadow: var(--premium-inset);
+  background: var(--color-button-secondary-bg);
+  color: var(--color-button-secondary-fg);
+  border-color: var(--color-button-secondary-border);
+  box-shadow: 0 14px 26px -22px rgba(15, 23, 42, 0.34), var(--premium-inset);
   transition: transform var(--duration-base) var(--ease-smooth), background-color var(--duration-base) var(--ease-smooth), border-color var(--duration-base) var(--ease-smooth), box-shadow var(--duration-base) var(--ease-smooth), color var(--duration-base) var(--ease-smooth);
 }
 
@@ -473,11 +473,11 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
 .dashboard-navbar .dashboard-copy-link-button:hover,
 .dashboard-navbar button[aria-label="Open navigation"]:hover,
 .dashboard-navbar button[aria-label="Close navigation"]:hover {
-  background: color-mix(in srgb, var(--card) 92%, transparent);
-  color: var(--button-subtle-foreground-hover);
-  border-color: var(--button-subtle-border);
+  background: var(--color-button-secondary-bg-hover);
+  color: var(--color-button-secondary-fg-hover);
+  border-color: var(--color-button-secondary-border);
   transform: translateY(-1px);
-  box-shadow: 0 14px 28px -20px rgba(15, 23, 42, 0.34), var(--premium-inset);
+  box-shadow: 0 16px 30px -20px rgba(15, 23, 42, 0.36), var(--premium-inset);
 }
 
 #dashboard-theme-scope .dashboard-navbar .dashboard-view-profile-button:hover::after,
@@ -503,48 +503,53 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
 
 #dashboard-theme-scope .dashboard-notifications-button,
 .dashboard-notifications-button {
-  color: var(--button-subtle-foreground);
-  border-color: var(--button-subtle-border);
+  background: var(--color-button-secondary-bg);
+  color: var(--color-button-secondary-fg);
+  border-color: var(--color-button-secondary-border);
+  box-shadow: 0 14px 26px -22px rgba(15, 23, 42, 0.32), var(--premium-inset);
 }
 
 #dashboard-theme-scope .dashboard-notifications-button:hover,
 .dashboard-notifications-button:hover {
-  color: var(--button-subtle-foreground-hover);
-  border-color: var(--button-subtle-border);
+  background: var(--color-button-secondary-bg-hover);
+  color: var(--color-button-secondary-fg-hover);
+  border-color: var(--color-button-secondary-border);
 }
 
 #dashboard-theme-scope .dashboard-new-linket-button,
 .dashboard-new-linket-button {
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--primary) 75%, var(--ring) 25%),
-    color-mix(in srgb, var(--accent) 60%, var(--primary) 40%)
-  );
-  color: var(--primary-foreground);
-  border: 1px solid var(--button-solid-outline);
-  box-shadow: 0 20px 40px -28px rgba(0, 0, 0, 0.6), var(--premium-inset);
+  background: var(--color-button-primary-bg);
+  color: var(--color-button-primary-fg);
+  border: 1px solid var(--color-button-primary-border);
+  box-shadow: 0 20px 40px -28px rgba(0, 0, 0, 0.44), var(--premium-inset);
 }
 
 #dashboard-theme-scope .dashboard-new-linket-button:hover,
 .dashboard-new-linket-button:hover {
-  filter: brightness(1.05);
+  background: var(--color-button-primary-bg-hover);
+}
+
+#dashboard-theme-scope .dashboard-new-linket-button:active,
+.dashboard-new-linket-button:active {
+  background: var(--color-button-primary-bg-active);
 }
 
 #dashboard-theme-scope .dashboard-mobile-toggle,
 .dashboard-mobile-toggle {
-  background: color-mix(in srgb, var(--card) 80%, transparent);
-  color: var(--button-subtle-foreground);
-  border-color: var(--button-subtle-border);
-  box-shadow: var(--premium-inset);
+  background: var(--color-button-secondary-bg);
+  color: var(--color-button-secondary-fg);
+  border-color: var(--color-button-secondary-border);
+  box-shadow: 0 14px 26px -22px rgba(15, 23, 42, 0.34), var(--premium-inset);
   transition: transform var(--duration-base) var(--ease-smooth), background-color var(--duration-base) var(--ease-smooth), border-color var(--duration-base) var(--ease-smooth), box-shadow var(--duration-base) var(--ease-smooth);
 }
 
 #dashboard-theme-scope .dashboard-mobile-toggle:hover,
 .dashboard-mobile-toggle:hover {
-  color: var(--button-subtle-foreground-hover);
-  border-color: var(--button-subtle-border);
+  background: var(--color-button-secondary-bg-hover);
+  color: var(--color-button-secondary-fg-hover);
+  border-color: var(--color-button-secondary-border);
   transform: translateY(-1px);
-  box-shadow: 0 14px 28px -22px rgba(15, 23, 42, 0.34), var(--premium-inset);
+  box-shadow: 0 16px 30px -20px rgba(15, 23, 42, 0.36), var(--premium-inset);
 }
 
 #dashboard-theme-scope .dashboard-mobile-toggle svg,
@@ -618,11 +623,12 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
 /* Premium hairline for inputs and buttons */
 #dashboard-theme-scope [data-slot=input],
 #dashboard-theme-scope [data-slot=button] {
-  border-color: var(--premium-border);
+  border-color: transparent;
 }
 
 #dashboard-theme-scope [data-slot=button] {
   cursor: pointer;
+  background-image: none;
 }
 
 #dashboard-theme-scope [data-slot=button]:disabled,
@@ -636,10 +642,6 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
 
 #dashboard-theme-scope [data-slot=input] {
   background: var(--premium-input-gradient);
-}
-
-#dashboard-theme-scope [data-slot=button] {
-  background-image: var(--premium-button-gradient);
 }
 
 /* Premium range slider */
@@ -1178,18 +1180,18 @@ body.theme-forest .dashboard-forest-pin {
 
 /* Gilded theme: boost selected analytics range contrast */
 #dashboard-theme-scope.theme-gilded .dashboard-analytics-range-button[data-selected="true"] {
-  background: #f2cf6a;
-  border-color: #f2cf6a;
-  color: #1a1205;
-  box-shadow: 0 14px 30px rgba(211, 172, 44, 0.35), 0 0 0 2px rgba(211, 172, 44, 0.25);
+  background: var(--color-button-selected-bg);
+  border-color: var(--color-button-selected-border);
+  color: var(--color-button-selected-fg);
+  box-shadow: 0 14px 30px rgba(211, 172, 44, 0.35), 0 0 0 2px color-mix(in srgb, var(--color-button-selected-border) 42%, transparent);
 }
 
 /* Forest theme: boost selected range contrast */
 #dashboard-theme-scope.theme-forest .dashboard-analytics-range-button[data-selected="true"] {
-  background: #c79c7e;
-  border-color: #c79c7e;
-  color: #0f0407;
-  box-shadow: 0 14px 30px rgba(199, 156, 126, 0.35), 0 0 0 2px rgba(199, 156, 126, 0.26);
+  background: var(--color-button-selected-bg);
+  border-color: var(--color-button-selected-border);
+  color: var(--color-button-selected-fg);
+  box-shadow: 0 14px 30px rgba(199, 156, 126, 0.35), 0 0 0 2px color-mix(in srgb, var(--color-button-selected-border) 42%, transparent);
 }
 
 /* All themes: ensure selected analytics range button glows */
@@ -1211,40 +1213,40 @@ body.theme-forest .dashboard-forest-pin {
 
 /* Dark + Midnight: push selected fill for clearer contrast */
 #dashboard-theme-scope.theme-dark .dashboard-analytics-range-button[data-selected="true"] {
-  background: var(--primary);
-  border-color: var(--primary);
-  color: var(--primary-foreground);
+  background: var(--color-button-selected-bg);
+  border-color: var(--color-button-selected-border);
+  color: var(--color-button-selected-fg);
   box-shadow: 0 18px 34px rgba(7, 12, 24, 0.55),
-    0 0 22px color-mix(in srgb, var(--primary) 70%, transparent),
-    0 0 0 2px color-mix(in srgb, var(--primary) 70%, transparent);
+    0 0 22px color-mix(in srgb, var(--color-button-selected-border) 70%, transparent),
+    0 0 0 2px color-mix(in srgb, var(--color-button-selected-border) 70%, transparent);
 }
 
 #dashboard-theme-scope.theme-midnight .dashboard-analytics-range-button[data-selected="true"] {
-  background: var(--primary);
-  border-color: var(--primary);
-  color: var(--primary-foreground);
+  background: var(--color-button-selected-bg);
+  border-color: var(--color-button-selected-border);
+  color: var(--color-button-selected-fg);
   box-shadow: 0 18px 34px rgba(6, 4, 18, 0.6),
-    0 0 22px color-mix(in srgb, var(--primary) 70%, transparent),
-    0 0 0 2px color-mix(in srgb, var(--primary) 70%, transparent);
+    0 0 22px color-mix(in srgb, var(--color-button-selected-border) 70%, transparent),
+    0 0 0 2px color-mix(in srgb, var(--color-button-selected-border) 70%, transparent);
 }
 
 /* Hook 'Em + Aggie: strong selected fill for contrast */
 #dashboard-theme-scope.theme-burnt-orange .dashboard-analytics-range-button[data-selected="true"] {
-  background: var(--primary);
-  border-color: var(--primary);
-  color: var(--primary-foreground);
+  background: var(--color-button-selected-bg);
+  border-color: var(--color-button-selected-border);
+  color: var(--color-button-selected-fg);
   box-shadow: 0 18px 34px rgba(10, 4, 2, 0.6),
-    0 0 22px color-mix(in srgb, var(--primary) 70%, transparent),
-    0 0 0 2px color-mix(in srgb, var(--primary) 70%, transparent);
+    0 0 22px color-mix(in srgb, var(--color-button-selected-border) 70%, transparent),
+    0 0 0 2px color-mix(in srgb, var(--color-button-selected-border) 70%, transparent);
 }
 
 #dashboard-theme-scope.theme-maroon .dashboard-analytics-range-button[data-selected="true"] {
-  background: var(--primary);
-  border-color: var(--primary);
-  color: var(--primary-foreground);
+  background: var(--color-button-selected-bg);
+  border-color: var(--color-button-selected-border);
+  color: var(--color-button-selected-fg);
   box-shadow: 0 18px 34px rgba(10, 4, 6, 0.6),
-    0 0 22px color-mix(in srgb, var(--primary) 70%, transparent),
-    0 0 0 2px color-mix(in srgb, var(--primary) 70%, transparent);
+    0 0 22px color-mix(in srgb, var(--color-button-selected-border) 70%, transparent),
+    0 0 0 2px color-mix(in srgb, var(--color-button-selected-border) 70%, transparent);
 }
 
 /* Tablet layout alignment */

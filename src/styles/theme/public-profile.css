@@ -779,18 +779,41 @@
   align-items: stretch;
 }
 
-.public-profile-cta-primary {
+.public-profile-shell .public-profile-actions [data-slot=button]:not(.public-profile-cta-primary) {
+  background: var(--color-button-secondary-bg);
+  color: var(--color-button-secondary-fg);
+  border: 1px solid var(--color-button-secondary-border);
+  box-shadow: 0 16px 32px -24px rgba(15, 23, 42, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.42);
+  transition:
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 220ms ease,
+    color 220ms ease,
+    border-color 220ms ease;
+}
+
+.public-profile-shell .public-profile-actions [data-slot=button]:not(.public-profile-cta-primary):hover {
+  background: var(--color-button-secondary-bg-hover);
+  color: var(--color-button-secondary-fg-hover);
+  border-color: var(--color-button-secondary-border);
+  transform: translateY(-1px);
+}
+
+.public-profile-shell .public-profile-actions [data-slot=button]:not(.public-profile-cta-primary):focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--color-button-focus-offset),
+    0 0 0 5px var(--color-button-focus-ring),
+    0 16px 32px -24px rgba(15, 23, 42, 0.34);
+}
+
+.public-profile-shell .public-profile-cta-primary {
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  border: 1px solid var(--button-solid-outline, color-mix(in srgb, var(--primary) 58%, transparent));
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--primary) 82%, #0f172a 18%) 0%,
-    color-mix(in srgb, var(--accent) 70%, var(--primary) 30%) 52%,
-    color-mix(in srgb, var(--ring) 58%, var(--accent) 42%) 100%
-  );
-  color: var(--primary-foreground);
+  border: 1px solid var(--color-button-primary-border) !important;
+  background: var(--color-button-primary-bg) !important;
+  color: var(--color-button-primary-fg) !important;
   box-shadow:
     0 24px 46px -30px rgba(15, 23, 42, 0.6),
     inset 0 1px 0 color-mix(in srgb, #ffffff 28%, transparent);
@@ -804,7 +827,7 @@
     border-color 220ms ease;
 }
 
-.public-profile-cta-primary::before {
+.public-profile-shell .public-profile-cta-primary::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -823,7 +846,7 @@
     transform 560ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.public-profile-cta-primary::after {
+.public-profile-shell .public-profile-cta-primary::after {
   content: "";
   position: absolute;
   inset: 1px;
@@ -833,47 +856,53 @@
   opacity: 0.5;
 }
 
-.public-profile-cta-primary:hover {
+.public-profile-shell .public-profile-cta-primary:hover {
+  background: var(--color-button-primary-bg-hover) !important;
   transform: translateY(-1px);
-  filter: saturate(1.06) brightness(1.02);
   box-shadow:
     0 30px 52px -32px rgba(15, 23, 42, 0.64),
     inset 0 1px 0 color-mix(in srgb, #ffffff 36%, transparent);
 }
 
-.public-profile-cta-primary:hover::before,
-.public-profile-cta-primary:focus-visible::before {
+.public-profile-shell .public-profile-cta-primary:hover::before,
+.public-profile-shell .public-profile-cta-primary:focus-visible::before {
   opacity: 1;
   transform: translateX(130%);
 }
 
-.public-profile-cta-primary:focus-visible {
+.public-profile-shell .public-profile-cta-primary:focus-visible {
+  outline: none;
   box-shadow:
-    0 0 0 3px color-mix(in srgb, var(--ring) 22%, transparent),
+    0 0 0 2px var(--color-button-focus-offset),
+    0 0 0 5px var(--color-button-focus-ring),
     0 26px 50px -30px rgba(15, 23, 42, 0.62),
     inset 0 1px 0 color-mix(in srgb, #ffffff 38%, transparent);
 }
 
-.public-profile-cta-primary:active {
+.public-profile-shell .public-profile-cta-primary:active {
+  background: var(--color-button-primary-bg-active) !important;
   transform: translateY(0);
-  filter: saturate(1.02);
   box-shadow:
     0 20px 38px -28px rgba(15, 23, 42, 0.58),
     inset 0 1px 0 color-mix(in srgb, #ffffff 30%, transparent);
 }
 
-.public-profile-cta-primary:disabled::before {
+.public-profile-shell .public-profile-cta-primary:disabled::before {
   display: none;
 }
 
-.public-profile-cta-primary:disabled {
+.public-profile-shell .public-profile-cta-primary:disabled {
+  border-color: var(--color-button-disabled-border) !important;
+  background: var(--color-button-disabled-bg) !important;
+  color: var(--color-button-disabled-fg) !important;
   transform: none;
-  filter: none;
+  box-shadow: none;
 }
 
-.public-profile-cta-secondary {
-  border-color: color-mix(in srgb, var(--border) 70%, transparent);
-  background: color-mix(in srgb, var(--card) 78%, transparent);
+.public-profile-shell .public-profile-cta-secondary {
+  border-color: var(--color-button-outline-border);
+  background: var(--color-button-outline-bg);
+  color: var(--color-button-outline-fg);
 }
 
 .public-profile-links h2 {
@@ -882,27 +911,27 @@
 
 /* Hook 'Em: make public profile CTA + section label readable on orange */
 .theme-burnt-orange .public-profile-actions [data-slot=button]:not(.public-profile-cta-primary) {
-  background: rgba(255, 246, 237, 0.95);
-  color: var(--button-subtle-foreground);
-  border: 1px solid var(--button-subtle-border);
-  box-shadow: 0 16px 32px -24px rgba(122, 58, 0, 0.45);
+  background: var(--color-button-secondary-bg);
+  color: var(--color-button-secondary-fg);
+  border: 1px solid var(--color-button-secondary-border);
+  box-shadow: 0 16px 32px -24px color-mix(in srgb, var(--button-subtle-foreground) 32%, transparent);
 }
 
 .theme-maroon .public-profile-actions [data-slot=button]:not(.public-profile-cta-primary) {
-  background: rgba(255, 241, 241, 0.95);
-  color: var(--button-subtle-foreground);
-  border: 1px solid var(--button-subtle-border);
-  box-shadow: 0 16px 32px -24px rgba(80, 0, 0, 0.45);
+  background: var(--color-button-secondary-bg);
+  color: var(--color-button-secondary-fg);
+  border: 1px solid var(--color-button-secondary-border);
+  box-shadow: 0 16px 32px -24px color-mix(in srgb, var(--button-subtle-foreground) 32%, transparent);
 }
 
 .theme-burnt-orange .public-profile-actions [data-slot=button]:not(.public-profile-cta-primary):hover {
-  background: #fff6ed;
-  color: var(--button-subtle-foreground-hover);
+  background: var(--color-button-secondary-bg-hover);
+  color: var(--color-button-secondary-fg-hover);
 }
 
 .theme-maroon .public-profile-actions [data-slot=button]:not(.public-profile-cta-primary):hover {
-  background: #fff1f1;
-  color: var(--button-subtle-foreground-hover);
+  background: var(--color-button-secondary-bg-hover);
+  color: var(--color-button-secondary-fg-hover);
 }
 
 .theme-burnt-orange .public-profile-links h2 {
@@ -923,47 +952,47 @@
 
 /* Hook 'Em: ensure primary CTA is clearly visible */
 .theme-burnt-orange .public-profile-cta-primary {
-  background: #b65300 !important;
-  color: var(--primary-foreground) !important;
-  border: 1px solid var(--button-solid-outline);
+  background: var(--color-button-primary-bg) !important;
+  color: var(--color-button-primary-fg) !important;
+  border: 1px solid var(--color-button-primary-border);
 }
 
 .theme-maroon .public-profile-cta-primary {
-  background: #500000 !important;
-  color: var(--primary-foreground) !important;
-  border: 1px solid var(--button-solid-outline);
+  background: var(--color-button-primary-bg) !important;
+  color: var(--color-button-primary-fg) !important;
+  border: 1px solid var(--color-button-primary-border);
 }
 
 .theme-burnt-orange .public-profile-cta-primary:hover {
-  background: #c35c00 !important;
+  background: var(--color-button-primary-bg-hover) !important;
 }
 
 .theme-maroon .public-profile-cta-primary:hover {
-  background: #5a0000 !important;
+  background: var(--color-button-primary-bg-hover) !important;
 }
 
 .theme-burnt-orange .public-profile-link-action {
-  background: rgba(182, 83, 0, 0.78);
-  color: var(--primary-foreground);
-  border-color: var(--button-solid-outline);
+  background: var(--color-button-primary-bg);
+  color: var(--color-button-primary-fg);
+  border-color: var(--color-button-primary-border);
 }
 
 .theme-burnt-orange .public-profile-link-action:hover,
 .theme-burnt-orange .public-profile-link:hover .public-profile-link-action {
-  color: var(--primary-foreground);
-  background: rgba(192, 86, 0, 0.88);
+  color: var(--color-button-primary-fg);
+  background: var(--color-button-primary-bg-hover);
 }
 
 .theme-maroon .public-profile-link-action {
-  background: rgba(80, 0, 0, 0.7);
-  color: var(--primary-foreground);
-  border-color: var(--button-solid-outline);
+  background: var(--color-button-primary-bg);
+  color: var(--color-button-primary-fg);
+  border-color: var(--color-button-primary-border);
 }
 
 .theme-maroon .public-profile-link-action:hover,
 .theme-maroon .public-profile-link:hover .public-profile-link-action {
-  color: var(--primary-foreground);
-  background: rgba(80, 0, 0, 0.85);
+  color: var(--color-button-primary-fg);
+  background: var(--color-button-primary-bg-hover);
 }
 
 .theme-burnt-orange .public-profile-link-action svg,
@@ -1032,12 +1061,36 @@
   text-transform: uppercase;
 }
 
-.public-profile-link-action {
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--background) 85%, transparent),
-    color-mix(in srgb, var(--background) 65%, transparent)
-  );
+.public-profile-shell .public-profile-link-action {
+  background: var(--color-button-outline-bg);
+  color: var(--color-button-outline-fg);
+  border-color: var(--color-button-outline-border);
+  box-shadow: 0 10px 24px -24px rgba(15, 23, 42, 0.28);
+}
+
+.public-profile-shell .public-profile-link-action:hover,
+.public-profile-shell .public-profile-link:hover .public-profile-link-action {
+  background: var(--color-button-outline-bg-hover);
+  color: var(--color-button-outline-fg-hover);
+  border-color: var(--color-button-outline-border);
+}
+
+.public-profile-shell #public-lead-form [data-slot="button"] {
+  background: var(--color-button-primary-bg);
+  color: var(--color-button-primary-fg);
+  border-color: var(--color-button-primary-border);
+}
+
+.public-profile-shell #public-lead-form [data-slot="button"]:hover {
+  background: var(--color-button-primary-bg-hover);
+}
+
+.public-profile-shell #public-lead-form [data-slot="button"]:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--color-button-focus-offset),
+    0 0 0 5px var(--color-button-focus-ring),
+    0 14px 28px -24px rgba(15, 23, 42, 0.5);
 }
 
 /* Public lead form field contrast */
@@ -1066,16 +1119,4 @@
   border-color: color-mix(in srgb, var(--ring) 70%, transparent);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 18%, transparent),
     0 14px 28px -24px rgba(15, 23, 42, 0.5);
-}
-
-/* Aggie: maroon submit button with white text on public lead form */
-.theme-maroon #public-lead-form [data-slot="button"] {
-  background: #500000;
-  color: var(--primary-foreground);
-  border: 1px solid var(--button-solid-outline);
-}
-
-.theme-maroon #public-lead-form [data-slot="button"]:hover {
-  background: #5a0000;
-  color: var(--primary-foreground);
 }

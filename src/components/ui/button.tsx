@@ -5,19 +5,23 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  "appearance-none inline-flex items-center justify-center whitespace-nowrap rounded-md border text-sm font-medium transition-[background-color,color,border-color,box-shadow,transform] focus-visible:outline-none focus-visible:[box-shadow:0_0_0_2px_var(--color-button-focus-offset),0_0_0_5px_var(--color-button-focus-ring)] disabled:pointer-events-none disabled:opacity-100 disabled:[background:var(--color-button-disabled-bg)] disabled:[color:var(--color-button-disabled-fg)] disabled:[border-color:var(--color-button-disabled-border)] disabled:shadow-none",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        default:
+          "[background:var(--color-button-primary-bg)] [color:var(--color-button-primary-fg)] border-[color:var(--color-button-primary-border)] shadow-[0_14px_30px_-24px_rgba(15,23,42,0.45)] hover:[background:var(--color-button-primary-bg-hover)] active:[background:var(--color-button-primary-bg-active)] active:scale-[0.98]",
         destructive:
-          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+          "[background:var(--color-button-destructive-bg)] [color:var(--color-button-destructive-fg)] border-[color:var(--color-button-destructive-border)] shadow-[0_14px_30px_-24px_var(--color-button-destructive-shadow)] hover:[background:var(--color-button-destructive-bg-hover)] active:[background:var(--color-button-destructive-bg-active)] active:scale-[0.98]",
+        success:
+          "[background:var(--color-button-success-bg)] [color:var(--color-button-success-fg)] border-[color:var(--color-button-success-border)] shadow-[0_14px_30px_-24px_var(--color-button-success-shadow)] hover:[background:var(--color-button-success-bg-hover)] active:[background:var(--color-button-success-bg-active)] active:scale-[0.98]",
         outline:
-          "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+          "[background:var(--color-button-outline-bg)] [color:var(--color-button-outline-fg)] border-[color:var(--color-button-outline-border)] shadow-[0_10px_24px_-24px_rgba(15,23,42,0.32)] hover:[background:var(--color-button-outline-bg-hover)] hover:[color:var(--color-button-outline-fg-hover)] active:[background:var(--color-button-outline-bg-active)]",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
+          "[background:var(--color-button-secondary-bg)] [color:var(--color-button-secondary-fg)] border-[color:var(--color-button-secondary-border)] shadow-[0_10px_24px_-22px_rgba(15,23,42,0.34)] hover:[background:var(--color-button-secondary-bg-hover)] hover:[color:var(--color-button-secondary-fg-hover)] active:[background:var(--color-button-secondary-bg-active)] active:scale-[0.98]",
+        ghost:
+          "[background:var(--color-button-ghost-bg)] [color:var(--color-button-ghost-fg)] border-[color:var(--color-button-ghost-border)] shadow-[0_8px_20px_-24px_rgba(15,23,42,0.28)] hover:[background:var(--color-button-ghost-bg-hover)] hover:[color:var(--color-button-ghost-fg-hover)] active:[background:var(--color-button-ghost-bg-active)]",
+        link: "border-transparent bg-transparent p-0 [color:var(--color-button-link-fg)] shadow-none underline decoration-[color:var(--color-button-link-underline)] underline-offset-4 hover:[color:var(--color-button-link-fg-hover)] hover:decoration-[color:var(--color-button-link-fg-hover)]",
       },
       size: {
         default: "h-10 px-4 py-2",
@@ -45,6 +49,8 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <Comp
         data-slot="button"
+        data-variant={variant ?? "default"}
+        data-size={size ?? "default"}
         className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
         {...props}
