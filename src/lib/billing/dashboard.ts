@@ -3,6 +3,10 @@ import "server-only";
 import type Stripe from "stripe";
 
 import {
+  isManageableStripeSubscriptionStatus,
+  pickManageableSubscriptionId,
+} from "@/lib/billing/complimentary-subscription";
+import {
   getLinketBundleComplimentaryWindowForUser,
   type LinketBundleComplimentaryWindow,
 } from "@/lib/billing/linket-bundle";
@@ -102,6 +106,7 @@ export type DashboardBillingSummary = {
   renewsOn: string | null;
   autoRenews: boolean | null;
   activeSubscriptionId: string | null;
+  manageableSubscriptionId: string | null;
   customerId: string | null;
   paidPeriods: number;
   refundedPeriods: number;
@@ -318,6 +323,21 @@ function readStripeCustomerNameFromUser(options?: {
   return combined || null;
 }
 
+function normalizeEmail(value: string | null | undefined) {
+  const trimmed = value?.trim().toLowerCase();
+  return trimmed || null;
+}
+
+function readStripeCustomerUserId(metadata?: Stripe.Metadata | null) {
+  const candidates = [metadata?.user_id, metadata?.supabase_user_id];
+  for (const candidate of candidates) {
+    if (typeof candidate !== "string") continue;
+    const trimmed = candidate.trim();
+    if (trimmed) return trimmed;
+  }
+  return null;
+}
+
 async function fetchPersistedStripeCustomerIdForUser(userId: string) {
   if (isSupabaseAdminAvailable) {
     const { data, error } = await supabaseAdmin
@@ -367,6 +387,22 @@ async function persistStripeCustomerIdForUser(
     .from("user_profiles")
     .update({
       stripe_customer_id: customerId,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("user_id", userId);
+
+  if (error && !isMissingRelationError(error.message)) {
+    throw new Error(error.message);
+  }
+}
+
+async function clearPersistedStripeCustomerIdForUser(userId: string) {
+  if (!isSupabaseAdminAvailable) return;
+
+  const { error } = await supabaseAdmin
+    .from("user_profiles")
+    .update({
+      stripe_customer_id: null,
       updated_at: new Date().toISOString(),
     })
     .eq("user_id", userId);
@@ -555,7 +591,10 @@ async function findStripeCustomerByUserId(
 async function findStripeCustomerByEmail(
   stripe: Stripe,
   email: string,
-  userId: string
+  userId: string,
+  options?: {
+    allowSingleUnboundMatch?: boolean;
+  }
 ) {
   const result = await stripe.customers.list({
     email,
@@ -564,12 +603,16 @@ async function findStripeCustomerByEmail(
   if (result.data.length === 0) return null;
 
   const exactWithUserId = result.data.find(
-    (customer) => customer.metadata?.user_id === userId
+    (customer) => readStripeCustomerUserId(customer.metadata) === userId
   );
-  if (exactWithUserId?.id) return exactWithUserId.id;
+  if (exactWithUserId) return exactWithUserId;
 
-  if (result.data.length === 1) {
-    return result.data[0].id;
+  if (
+    options?.allowSingleUnboundMatch &&
+    result.data.length === 1 &&
+    !readStripeCustomerUserId(result.data[0].metadata)
+  ) {
+    return result.data[0];
   }
 
   return null;
@@ -592,19 +635,144 @@ function pickPreferredCustomerId(rows: SubscriptionBillingPeriodRow[]) {
   );
 }
 
-function pickManageableSubscriptionId(subscriptions: Stripe.Subscription[]) {
-  const priority: Stripe.Subscription.Status[] = [
-    "trialing",
-    "active",
-    "past_due",
-    "unpaid",
-    "paused",
-  ];
-  for (const status of priority) {
-    const match = subscriptions.find((subscription) => subscription.status === status);
-    if (match) return match.id;
+async function bindStripeCustomerToUser(
+  stripe: Stripe,
+  customer: Stripe.Customer,
+  options: {
+    userId: string;
+    email?: string | null;
+    fullName?: string | null;
+    firstName?: string | null;
+    lastName?: string | null;
   }
-  return null;
+) {
+  const existingUserId = readStripeCustomerUserId(customer.metadata);
+  if (existingUserId && existingUserId !== options.userId) {
+    return null;
+  }
+
+  const email = options.email?.trim() ?? null;
+  const name = readStripeCustomerNameFromUser(options);
+  const metadataNeedsUpdate =
+    customer.metadata.user_id !== options.userId ||
+    customer.metadata.supabase_user_id !== options.userId;
+  const nextEmail =
+    email && !(customer.email?.trim())
+      ? email
+      : undefined;
+  const nextName =
+    name && !(customer.name?.trim())
+      ? name
+      : undefined;
+
+  if (!metadataNeedsUpdate && !nextEmail && !nextName) {
+    return customer.id;
+  }
+
+  const updatedCustomer = await stripe.customers.update(customer.id, {
+    ...(nextEmail ? { email: nextEmail } : {}),
+    ...(nextName ? { name: nextName } : {}),
+    metadata: {
+      ...customer.metadata,
+      user_id: options.userId,
+      supabase_user_id: options.userId,
+    },
+  });
+
+  return updatedCustomer.id;
+}
+
+function isStripeMissingCustomerError(error: unknown) {
+  if (!error || typeof error !== "object") return false;
+
+  if (
+    "statusCode" in error &&
+    typeof error.statusCode === "number" &&
+    error.statusCode === 404
+  ) {
+    return true;
+  }
+
+  const message =
+    "message" in error && typeof error.message === "string"
+      ? error.message.toLowerCase()
+      : "";
+  return message.includes("no such customer");
+}
+
+async function retrieveActiveStripeCustomer(
+  stripe: Stripe,
+  customerId: string
+): Promise<Stripe.Customer | null> {
+  try {
+    const customer = await stripe.customers.retrieve(customerId);
+    if ("deleted" in customer && customer.deleted) {
+      return null;
+    }
+    return customer;
+  } catch (error) {
+    if (isStripeMissingCustomerError(error)) {
+      return null;
+    }
+    throw error;
+  }
+}
+
+async function resolveVerifiedStripeCustomerIdForUser(args: {
+  stripe: Stripe;
+  customerId: string;
+  userId: string;
+  email?: string | null;
+  fullName?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  allowBindUnboundEmail?: boolean;
+  clearPersistedOnFailure?: boolean;
+}) {
+  const customer = await retrieveActiveStripeCustomer(args.stripe, args.customerId);
+  if (!customer) {
+    if (args.clearPersistedOnFailure) {
+      await clearPersistedStripeCustomerIdForUser(args.userId);
+    }
+    return null;
+  }
+
+  const existingUserId = readStripeCustomerUserId(customer.metadata);
+  if (existingUserId === args.userId) {
+    return customer.id;
+  }
+
+  if (existingUserId && existingUserId !== args.userId) {
+    if (args.clearPersistedOnFailure) {
+      await clearPersistedStripeCustomerIdForUser(args.userId);
+    }
+    return null;
+  }
+
+  const normalizedCustomerEmail = normalizeEmail(customer.email);
+  const normalizedUserEmail = normalizeEmail(args.email);
+  if (
+    !args.allowBindUnboundEmail ||
+    !normalizedCustomerEmail ||
+    !normalizedUserEmail ||
+    normalizedCustomerEmail !== normalizedUserEmail
+  ) {
+    if (args.clearPersistedOnFailure) {
+      await clearPersistedStripeCustomerIdForUser(args.userId);
+    }
+    return null;
+  }
+
+  const boundCustomerId = await bindStripeCustomerToUser(args.stripe, customer, args);
+  if (!boundCustomerId) {
+    if (args.clearPersistedOnFailure) {
+      await clearPersistedStripeCustomerIdForUser(args.userId);
+    }
+    return null;
+  }
+
+  await persistStripeCustomerIdForUser(args.userId, boundCustomerId);
+  return boundCustomerId;
 }
 
 function mapStripeSubscription(
@@ -669,23 +837,83 @@ async function fetchSubscriptionBillingPeriods(userId: string) {
   return data ?? [];
 }
 
-export async function getStripeCustomerIdForUser(userId: string) {
+export async function getStripeCustomerIdForUser(
+  userId: string,
+  options?: {
+    email?: string | null;
+    fullName?: string | null;
+    firstName?: string | null;
+    lastName?: string | null;
+    allowBindUnboundEmail?: boolean;
+  }
+) {
   const persistedCustomerId = await fetchPersistedStripeCustomerIdForUser(userId);
-  if (persistedCustomerId) return persistedCustomerId;
+  const stripe = getStripeSecretKey() ? getStripeServerClient() : null;
+  if (persistedCustomerId) {
+    if (!stripe) return persistedCustomerId;
+
+    const verifiedPersistedCustomerId =
+      await resolveVerifiedStripeCustomerIdForUser({
+        stripe,
+        customerId: persistedCustomerId,
+        userId,
+        email: options?.email ?? null,
+        fullName: options?.fullName ?? null,
+        firstName: options?.firstName ?? null,
+        lastName: options?.lastName ?? null,
+        allowBindUnboundEmail: options?.allowBindUnboundEmail ?? false,
+        clearPersistedOnFailure: true,
+      });
+    if (verifiedPersistedCustomerId) {
+      return verifiedPersistedCustomerId;
+    }
+  }
 
   const rows = await fetchSubscriptionBillingPeriods(userId);
   const directCustomerId = pickPreferredCustomerId(rows);
-  if (directCustomerId) return directCustomerId;
+  if (directCustomerId) {
+    if (!stripe) return directCustomerId;
+
+    const verifiedDirectCustomerId = await resolveVerifiedStripeCustomerIdForUser({
+      stripe,
+      customerId: directCustomerId,
+      userId,
+      email: options?.email ?? null,
+      fullName: options?.fullName ?? null,
+      firstName: options?.firstName ?? null,
+      lastName: options?.lastName ?? null,
+      allowBindUnboundEmail: options?.allowBindUnboundEmail ?? false,
+    });
+    if (verifiedDirectCustomerId) {
+      await persistStripeCustomerIdForUser(userId, verifiedDirectCustomerId);
+      return verifiedDirectCustomerId;
+    }
+  }
 
   const subscriptionId = pickPreferredSubscriptionId(rows);
-  if (!subscriptionId || !getStripeSecretKey()) return null;
+  if (!subscriptionId || !stripe) return null;
 
   try {
-    const stripe = getStripeServerClient();
     const subscription = await stripe.subscriptions.retrieve(subscriptionId, {
       expand: ["customer"],
     });
-    return readStripeCustomerId(subscription.customer);
+    const customerId = readStripeCustomerId(subscription.customer);
+    if (!customerId) return null;
+
+    const verifiedCustomerId = await resolveVerifiedStripeCustomerIdForUser({
+      stripe,
+      customerId,
+      userId,
+      email: options?.email ?? null,
+      fullName: options?.fullName ?? null,
+      firstName: options?.firstName ?? null,
+      lastName: options?.lastName ?? null,
+      allowBindUnboundEmail: options?.allowBindUnboundEmail ?? false,
+    });
+    if (!verifiedCustomerId) return null;
+
+    await persistStripeCustomerIdForUser(userId, verifiedCustomerId);
+    return verifiedCustomerId;
   } catch {
     return null;
   }
@@ -698,12 +926,13 @@ export async function getOrCreateStripeCustomerForUser(options: {
   firstName?: string | null;
   lastName?: string | null;
 }) {
-  const persistedCustomerId = await fetchPersistedStripeCustomerIdForUser(
-    options.userId
-  );
-  if (persistedCustomerId) return persistedCustomerId;
-
-  const existingCustomerId = await getStripeCustomerIdForUser(options.userId);
+  const existingCustomerId = await getStripeCustomerIdForUser(options.userId, {
+    email: options.email ?? null,
+    fullName: options.fullName ?? null,
+    firstName: options.firstName ?? null,
+    lastName: options.lastName ?? null,
+    allowBindUnboundEmail: true,
+  });
   if (existingCustomerId) {
     await persistStripeCustomerIdForUser(options.userId, existingCustomerId);
     return existingCustomerId;
@@ -722,6 +951,27 @@ export async function getOrCreateStripeCustomerForUser(options: {
   }
 
   const email = options.email?.trim() ?? null;
+  if (email) {
+    const searchedByEmail = await findStripeCustomerByEmail(
+      stripe,
+      email,
+      options.userId,
+      {
+        allowSingleUnboundMatch: true,
+      }
+    );
+    if (searchedByEmail) {
+      const boundCustomerId = await bindStripeCustomerToUser(
+        stripe,
+        searchedByEmail,
+        options
+      );
+      if (boundCustomerId) {
+        await persistStripeCustomerIdForUser(options.userId, boundCustomerId);
+        return boundCustomerId;
+      }
+    }
+  }
 
   const created = await stripe.customers.create({
     email: email ?? undefined,
@@ -775,12 +1025,14 @@ export async function getDashboardBillingDataForUser(
   const voidedPeriods = periodRows.filter((row) => row.status === "voided").length;
 
   let stripeEnabled = Boolean(getStripeSecretKey());
-  let stripeCustomerId =
-    (await fetchPersistedStripeCustomerIdForUser(userId)) ??
-    pickPreferredCustomerId(periodRows);
+  let stripeCustomerId = await getStripeCustomerIdForUser(userId, {
+    email: options?.email ?? null,
+    allowBindUnboundEmail: true,
+  });
   const preferredSubscriptionId: string | null =
     pickPreferredSubscriptionId(periodRows);
-  let resolvedSubscriptionId: string | null = preferredSubscriptionId;
+  let resolvedSubscriptionId: string | null = null;
+  let manageableSubscriptionId: string | null = null;
   const stripeErrors: string[] = [];
   let subscription: DashboardBillingSubscription | null = null;
   let paymentMethods: DashboardBillingPaymentMethod[] = [];
@@ -796,6 +1048,19 @@ export async function getDashboardBillingDataForUser(
       if (!stripeCustomerId) {
         try {
           stripeCustomerId = await findStripeCustomerByUserId(stripe, userId);
+          if (stripeCustomerId) {
+            const verifiedCustomerId = await resolveVerifiedStripeCustomerIdForUser({
+              stripe,
+              customerId: stripeCustomerId,
+              userId,
+              email: options?.email ?? null,
+              allowBindUnboundEmail: true,
+            });
+            stripeCustomerId = verifiedCustomerId;
+          }
+          if (stripeCustomerId) {
+            await persistStripeCustomerIdForUser(userId, stripeCustomerId);
+          }
         } catch (error) {
           stripeErrors.push(
             formatErrorMessage("Customer lookup by user metadata failed", error)
@@ -805,17 +1070,21 @@ export async function getDashboardBillingDataForUser(
 
       if (!stripeCustomerId && normalizedEmail) {
         try {
-          stripeCustomerId = await findStripeCustomerByEmail(
+          const customer = await findStripeCustomerByEmail(
             stripe,
             normalizedEmail,
             userId
           );
+          stripeCustomerId = customer?.id ?? null;
+          if (stripeCustomerId) {
+            await persistStripeCustomerIdForUser(userId, stripeCustomerId);
+          }
         } catch (error) {
           stripeErrors.push(formatErrorMessage("Customer lookup by email failed", error));
         }
       }
 
-      if (!resolvedSubscriptionId && stripeCustomerId) {
+      if (stripeCustomerId) {
         try {
           const customerIdForLookup = stripeCustomerId;
           const subscriptions = await stripe.subscriptions.list({
@@ -823,10 +1092,16 @@ export async function getDashboardBillingDataForUser(
             status: "all",
             limit: 20,
           });
-          resolvedSubscriptionId = pickManageableSubscriptionId(subscriptions.data);
+          manageableSubscriptionId = pickManageableSubscriptionId(subscriptions.data);
+          resolvedSubscriptionId =
+            manageableSubscriptionId ?? preferredSubscriptionId;
         } catch (error) {
           stripeErrors.push(formatErrorMessage("Subscription list lookup failed", error));
         }
+      }
+
+      if (!resolvedSubscriptionId && preferredSubscriptionId) {
+        resolvedSubscriptionId = preferredSubscriptionId;
       }
 
       if (resolvedSubscriptionId && !stripeCustomerId) {
@@ -840,6 +1115,19 @@ export async function getDashboardBillingDataForUser(
           preloadedSubscription = stripeSubscription;
           stripeCustomerId =
             readStripeCustomerId(stripeSubscription.customer) ?? stripeCustomerId;
+          if (stripeCustomerId) {
+            const verifiedCustomerId = await resolveVerifiedStripeCustomerIdForUser({
+              stripe,
+              customerId: stripeCustomerId,
+              userId,
+              email: options?.email ?? null,
+              allowBindUnboundEmail: true,
+            });
+            stripeCustomerId = verifiedCustomerId;
+          }
+          if (stripeCustomerId) {
+            await persistStripeCustomerIdForUser(userId, stripeCustomerId);
+          }
           defaultPaymentMethodId =
             readStripePaymentMethodId(stripeSubscription.default_payment_method) ??
             defaultPaymentMethodId;
@@ -880,6 +1168,9 @@ export async function getDashboardBillingDataForUser(
           const stripeSubscription = subscriptionResult.value;
           if (stripeSubscription) {
             subscription = mapStripeSubscription(stripeSubscription);
+            if (isManageableStripeSubscriptionStatus(stripeSubscription.status)) {
+              manageableSubscriptionId = stripeSubscription.id;
+            }
             stripeCustomerId =
               readStripeCustomerId(stripeSubscription.customer) ?? stripeCustomerId;
             defaultPaymentMethodId =
@@ -987,12 +1278,17 @@ export async function getDashboardBillingDataForUser(
         ? complimentaryWindow.endsAt
         : subscription?.currentPeriodEnd ?? activePaidPeriod?.period_end ?? null,
     autoRenews:
-      subscription !== null ? !subscription.cancelAtPeriodEnd : null,
+      subscription !== null
+        ? isManageableStripeSubscriptionStatus(subscription.status)
+          ? !subscription.cancelAtPeriodEnd
+          : false
+        : null,
     activeSubscriptionId:
       subscription?.id ??
       activePaidPeriod?.provider_subscription_id ??
       latestPaidPeriod?.provider_subscription_id ??
       null,
+    manageableSubscriptionId,
     customerId: stripeCustomerId,
     paidPeriods,
     refundedPeriods,

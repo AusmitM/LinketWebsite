@@ -158,6 +158,7 @@ export default function ProfilesContent() {
   const [accountHandle, setAccountHandle] = useState<string | null>(null);
   const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const autosavePending = useRef(false);
+  const retryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastThemeRef = useRef<ThemeName | null>(null);
   const themeSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -740,9 +741,38 @@ export default function ProfilesContent() {
   }, [saving, draft, isDirty, handleSave]);
 
   useEffect(() => {
+    if (!draft || !isDirty || !autoSaveError || saving || !userId) {
+      if (retryTimer.current) {
+        clearTimeout(retryTimer.current);
+        retryTimer.current = null;
+      }
+      return;
+    }
+
+    if (retryTimer.current) {
+      clearTimeout(retryTimer.current);
+    }
+
+    retryTimer.current = setTimeout(() => {
+      retryTimer.current = null;
+      void handleSave({ quiet: true });
+    }, 4000);
+
+    return () => {
+      if (retryTimer.current) {
+        clearTimeout(retryTimer.current);
+        retryTimer.current = null;
+      }
+    };
+  }, [draft, isDirty, autoSaveError, saving, userId, handleSave]);
+
+  useEffect(() => {
     return () => {
       if (autosaveTimer.current) {
         clearTimeout(autosaveTimer.current);
+      }
+      if (retryTimer.current) {
+        clearTimeout(retryTimer.current);
       }
     };
   }, []);
@@ -750,7 +780,7 @@ export default function ProfilesContent() {
   const saveStatusMessage = useMemo(() => {
     if (accountLoading) return "Loading...";
     if (accountError) return accountError;
-    if (autoSaveError) return autoSaveError;
+    if (autoSaveError) return `${autoSaveError} Retrying automatically...`;
     if (saving) return "Saving changes...";
     if (isDirty) return "Changes will save automatically";
     return "All changes saved";
@@ -1246,27 +1276,15 @@ export default function ProfilesContent() {
                   </Button>
                 </div>
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  {hasAutoSaveError ? (
-                    <div className="flex flex-wrap items-center gap-3">
-                      <span className="text-sm text-destructive">
-                        {saveStatusMessage}
-                      </span>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="rounded-full"
-                        onClick={() => handleSave({ quiet: true })}
-                        disabled={saving}
-                      >
-                        Retry save
-                      </Button>
-                    </div>
-                  ) : (
-                    <span className="text-sm text-muted-foreground">
-                      {saveStatusMessage}
-                    </span>
-                  )}
+                  <span
+                    className={
+                      hasAutoSaveError
+                        ? "text-sm text-destructive"
+                        : "text-sm text-muted-foreground"
+                    }
+                  >
+                    {saveStatusMessage}
+                  </span>
                   <div className="flex items-center gap-2">
                     {confirmDelete ? (
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">

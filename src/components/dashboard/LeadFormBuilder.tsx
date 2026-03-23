@@ -12,6 +12,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GripVertical, Plus, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
@@ -172,6 +173,7 @@ export default function LeadFormBuilder({
   const [draggingFieldId, setDraggingFieldId] = useState<string | null>(null);
 
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const retryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSnapshot = useRef<string | null>(null);
 
   const activeField = useMemo(() => {
@@ -279,11 +281,13 @@ export default function LeadFormBuilder({
       const message =
         error instanceof Error ? error.message : "Unable to save form";
       setSaveError(message);
-      toast({ title: "Save failed", description: message, variant: "destructive" });
+      if (saveError !== message) {
+        toast({ title: "Save failed", description: message, variant: "destructive" });
+      }
     } finally {
       setSaving(false);
     }
-  }, [form, handle, profileId, userId]);
+  }, [form, handle, profileId, saveError, userId]);
 
   useEffect(() => {
     if (!form || !isDirty || loading) return;
@@ -299,6 +303,40 @@ export default function LeadFormBuilder({
       }
     };
   }, [form, isDirty, loading, persist]);
+
+  useEffect(() => {
+    if (!form || !saveError || !isDirty || loading || saving) {
+      if (retryTimer.current) {
+        clearTimeout(retryTimer.current);
+        retryTimer.current = null;
+      }
+      return;
+    }
+    if (retryTimer.current) {
+      clearTimeout(retryTimer.current);
+    }
+    retryTimer.current = setTimeout(() => {
+      retryTimer.current = null;
+      void persist();
+    }, 4000);
+    return () => {
+      if (retryTimer.current) {
+        clearTimeout(retryTimer.current);
+        retryTimer.current = null;
+      }
+    };
+  }, [form, isDirty, loading, persist, saveError, saving]);
+
+  useEffect(() => {
+    return () => {
+      if (saveTimer.current) {
+        clearTimeout(saveTimer.current);
+      }
+      if (retryTimer.current) {
+        clearTimeout(retryTimer.current);
+      }
+    };
+  }, []);
 
   const updateForm = useCallback((patch: Partial<LeadFormConfig>) => {
     setForm((current) => {
@@ -467,178 +505,97 @@ export default function LeadFormBuilder({
   return (
     <div className="space-y-6">
       <div className="space-y-6" data-layout={layout}>
-          <Card className="w-full max-w-none self-start rounded-2xl border border-border/60 bg-card/80 shadow-sm">
-            <CardHeader className="gap-2">
-              <div className="flex items-center justify-between gap-4">
-                <CardTitle className="text-sm font-semibold whitespace-nowrap">
-                  Form details
-                </CardTitle>
-                <Button
-                  size="sm"
-                  onClick={() => void persist()}
-                  disabled={saving}
+        <div className="rounded-[1.8rem] border border-border/60 bg-card/85 px-5 py-5 shadow-[0_20px_52px_-38px_rgba(15,23,42,0.38)]">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-full border border-border/60 bg-background/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                  Form Builder
+                </span>
+                <span
                   className={cn(
-                    saving ? "dashboard-saving-indicator" : undefined,
-                    "hidden sm:inline-flex text-foreground hover:text-foreground dark:text-foreground dark:hover:text-foreground"
+                    "rounded-full px-3 py-1 text-xs font-medium",
+                    form.status === "published"
+                      ? "border border-emerald-300/60 bg-emerald-50 text-emerald-800"
+                      : "border border-border/60 bg-background/80 text-foreground"
                   )}
                 >
-                  {saving ? "Saving" : "Save"}
-                </Button>
-              </div>
-              <div
-                className={cn(
-                  "text-xs",
-                  saveState === "failed"
-                    ? "text-destructive"
+                  {form.status === "published" ? "Published" : "Draft"}
+                </span>
+                <span
+                  className={cn(
+                    "text-xs",
+                    saveState === "failed"
+                      ? "text-destructive"
+                      : saveState === "saving"
+                      ? "dashboard-saving-indicator text-foreground"
+                      : "text-muted-foreground"
+                  )}
+                >
+                  {saveState === "failed"
+                    ? "Save failed. Retrying..."
                     : saveState === "saving"
-                    ? "text-foreground dashboard-saving-indicator"
-                    : "text-muted-foreground"
-                )}
-              >
-                {saveState === "failed"
-                  ? "Save failed"
-                  : saveState === "saving"
-                  ? "Saving changes..."
-                  : saveState === "unsaved"
-                  ? "Unsaved changes"
-                  : "All changes saved"}
-                {lastSavedAt ? ` - Updated ${formatShortDate(lastSavedAt)}` : ""}
-                {form.status === "published" ? " - Published" : " - Draft"}
+                    ? "Saving changes..."
+                    : saveState === "unsaved"
+                    ? "Unsaved changes"
+                    : "All changes saved"}
+                  {lastSavedAt ? ` - Updated ${formatShortDate(lastSavedAt)}` : ""}
+                </span>
               </div>
-            </CardHeader>
-            <CardContent className="space-y-3">
-            <div className="space-y-2">
-              <div className="space-y-2">
-                <Label htmlFor="lead-form-title">Title</Label>
-                <Input
-                  id="lead-form-title"
-                  value={form.title}
-                  onChange={(event) =>
-                    updateForm({ title: event.target.value })
-                  }
-                />
+              <div>
+                <h2 className="text-2xl font-semibold tracking-tight text-foreground">
+                  {form.title || "Untitled lead form"}
+                </h2>
+                <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
+                  Build questions on the left, adjust form and field settings in the center, and keep the live preview isolated on the right.
+                </p>
               </div>
             </div>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="lead-form-description">Description</Label>
-                <Textarea
-                  id="lead-form-description"
-                  value={form.description}
-                  onChange={(event) =>
-                    updateForm({ description: event.target.value })
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="lead-form-confirm">
-                  Confirmation message
-                </Label>
-                <Textarea
-                  id="lead-form-confirm"
-                  value={form.settings.confirmationMessage}
-                  onChange={(event) =>
-                    updateForm({
-                      settings: {
-                        ...form.settings,
-                        confirmationMessage: event.target.value,
-                      },
-                    })
-                  }
-                />
-              </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="outline" className="rounded-full px-3 py-1 text-xs">
+                {stats.count} submissions
+              </Badge>
+              <Badge variant="outline" className="rounded-full px-3 py-1 text-xs">
+                {stats.lastSubmittedAt
+                  ? `Last response ${formatShortDate(stats.lastSubmittedAt)}`
+                  : "No responses yet"}
+              </Badge>
             </div>
-              <div className="grid gap-3 md:grid-cols-2">
-                <label className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Switch
-                    checked={form.settings.allowEditAfterSubmit}
-                    onCheckedChange={(value) =>
-                      updateForm({
-                        settings: {
-                          ...form.settings,
-                          allowEditAfterSubmit: Boolean(value),
-                        },
-                      })
-                    }
-                  />
-                  Allow edit after submit
-                </label>
-                <label className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Switch
-                    checked={form.settings.limitOneResponse === "on"}
-                    onCheckedChange={(value) =>
-                      updateForm({
-                        settings: {
-                          ...form.settings,
-                          limitOneResponse: value ? "on" : "off",
-                        },
-                      })
-                    }
-                  />
-                  Limit one response
-                </label>
-                <label className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Switch
-                    checked={form.settings.showProgressBar}
-                    onCheckedChange={(value) =>
-                      updateForm({
-                        settings: {
-                          ...form.settings,
-                          showProgressBar: Boolean(value),
-                        },
-                      })
-                    }
-                  />
-                  Show progress bar
-                </label>
-                <label className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Switch
-                    checked={form.settings.shuffleQuestionOrder}
-                    onCheckedChange={(value) =>
-                      updateForm({
-                        settings: {
-                          ...form.settings,
-                          shuffleQuestionOrder: Boolean(value),
-                        },
-                      })
-                    }
-                  />
-                  Shuffle question order
-                </label>
-              </div>
-              {saveError ? (
-                <div className="text-xs text-destructive">{saveError}</div>
-              ) : null}
-            </CardContent>
-          </Card>
+          </div>
+        </div>
         <div
           className={cn(
             "grid gap-6",
             layout === "side" &&
-              (columns === 3 ? "md:grid-cols-2 lg:grid-cols-3" : "md:grid-cols-2")
+              (columns === 3
+                ? "lg:grid-cols-[0.92fr_1.06fr_0.98fr]"
+                : "md:grid-cols-2")
           )}
         >
           <Card
             id="lead-form-field-settings-panel"
             className="rounded-2xl border border-border/60 bg-card/80 shadow-sm"
           >
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-sm font-semibold whitespace-nowrap">
-                Questions
-              </CardTitle>
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={() => setFieldPickerOpen(true)}
-                className="hidden sm:inline-flex lead-form-add-field"
-              >
-                <Plus className="mr-2 h-4 w-4" /> Add field
-              </Button>
+            <CardHeader className="space-y-3">
+              <div className="flex flex-row items-center justify-between gap-4">
+                <CardTitle className="text-sm font-semibold whitespace-nowrap">
+                  Questions
+                </CardTitle>
+                <Button
+                  size="sm"
+                  onClick={() => setFieldPickerOpen(true)}
+                  className="hidden sm:inline-flex lead-form-add-field"
+                >
+                  <Plus className="mr-2 h-4 w-4" /> Add field
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Reorder questions here, then open one to edit its settings in the center panel.
+              </p>
             </CardHeader>
             <CardContent className="space-y-3">
               <Button
                 size="sm"
-                variant="secondary"
                 onClick={() => setFieldPickerOpen(true)}
                 className="w-full justify-center sm:hidden lead-form-add-field"
               >
@@ -703,98 +660,233 @@ export default function LeadFormBuilder({
             </CardContent>
           </Card>
           <Card className="rounded-2xl border border-border/60 bg-card/80 shadow-sm">
-            <CardHeader>
+            <CardHeader className="space-y-3">
               <CardTitle className="text-sm font-semibold whitespace-nowrap">
-                Field settings
+                Settings
               </CardTitle>
+              <p className="text-xs text-muted-foreground">
+                Configure overall form behavior first, then tune the selected field below.
+              </p>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {!activeField ? (
-                <div className="text-sm text-muted-foreground">
-                  Select a field to edit.
+            <CardContent className="space-y-5">
+              <div className="space-y-4 rounded-2xl border border-border/50 bg-background/55 p-4">
+                <div className="space-y-1">
+                  <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                    Form content
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Set the title, intro text, and success message shown after submit.
+                  </p>
                 </div>
-              ) : (
-                <>
-                  <div className="space-y-2">
-                    <Label>Label</Label>
-                    <Input
-                      value={activeField.label}
-                      onChange={(event) =>
-                        updateField(activeField.id, {
-                          label: event.target.value,
-                        })
-                      }
-                    />
+                <div className="space-y-2">
+                  <Label htmlFor="lead-form-title">Title</Label>
+                  <Input
+                    id="lead-form-title"
+                    value={form.title}
+                    onChange={(event) => updateForm({ title: event.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="lead-form-description">Subtitle</Label>
+                  <Textarea
+                    id="lead-form-description"
+                    value={form.description}
+                    onChange={(event) => updateForm({ description: event.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="lead-form-confirm">Success message</Label>
+                  <Textarea
+                    id="lead-form-confirm"
+                    value={form.settings.confirmationMessage}
+                    onChange={(event) =>
+                      updateForm({
+                        settings: {
+                          ...form.settings,
+                          confirmationMessage: event.target.value,
+                        },
+                      })
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-4 rounded-2xl border border-border/50 bg-background/55 p-4">
+                <div className="space-y-1">
+                  <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                    Submission rules
                   </div>
-                  <div className="space-y-2">
-                    <Label>Help text</Label>
-                    <Input
-                      value={activeField.helpText}
-                      onChange={(event) =>
-                        updateField(activeField.id, {
-                          helpText: event.target.value,
-                        })
-                      }
-                    />
+                  <p className="text-xs text-muted-foreground">
+                    Control how many responses a visitor can send and whether they can edit later.
+                  </p>
+                </div>
+                <label className="flex items-center justify-between gap-3 text-sm text-foreground">
+                  <span>Allow edit after submit</span>
+                  <Switch
+                    checked={form.settings.allowEditAfterSubmit}
+                    onCheckedChange={(value) =>
+                      updateForm({
+                        settings: {
+                          ...form.settings,
+                          allowEditAfterSubmit: Boolean(value),
+                        },
+                      })
+                    }
+                  />
+                </label>
+                <label className="flex items-center justify-between gap-3 text-sm text-foreground">
+                  <span>Limit one response</span>
+                  <Switch
+                    checked={form.settings.limitOneResponse === "on"}
+                    onCheckedChange={(value) =>
+                      updateForm({
+                        settings: {
+                          ...form.settings,
+                          limitOneResponse: value ? "on" : "off",
+                        },
+                      })
+                    }
+                  />
+                </label>
+                <label className="flex items-center justify-between gap-3 text-sm text-foreground">
+                  <span>Verify email on email fields</span>
+                  <Switch
+                    checked={form.settings.collectEmail === "verified"}
+                    onCheckedChange={(value) =>
+                      updateForm({
+                        settings: {
+                          ...form.settings,
+                          collectEmail: value ? "verified" : "user_input",
+                        },
+                      })
+                    }
+                  />
+                </label>
+              </div>
+
+              <div className="space-y-4 rounded-2xl border border-border/50 bg-background/55 p-4">
+                <div className="space-y-1">
+                  <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                    Display options
                   </div>
-                  <label className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Switch
-                      checked={activeField.required}
-                      onCheckedChange={(value) =>
-                        updateField(activeField.id, {
-                          required: Boolean(value),
-                        })
-                      }
-                    />
-                    Required
-                  </label>
-                  {isEmailField(activeField) ? (
-                    <label className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Switch
-                        checked={form.settings.collectEmail === "verified"}
-                        onCheckedChange={(value) =>
-                          updateForm({
-                            settings: {
-                              ...form.settings,
-                              collectEmail: value ? "verified" : "user_input",
-                            },
+                  <p className="text-xs text-muted-foreground">
+                    Decide how structured or dynamic the public form should feel.
+                  </p>
+                </div>
+                <label className="flex items-center justify-between gap-3 text-sm text-foreground">
+                  <span>Show progress bar</span>
+                  <Switch
+                    checked={form.settings.showProgressBar}
+                    onCheckedChange={(value) =>
+                      updateForm({
+                        settings: {
+                          ...form.settings,
+                          showProgressBar: Boolean(value),
+                        },
+                      })
+                    }
+                  />
+                </label>
+                <label className="flex items-center justify-between gap-3 text-sm text-foreground">
+                  <span>Shuffle question order</span>
+                  <Switch
+                    checked={form.settings.shuffleQuestionOrder}
+                    onCheckedChange={(value) =>
+                      updateForm({
+                        settings: {
+                          ...form.settings,
+                          shuffleQuestionOrder: Boolean(value),
+                        },
+                      })
+                    }
+                  />
+                </label>
+              </div>
+
+              <div className="space-y-4 rounded-2xl border border-border/50 bg-background/55 p-4">
+                <div className="space-y-1">
+                  <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                    Selected field
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Adjust the active question’s copy, requirement, type, and validation.
+                  </p>
+                </div>
+                {!activeField ? (
+                  <div className="rounded-xl border border-dashed border-border/60 px-3 py-5 text-sm text-muted-foreground">
+                    Select a field from the left rail to edit it here.
+                  </div>
+                ) : (
+                  <>
+                    <div className="space-y-2">
+                      <Label>Label</Label>
+                      <Input
+                        value={activeField.label}
+                        onChange={(event) =>
+                          updateField(activeField.id, {
+                            label: event.target.value,
                           })
                         }
                       />
-                      Verify email
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Help text</Label>
+                      <Input
+                        value={activeField.helpText}
+                        onChange={(event) =>
+                          updateField(activeField.id, {
+                            helpText: event.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                    <label className="flex items-center justify-between gap-3 text-sm text-foreground">
+                      <span>Required</span>
+                      <Switch
+                        checked={activeField.required}
+                        onCheckedChange={(value) =>
+                          updateField(activeField.id, {
+                            required: Boolean(value),
+                          })
+                        }
+                      />
                     </label>
-                  ) : null}
-                  <div className="space-y-2">
-                    <Label>Type</Label>
-                    <select
-                      className="h-10 w-full rounded-md border border-border/60 bg-background px-3 text-sm"
-                      value={activeField.type}
-                      onChange={(event) =>
-                        handleFieldTypeChange(
-                          activeField.id,
-                          event.target.value as LeadFormFieldType
-                        )
+                    <div className="space-y-2">
+                      <Label>Field type</Label>
+                      <select
+                        className="h-10 w-full rounded-md border border-border/60 bg-background px-3 text-sm"
+                        value={activeField.type}
+                        onChange={(event) =>
+                          handleFieldTypeChange(
+                            activeField.id,
+                            event.target.value as LeadFormFieldType
+                          )
+                        }
+                      >
+                        {ALLOWED_TYPES.map((option) => (
+                          <option key={option.type} value={option.type}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <ValidationEditor
+                      field={activeField}
+                      onChange={(validation) =>
+                        updateField(activeField.id, { validation })
                       }
-                    >
-                      {ALLOWED_TYPES.map((option) => (
-                        <option key={option.type} value={option.type}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <ValidationEditor
-                    field={activeField}
-                    onChange={(validation) =>
-                      updateField(activeField.id, { validation })
-                    }
-                  />
-                  <FieldTypeEditor
-                    field={activeField}
-                    onChange={(patch) => updateField(activeField.id, patch)}
-                  />
-                </>
-              )}
+                    />
+                    <FieldTypeEditor
+                      field={activeField}
+                      onChange={(patch) => updateField(activeField.id, patch)}
+                    />
+                  </>
+                )}
+              </div>
+
+              {saveError ? (
+                <div className="text-xs text-destructive">{saveError}</div>
+              ) : null}
             </CardContent>
           </Card>
 

@@ -74,6 +74,7 @@ export default function BundlePaymentStatusPoller({
           clearPolling();
           if (payload.status === "paid") {
             clearTransientCheckoutParams();
+            router.refresh();
           } else {
             router.refresh();
           }

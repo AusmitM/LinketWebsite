@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { UPLOADER_ACTION_BUTTON_CLASS } from "@/components/dashboard/uploaderActionButtonStyles";
 import { supabase } from "@/lib/supabase";
 import { confirmRemove } from "@/lib/confirm-remove";
 
@@ -93,6 +94,10 @@ export default function VCardContent({
   const [zoom, setZoom] = useState(1);
   const [offset, setOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
+  const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const photoApplyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastPhotoCropSignatureRef = useRef<string | null>(null);
 
   const previewSize = 240;
   const cropSize = 200;
@@ -148,6 +153,7 @@ export default function VCardContent({
   function handlePhotoChange(file: File | null) {
     resetPhotoEditor();
     if (!file) return;
+    lastPhotoCropSignatureRef.current = null;
     setPhotoSourceUrl(URL.createObjectURL(file));
     setPhotoSourceName(file.name);
   }
@@ -319,6 +325,7 @@ export default function VCardContent({
   const handlePhotoReCrop = useCallback(() => {
     if (!fields.photoData) return;
     resetPhotoEditor();
+    lastPhotoCropSignatureRef.current = null;
     setPhotoSourceUrl(fields.photoData);
     setPhotoSourceName(fields.photoName ?? "profile-photo.jpg");
   }, [fields.photoData, fields.photoName, resetPhotoEditor]);
@@ -359,6 +366,49 @@ export default function VCardContent({
     resetPhotoEditor,
   ]);
 
+  useEffect(() => {
+    if (!photoSourceUrl || !previewReady || !imageMeta || isDragging) {
+      if (photoApplyTimerRef.current) {
+        clearTimeout(photoApplyTimerRef.current);
+        photoApplyTimerRef.current = null;
+      }
+      return;
+    }
+    const snapshot = JSON.stringify({
+      source: photoSourceName ?? photoSourceUrl,
+      zoom: Number(zoom.toFixed(3)),
+      offsetX: Number(offset.x.toFixed(1)),
+      offsetY: Number(offset.y.toFixed(1)),
+    });
+    if (snapshot === lastPhotoCropSignatureRef.current) {
+      return;
+    }
+    if (photoApplyTimerRef.current) {
+      clearTimeout(photoApplyTimerRef.current);
+    }
+    photoApplyTimerRef.current = setTimeout(() => {
+      photoApplyTimerRef.current = null;
+      lastPhotoCropSignatureRef.current = snapshot;
+      void handlePhotoApply();
+    }, 700);
+    return () => {
+      if (photoApplyTimerRef.current) {
+        clearTimeout(photoApplyTimerRef.current);
+        photoApplyTimerRef.current = null;
+      }
+    };
+  }, [
+    photoSourceUrl,
+    photoSourceName,
+    previewReady,
+    imageMeta,
+    isDragging,
+    zoom,
+    offset.x,
+    offset.y,
+    handlePhotoApply,
+  ]);
+
 
   const isDirty = useMemo(() => {
     if (!lastSavedRef.current) {
@@ -379,6 +429,66 @@ export default function VCardContent({
     }
     return !areVCardFieldsEqual(lastSavedRef.current, fields);
   }, [fields]);
+
+  useEffect(() => {
+    if (
+      !userId ||
+      !initialisedRef.current ||
+      loading ||
+      status === "saving" ||
+      !isDirty ||
+      photoSourceUrl
+    ) {
+      if (autosaveTimerRef.current) {
+        clearTimeout(autosaveTimerRef.current);
+        autosaveTimerRef.current = null;
+      }
+      return;
+    }
+    if (autosaveTimerRef.current) {
+      clearTimeout(autosaveTimerRef.current);
+    }
+    autosaveTimerRef.current = setTimeout(() => {
+      autosaveTimerRef.current = null;
+      void persist(latestFieldsRef.current);
+    }, 1000);
+    return () => {
+      if (autosaveTimerRef.current) {
+        clearTimeout(autosaveTimerRef.current);
+        autosaveTimerRef.current = null;
+      }
+    };
+  }, [fields, isDirty, loading, persist, photoSourceUrl, status, userId]);
+
+  useEffect(() => {
+    if (
+      !userId ||
+      !initialisedRef.current ||
+      loading ||
+      status === "saving" ||
+      status !== "error" ||
+      !isDirty
+    ) {
+      if (retryTimerRef.current) {
+        clearTimeout(retryTimerRef.current);
+        retryTimerRef.current = null;
+      }
+      return;
+    }
+    if (retryTimerRef.current) {
+      clearTimeout(retryTimerRef.current);
+    }
+    retryTimerRef.current = setTimeout(() => {
+      retryTimerRef.current = null;
+      void persist(latestFieldsRef.current);
+    }, 4000);
+    return () => {
+      if (retryTimerRef.current) {
+        clearTimeout(retryTimerRef.current);
+        retryTimerRef.current = null;
+      }
+    };
+  }, [isDirty, loading, persist, status, userId]);
 
   const handleFieldBlur = useCallback(() => {
     if (!userId) return;
@@ -423,10 +533,24 @@ export default function VCardContent({
   const statusMessage = useMemo(() => {
     if (loading) return "Loading...";
     if (status === "saving") return "Saving changes...";
-    if (status === "error") return error ?? "Save failed";
+    if (status === "error") return `${error ?? "Save failed"} Retrying automatically...`;
     if (isDirty) return "Changes pending";
     return "All changes saved";
   }, [loading, status, error, isDirty]);
+
+  useEffect(() => {
+    return () => {
+      if (autosaveTimerRef.current) {
+        clearTimeout(autosaveTimerRef.current);
+      }
+      if (retryTimerRef.current) {
+        clearTimeout(retryTimerRef.current);
+      }
+      if (photoApplyTimerRef.current) {
+        clearTimeout(photoApplyTimerRef.current);
+      }
+    };
+  }, []);
 
   const inputsDisabled = loading || !userId;
 
@@ -529,9 +653,9 @@ export default function VCardContent({
                 <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-3">
                   <Button
                     type="button"
-                    variant="ghost"
+                    variant="custom"
                     size="sm"
-                    className="h-10 w-full rounded-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:bg-primary/70 disabled:text-primary-foreground/90 disabled:opacity-100 sm:h-8 sm:w-auto"
+                    className={UPLOADER_ACTION_BUTTON_CLASS}
                     onClick={handlePhotoReCrop}
                     disabled={!fields.photoData}
                   >
@@ -539,9 +663,9 @@ export default function VCardContent({
                   </Button>
                   <Button
                     type="button"
-                    variant="ghost"
+                    variant="custom"
                     size="sm"
-                    className="h-10 w-full rounded-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:bg-primary/70 disabled:text-primary-foreground/90 disabled:opacity-100 sm:h-8 sm:w-auto"
+                    className={UPLOADER_ACTION_BUTTON_CLASS}
                     onClick={handlePhotoRemove}
                     disabled={!fields.photoData && !photoSourceUrl}
                   >
@@ -624,15 +748,9 @@ export default function VCardContent({
                 />
               </div>
               <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:justify-center sm:gap-3">
-                <Button
-                  type="button"
-                  size="sm"
-                  className="h-10 w-full rounded-full sm:h-8 sm:w-auto"
-                  onClick={handlePhotoApply}
-                  disabled={!previewReady || inputsDisabled}
-                >
-                  Apply crop
-                </Button>
+                <span className="col-span-2 text-center text-xs text-muted-foreground sm:col-span-1 sm:text-left">
+                  Crop auto-applies after you stop moving.
+                </span>
                 <Button
                   type="button"
                   variant="ghost"
@@ -674,11 +792,6 @@ export default function VCardContent({
           >
             {statusMessage}
           </span>
-          {status === "error" && userId && (
-            <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => void persist(fields)}>
-              Retry save
-            </Button>
-          )}
         </div>
       </CardContent>
     </Card>

@@ -1,11 +1,10 @@
 import { redirect } from "next/navigation";
 
+import DashboardSetupFlow from "@/components/dashboard/DashboardSetupFlow";
 import { getDashboardOnboardingState } from "@/lib/dashboard-onboarding";
 import { createServerSupabaseReadonly } from "@/lib/supabase/server";
 
-export const revalidate = 0;
-
-export default async function Dashboard() {
+export default async function DashboardGetStartedPage() {
   const supabase = await createServerSupabaseReadonly();
   const {
     data: { user },
@@ -16,10 +15,9 @@ export default async function Dashboard() {
   }
 
   const onboardingState = await getDashboardOnboardingState(user.id);
-  if (onboardingState.requiresOnboarding) {
-    redirect("/dashboard/get-started");
+  if (!onboardingState.requiresOnboarding) {
+    redirect("/dashboard/overview");
   }
 
-  redirect("/dashboard/overview");
+  return <DashboardSetupFlow initialOnboardingState={onboardingState} />;
 }
-

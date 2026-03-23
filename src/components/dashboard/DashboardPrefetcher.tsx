@@ -10,6 +10,7 @@ type ConnectionLike = {
 
 const PREFETCH_TARGETS_BY_ROUTE: Record<string, string[]> = {
   "/dashboard": ["/dashboard/overview", "/dashboard/leads"],
+  "/dashboard/get-started": ["/dashboard/overview", "/dashboard/profiles"],
   "/dashboard/overview": ["/dashboard/leads", "/dashboard/analytics"],
   "/dashboard/leads": ["/dashboard/overview", "/dashboard/profiles"],
   "/dashboard/profiles": ["/dashboard/leads", "/dashboard/linkets"],

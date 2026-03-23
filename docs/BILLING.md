@@ -810,8 +810,15 @@ Priority:
 2. customer ID from stored period rows
 3. customer from Stripe subscription lookup
 4. search Stripe customers by metadata `user_id`
-5. fallback list-by-email (read path only)
-6. create customer with metadata `user_id` + `supabase_user_id`
+5. exact metadata match from Stripe list-by-email fallback
+6. safe adoption of a single unbound email-matched customer on write flows
+7. create customer with metadata `user_id` + `supabase_user_id`
+
+Safety rules:
+
+- persisted `stripe_customer_id` values are re-validated against live Stripe customer metadata before they are trusted
+- stale or mismatched persisted customer bindings are cleared instead of being reused
+- unbound Stripe customers are only adopted when the authenticated user's email matches the Stripe customer email
 
 ### 10.2 Billing summary fields
 
@@ -823,6 +830,7 @@ Summary includes:
 - renews on
 - auto renew toggle
 - active subscription ID
+- manageable subscription ID
 - customer ID
 - counts of paid/refunded/voided windows
 
@@ -895,7 +903,7 @@ File: `BundlePaymentStatusPoller.tsx`
 - starts polling after 10s delay
 - polls every 8s
 - endpoint: `/api/billing/bundle-session-status`
-- on `paid`: clears transient params and replaces route
+- on `paid`: waits for persisted order state, then clears transient params and refreshes
 - on `failed`: refreshes page and shows retry link
 
 ## 11.5 Card entry flow
@@ -1017,7 +1025,8 @@ When preview Basic Auth lock is enabled (`PREVIEW_LOCK=1`), middleware still all
 - Billing API folders `checkout`, `manage`, `summary`, and `reminders/run` exist as directories but do not currently expose route handlers.
 - Loyalty accrual is based on normalized Stripe period rows and is explicitly personal-scope oriented.
 - Tracking/fulfillment fields shown in bundle orders are read from metadata keys; there is no dedicated billing API in this code to manage shipment updates.
-- `findStripeCustomerByEmail` is used for dashboard read-time fallback; customer creation path is metadata-driven.
+- dashboard reads no longer adopt unbound Stripe customers by email.
+- write flows may safely adopt a single unbound Stripe customer when the email match is unique, then persist the binding on `user_profiles`.
 
 ---
 

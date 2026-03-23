@@ -11,7 +11,7 @@ import { trackEvent } from "@/lib/analytics";
 import { getSiteOrigin } from "@/lib/site-url";
 import { friendlyAuthError } from "@/lib/auth-errors";
 
-const DEFAULT_NEXT = "/dashboard/overview";
+const DEFAULT_NEXT = "/dashboard";
 const PASSWORD_LENGTH_ERROR = "Password must be at least 6 characters.";
 const PASSWORD_STRENGTH_ERROR =
   "Use a stronger password: include at least 1 lowercase letter, 1 uppercase letter, 1 number, and 1 symbol.";

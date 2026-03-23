@@ -2,18 +2,28 @@
 
 import type { CSSProperties } from "react";
 import { useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import Sidebar from "@/components/dashboard/Sidebar";
 import DashboardOnboardingTour from "@/components/dashboard/DashboardOnboardingTour";
 import DashboardEmailVerificationPrompt from "@/components/dashboard/DashboardEmailVerificationPrompt";
+import type { DashboardOnboardingState } from "@/lib/dashboard-onboarding-types";
 import { cn } from "@/lib/utils";
 
 export default function DashboardAppShell({
   children,
+  onboardingState,
 }: {
   children: React.ReactNode;
+  onboardingState: DashboardOnboardingState;
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const pathname = usePathname() ?? "";
+  const router = useRouter();
+  const isSetupRoute = pathname.startsWith("/dashboard/get-started");
+  const shouldHideChrome = onboardingState.requiresOnboarding && isSetupRoute;
+  const shouldRedirectToSetup =
+    onboardingState.requiresOnboarding && !isSetupRoute;
 
   useEffect(() => {
     const onResize = () => {
@@ -47,63 +57,104 @@ export default function DashboardAppShell({
     );
   }, [sidebarOpen]);
 
+  useEffect(() => {
+    if (!shouldRedirectToSetup) return;
+    router.replace("/dashboard/get-started");
+  }, [router, shouldRedirectToSetup]);
+
+  if (shouldRedirectToSetup) {
+    return (
+      <div
+        id="dashboard-theme-scope"
+        className="font-dashboard flex min-h-[100svh] items-center justify-center bg-[var(--background)] px-6"
+      >
+        <div className="w-full max-w-md rounded-3xl border border-border/60 bg-card/90 px-6 py-8 text-center shadow-[0_28px_70px_-45px_rgba(15,23,42,0.35)]">
+          <p className="text-sm font-semibold text-foreground">
+            Redirecting to setup...
+          </p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Taking you to the fastest path to a live Linket profile.
+          </p>
+        </div>
+        <DashboardEmailVerificationPrompt />
+      </div>
+    );
+  }
+
   return (
     <div
       id="dashboard-theme-scope"
       className="font-dashboard flex min-h-[100svh] bg-[var(--background)]"
       style={{ "--dashboard-nav-height": "64px" } as CSSProperties}
     >
-      <div className="relative z-30 hidden h-[calc(100vh-var(--dashboard-nav-height))] lg:sticky lg:top-[var(--dashboard-nav-height)] lg:block">
-        <Sidebar />
-      </div>
+      {!shouldHideChrome ? (
+        <div className="relative z-30 hidden h-[calc(100vh-var(--dashboard-nav-height))] lg:sticky lg:top-[var(--dashboard-nav-height)] lg:block">
+          <Sidebar onboardingState={onboardingState} />
+        </div>
+      ) : null}
       <div className="flex flex-1 flex-col overflow-hidden">
-        <div className="dashboard-scroll-area flex-1 overflow-auto px-3 pb-6 pt-3 sm:px-4 sm:pb-8 sm:pt-4 lg:px-8 lg:pb-10">
-          <div className="dashboard-content mx-auto w-full max-w-none lg:max-w-7xl">
+        <div
+          className={cn(
+            "dashboard-scroll-area flex-1 overflow-auto",
+            shouldHideChrome
+              ? "px-0 pb-0 pt-0"
+              : "px-3 pb-6 pt-3 sm:px-4 sm:pb-8 sm:pt-4 lg:px-8 lg:pb-10"
+          )}
+        >
+          <div
+            className={cn(
+              "dashboard-content mx-auto w-full",
+              shouldHideChrome ? "max-w-none" : "max-w-none lg:max-w-7xl"
+            )}
+          >
             {children}
           </div>
         </div>
       </div>
-      <div
-        className={cn(
-          "fixed inset-0 z-40 transition lg:hidden",
-          sidebarOpen ? "pointer-events-auto" : "pointer-events-none"
-        )}
-        aria-hidden={!sidebarOpen}
-      >
+      {!shouldHideChrome ? (
         <div
           className={cn(
-            "dashboard-sidebar-overlay absolute inset-0 bg-black/40 transition-opacity",
-            sidebarOpen ? "opacity-100" : "opacity-0"
+            "fixed inset-0 z-40 transition lg:hidden",
+            sidebarOpen ? "pointer-events-auto" : "pointer-events-none"
           )}
-          onClick={() => setSidebarOpen(false)}
-        />
-        <div
-          className={cn(
-            "dashboard-sidebar-panel absolute inset-x-0 bottom-0 max-h-[80vh] w-full transform rounded-t-3xl border-t border-border/60 bg-background shadow-2xl transition-transform duration-500 ease-in-out will-change-transform",
-            sidebarOpen ? "translate-y-0" : "translate-y-full"
-          )}
+          aria-hidden={!sidebarOpen}
         >
-          <div className="relative flex items-center justify-center px-4 py-3">
-            <span className="text-sm font-semibold text-foreground">
-              Navigation
-            </span>
-            <button
-              type="button"
-              onClick={() => setSidebarOpen(false)}
-              className="absolute right-4 rounded-full p-2 text-muted-foreground hover:bg-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]"
-              aria-label="Close navigation"
-            >
-              <X className="h-4 w-4" aria-hidden />
-            </button>
-          </div>
-          <Sidebar
-            variant="mobile"
-            className="h-full w-full border-r-0 bg-transparent pb-4"
-            onNavigate={() => setSidebarOpen(false)}
+          <div
+            className={cn(
+              "dashboard-sidebar-overlay absolute inset-0 bg-black/40 transition-opacity",
+              sidebarOpen ? "opacity-100" : "opacity-0"
+            )}
+            onClick={() => setSidebarOpen(false)}
           />
+          <div
+            className={cn(
+              "dashboard-sidebar-panel absolute inset-x-0 bottom-0 max-h-[80vh] w-full transform rounded-t-3xl border-t border-border/60 bg-background shadow-2xl transition-transform duration-500 ease-in-out will-change-transform",
+              sidebarOpen ? "translate-y-0" : "translate-y-full"
+            )}
+          >
+            <div className="relative flex items-center justify-center px-4 py-3">
+              <span className="text-sm font-semibold text-foreground">
+                Navigation
+              </span>
+              <button
+                type="button"
+                onClick={() => setSidebarOpen(false)}
+                className="absolute right-4 rounded-full p-2 text-muted-foreground hover:bg-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]"
+                aria-label="Close navigation"
+              >
+                <X className="h-4 w-4" aria-hidden />
+              </button>
+            </div>
+            <Sidebar
+              onboardingState={onboardingState}
+              variant="mobile"
+              className="h-full w-full border-r-0 bg-transparent pb-4"
+              onNavigate={() => setSidebarOpen(false)}
+            />
+          </div>
         </div>
-      </div>
-      <DashboardOnboardingTour />
+      ) : null}
+      {!shouldHideChrome ? <DashboardOnboardingTour /> : null}
       <DashboardEmailVerificationPrompt />
     </div>
   );

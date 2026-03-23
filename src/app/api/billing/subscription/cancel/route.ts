@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import type Stripe from "stripe";
 
 import { requireRouteAccess } from "@/lib/api-authorization";
+import { pickManageableSubscriptionId } from "@/lib/billing/complimentary-subscription";
 import { getOrCreateStripeCustomerForUser } from "@/lib/billing/dashboard";
 import { isTrustedRequestOrigin } from "@/lib/http-origin";
 import { getConfiguredSiteOrigin } from "@/lib/site-url";
@@ -27,24 +27,6 @@ function toBillingUrl(
     url.searchParams.set("subscription", options.subscriptionNotice);
   }
   return url.toString();
-}
-
-function pickManageableSubscriptionId(subscriptions: Stripe.Subscription[]) {
-  const priority = [
-    "trialing",
-    "active",
-    "past_due",
-    "unpaid",
-    "incomplete",
-    "paused",
-  ] as const;
-  for (const status of priority) {
-    const match = subscriptions.find(
-      (subscription) => subscription.status === status
-    );
-    if (match) return match.id;
-  }
-  return null;
 }
 
 export async function POST(request: NextRequest) {

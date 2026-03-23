@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import type Stripe from "stripe";
 
 import { requireRouteAccess } from "@/lib/api-authorization";
+import { pickManageableSubscriptionId } from "@/lib/billing/complimentary-subscription";
 import { getOrCreateStripeCustomerForUser } from "@/lib/billing/dashboard";
 import { isTrustedRequestOrigin } from "@/lib/http-origin";
 import { getConfiguredSiteOrigin } from "@/lib/site-url";
@@ -32,20 +33,7 @@ async function resolveActiveSubscriptionId(
     status: "all",
     limit: 20,
   });
-  const priority: Array<Stripe.Subscription.Status> = [
-    "trialing",
-    "active",
-    "past_due",
-    "unpaid",
-    "paused",
-  ];
-  for (const status of priority) {
-    const match = subscriptions.data.find(
-      (subscription) => subscription.status === status
-    );
-    if (match) return match.id;
-  }
-  return null;
+  return pickManageableSubscriptionId(subscriptions.data);
 }
 
 function buildPortalIdempotencyKey(args: {

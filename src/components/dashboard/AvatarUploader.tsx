@@ -12,6 +12,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { UPLOADER_ACTION_BUTTON_CLASS } from "@/components/dashboard/uploaderActionButtonStyles";
 import { uploadAvatar } from "@/lib/supabase-storage";
 import { supabase } from "@/lib/supabase";
 import { appendVersion } from "@/lib/avatar-utils";
@@ -42,6 +43,7 @@ const OUTPUT_SIZE = 640;
 const MIN_ZOOM = 0.7;
 const MAX_ZOOM = 3;
 const ZOOM_STEP = 0.01;
+const AUTOSAVE_DEBOUNCE_MS = 700;
 
 export default function AvatarUploader({
   userId,
@@ -72,6 +74,8 @@ export default function AvatarUploader({
   const cropCorner = Math.round(cropSize * 0.22);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const pointerPosition = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastUploadSignatureRef = useRef<string | null>(null);
 
   const [sourceFile, setSourceFile] = useState<File | null>(null);
   const [inputFileName, setInputFileName] = useState<string | null>(null);
@@ -128,6 +132,7 @@ export default function AvatarUploader({
     (file: File | null) => {
       resetEditor();
       if (!file) return;
+      lastUploadSignatureRef.current = null;
       const selectedName = file.name || null;
       setInputFileName(selectedName);
       setPersistedFileName(selectedName);
@@ -225,11 +230,11 @@ export default function AvatarUploader({
   }, [zoom, clampOffset]);
 
   const handlePointerDown = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
-    if (!previewReady || event.button !== 0) return;
+    if (!previewReady || loading || event.button !== 0) return;
     setIsDragging(true);
     pointerPosition.current = { x: event.clientX, y: event.clientY };
     event.currentTarget.setPointerCapture(event.pointerId);
-  }, [previewReady]);
+  }, [loading, previewReady]);
 
   const handlePointerMove = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -270,7 +275,7 @@ export default function AvatarUploader({
 
   const handleUpload = useCallback(async () => {
     if (!sourceFile || !sourceUrl || !imageMeta) {
-      setError("Choose and position a photo before saving.");
+      setError("Choose and position a photo before uploading.");
       return;
     }
     setError(null);
@@ -353,8 +358,46 @@ export default function AvatarUploader({
     resolveUsername,
   ]);
 
+  const uploadSignature = useMemo(() => {
+    if (!sourceUrl || !previewReady || !imageMeta) return null;
+    return JSON.stringify({
+      source: inputFileName ?? sourceFile?.name ?? sourceUrl,
+      zoom: Number(zoom.toFixed(3)),
+      offsetX: Number(offset.x.toFixed(1)),
+      offsetY: Number(offset.y.toFixed(1)),
+    });
+  }, [imageMeta, inputFileName, offset.x, offset.y, previewReady, sourceFile?.name, sourceUrl, zoom]);
+
+  useEffect(() => {
+    if (!uploadSignature || loading || isDragging) {
+      if (autosaveTimerRef.current) {
+        clearTimeout(autosaveTimerRef.current);
+        autosaveTimerRef.current = null;
+      }
+      return;
+    }
+    if (uploadSignature === lastUploadSignatureRef.current) {
+      return;
+    }
+    if (autosaveTimerRef.current) {
+      clearTimeout(autosaveTimerRef.current);
+    }
+    autosaveTimerRef.current = setTimeout(() => {
+      autosaveTimerRef.current = null;
+      lastUploadSignatureRef.current = uploadSignature;
+      void handleUpload();
+    }, AUTOSAVE_DEBOUNCE_MS);
+    return () => {
+      if (autosaveTimerRef.current) {
+        clearTimeout(autosaveTimerRef.current);
+        autosaveTimerRef.current = null;
+      }
+    };
+  }, [handleUpload, isDragging, loading, uploadSignature]);
+
   const handleReset = useCallback(() => {
     if (sourceUrl) {
+      lastUploadSignatureRef.current = null;
       resetEditor();
       setSourceFile(null);
       setInputFileName(null);
@@ -440,6 +483,14 @@ export default function AvatarUploader({
   const helperText = sourceFile
     ? "Drag to reposition the image inside the crop."
     : "Upload a photo to start cropping.";
+
+  useEffect(() => {
+    return () => {
+      if (autosaveTimerRef.current) {
+        clearTimeout(autosaveTimerRef.current);
+      }
+    };
+  }, []);
 
   const cardClassName = cn(
     "rounded-2xl border border-border/70 bg-card/80 shadow-sm",
@@ -527,9 +578,9 @@ export default function AvatarUploader({
               <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-3">
                 <Button
                   type="button"
-                  variant="ghost"
+                  variant="custom"
                   size="sm"
-                  className="h-10 w-full rounded-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:bg-primary/70 disabled:text-primary-foreground/90 disabled:opacity-100 sm:h-8 sm:w-auto"
+                  className={UPLOADER_ACTION_BUTTON_CLASS}
                   onClick={handleReCrop}
                   disabled={!latestAvatarUrl || loading}
                 >
@@ -537,9 +588,9 @@ export default function AvatarUploader({
                 </Button>
                 <Button
                   type="button"
-                  variant="ghost"
+                  variant="custom"
                   size="sm"
-                  className="h-10 w-full rounded-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:bg-primary/70 disabled:text-primary-foreground/90 disabled:opacity-100 sm:h-8 sm:w-auto"
+                  className={UPLOADER_ACTION_BUTTON_CLASS}
                   onClick={handleRemove}
                   disabled={!(latestAvatarUrl || sourceUrl) || loading}
                 >
@@ -635,25 +686,29 @@ export default function AvatarUploader({
                 step={ZOOM_STEP}
                 value={zoom}
                 onChange={(event) => setZoom(Number(event.target.value))}
+                disabled={loading}
                 className="dashboard-zoom-slider w-full"
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-3">
-              <Button
-                type="button"
-                size="sm"
-                className="h-10 w-full rounded-full sm:h-8 sm:w-auto"
-                disabled={!previewReady || loading}
-                onClick={handleUpload}
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <span
+                className={cn(
+                  "text-center text-xs",
+                  loading
+                    ? "dashboard-saving-indicator text-foreground"
+                    : "text-muted-foreground"
+                )}
               >
-                {loading ? "Saving..." : "Save"}
-              </Button>
+                {loading
+                  ? "Uploading crop..."
+                  : "Crop auto-applies after you stop moving."}
+              </span>
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="h-10 w-full rounded-full sm:h-8 sm:w-auto"
+                className="h-10 rounded-full px-4 sm:h-8"
                 onClick={handleReset}
                 disabled={!(sourceUrl || latestAvatarUrl) || loading}
               >
@@ -807,15 +862,21 @@ export default function AvatarUploader({
         <aside className={cn("w-full max-w-sm", isCompact && "max-w-[280px]")}>
           <div className={cn("space-y-4 rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm", isCompact && "space-y-3 p-3")}>
             <div className="flex flex-wrap items-center gap-2">
-              <Button
-                type="button"
-                size={isCompact ? "sm" : "default"}
-                className="rounded-full"
-                disabled={!sourceUrl || !previewReady || loading}
-                onClick={handleUpload}
+              <span
+                className={cn(
+                  "text-xs",
+                  loading
+                    ? "dashboard-saving-indicator text-foreground"
+                    : "text-muted-foreground",
+                  isCompact && "text-[11px]"
+                )}
               >
-                {loading ? "Saving..." : "Save"}
-              </Button>
+                {loading
+                  ? "Uploading crop..."
+                  : sourceUrl
+                  ? "Crop auto-applies after you stop moving."
+                  : "Choose a photo to start editing."}
+              </span>
               <span className={cn("text-xs text-muted-foreground", isCompact && "text-[11px]")}>
                 PNG/JPG/WebP  Up to 5MB  Saved as WebP
               </span>
@@ -843,6 +904,7 @@ export default function AvatarUploader({
                   step={ZOOM_STEP}
                   value={zoom}
                   onChange={(event) => setZoom(Number(event.target.value))}
+                  disabled={loading}
                   className="dashboard-zoom-slider w-full"
                 />
               </div>

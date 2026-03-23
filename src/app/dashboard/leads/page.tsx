@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { FileText, Inbox } from "lucide-react";
 
 import LeadsList from "@/components/dashboard/LeadsList";
 import LeadFormBuilder from "@/components/dashboard/LeadFormBuilder";
 import { useDashboardUser } from "@/components/dashboard/DashboardSessionContext";
 import ErrorBoundary from "@/components/system/ErrorBoundary";
 import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function LeadsPage() {
   const dashboardUser = useDashboardUser();
@@ -62,13 +64,36 @@ export default function LeadsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div data-tour="leads-inbox">
+    <Tabs defaultValue="leads" className="space-y-6">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div className="space-y-2">
+          <h1 className="font-display text-3xl font-semibold tracking-tight text-foreground">
+            Leads
+          </h1>
+          <p className="max-w-3xl text-sm text-muted-foreground">
+            Manage inbound contacts in a compact inbox, then switch to the form
+            builder when you need to change what people submit.
+          </p>
+        </div>
+        <TabsList className="h-auto rounded-full border border-border/60 bg-card/80 p-1 shadow-sm">
+          <TabsTrigger value="leads" className="rounded-full px-4 py-2">
+            <Inbox className="h-4 w-4" aria-hidden />
+            Leads
+          </TabsTrigger>
+          <TabsTrigger value="builder" className="rounded-full px-4 py-2">
+            <FileText className="h-4 w-4" aria-hidden />
+            Form Builder
+          </TabsTrigger>
+        </TabsList>
+      </div>
+
+      <TabsContent value="leads" data-tour="leads-inbox">
         <ErrorBoundary title="Leads inbox failed to load">
           <LeadsList userId={userId} />
         </ErrorBoundary>
-      </div>
-      <div data-tour="leads-form-builder">
+      </TabsContent>
+
+      <TabsContent value="builder" data-tour="leads-form-builder">
         <ErrorBoundary title="Lead form builder failed to load">
           <LeadFormBuilder
             userId={userId}
@@ -78,7 +103,7 @@ export default function LeadsPage() {
             columns={3}
           />
         </ErrorBoundary>
-      </div>
-    </div>
+      </TabsContent>
+    </Tabs>
   );
 }

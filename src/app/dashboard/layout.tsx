@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/components/theme/theme-provider";
 import DashboardPrefetcher from "@/components/dashboard/DashboardPrefetcher";
 import DashboardThemeSync from "@/components/dashboard/DashboardThemeSync";
 import DashboardThemeRemoteSync from "@/components/dashboard/DashboardThemeRemoteSync";
+import { getDashboardOnboardingState } from "@/lib/dashboard-onboarding";
 import { createServerSupabaseReadonly } from "@/lib/supabase/server";
 import { DashboardSessionProvider } from "@/components/dashboard/DashboardSessionContext";
 import DashboardAppShell from "@/components/dashboard/DashboardAppShell";
@@ -25,6 +26,8 @@ export default async function DashboardLayout({
     redirect("/auth?view=signin&next=%2Fdashboard");
   }
 
+  const onboardingState = await getDashboardOnboardingState(user.id);
+
   return (
     <ThemeProvider
       scopeSelector="#dashboard-theme-scope"
@@ -33,7 +36,7 @@ export default async function DashboardLayout({
       <DashboardSessionProvider user={user}>
         <DashboardThemeSync />
         <DashboardThemeRemoteSync />
-        <DashboardAppShell>
+        <DashboardAppShell onboardingState={onboardingState}>
           <DashboardPrefetcher />
           {children}
         </DashboardAppShell>

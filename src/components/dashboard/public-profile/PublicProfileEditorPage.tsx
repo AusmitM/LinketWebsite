@@ -252,6 +252,8 @@ export default function PublicProfileEditorPage() {
   const autosavePending = useRef(false);
   const leadFormLoadRef = useRef(0);
   const draftRef = useRef<ProfileDraft | null>(null);
+  const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const retryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reorderSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const leadFormReorderSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(
     null
@@ -262,6 +264,8 @@ export default function PublicProfileEditorPage() {
   const lastLogoShapeRef = useRef<ProfileDraft["logoShape"] | null>(null);
   const logoBackgroundSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastLogoBackgroundRef = useRef<ProfileDraft["logoBackgroundWhite"] | null>(null);
+  const linkModalSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastLinkModalSnapshotRef = useRef<string | null>(null);
   const dragScrollFrame = useRef<number | null>(null);
   const leadFormReorderRef = useRef<
     ((sourceId: string, targetId: string) => void) | null
@@ -481,6 +485,12 @@ export default function PublicProfileEditorPage() {
 
   useEffect(() => {
     return () => {
+      if (autosaveTimer.current) {
+        clearTimeout(autosaveTimer.current);
+      }
+      if (retryTimer.current) {
+        clearTimeout(retryTimer.current);
+      }
       if (themeSaveTimer.current) {
         clearTimeout(themeSaveTimer.current);
       }
@@ -489,6 +499,9 @@ export default function PublicProfileEditorPage() {
       }
       if (logoBackgroundSaveTimer.current) {
         clearTimeout(logoBackgroundSaveTimer.current);
+      }
+      if (linkModalSaveTimer.current) {
+        clearTimeout(linkModalSaveTimer.current);
       }
     };
   }, []);
@@ -578,7 +591,10 @@ export default function PublicProfileEditorPage() {
       const message =
         err instanceof Error ? err.message : "Unable to save profile";
       setSaveError(message);
-      if (!message.toLowerCase().includes("handle already taken")) {
+      if (
+        !message.toLowerCase().includes("handle already taken") &&
+        saveError !== message
+      ) {
         toast({
           title: "Save failed",
           description: message,
@@ -588,7 +604,7 @@ export default function PublicProfileEditorPage() {
     } finally {
       setSaving(false);
     }
-  }, [draft, userId, saving]);
+  }, [draft, saveError, userId, saving]);
 
   useEffect(() => {
     if (!draft || !userId) return;
@@ -650,6 +666,60 @@ export default function PublicProfileEditorPage() {
       void handleSave();
     }
   }, [saving, draft, isDirty, userId, handleSave]);
+
+  useEffect(() => {
+    if (!draft || !userId || !isDirty) {
+      if (autosaveTimer.current) {
+        clearTimeout(autosaveTimer.current);
+        autosaveTimer.current = null;
+      }
+      return;
+    }
+    if (saving) {
+      autosavePending.current = true;
+      if (autosaveTimer.current) {
+        clearTimeout(autosaveTimer.current);
+        autosaveTimer.current = null;
+      }
+      return;
+    }
+    if (autosaveTimer.current) {
+      clearTimeout(autosaveTimer.current);
+    }
+    autosaveTimer.current = setTimeout(() => {
+      autosaveTimer.current = null;
+      void handleSave();
+    }, 1200);
+    return () => {
+      if (autosaveTimer.current) {
+        clearTimeout(autosaveTimer.current);
+        autosaveTimer.current = null;
+      }
+    };
+  }, [draft, isDirty, saving, userId, handleSave]);
+
+  useEffect(() => {
+    if (!draft || !userId || !isDirty || !saveError || saving) {
+      if (retryTimer.current) {
+        clearTimeout(retryTimer.current);
+        retryTimer.current = null;
+      }
+      return;
+    }
+    if (retryTimer.current) {
+      clearTimeout(retryTimer.current);
+    }
+    retryTimer.current = setTimeout(() => {
+      retryTimer.current = null;
+      void handleSave();
+    }, 4000);
+    return () => {
+      if (retryTimer.current) {
+        clearTimeout(retryTimer.current);
+        retryTimer.current = null;
+      }
+    };
+  }, [draft, isDirty, saveError, saving, userId, handleSave]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -842,6 +912,7 @@ export default function PublicProfileEditorPage() {
 
   const addLink = useCallback(() => {
     const newLink = createLink();
+    lastLinkModalSnapshotRef.current = null;
     setLinkForm(newLink);
     setEditingLinkId(null);
     setLinkModalMode("add");
@@ -946,6 +1017,7 @@ export default function PublicProfileEditorPage() {
     (linkId: string) => {
       const link = draft?.links.find((item) => item.id === linkId);
       if (!link) return;
+      lastLinkModalSnapshotRef.current = JSON.stringify(link);
       setLinkForm(link);
       setEditingLinkId(linkId);
       setLinkModalMode("edit");
@@ -954,7 +1026,7 @@ export default function PublicProfileEditorPage() {
     [draft?.links]
   );
 
-  const saveLinkModal = useCallback(() => {
+  const saveLinkModal = useCallback((options?: { close?: boolean }) => {
     if (!linkForm) return;
     let nextDraft: ProfileDraft | null = null;
     setDraft((prev) => {
@@ -992,8 +1064,43 @@ export default function PublicProfileEditorPage() {
     if (nextDraft) {
       void handleSave(nextDraft);
     }
-    setLinkModalOpen(false);
+    if (options?.close !== false) {
+      setLinkModalOpen(false);
+    }
   }, [editingLinkId, handleSave, linkForm, linkModalMode]);
+
+  useEffect(() => {
+    if (
+      !linkModalOpen ||
+      linkModalMode !== "edit" ||
+      !editingLinkId ||
+      !linkForm
+    ) {
+      if (linkModalSaveTimer.current) {
+        clearTimeout(linkModalSaveTimer.current);
+        linkModalSaveTimer.current = null;
+      }
+      return;
+    }
+    const snapshot = JSON.stringify(linkForm);
+    if (snapshot === lastLinkModalSnapshotRef.current) {
+      return;
+    }
+    if (linkModalSaveTimer.current) {
+      clearTimeout(linkModalSaveTimer.current);
+    }
+    linkModalSaveTimer.current = setTimeout(() => {
+      linkModalSaveTimer.current = null;
+      lastLinkModalSnapshotRef.current = snapshot;
+      saveLinkModal({ close: false });
+    }, 700);
+    return () => {
+      if (linkModalSaveTimer.current) {
+        clearTimeout(linkModalSaveTimer.current);
+        linkModalSaveTimer.current = null;
+      }
+    };
+  }, [editingLinkId, linkForm, linkModalMode, linkModalOpen, saveLinkModal]);
 
   const handleModalOverrideToggle = useCallback(
     (enabled: boolean) => {
@@ -1024,7 +1131,7 @@ export default function PublicProfileEditorPage() {
   const saveStatusMeta = useMemo(() => {
     if (saveState === "failed") {
       return {
-        label: "Save failed",
+        label: "Save failed. Retrying...",
         className:
           "border-destructive/40 bg-destructive/10 text-destructive",
       };
@@ -1305,11 +1412,6 @@ export default function PublicProfileEditorPage() {
                 <span>
                   Last saved: {lastSavedAt ? formatShortDate(lastSavedAt) : "Just now"}
                 </span>
-                {saveState === "failed" ? (
-                  <Button variant="outline" size="sm" onClick={() => void handleSave()}>
-                    Retry save
-                  </Button>
-                ) : null}
                 </div>
               </div>
               <div className="w-full max-w-[340px] origin-top-left scale-[1]">
@@ -2426,7 +2528,11 @@ function LinkModal({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{mode === "add" ? "Add link" : "Edit link"}</DialogTitle>
-          <DialogDescription>Update the link details.</DialogDescription>
+          <DialogDescription>
+            {mode === "add"
+              ? "Add the link details."
+              : "Changes autosave while you edit."}
+          </DialogDescription>
         </DialogHeader>
         {link ? (
           <div className="space-y-4">
@@ -2513,7 +2619,7 @@ function LinkModal({
             Cancel
           </Button>
           <Button className="text-foreground hover:text-foreground dark:text-foreground dark:hover:text-foreground" onClick={onSave}>
-            {mode === "add" ? "Add link" : "Save changes"}
+            {mode === "add" ? "Add link" : "Done"}
           </Button>
         </DialogFooter>
       </DialogContent>

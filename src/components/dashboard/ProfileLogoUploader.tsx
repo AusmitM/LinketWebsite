@@ -11,6 +11,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { UPLOADER_ACTION_BUTTON_CLASS } from "@/components/dashboard/uploaderActionButtonStyles";
 import { uploadProfileLogoImage } from "@/lib/supabase-storage";
 import { supabase } from "@/lib/supabase";
 import { appendVersion } from "@/lib/avatar-utils";
@@ -45,6 +46,7 @@ const MIN_ZOOM = 0.7;
 const MAX_ZOOM = 3;
 const ZOOM_STEP = 0.01;
 const RECT_GUIDE_RATIO = 2.5;
+const AUTOSAVE_DEBOUNCE_MS = 700;
 
 export default function ProfileLogoUploader({
   userId,
@@ -76,6 +78,8 @@ export default function ProfileLogoUploader({
   const rectGuideOffset = (previewSize - rectGuideHeight) / 2;
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const pointerPosition = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastUploadSignatureRef = useRef<string | null>(null);
 
   const [sourceFile, setSourceFile] = useState<File | null>(null);
   const [inputFileName, setInputFileName] = useState<string | null>(null);
@@ -141,6 +145,7 @@ export default function ProfileLogoUploader({
     (file: File | null) => {
       resetEditor();
       if (!file) return;
+      lastUploadSignatureRef.current = null;
       if (!file.type.startsWith("image/")) {
         setError("Please select an image file.");
         return;
@@ -199,11 +204,11 @@ export default function ProfileLogoUploader({
 
   const handlePointerDown = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {
-      if (!previewReady) return;
+      if (!previewReady || loading) return;
       setIsDragging(true);
       pointerPosition.current = { x: event.clientX, y: event.clientY };
     },
-    [previewReady]
+    [loading, previewReady]
   );
 
   const handlePointerMove = useCallback(
@@ -327,8 +332,46 @@ export default function ProfileLogoUploader({
     resetEditor,
   ]);
 
+  const uploadSignature = useMemo(() => {
+    if (!sourceUrl || !previewReady || !imageMeta) return null;
+    return JSON.stringify({
+      source: inputFileName ?? sourceFile?.name ?? sourceUrl,
+      zoom: Number(zoom.toFixed(3)),
+      offsetX: Number(offset.x.toFixed(1)),
+      offsetY: Number(offset.y.toFixed(1)),
+    });
+  }, [imageMeta, inputFileName, offset.x, offset.y, previewReady, sourceFile?.name, sourceUrl, zoom]);
+
+  useEffect(() => {
+    if (!uploadSignature || loading || isDragging) {
+      if (autosaveTimerRef.current) {
+        clearTimeout(autosaveTimerRef.current);
+        autosaveTimerRef.current = null;
+      }
+      return;
+    }
+    if (uploadSignature === lastUploadSignatureRef.current) {
+      return;
+    }
+    if (autosaveTimerRef.current) {
+      clearTimeout(autosaveTimerRef.current);
+    }
+    autosaveTimerRef.current = setTimeout(() => {
+      autosaveTimerRef.current = null;
+      lastUploadSignatureRef.current = uploadSignature;
+      void handleUpload();
+    }, AUTOSAVE_DEBOUNCE_MS);
+    return () => {
+      if (autosaveTimerRef.current) {
+        clearTimeout(autosaveTimerRef.current);
+        autosaveTimerRef.current = null;
+      }
+    };
+  }, [handleUpload, isDragging, loading, uploadSignature]);
+
   const handleReset = useCallback(() => {
     if (sourceUrl) {
+      lastUploadSignatureRef.current = null;
       resetEditor();
       setSourceFile(null);
       setInputFileName(null);
@@ -407,6 +450,14 @@ export default function ProfileLogoUploader({
   const visibleFileName = inputFileName ?? persistedFileName;
   const inputTargetId = inputId ?? "profile-logo-upload";
 
+  useEffect(() => {
+    return () => {
+      if (autosaveTimerRef.current) {
+        clearTimeout(autosaveTimerRef.current);
+      }
+    };
+  }, []);
+
   if (variant === "compact") {
     const previewScale = baseScale * zoom;
     return (
@@ -466,9 +517,9 @@ export default function ProfileLogoUploader({
               <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-3">
                 <Button
                   type="button"
-                  variant="ghost"
+                  variant="custom"
                   size="sm"
-                  className="h-10 w-full rounded-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:bg-primary/70 disabled:text-primary-foreground/90 disabled:opacity-100 sm:h-8 sm:w-auto"
+                  className={UPLOADER_ACTION_BUTTON_CLASS}
                   onClick={handleReCrop}
                   disabled={!latestLogoUrl || loading}
                 >
@@ -476,9 +527,9 @@ export default function ProfileLogoUploader({
                 </Button>
                 <Button
                   type="button"
-                  variant="ghost"
+                  variant="custom"
                   size="sm"
-                  className="h-10 w-full rounded-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:bg-primary/70 disabled:text-primary-foreground/90 disabled:opacity-100 sm:h-8 sm:w-auto"
+                  className={UPLOADER_ACTION_BUTTON_CLASS}
                   onClick={handleRemove}
                   disabled={!(latestLogoUrl || sourceUrl) || loading}
                 >
@@ -600,25 +651,29 @@ export default function ProfileLogoUploader({
                 step={ZOOM_STEP}
                 value={zoom}
                 onChange={(event) => setZoom(Number(event.target.value))}
+                disabled={loading}
                 className="dashboard-zoom-slider w-full"
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:justify-center sm:gap-3">
-              <Button
-                type="button"
-                size="sm"
-                className="h-10 w-full rounded-full sm:h-8 sm:w-auto"
-                disabled={!previewReady || loading}
-                onClick={handleUpload}
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <span
+                className={cn(
+                  "text-center text-xs",
+                  loading
+                    ? "dashboard-saving-indicator text-foreground"
+                    : "text-muted-foreground"
+                )}
               >
-                {loading ? "Saving..." : "Save"}
-              </Button>
+                {loading
+                  ? "Uploading crop..."
+                  : "Crop auto-applies after you stop moving."}
+              </span>
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="h-10 w-full rounded-full sm:h-8 sm:w-auto"
+                className="h-10 rounded-full px-4 sm:h-8"
                 onClick={handleReset}
                 disabled={!(sourceUrl || latestLogoUrl) || loading}
               >

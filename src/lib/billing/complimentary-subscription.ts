@@ -3,6 +3,17 @@ import "server-only";
 import Stripe from "stripe";
 
 const MIN_FUTURE_WINDOW_SECONDS = 60;
+export const MANAGEABLE_STRIPE_SUBSCRIPTION_STATUSES = [
+  "trialing",
+  "active",
+  "past_due",
+  "unpaid",
+  "incomplete",
+  "paused",
+] as const;
+
+type ManageableStripeSubscriptionStatus =
+  (typeof MANAGEABLE_STRIPE_SUBSCRIPTION_STATUSES)[number];
 
 function toUnixFromIso(value: string | null) {
   if (!value) return null;
@@ -32,18 +43,19 @@ function buildComplimentaryPauseMetadata(args: {
 }
 
 export function pickManageableSubscriptionId(subscriptions: Stripe.Subscription[]) {
-  const priority: Stripe.Subscription.Status[] = [
-    "trialing",
-    "active",
-    "past_due",
-    "unpaid",
-    "paused",
-  ];
-  for (const status of priority) {
+  for (const status of MANAGEABLE_STRIPE_SUBSCRIPTION_STATUSES) {
     const match = subscriptions.find((subscription) => subscription.status === status);
     if (match) return match.id;
   }
   return null;
+}
+
+export function isManageableStripeSubscriptionStatus(
+  status: Stripe.Subscription.Status
+): status is ManageableStripeSubscriptionStatus {
+  return MANAGEABLE_STRIPE_SUBSCRIPTION_STATUSES.some(
+    (candidate) => candidate === status
+  );
 }
 
 export async function ensureNoChargeDuringComplimentary(args: {
@@ -104,4 +116,3 @@ export async function ensureNoChargeDuringComplimentary(args: {
 
   return true;
 }
-

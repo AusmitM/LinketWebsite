@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import ThemeToggle from "@/components/dashboard/ThemeToggle";
 import { createClient } from "@/lib/supabase/client";
+import type { DashboardOnboardingState } from "@/lib/dashboard-onboarding-types";
 import {
   LayoutDashboard,
   BarChart3,
@@ -16,6 +17,7 @@ import {
   ChevronRight,
   Package,
   Megaphone,
+  Sparkles,
   User,
 } from "lucide-react";
 
@@ -56,10 +58,12 @@ export default function Sidebar({
   className,
   variant = "desktop",
   onNavigate,
+  onboardingState,
 }: {
   className?: string;
   variant?: "desktop" | "mobile";
   onNavigate?: () => void;
+  onboardingState?: DashboardOnboardingState;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -110,6 +114,15 @@ export default function Sidebar({
   }, [supabase]);
 
   const navItems = useMemo(() => {
+    if (onboardingState?.requiresOnboarding) {
+      return [
+        {
+          href: "/dashboard/get-started",
+          label: "Get Started",
+          icon: Sparkles,
+        },
+      ];
+    }
     if (!isAdmin) return BASE_NAV;
     return [
       ...BASE_NAV,
@@ -120,7 +133,7 @@ export default function Sidebar({
         icon: Megaphone,
       },
     ];
-  }, [isAdmin]);
+  }, [isAdmin, onboardingState?.requiresOnboarding]);
 
 
   const requestAutosave = useCallback(() => {
@@ -163,9 +176,11 @@ export default function Sidebar({
             </button>
           )}
         </div>
-        <div className={cn("px-3 pb-2", isCollapsed && "flex justify-center")}>
-          <ThemeToggle showLabel={!isCollapsed || isMobile} />
-        </div>
+        {!onboardingState?.requiresOnboarding ? (
+          <div className={cn("px-3 pb-2", isCollapsed && "flex justify-center")}>
+            <ThemeToggle showLabel={!isCollapsed || isMobile} />
+          </div>
+        ) : null}
         <nav className="flex-1 space-y-1 px-2">
           {navItems.map((item) => {
             const Icon = item.icon;

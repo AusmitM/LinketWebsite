@@ -272,9 +272,8 @@ export default function BillingContent({
   const stripeErrors = billingData?.stripe.errors ?? [];
   const billingWarnings = billingData?.warnings ?? [];
   const stripeEnabled = Boolean(billingData?.stripe.enabled);
-  const hasManageableSubscription = Boolean(
-    billingData?.subscription?.id || summary?.activeSubscriptionId
-  );
+  const manageableSubscriptionId = summary?.manageableSubscriptionId ?? null;
+  const hasManageableSubscription = Boolean(manageableSubscriptionId);
   const subscribeMonthlyHref = "/api/billing/subscribe?interval=month";
   const subscribeYearlyHref = "/api/billing/subscribe?interval=year";
   const bundleCheckoutHref = "/api/billing/bundle-checkout";
@@ -1024,17 +1023,32 @@ export default function BillingContent({
                 const partialAddress =
                   Boolean(shippingAddressLines) &&
                   !hasStreetAddress(purchase.shippingAddress);
+                const trackingLabel = purchase.trackingUrl
+                  ? "Tracking link available"
+                  : purchase.trackingNumber
+                    ? "Tracking available"
+                    : "Tracking pending";
+                const productLabel =
+                  purchase.quantity === 1
+                    ? "Linket Bundle"
+                    : `Linket Bundle x${purchase.quantity}`;
+                const orderSummaryLine = [
+                  orderDateLabel,
+                  formatMinorAmount(purchase.totalMinor, purchase.currency),
+                  formatStatus(purchase.purchaseStatus),
+                  trackingLabel,
+                ].join(" • ");
 
                 return (
                   <div
                     key={purchase.id}
                     className="rounded-2xl border bg-card/60 p-4 shadow-sm"
                   >
-                    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                      <div className="space-y-2">
+                    <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                      <div className="min-w-0 flex-1 space-y-2">
                         <div className="flex flex-wrap items-center gap-2">
                           <p className="font-semibold text-foreground">
-                            Linket Bundle x{purchase.quantity}
+                            {productLabel}
                           </p>
                           <Badge variant="secondary" className="rounded-full">
                             {formatStatus(purchase.purchaseStatus)}
@@ -1046,16 +1060,7 @@ export default function BillingContent({
                           </Badge>
                         </div>
                         <p className="text-sm text-muted-foreground">
-                          Ordered {orderDateLabel} |{" "}
-                          {formatMinorAmount(purchase.totalMinor, purchase.currency)} total
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Tracking status:{" "}
-                          {purchase.trackingUrl
-                            ? "Tracking link available"
-                            : purchase.trackingNumber
-                              ? "Tracking number available"
-                              : "Tracking pending"}
+                          {orderSummaryLine}
                         </p>
                       </div>
                       <div className="flex flex-wrap gap-2">
@@ -1075,63 +1080,36 @@ export default function BillingContent({
                             </a>
                           </Button>
                         ) : null}
-                        {purchase.receiptUrl ? (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            asChild
-                            className="rounded-full"
-                          >
-                            <a
-                              href={purchase.receiptUrl}
-                              target="_blank"
-                              rel="noreferrer"
+                        <div className="flex flex-wrap items-center gap-2">
+                          {purchase.receiptUrl ? (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              asChild
+                              className="rounded-full"
                             >
-                              Receipt
-                            </a>
-                          </Button>
-                        ) : (
-                          <span className="inline-flex items-center text-xs text-muted-foreground">
-                            Receipt pending
-                          </span>
-                        )}
+                              <a
+                                href={purchase.receiptUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                              >
+                                Receipt
+                              </a>
+                            </Button>
+                          ) : (
+                            <span className="inline-flex items-center text-xs text-muted-foreground">
+                              Receipt pending
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
 
-                    <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                      <DetailItem
-                        label="Product"
-                        value={
-                          purchase.quantity === 1
-                            ? "Linket Bundle"
-                            : `Linket Bundle x${purchase.quantity}`
-                        }
-                      />
-                      <DetailItem
-                        label="Order total"
-                        value={formatMinorAmount(
-                          purchase.totalMinor,
-                          purchase.currency
-                        )}
-                      />
-                      <DetailItem label="Order date" value={orderDateLabel} />
-                      <DetailItem
-                        label="Tracking"
-                        value={
-                          purchase.trackingNumber
-                            ? purchase.trackingNumber
-                            : purchase.trackingUrl
-                              ? "Tracking link available"
-                              : "Pending"
-                        }
-                      />
-                    </div>
-
-                    <details className="mt-4 rounded-2xl border bg-background/70 p-4">
-                      <summary className="cursor-pointer list-none font-semibold text-foreground [&::-webkit-details-marker]:hidden">
+                    <details className="mt-3 rounded-2xl border bg-background/70 p-4">
+                      <summary className="cursor-pointer list-none text-sm font-semibold text-foreground [&::-webkit-details-marker]:hidden">
                         Shipping and order details
                       </summary>
-                      <div className="mt-4 grid gap-4 lg:grid-cols-2">
+                      <div className="mt-3 grid gap-4 lg:grid-cols-2">
                         <div className="space-y-2 text-sm text-muted-foreground">
                           <p>
                             <span className="font-semibold text-foreground">
@@ -1144,6 +1122,14 @@ export default function BillingContent({
                               Phone:
                             </span>{" "}
                             {purchase.shippingPhone ?? "Not provided"}
+                          </p>
+                          <p>
+                            <span className="font-semibold text-foreground">
+                              Tracking:
+                            </span>{" "}
+                            {purchase.trackingNumber
+                              ? purchase.trackingNumber
+                              : trackingLabel}
                           </p>
                           <p>
                             <span className="font-semibold text-foreground">

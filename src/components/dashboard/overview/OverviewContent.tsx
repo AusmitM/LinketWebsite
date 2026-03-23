@@ -361,7 +361,7 @@ export default function OverviewContent() {
             </Card>
           )}
 
-          <Card className="dashboard-overview-section-card rounded-3xl border border-border/70 bg-card/90 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
+          <Card className="dashboard-leads-card dashboard-overview-section-card rounded-3xl border border-border/70 bg-card/90 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
             <CardHeader className="space-y-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
@@ -375,8 +375,9 @@ export default function OverviewContent() {
               </div>
               <Button
                 asChild
-                variant="ghost"
-                className="text-sm text-primary hover:text-primary/80"
+                variant="outline"
+                size="sm"
+                className="w-fit rounded-full px-4 text-sm font-semibold"
               >
                 <Link href="/dashboard/leads">View all</Link>
               </Button>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { requireRouteAccess } from "@/lib/api-authorization";
+import { isManageableStripeSubscriptionStatus } from "@/lib/billing/complimentary-subscription";
 import { getOrCreateStripeCustomerForUser } from "@/lib/billing/dashboard";
 import { isTrustedRequestOrigin } from "@/lib/http-origin";
 import { getStripeSecretKey, getStripeServerClient } from "@/lib/stripe";
@@ -108,18 +109,11 @@ export async function POST(request: NextRequest) {
       limit: 20,
     });
 
-    const updatableStatuses = new Set([
-      "trialing",
-      "active",
-      "past_due",
-      "unpaid",
-      "incomplete",
-      "paused",
-    ]);
-
     await Promise.all(
       subscriptions.data
-        .filter((subscription) => updatableStatuses.has(subscription.status))
+        .filter((subscription) =>
+          isManageableStripeSubscriptionStatus(subscription.status)
+        )
         .map((subscription) =>
           stripe.subscriptions.update(subscription.id, {
             default_payment_method: paymentMethodId,

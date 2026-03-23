@@ -5,6 +5,7 @@ import { z } from "zod";
 import { requireRouteAccess } from "@/lib/api-authorization";
 import { getStripeSecretKey, getStripeServerClient } from "@/lib/stripe";
 import { validateSearchParams } from "@/lib/request-validation";
+import { createServerSupabaseReadonly } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,6 +15,17 @@ const bundleSessionQuerySchema = z.object({
 });
 
 type BundleSessionLifecycleStatus = "processing" | "paid" | "failed";
+type PersistedOrderStatus = "pending" | "paid" | "refunded" | "canceled";
+type PersistedPurchaseStatus = PersistedOrderStatus;
+
+type PersistedOrderRow = {
+  status: PersistedOrderStatus;
+  receipt_url: string | null;
+};
+
+type PersistedBundlePurchaseRow = {
+  purchase_status: PersistedPurchaseStatus;
+};
 
 function sanitizeCheckoutSessionId(value: string | null) {
   const trimmed = value?.trim() ?? "";
@@ -78,6 +90,85 @@ function readReceiptUrlFromSessionInvoice(
   return invoice.hosted_invoice_url ?? invoice.invoice_pdf ?? null;
 }
 
+function isMissingRelationError(message: string) {
+  const lowered = message.toLowerCase();
+  return (
+    lowered.includes("does not exist") ||
+    lowered.includes("relation") ||
+    lowered.includes("schema cache")
+  );
+}
+
+async function readPersistedBundleSessionState(
+  userId: string,
+  checkoutSessionId: string
+) {
+  const supabase = await createServerSupabaseReadonly();
+  try {
+    const [orderResult, purchaseResult] = await Promise.all([
+      supabase
+        .from("orders")
+        .select("status,receipt_url")
+        .eq("provider", "stripe")
+        .eq("user_id", userId)
+        .eq("provider_checkout_session_id", checkoutSessionId)
+        .maybeSingle<PersistedOrderRow>(),
+      supabase
+        .from("bundle_purchases")
+        .select("purchase_status")
+        .eq("provider", "stripe")
+        .eq("user_id", userId)
+        .eq("provider_checkout_session_id", checkoutSessionId)
+        .maybeSingle<PersistedBundlePurchaseRow>(),
+    ]);
+
+    if (orderResult.error) throw orderResult.error;
+    if (purchaseResult.error) throw purchaseResult.error;
+
+    const orderStatus = orderResult.data?.status ?? null;
+    const purchaseStatus = purchaseResult.data?.purchase_status ?? null;
+
+    if (orderStatus === "paid" || purchaseStatus === "paid") {
+      return {
+        status: "paid" as const,
+        receiptUrl: orderResult.data?.receipt_url ?? null,
+      };
+    }
+
+    if (
+      orderStatus === "canceled" ||
+      purchaseStatus === "canceled" ||
+      orderStatus === "refunded" ||
+      purchaseStatus === "refunded"
+    ) {
+      return {
+        status: "failed" as const,
+        receiptUrl: orderResult.data?.receipt_url ?? null,
+      };
+    }
+
+    if (orderStatus || purchaseStatus) {
+      return {
+        status: "processing" as const,
+        receiptUrl: orderResult.data?.receipt_url ?? null,
+      };
+    }
+
+    return null;
+  } catch (error) {
+    if (
+      error &&
+      typeof error === "object" &&
+      "message" in error &&
+      typeof (error as { message?: unknown }).message === "string" &&
+      isMissingRelationError((error as { message: string }).message)
+    ) {
+      return null;
+    }
+    throw error;
+  }
+}
+
 export async function GET(request: NextRequest) {
   const parsedQuery = validateSearchParams(
     request.nextUrl.searchParams,
@@ -135,13 +226,27 @@ export async function GET(request: NextRequest) {
       paymentStatus: checkoutSession.payment_status,
       paymentIntentStatus,
     });
+    const persistedState = await readPersistedBundleSessionState(
+      user.id,
+      checkoutSessionId
+    );
+    const effectiveStatus: BundleSessionLifecycleStatus =
+      persistedState?.status === "paid"
+        ? "paid"
+        : persistedState?.status === "failed"
+          ? "failed"
+          : lifecycleStatus === "paid"
+            ? "processing"
+            : lifecycleStatus;
 
     return NextResponse.json({
-      status: lifecycleStatus,
+      status: effectiveStatus,
       checkoutStatus: checkoutSession.status ?? null,
       paymentStatus: checkoutSession.payment_status ?? null,
       paymentIntentStatus,
-      receiptUrl: readReceiptUrlFromSessionInvoice(checkoutSession.invoice),
+      receiptUrl:
+        persistedState?.receiptUrl ??
+        readReceiptUrlFromSessionInvoice(checkoutSession.invoice),
     });
   } catch (error) {
     console.error("Stripe bundle session status lookup failed:", error);

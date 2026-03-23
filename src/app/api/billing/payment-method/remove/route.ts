@@ -3,6 +3,7 @@ import type Stripe from "stripe";
 import { z } from "zod";
 
 import { requireRouteAccess } from "@/lib/api-authorization";
+import { isManageableStripeSubscriptionStatus } from "@/lib/billing/complimentary-subscription";
 import { getOrCreateStripeCustomerForUser } from "@/lib/billing/dashboard";
 import { isTrustedRequestOrigin } from "@/lib/http-origin";
 import { validateJsonBody } from "@/lib/request-validation";
@@ -134,16 +135,8 @@ export async function POST(request: NextRequest) {
       limit: 50,
     });
 
-    const updatableStatuses = new Set([
-      "trialing",
-      "active",
-      "past_due",
-      "unpaid",
-      "incomplete",
-      "paused",
-    ]);
     const hasManageableSubscription = subscriptions.data.some((subscription) =>
-      updatableStatuses.has(subscription.status)
+      isManageableStripeSubscriptionStatus(subscription.status)
     );
 
     if (!replacementPaymentMethodId && hasManageableSubscription) {
@@ -166,7 +159,9 @@ export async function POST(request: NextRequest) {
 
     await Promise.all(
       subscriptions.data
-        .filter((subscription) => updatableStatuses.has(subscription.status))
+        .filter((subscription) =>
+          isManageableStripeSubscriptionStatus(subscription.status)
+        )
         .filter(
           (subscription) =>
             readPaymentMethodId(subscription.default_payment_method) ===
