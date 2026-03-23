@@ -28,8 +28,8 @@ AA status: all audited themes pass. Open AA failures remain in . A contextual AA
 | .theme-rose | src/styles/theme/variants.css | 13 | 0 | 3 | None | primary-foreground/primary, muted-foreground/muted, sidebar-primary-foreground/sidebar-primary |
 | .theme-autumn | src/styles/theme/variants.css | 13 | 0 | 4 | None | primary-foreground/primary, accent-foreground/accent, muted-foreground/muted, sidebar-primary-foreground/sidebar-primary |
 | .theme-honey | src/styles/theme/variants.css | 13 | 0 | 4 | None | primary-foreground/primary, muted-foreground/muted, sidebar-primary-foreground/sidebar-primary, muted-foreground/background |
-| .theme-burnt-orange | src/styles/theme/variants.css | 13 | 0 | 5 | None | foreground/background, primary-foreground/primary, accent-foreground/accent, sidebar-primary-foreground/sidebar-primary, muted-foreground/background |
-| .theme-maroon | src/styles/theme/variants.css | 13 | 0 | 3 | None | muted-foreground/muted, muted-foreground/background, muted-foreground/card |
+| .theme-burnt-orange | src/styles/theme/variants.css | 13 | 0 | 5 | None | primary-foreground/primary, accent-foreground/accent, muted-foreground/muted, sidebar-primary-foreground/sidebar-primary, muted-foreground/background |
+| .theme-maroon | src/styles/theme/variants.css | 13 | 0 | 2 | None | muted-foreground/muted, muted-foreground/background |
 
 ## AA Failures And Contextual Risks
 
@@ -43,13 +43,10 @@ AA status: all audited themes pass. Open AA failures remain in . A contextual AA
 | --- | --- | ---: | --- |
 | .theme-autumn | primary-foreground/primary | 4.53:1 | Pass AA, fail AAA |
 | .theme-autumn | sidebar-primary-foreground/sidebar-primary | 4.53:1 | Pass AA, fail AAA |
-| .theme-maroon | muted-foreground/background | 4.57:1 | Pass AA, fail AAA |
-| .theme-burnt-orange | muted-foreground/background | 4.58:1 | Pass AA, fail AAA |
-| .theme-burnt-orange | primary-foreground/primary | 4.59:1 | Pass AA, fail AAA |
-| .theme-burnt-orange | sidebar-primary-foreground/sidebar-primary | 4.59:1 | Pass AA, fail AAA |
-| .theme-burnt-orange | foreground/background | 4.71:1 | Pass AA, fail AAA |
 | .theme-gilded | primary-foreground/primary | 4.76:1 | Pass AA, fail AAA |
 | .theme-gilded | sidebar-primary-foreground/sidebar-primary | 4.76:1 | Pass AA, fail AAA |
+| .theme-burnt-orange | primary-foreground/primary | 4.78:1 | Pass AA, fail AAA |
+| .theme-burnt-orange | sidebar-primary-foreground/sidebar-primary | 4.78:1 | Pass AA, fail AAA |
 | .theme-dream | muted-foreground/muted | 4.81:1 | Pass AA, fail AAA |
 | :root (default) | primary-foreground/primary | 4.86:1 | Pass AA, fail AAA |
 | :root (default) | sidebar-primary-foreground/sidebar-primary | 4.86:1 | Pass AA, fail AAA |
@@ -59,12 +56,15 @@ AA status: all audited themes pass. Open AA failures remain in . A contextual AA
 | .theme-honey | sidebar-primary-foreground/sidebar-primary | 4.88:1 | Pass AA, fail AAA |
 | .theme-midnight | primary-foreground/primary | 4.95:1 | Pass AA, fail AAA |
 | .theme-midnight | sidebar-primary-foreground/sidebar-primary | 4.95:1 | Pass AA, fail AAA |
-| .theme-burnt-orange | accent-foreground/accent | 4.97:1 | Pass AA, fail AAA |
 | .theme-rose | primary-foreground/primary | 5.00:1 | Pass AA, fail AAA |
 | .theme-rose | sidebar-primary-foreground/sidebar-primary | 5.00:1 | Pass AA, fail AAA |
 | .theme-forest | primary-foreground/primary | 5.07:1 | Pass AA, fail AAA |
 | .theme-forest | sidebar-primary-foreground/sidebar-primary | 5.07:1 | Pass AA, fail AAA |
 | .theme-dream | muted-foreground/background | 5.20:1 | Pass AA, fail AAA |
+| .theme-burnt-orange | accent-foreground/accent | 5.31:1 | Pass AA, fail AAA |
+| .theme-honey | muted-foreground/muted | 5.53:1 | Pass AA, fail AAA |
+| .theme-gilded | muted-foreground/muted | 5.82:1 | Pass AA, fail AAA |
+| .theme-burnt-orange | muted-foreground/muted | 5.84:1 | Pass AA, fail AAA |
 
 ## Method
 

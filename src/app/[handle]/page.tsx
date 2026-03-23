@@ -149,10 +149,7 @@ export default async function PublicProfilePage({ params }: Props) {
   const resolvedTheme = normalizeThemeName(profile.theme, "autumn");
   const isDark = isDarkTheme(resolvedTheme);
   const themeClass = `theme-${resolvedTheme} ${isDark ? "dark" : ""}`;
-  const isHookEmOrAggie =
-    resolvedTheme === "burnt-orange" || resolvedTheme === "maroon";
   const headline = profile.headline?.trim() ?? "";
-  const isBurntOrange = resolvedTheme === "burnt-orange";
   const links = sortLinks(profile.links);
   const hasLinks = links.length > 0;
   const hasHeadline = Boolean(headline);
@@ -328,28 +325,18 @@ export default async function PublicProfilePage({ params }: Props) {
                   </div>
                 ) : null}
                 <div className="min-w-0 space-y-1">
-                  <h1
-                    className={`break-words font-display text-3xl tracking-tight sm:text-4xl ${
-                      isBurntOrange ? "sm:text-[#fff6ed]" : ""
-                    }`}
-                  >
+                  <h1 className="break-words font-display text-3xl tracking-tight sm:text-4xl">
                     {displayName}
                   </h1>
                   {hasHeadline ? (
                     <p
-                      className={`break-words text-sm text-muted-foreground ${
-                        isBurntOrange ? "sm:text-[rgba(255,246,237,0.82)]" : ""
-                      }`}
+                      className="break-words text-sm text-muted-foreground"
                       style={{ whiteSpace: "normal", overflow: "visible", textOverflow: "clip" }}
                     >
                       {headline}
                     </p>
                   ) : null}
-                  <div
-                    className={`break-words text-xs text-muted-foreground ${
-                      isBurntOrange ? "sm:text-[rgba(255,246,237,0.7)]" : ""
-                    }`}
-                  >
+                  <div className="break-words text-xs text-muted-foreground">
                     @{publicHandle}
                   </div>
                 </div>
@@ -373,10 +360,7 @@ export default async function PublicProfilePage({ params }: Props) {
 
               {hasLinks ? (
                 <div className="space-y-3 public-profile-load public-profile-load-4">
-                  <h2
-                    className="public-profile-links-label text-sm font-semibold uppercase tracking-[0.3em] text-muted-foreground"
-                    style={isHookEmOrAggie ? { color: "#ffffff" } : undefined}
-                  >
+                  <h2 className="public-profile-links-label text-sm font-semibold uppercase tracking-[0.3em] text-muted-foreground">
                     Links
                   </h2>
                   <PublicProfileLinksList links={links} trackClicks />

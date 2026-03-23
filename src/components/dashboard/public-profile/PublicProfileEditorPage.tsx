@@ -1582,8 +1582,6 @@ function EditorPanel({
   const canReorderLinks =
     linkSortMode === "manual" && linkSearchQuery.trim().length === 0;
   const hasLinkMatches = sortedFilteredLinks.length > 0;
-  const isHookEmOrAggieTheme =
-    theme === "burnt-orange" || theme === "maroon";
   const activeOverrideLink = useMemo(
     () => draft?.links.find((link) => link.isOverride) ?? null,
     [draft?.links]
@@ -1801,42 +1799,18 @@ function EditorPanel({
             data-tour="profile-override-link"
             className="rounded-xl border border-primary/30 bg-primary/5 px-3 py-3"
           >
-            <p
-              className={cn(
-                "text-sm font-semibold",
-                isHookEmOrAggieTheme ? "text-[#500000]" : "text-foreground"
-              )}
-            >
+            <p className="text-sm font-semibold text-foreground">
               Direct-to-link mode
             </p>
-            <p
-              className={cn(
-                "mt-1 text-xs",
-                isHookEmOrAggieTheme
-                  ? "text-[#500000]/85"
-                  : "text-muted-foreground"
-              )}
-            >
+            <p className="mt-1 text-xs text-muted-foreground">
               Turn this on for one link to make your Linket URL open that
               destination directly instead of your public profile page.
             </p>
-            <p
-              className={cn(
-                "mt-2 text-[11px]",
-                isHookEmOrAggieTheme
-                  ? "text-[#500000]/85"
-                  : "text-muted-foreground"
-              )}
-            >
+            <p className="mt-2 text-[11px] text-muted-foreground">
               Consequence: scans bypass your profile page and open the selected
               link directly.
             </p>
-            <p
-              className={cn(
-                "mt-2 text-xs",
-                isHookEmOrAggieTheme ? "text-[#500000]" : "text-foreground"
-              )}
-            >
+            <p className="mt-2 text-xs text-foreground">
               {activeOverrideLink
                 ? `Currently active: ${activeOverrideLink.label || "Selected link"}`
                 : "Currently active: none (Linket URL opens your public profile)."}
@@ -1935,22 +1909,10 @@ function EditorPanel({
                         aria-label={`Use ${link.label || "this link"} for Direct-to-link mode`}
                       />
                       <span className="space-y-0.5 text-left">
-                        <span
-                          className={cn(
-                            "block text-xs font-medium",
-                            isHookEmOrAggieTheme ? "text-white" : "text-foreground"
-                          )}
-                        >
+                        <span className="block text-xs font-medium text-foreground">
                           Use Direct-to-link mode
                         </span>
-                        <span
-                          className={cn(
-                            "block text-[11px]",
-                            isHookEmOrAggieTheme
-                              ? "text-white/85"
-                              : "text-muted-foreground"
-                          )}
-                        >
+                        <span className="block text-[11px] text-muted-foreground">
                           Linket scans skip your public page and open this link directly.
                         </span>
                       </span>
@@ -2143,16 +2105,12 @@ function PhonePreviewCard({
   );
   const submitLabel = "Submit";
   const resolvedTheme = themeName;
-  const isBurntOrange = resolvedTheme === "burnt-orange";
-  const isHookEmOrAggie =
-    resolvedTheme === "burnt-orange" || resolvedTheme === "maroon";
 
   return (
     <div
       className={cn(
         "public-profile-preview h-fit w-full max-w-[340px] overflow-hidden rounded-[36px] border border-border/60 bg-background shadow-[0_20px_40px_-30px_rgba(15,23,42,0.3)]",
-        resolvedTheme ? `theme-${resolvedTheme}` : "",
-        isBurntOrange && "theme-burnt-orange"
+        resolvedTheme ? `theme-${resolvedTheme}` : ""
       )}
     >
       <div
@@ -2215,7 +2173,7 @@ function PhonePreviewCard({
           className={cn(
             "mt-4 w-full rounded-full px-4 py-2 text-xs font-semibold transition",
             contactEnabled
-              ? "bg-[var(--primary)] text-[var(--primary-foreground)] shadow-[0_12px_28px_-18px_var(--ring)] hover:bg-[color-mix(in_oklab,var(--primary),#fff_15%)]"
+              ? "public-profile-preview-contact-button"
               : "bg-muted text-muted-foreground opacity-80"
           )}
         >
@@ -2229,7 +2187,6 @@ function PhonePreviewCard({
             className={cn(
               "public-profile-preview-section-label public-profile-links-label text-xs font-semibold text-muted-foreground",
             )}
-            style={isHookEmOrAggie ? { color: "#ffffff" } : undefined}
           >
             Links
           </div>
@@ -2255,10 +2212,7 @@ function PhonePreviewCard({
         </div>
 
         <div
-          className={cn(
-            "public-profile-preview-section-label mt-4 w-full text-xs text-muted-foreground",
-            isBurntOrange && "text-[#fff6ed]"
-          )}
+          className="public-profile-preview-section-label mt-4 w-full text-xs text-muted-foreground"
         >
           {leadFormPreview?.title || "Get in Touch"}
         </div>

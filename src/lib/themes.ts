@@ -46,8 +46,6 @@ const DARK_SET: Set<ThemeName> = new Set([
   "midnight",
   "forest",
   "gilded",
-  "burnt-orange",
-  "maroon",
 ]);
 
 function resolveThemeName(

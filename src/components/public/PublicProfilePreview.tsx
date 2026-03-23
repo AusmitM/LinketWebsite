@@ -69,9 +69,6 @@ export default function PublicProfilePreview({
   const links = sortLinks(profile.links);
   const hasLinks = links.length > 0;
   const hasHeadline = Boolean(headline);
-  const isBurntOrange = resolvedTheme === "burnt-orange";
-  const isHookEmOrAggie =
-    resolvedTheme === "burnt-orange" || resolvedTheme === "maroon";
   const [leadFormTitle, setLeadFormTitle] = useState("Contact");
   const [hasLeadForm, setHasLeadForm] = useState(false);
 
@@ -278,28 +275,18 @@ export default function PublicProfilePreview({
                   </div>
                 ) : null}
                   <div className="min-w-0 space-y-1">
-                    <h1
-                      className={`break-words font-display text-3xl tracking-tight sm:text-4xl ${
-                        isBurntOrange ? "sm:text-[#fff6ed]" : ""
-                      }`}
-                    >
+                    <h1 className="break-words font-display text-3xl tracking-tight sm:text-4xl">
                       {displayName}
                     </h1>
                     {hasHeadline ? (
                       <p
-                        className={`break-words text-sm text-muted-foreground ${
-                          isBurntOrange ? "sm:text-[rgba(255,246,237,0.82)]" : ""
-                        }`}
+                        className="break-words text-sm text-muted-foreground"
                         style={{ whiteSpace: "normal", overflow: "visible", textOverflow: "clip" }}
                       >
                         {headline}
                       </p>
                     ) : null}
-                    <div
-                      className={`break-words text-xs text-muted-foreground ${
-                        isBurntOrange ? "sm:text-[rgba(255,246,237,0.7)]" : ""
-                      }`}
-                    >
+                    <div className="break-words text-xs text-muted-foreground">
                       @{publicHandle}
                     </div>
                   </div>
@@ -331,10 +318,7 @@ export default function PublicProfilePreview({
 
               {hasLinks ? (
                 <div className="space-y-3">
-                  <h2
-                    className="public-profile-links-label text-sm font-semibold uppercase tracking-[0.3em] text-muted-foreground"
-                    style={isHookEmOrAggie ? { color: "#ffffff" } : undefined}
-                  >
+                  <h2 className="public-profile-links-label text-sm font-semibold uppercase tracking-[0.3em] text-muted-foreground">
                     Links
                   </h2>
                   <PublicProfileLinksList links={links} />
@@ -444,7 +428,7 @@ export default function PublicProfilePreview({
                 </div>
               </div>
               {forceMobile ? null : (
-              <div className="hidden flex-wrap items-center gap-4 sm:flex">
+              <div className="public-profile-desktop-header hidden flex-wrap items-center gap-4 sm:flex">
                 {avatar ? (
                   <div className="flex flex-col items-center">
                     <div className="relative flex flex-col items-center">
@@ -474,28 +458,18 @@ export default function PublicProfilePreview({
                   </div>
                 ) : null}
                   <div className="min-w-0 space-y-1">
-                    <h1
-                      className={`break-words font-display text-3xl tracking-tight sm:text-4xl ${
-                        isBurntOrange ? "sm:text-[#fff6ed]" : ""
-                      }`}
-                    >
+                    <h1 className="break-words font-display text-3xl tracking-tight sm:text-4xl">
                       {displayName}
                     </h1>
                     {hasHeadline ? (
                       <p
-                        className={`break-words text-sm text-muted-foreground ${
-                          isBurntOrange ? "sm:text-[rgba(255,246,237,0.82)]" : ""
-                        }`}
+                        className="break-words text-sm text-muted-foreground"
                         style={{ whiteSpace: "normal", overflow: "visible", textOverflow: "clip" }}
                       >
                         {headline}
                       </p>
                     ) : null}
-                    <div
-                      className={`break-words text-xs text-muted-foreground ${
-                        isBurntOrange ? "sm:text-[rgba(255,246,237,0.7)]" : ""
-                      }`}
-                    >
+                    <div className="break-words text-xs text-muted-foreground">
                       @{publicHandle}
                     </div>
                   </div>
@@ -520,10 +494,7 @@ export default function PublicProfilePreview({
 
                 {hasLinks ? (
                   <div className="space-y-3">
-                  <h2
-                    className="public-profile-links-label text-sm font-semibold uppercase tracking-[0.3em] text-muted-foreground"
-                    style={isHookEmOrAggie ? { color: "#ffffff" } : undefined}
-                  >
+                  <h2 className="public-profile-links-label text-sm font-semibold uppercase tracking-[0.3em] text-muted-foreground">
                     Links
                   </h2>
                   <PublicProfileLinksList links={links} />

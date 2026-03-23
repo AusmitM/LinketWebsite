@@ -27,6 +27,20 @@
 .public-profile-shell {
   --public-profile-load-ease: cubic-bezier(0.22, 1, 0.36, 1);
   --public-profile-load-duration: 760ms;
+  --profile-hero-foreground: var(--foreground);
+  --profile-hero-muted-foreground: var(--muted-foreground);
+  --profile-section-label: var(--muted-foreground);
+  --profile-contact-button-bg: var(--color-button-primary-bg);
+  --profile-contact-button-bg-hover: var(--color-button-primary-bg-hover);
+  --profile-contact-button-bg-active: var(--color-button-primary-bg-active);
+  --profile-contact-button-fg: var(--color-button-primary-fg);
+  --profile-contact-button-border: var(--color-button-primary-border);
+  --profile-contact-button-preview-shadow: 0 12px 28px -18px var(--ring);
+  --profile-preview-hero-foreground: var(--foreground);
+  --profile-preview-hero-muted-foreground: var(--muted-foreground);
+  --profile-preview-section-label: var(--muted-foreground);
+  --profile-preview-link-foreground: var(--foreground);
+  --profile-preview-link-muted-foreground: var(--muted-foreground);
   background: var(--background);
 }
 
@@ -327,19 +341,169 @@
   letter-spacing: 0.06em;
 }
 
-/* Hook 'Em theme: gradient only */
+/* Hook 'Em: layered copper glow with readable cream surfaces */
 .theme-burnt-orange.public-profile-shell,
-.theme-burnt-orange .public-profile-shell {
-  background-image: linear-gradient(180deg, #c05600 55%, #ffffff 100%);
+.theme-burnt-orange .public-profile-shell,
+.public-profile-preview.theme-burnt-orange {
+  --profile-hero-foreground: #fff7f1;
+  --profile-hero-muted-foreground: rgba(255, 247, 241, 0.84);
+  --profile-section-label: #fff7f1;
+  --profile-contact-button-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.99) 0%, rgba(255, 246, 238, 0.96) 100%);
+  --profile-contact-button-bg-hover: linear-gradient(180deg, rgba(255, 255, 255, 1) 0%, rgba(255, 241, 230, 0.98) 100%);
+  --profile-contact-button-bg-active: linear-gradient(180deg, rgba(255, 251, 246, 0.99) 0%, rgba(255, 236, 220, 0.95) 100%);
+  --profile-contact-button-fg: #7a360d;
+  --profile-contact-button-border: rgba(120, 53, 14, 0.3);
+  --profile-contact-button-preview-shadow: 0 14px 28px -18px rgba(92, 44, 16, 0.34);
+  --profile-preview-hero-foreground: #fff7f1;
+  --profile-preview-hero-muted-foreground: rgba(255, 247, 241, 0.82);
+  --profile-preview-section-label: #fffaf6;
+  --profile-preview-link-foreground: #4a2312;
+  --profile-preview-link-muted-foreground: #6b3312;
+  background-image:
+    radial-gradient(220px 150px at 10% 0%, rgba(255, 214, 181, 0.34) 0%, transparent 72%),
+    radial-gradient(260px 180px at 90% 0%, rgba(255, 182, 138, 0.2) 0%, transparent 74%),
+    linear-gradient(180deg, #4a2312 0%, #b55200 24%, #f4b27b 52%, #fff4ea 100%);
 }
 
+.theme-burnt-orange .public-profile-backdrop {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, #4a2312 22%, transparent),
+    color-mix(in srgb, #fff1e3 94%, transparent)
+  );
+}
+
+.theme-burnt-orange .public-profile-card {
+  background: linear-gradient(162deg, rgba(255, 251, 246, 0.95) 0%, rgba(255, 238, 223, 0.9) 54%, rgba(244, 201, 167, 0.84) 100%);
+  border-color: rgba(120, 53, 14, 0.28);
+  box-shadow: 0 30px 56px -38px rgba(92, 44, 16, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.64);
+  backdrop-filter: blur(10px);
+}
+
+.theme-burnt-orange .public-profile-link {
+  background: linear-gradient(160deg, rgba(255, 251, 246, 0.95) 0%, rgba(255, 239, 225, 0.9) 54%, rgba(243, 196, 159, 0.84) 100%);
+  border-color: rgba(120, 53, 14, 0.28);
+  box-shadow: 0 22px 44px -36px rgba(92, 44, 16, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.theme-burnt-orange .public-profile-link-action {
+  background: linear-gradient(180deg, rgba(255, 251, 245, 0.95) 0%, rgba(255, 233, 212, 0.9) 58%, rgba(247, 204, 167, 0.84) 100%);
+  border-color: var(--color-button-outline-border);
+  color: var(--color-button-outline-fg);
+}
+
+.theme-burnt-orange .public-profile-link-action:hover,
+.theme-burnt-orange .public-profile-link:hover .public-profile-link-action {
+  background: linear-gradient(180deg, rgba(255, 252, 247, 0.98) 0%, rgba(255, 239, 221, 0.93) 58%, rgba(249, 212, 180, 0.88) 100%);
+  color: var(--color-button-outline-fg-hover);
+}
+
+.theme-burnt-orange .public-profile-actions [data-slot=button]:not(.public-profile-cta-primary) {
+  background: linear-gradient(180deg, rgba(255, 251, 246, 0.96) 0%, rgba(255, 239, 224, 0.92) 56%, rgba(245, 204, 171, 0.88) 100%);
+  color: var(--color-button-secondary-fg);
+  border: 1px solid var(--color-button-secondary-border);
+  box-shadow: 0 16px 32px -24px rgba(92, 44, 16, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.64);
+}
+
+.theme-burnt-orange .public-profile-actions [data-slot=button]:not(.public-profile-cta-primary):hover {
+  background: linear-gradient(180deg, rgba(255, 252, 247, 0.98) 0%, rgba(255, 242, 228, 0.94) 56%, rgba(248, 212, 184, 0.9) 100%);
+  color: var(--color-button-secondary-fg-hover);
+}
+
+.theme-burnt-orange .public-profile-cta-primary {
+  background: linear-gradient(135deg, #6f2d00 0%, #914000 34%, #a74a00 62%, #b55200 100%) !important;
+  color: var(--primary-foreground) !important;
+  border: 1px solid var(--button-solid-outline);
+  box-shadow: 0 20px 40px -26px rgba(78, 34, 10, 0.52);
+}
+
+.theme-burnt-orange .public-profile-cta-primary:hover {
+  background: linear-gradient(135deg, #7a3200 0%, #9b4500 34%, #ad4d00 62%, #b55200 100%) !important;
+}
+
+/* Aggie: deep wine hero with blush surfaces */
 .theme-maroon.public-profile-shell,
-.theme-maroon .public-profile-shell {
-  background-image: linear-gradient(180deg, #500000 55%, #ffffff 100%);
+.theme-maroon .public-profile-shell,
+.public-profile-preview.theme-maroon {
+  --profile-hero-foreground: #fff4f5;
+  --profile-hero-muted-foreground: rgba(255, 244, 245, 0.84);
+  --profile-section-label: #fff4f5;
+  --profile-contact-button-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.99) 0%, rgba(255, 244, 246, 0.96) 100%);
+  --profile-contact-button-bg-hover: linear-gradient(180deg, rgba(255, 255, 255, 1) 0%, rgba(255, 239, 242, 0.98) 100%);
+  --profile-contact-button-bg-active: linear-gradient(180deg, rgba(255, 251, 252, 0.99) 0%, rgba(251, 234, 238, 0.95) 100%);
+  --profile-contact-button-fg: #681423;
+  --profile-contact-button-border: rgba(108, 23, 40, 0.3);
+  --profile-contact-button-preview-shadow: 0 14px 28px -18px rgba(73, 10, 24, 0.34);
+  --profile-preview-hero-foreground: #fff4f5;
+  --profile-preview-hero-muted-foreground: rgba(255, 244, 245, 0.82);
+  --profile-preview-section-label: #fff6f7;
+  --profile-preview-link-foreground: #4c0b15;
+  --profile-preview-link-muted-foreground: #6d2430;
+  background-image:
+    radial-gradient(220px 160px at 12% 0%, rgba(255, 215, 221, 0.28) 0%, transparent 72%),
+    radial-gradient(260px 180px at 88% 0%, rgba(196, 84, 104, 0.2) 0%, transparent 74%),
+    linear-gradient(180deg, #2f040a 0%, #500000 26%, #b86473 52%, #fff3f3 100%);
+}
+
+.theme-maroon .public-profile-backdrop {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, #2f040a 24%, transparent),
+    color-mix(in srgb, #fff1f2 95%, transparent)
+  );
+}
+
+.theme-maroon .public-profile-card {
+  background: linear-gradient(162deg, rgba(255, 250, 250, 0.95) 0%, rgba(249, 232, 235, 0.9) 54%, rgba(237, 198, 206, 0.84) 100%);
+  border-color: rgba(108, 23, 40, 0.28);
+  box-shadow: 0 30px 56px -38px rgba(73, 10, 24, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.64);
+  backdrop-filter: blur(10px);
+}
+
+.theme-maroon .public-profile-link {
+  background: linear-gradient(160deg, rgba(255, 250, 250, 0.95) 0%, rgba(249, 233, 236, 0.9) 54%, rgba(235, 193, 202, 0.84) 100%);
+  border-color: rgba(108, 23, 40, 0.28);
+  box-shadow: 0 22px 44px -36px rgba(73, 10, 24, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.theme-maroon .public-profile-link-action {
+  background: linear-gradient(180deg, rgba(255, 250, 251, 0.95) 0%, rgba(247, 227, 231, 0.9) 58%, rgba(235, 196, 204, 0.84) 100%);
+  border-color: var(--color-button-outline-border);
+  color: var(--color-button-outline-fg);
+}
+
+.theme-maroon .public-profile-link-action:hover,
+.theme-maroon .public-profile-link:hover .public-profile-link-action {
+  background: linear-gradient(180deg, rgba(255, 251, 252, 0.98) 0%, rgba(250, 235, 238, 0.93) 58%, rgba(240, 205, 212, 0.88) 100%);
+  color: var(--color-button-outline-fg-hover);
+}
+
+.theme-maroon .public-profile-actions [data-slot=button]:not(.public-profile-cta-primary) {
+  background: linear-gradient(180deg, rgba(255, 250, 251, 0.96) 0%, rgba(248, 230, 234, 0.92) 56%, rgba(237, 200, 208, 0.88) 100%);
+  color: var(--color-button-secondary-fg);
+  border: 1px solid var(--color-button-secondary-border);
+  box-shadow: 0 16px 32px -24px rgba(73, 10, 24, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.64);
+}
+
+.theme-maroon .public-profile-actions [data-slot=button]:not(.public-profile-cta-primary):hover {
+  background: linear-gradient(180deg, rgba(255, 251, 252, 0.98) 0%, rgba(250, 236, 239, 0.94) 56%, rgba(241, 208, 214, 0.9) 100%);
+  color: var(--color-button-secondary-fg-hover);
+}
+
+.theme-maroon .public-profile-cta-primary {
+  background: linear-gradient(135deg, #3c0008 0%, #5e0714 38%, #7d1730 72%, #a33c54 100%) !important;
+  color: var(--primary-foreground) !important;
+  border: 1px solid var(--button-solid-outline);
+  box-shadow: 0 20px 40px -26px rgba(59, 6, 18, 0.54);
+}
+
+.theme-maroon .public-profile-cta-primary:hover {
+  background: linear-gradient(135deg, #4a000a 0%, #680a18 38%, #882039 72%, #ad4660 100%) !important;
 }
 
 .theme-honey.public-profile-shell,
-.theme-honey .public-profile-shell {
+.theme-honey .public-profile-shell,
+.public-profile-preview.theme-honey {
   background-color: #f7dcab;
   background-image:
     radial-gradient(180px 140px at 12% 0%, rgba(255, 246, 218, 0.32) 0%, transparent 74%),
@@ -429,7 +593,8 @@
 }
 
 .theme-forest.public-profile-shell,
-.theme-forest .public-profile-shell {
+.theme-forest .public-profile-shell,
+.public-profile-preview.theme-forest {
   background-color: #273529;
   background-image:
     radial-gradient(124% 90% at 50% -10%, rgba(199, 156, 126, 0.2) 0%, transparent 70%),
@@ -462,7 +627,8 @@
 }
 
 .theme-light.public-profile-shell,
-.public-profile-shell.theme-light {
+.public-profile-shell.theme-light,
+.public-profile-preview.theme-light {
   background-image:
     radial-gradient(180px 140px at 12% 0%, rgba(246, 251, 255, 0.34) 0%, transparent 74%),
     radial-gradient(220px 140px at 88% 0%, rgba(186, 209, 255, 0.22) 0%, transparent 74%),
@@ -531,7 +697,8 @@
 }
 
 .theme-dream.public-profile-shell,
-.theme-dream .public-profile-shell {
+.theme-dream .public-profile-shell,
+.public-profile-preview.theme-dream {
   background-image:
     radial-gradient(180px 140px at 12% 0%, rgba(252, 246, 255, 0.34) 0%, transparent 74%),
     radial-gradient(220px 140px at 88% 0%, rgba(200, 177, 255, 0.24) 0%, transparent 74%),
@@ -600,7 +767,8 @@
 }
 
 .theme-rose.public-profile-shell,
-.theme-rose .public-profile-shell {
+.theme-rose .public-profile-shell,
+.public-profile-preview.theme-rose {
   background-image:
     radial-gradient(180px 140px at 12% 0%, rgba(255, 246, 239, 0.34) 0%, transparent 74%),
     radial-gradient(220px 140px at 88% 0%, rgba(226, 116, 87, 0.24) 0%, transparent 74%),
@@ -669,7 +837,8 @@
 }
 
 .theme-autumn.public-profile-shell,
-.theme-autumn .public-profile-shell {
+.theme-autumn .public-profile-shell,
+.public-profile-preview.theme-autumn {
   background-image:
     radial-gradient(180px 140px at 12% 0%, rgba(248, 226, 160, 0.36) 0%, transparent 74%),
     radial-gradient(220px 150px at 88% 0%, rgba(191, 95, 59, 0.23) 0%, transparent 72%),
@@ -811,9 +980,9 @@
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  border: 1px solid var(--color-button-primary-border) !important;
-  background: var(--color-button-primary-bg) !important;
-  color: var(--color-button-primary-fg) !important;
+  border: 1px solid var(--profile-contact-button-border) !important;
+  background: var(--profile-contact-button-bg) !important;
+  color: var(--profile-contact-button-fg) !important;
   box-shadow:
     0 24px 46px -30px rgba(15, 23, 42, 0.6),
     inset 0 1px 0 color-mix(in srgb, #ffffff 28%, transparent);
@@ -857,7 +1026,7 @@
 }
 
 .public-profile-shell .public-profile-cta-primary:hover {
-  background: var(--color-button-primary-bg-hover) !important;
+  background: var(--profile-contact-button-bg-hover) !important;
   transform: translateY(-1px);
   box-shadow:
     0 30px 52px -32px rgba(15, 23, 42, 0.64),
@@ -880,7 +1049,7 @@
 }
 
 .public-profile-shell .public-profile-cta-primary:active {
-  background: var(--color-button-primary-bg-active) !important;
+  background: var(--profile-contact-button-bg-active) !important;
   transform: translateY(0);
   box-shadow:
     0 20px 38px -28px rgba(15, 23, 42, 0.58),
@@ -905,117 +1074,62 @@
   color: var(--color-button-outline-fg);
 }
 
+.public-profile-desktop-header h1 {
+  color: var(--profile-hero-foreground);
+}
+
+.public-profile-desktop-header p,
+.public-profile-desktop-header .text-muted-foreground {
+  color: var(--profile-hero-muted-foreground);
+}
+
 .public-profile-links h2 {
   letter-spacing: 0.28em;
+  color: var(--profile-section-label);
 }
 
-/* Hook 'Em: make public profile CTA + section label readable on orange */
-.theme-burnt-orange .public-profile-actions [data-slot=button]:not(.public-profile-cta-primary) {
-  background: var(--color-button-secondary-bg);
-  color: var(--color-button-secondary-fg);
-  border: 1px solid var(--color-button-secondary-border);
-  box-shadow: 0 16px 32px -24px color-mix(in srgb, var(--button-subtle-foreground) 32%, transparent);
+.public-profile-links-label {
+  color: var(--profile-section-label);
 }
 
-.theme-maroon .public-profile-actions [data-slot=button]:not(.public-profile-cta-primary) {
-  background: var(--color-button-secondary-bg);
-  color: var(--color-button-secondary-fg);
-  border: 1px solid var(--color-button-secondary-border);
-  box-shadow: 0 16px 32px -24px color-mix(in srgb, var(--button-subtle-foreground) 32%, transparent);
+.public-profile-preview .public-profile-preview-header .text-foreground {
+  color: var(--profile-preview-hero-foreground);
 }
 
-.theme-burnt-orange .public-profile-actions [data-slot=button]:not(.public-profile-cta-primary):hover {
-  background: var(--color-button-secondary-bg-hover);
-  color: var(--color-button-secondary-fg-hover);
+.public-profile-preview .public-profile-preview-header .text-muted-foreground {
+  color: var(--profile-preview-hero-muted-foreground);
 }
 
-.theme-maroon .public-profile-actions [data-slot=button]:not(.public-profile-cta-primary):hover {
-  background: var(--color-button-secondary-bg-hover);
-  color: var(--color-button-secondary-fg-hover);
+.public-profile-preview .public-profile-preview-section-label {
+  color: var(--profile-preview-section-label);
 }
 
-.theme-burnt-orange .public-profile-links h2 {
-  color: #ffffff;
+.public-profile-preview .public-link-title {
+  color: var(--profile-preview-link-foreground);
 }
 
-.theme-burnt-orange .public-profile-links-label {
-  color: #ffffff;
+.public-profile-preview .public-link-url,
+.public-profile-preview .public-link-clicks,
+.public-profile-preview .preview-lead-item,
+.public-profile-preview .preview-lead-item .text-muted-foreground,
+.public-profile-preview .preview-lead-item svg,
+.public-profile-preview .public-profile-preview-submit {
+  color: var(--profile-preview-link-muted-foreground);
 }
 
-.theme-maroon .public-profile-links h2 {
-  color: #ffffff;
+.public-profile-preview .public-profile-preview-contact-button {
+  border: 1px solid var(--profile-contact-button-border);
+  background: var(--profile-contact-button-bg);
+  color: var(--profile-contact-button-fg);
+  box-shadow: var(--profile-contact-button-preview-shadow);
 }
 
-.theme-maroon .public-profile-links-label {
-  color: #ffffff;
+.public-profile-preview .public-profile-preview-contact-button:hover {
+  background: var(--profile-contact-button-bg-hover);
 }
 
-/* Hook 'Em: ensure primary CTA is clearly visible */
-.theme-burnt-orange .public-profile-cta-primary {
-  background: var(--color-button-primary-bg) !important;
-  color: var(--color-button-primary-fg) !important;
-  border: 1px solid var(--color-button-primary-border);
-}
-
-.theme-maroon .public-profile-cta-primary {
-  background: var(--color-button-primary-bg) !important;
-  color: var(--color-button-primary-fg) !important;
-  border: 1px solid var(--color-button-primary-border);
-}
-
-.theme-burnt-orange .public-profile-cta-primary:hover {
-  background: var(--color-button-primary-bg-hover) !important;
-}
-
-.theme-maroon .public-profile-cta-primary:hover {
-  background: var(--color-button-primary-bg-hover) !important;
-}
-
-.theme-burnt-orange .public-profile-link-action {
-  background: var(--color-button-primary-bg);
-  color: var(--color-button-primary-fg);
-  border-color: var(--color-button-primary-border);
-}
-
-.theme-burnt-orange .public-profile-link-action:hover,
-.theme-burnt-orange .public-profile-link:hover .public-profile-link-action {
-  color: var(--color-button-primary-fg);
-  background: var(--color-button-primary-bg-hover);
-}
-
-.theme-maroon .public-profile-link-action {
-  background: var(--color-button-primary-bg);
-  color: var(--color-button-primary-fg);
-  border-color: var(--color-button-primary-border);
-}
-
-.theme-maroon .public-profile-link-action:hover,
-.theme-maroon .public-profile-link:hover .public-profile-link-action {
-  color: var(--color-button-primary-fg);
-  background: var(--color-button-primary-bg-hover);
-}
-
-.theme-burnt-orange .public-profile-link-action svg,
-.theme-maroon .public-profile-link-action svg {
-  color: currentColor;
-  stroke: currentColor;
-}
-@media (min-width: 640px) {
-  .theme-burnt-orange .public-profile-desktop-header h1 {
-    color: #fff6ed;
-  }
-
-  .theme-burnt-orange .public-profile-desktop-header p {
-    color: rgba(255, 246, 237, 0.82);
-  }
-
-  .theme-maroon .public-profile-desktop-header h1 {
-    color: #fff1f1;
-  }
-
-  .theme-maroon .public-profile-desktop-header p {
-    color: rgba(255, 241, 241, 0.82);
-  }
+.public-profile-preview .public-profile-preview-contact-button:active {
+  background: var(--profile-contact-button-bg-active);
 }
 
 .public-profile-link {
