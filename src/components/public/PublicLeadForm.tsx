@@ -38,6 +38,7 @@ type Appearance = {
 type Props = {
   ownerId?: string | null;
   handle: string;
+  profileId?: string | null;
   initialForm?: LeadFormConfig | null;
   initialFormId?: string | null;
   appearance?: Appearance;
@@ -55,6 +56,7 @@ const OTHER_PREFIX = "other:";
 
 export default function PublicLeadForm({
   handle,
+  profileId = null,
   initialForm = null,
   initialFormId = null,
   appearance,
@@ -103,6 +105,10 @@ export default function PublicLeadForm({
       ? "w-fit rounded-full px-5 py-1.5 text-sm shadow-[0_10px_24px_-18px_var(--ring)]"
       : "rounded-2xl"
   );
+  const submitButtonClassName = cn(
+    buttonClassName,
+    variant === "profile" ? "public-profile-form-submit" : null
+  );
   const cardClassName = cn(
     "border border-border/60",
     showHeader ? null : "gap-0 py-4",
@@ -111,15 +117,18 @@ export default function PublicLeadForm({
   );
 
   useEffect(() => {
-    if (!handle) return;
+    if (!handle && !profileId) return;
     const hasHydratedForm = Boolean(initialForm && hydratedFormId);
     if (!hasHydratedForm) {
       setLoading(true);
     }
     (async () => {
       try {
+        const search = new URLSearchParams();
+        if (handle) search.set("handle", handle);
+        if (profileId) search.set("profileId", profileId);
         const response = await fetch(
-          `/api/lead-forms/public?handle=${encodeURIComponent(handle)}`,
+          `/api/lead-forms/public?${search.toString()}`,
           { cache: "no-store" }
         );
         if (!response.ok) {
@@ -150,7 +159,7 @@ export default function PublicLeadForm({
         setLoading(false);
       }
     })();
-  }, [handle, hydratedFormId, initialForm]);
+  }, [handle, hydratedFormId, initialForm, profileId]);
 
   useEffect(() => {
     if (!formId) return;
@@ -1073,7 +1082,7 @@ export default function PublicLeadForm({
               type="submit"
               disabled={disabled || submitting}
               variant={appearance?.buttonVariant ?? "default"}
-              className={buttonClassName}
+              className={submitButtonClassName}
             >
               {submitting ? "Submitting..." : "Submit"}
             </Button>

@@ -2255,7 +2255,7 @@ function PhonePreviewCard({
                 )}
                 <button
                   type="button"
-                  className="public-profile-preview-submit w-full rounded-full bg-foreground/90 px-4 py-2 text-xs font-semibold text-background"
+                  className="public-profile-preview-submit w-full rounded-full px-4 py-2 text-xs font-semibold transition"
                 >
                   {submitLabel}
                 </button>

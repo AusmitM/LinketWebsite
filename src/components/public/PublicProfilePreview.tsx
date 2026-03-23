@@ -122,8 +122,11 @@ export default function PublicProfilePreview({
     let active = true;
     (async () => {
       try {
+        const search = new URLSearchParams();
+        if (publicHandle) search.set("handle", publicHandle);
+        if (profile.id) search.set("profileId", profile.id);
         const response = await fetch(
-          `/api/lead-forms/public?handle=${encodeURIComponent(publicHandle)}`,
+          `/api/lead-forms/public?${search.toString()}`,
           { cache: "no-store" }
         );
         if (!response.ok) return;
@@ -137,13 +140,16 @@ export default function PublicProfilePreview({
           setLeadFormTitle(payload.form.title);
         }
       } catch {
-        if (active) setLeadFormTitle("Contact");
+        if (active) {
+          setHasLeadForm(false);
+          setLeadFormTitle("Contact");
+        }
       }
     })();
     return () => {
       active = false;
     };
-  }, [publicHandle]);
+  }, [profile.id, publicHandle]);
 
   return (
     <div className={`public-profile-shell min-h-full text-foreground ${themeClass}`}>
@@ -309,6 +315,7 @@ export default function PublicProfilePreview({
                   ) : null}
                   <ShareContactButton
                     handle={publicHandle}
+                    profileId={profile.id}
                     label="Share contact"
                     variant="outline"
                     className="w-full rounded-full sm:w-auto"
@@ -342,6 +349,7 @@ export default function PublicProfilePreview({
                     <PublicLeadForm
                       ownerId={profile.user_id}
                       handle={publicHandle}
+                      profileId={profile.id}
                       variant="profile"
                       showHeader={false}
                     />
@@ -486,6 +494,7 @@ export default function PublicProfilePreview({
                   ) : null}
                   <ShareContactButton
                     handle={publicHandle}
+                    profileId={profile.id}
                     label="Share contact"
                     variant="outline"
                     className="w-full rounded-full sm:w-auto"
@@ -519,6 +528,7 @@ export default function PublicProfilePreview({
                     <PublicLeadForm
                       ownerId={profile.user_id}
                       handle={publicHandle}
+                      profileId={profile.id}
                       variant="profile"
                       showHeader={false}
                     />

@@ -1,47 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerSupabaseReadonly } from "@/lib/supabase/server";
-import { normalizeLeadFormConfig } from "@/lib/lead-form";
-import type { LeadFormConfig } from "@/types/lead-form";
-
-type LeadFormRow = {
-  id: string;
-  handle: string | null;
-  status: "draft" | "published";
-  config: LeadFormConfig;
-};
+import { getPublishedLeadForm } from "@/lib/public-lead-form";
 
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const handle = searchParams.get("handle");
+    const profileId = searchParams.get("profileId");
 
-    if (!handle) {
+    if (!handle && !profileId) {
       return NextResponse.json(
-        { error: "handle is required" },
+        { error: "handle or profileId is required" },
         { status: 400 }
       );
     }
 
-    const supabase = await createServerSupabaseReadonly();
-    const { data, error } = await supabase
-      .from("lead_forms")
-      .select("id, handle, status, config")
-      .eq("handle", handle)
-      .eq("status", "published")
-      .maybeSingle();
-    if (error && error.code !== "PGRST116") throw new Error(error.message);
-
-    if (!data) {
+    const { form, formId } = await getPublishedLeadForm({ handle, profileId });
+    if (!form || !formId) {
       return NextResponse.json({ form: null }, { status: 200 });
     }
 
-    const form = normalizeLeadFormConfig(
-      (data as LeadFormRow).config,
-      (data as LeadFormRow).id
-    );
-
     return NextResponse.json(
-      { form, formId: (data as LeadFormRow).id },
+      { form, formId },
       { headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300" } }
     );
   } catch (error) {

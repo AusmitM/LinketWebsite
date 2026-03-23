@@ -156,11 +156,13 @@ async function buildPhotoAnswer(
 
 export default function ShareContactButton({
   handle,
+  profileId = null,
   label = "Share contact",
   className,
   variant,
 }: {
   handle: string;
+  profileId?: string | null;
   label?: string;
   className?: string;
   variant?: ButtonVariant;
@@ -184,8 +186,11 @@ export default function ShareContactButton({
     void trackEvent("share_contact_click", { handle });
     try {
       setSharing(true);
+      const search = new URLSearchParams();
+      if (handle) search.set("handle", handle);
+      if (profileId) search.set("profileId", profileId);
       const response = await fetch(
-        `/api/lead-forms/public?handle=${encodeURIComponent(handle)}`,
+        `/api/lead-forms/public?${search.toString()}`,
         { cache: "no-store" }
       );
       if (!response.ok) {

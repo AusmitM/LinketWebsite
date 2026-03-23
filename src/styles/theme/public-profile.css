@@ -36,6 +36,14 @@
   --profile-contact-button-fg: var(--color-button-primary-fg);
   --profile-contact-button-border: var(--color-button-primary-border);
   --profile-contact-button-preview-shadow: 0 12px 28px -18px var(--ring);
+  --profile-submit-button-bg: var(--color-button-primary-bg);
+  --profile-submit-button-bg-hover: var(--color-button-primary-bg-hover);
+  --profile-submit-button-bg-active: var(--color-button-primary-bg-active);
+  --profile-submit-button-fg: var(--color-button-primary-fg);
+  --profile-submit-button-border: var(--color-button-primary-border);
+  --profile-submit-button-disabled-bg: color-mix(in srgb, var(--color-button-primary-bg) 58%, var(--card) 42%);
+  --profile-submit-button-disabled-fg: var(--color-button-primary-fg);
+  --profile-submit-button-disabled-border: color-mix(in srgb, var(--color-button-primary-border) 70%, var(--card) 30%);
   --profile-preview-hero-foreground: var(--foreground);
   --profile-preview-hero-muted-foreground: var(--muted-foreground);
   --profile-preview-section-label: var(--muted-foreground);
@@ -1112,8 +1120,7 @@
 .public-profile-preview .public-link-clicks,
 .public-profile-preview .preview-lead-item,
 .public-profile-preview .preview-lead-item .text-muted-foreground,
-.public-profile-preview .preview-lead-item svg,
-.public-profile-preview .public-profile-preview-submit {
+.public-profile-preview .preview-lead-item svg {
   color: var(--profile-preview-link-muted-foreground);
 }
 
@@ -1189,22 +1196,38 @@
   border-color: var(--color-button-outline-border);
 }
 
-.public-profile-shell #public-lead-form [data-slot="button"] {
-  background: var(--color-button-primary-bg);
-  color: var(--color-button-primary-fg);
-  border-color: var(--color-button-primary-border);
+.public-profile-shell #public-lead-form .public-profile-form-submit,
+.public-profile-preview .public-profile-preview-submit {
+  border: 1px solid var(--profile-submit-button-border);
+  background: var(--profile-submit-button-bg);
+  color: var(--profile-submit-button-fg);
+  box-shadow: 0 14px 28px -24px rgba(15, 23, 42, 0.5);
 }
 
-.public-profile-shell #public-lead-form [data-slot="button"]:hover {
-  background: var(--color-button-primary-bg-hover);
+.public-profile-shell #public-lead-form .public-profile-form-submit:hover,
+.public-profile-preview .public-profile-preview-submit:hover {
+  background: var(--profile-submit-button-bg-hover);
 }
 
-.public-profile-shell #public-lead-form [data-slot="button"]:focus-visible {
+.public-profile-shell #public-lead-form .public-profile-form-submit:active,
+.public-profile-preview .public-profile-preview-submit:active {
+  background: var(--profile-submit-button-bg-active);
+}
+
+.public-profile-shell #public-lead-form .public-profile-form-submit:focus-visible,
+.public-profile-preview .public-profile-preview-submit:focus-visible {
   outline: none;
   box-shadow:
     0 0 0 2px var(--color-button-focus-offset),
     0 0 0 5px var(--color-button-focus-ring),
     0 14px 28px -24px rgba(15, 23, 42, 0.5);
+}
+
+.public-profile-shell #public-lead-form .public-profile-form-submit:disabled {
+  border-color: var(--profile-submit-button-disabled-border);
+  background: var(--profile-submit-button-disabled-bg);
+  color: var(--profile-submit-button-disabled-fg);
+  box-shadow: none;
 }
 
 /* Public lead form field contrast */

@@ -4,13 +4,12 @@ import "@/styles/theme/public-profile.css";
 import { getSignedAvatarUrl } from "@/lib/avatar-server";
 import { getSignedProfileHeaderUrl } from "@/lib/profile-header-server";
 import { getSignedProfileLogoUrl } from "@/lib/profile-logo-server";
-import { normalizeLeadFormConfig } from "@/lib/lead-form";
+import { getPublishedLeadForm } from "@/lib/public-lead-form";
 import { getActiveProfileForPublicHandle } from "@/lib/profile-service";
-import { createServerSupabaseReadonly } from "@/lib/supabase/server";
 import { getConfiguredSiteOrigin } from "@/lib/site-url";
+import { createServerSupabaseReadonly } from "@/lib/supabase/server";
 import { isDarkTheme, normalizeThemeName } from "@/lib/themes";
 import type { ProfileLinkRecord } from "@/types/db";
-import type { LeadFormConfig } from "@/types/lead-form";
 import PublicProfileLinksList from "@/components/public/PublicProfileLinksList";
 import PublicProfileLiteMode from "@/components/public/PublicProfileLiteMode";
 import PublicLeadForm from "@/components/public/PublicLeadForm";
@@ -117,16 +116,13 @@ export default async function PublicProfilePage({ params }: Props) {
   const logoShape = profile.logo_shape === "rect" ? "rect" : "circle";
   const logoBadgeClass = profile.logo_bg_white ? "bg-white" : "bg-background";
   const publicHandle = profile.handle || handle;
-  let leadFormRow: { id: string; config: LeadFormConfig | null; status?: string } | null =
-    null;
   const supabase = await createServerSupabaseReadonly();
-  const { data } = await supabase
-    .from("lead_forms")
-    .select("id, config, status")
-    .eq("handle", publicHandle)
-    .eq("status", "published")
-    .maybeSingle();
-  leadFormRow = (data as { id: string; config: LeadFormConfig | null; status?: string } | null) ?? null;
+  const { row: leadFormRow, form: normalizedLeadForm } =
+    await getPublishedLeadForm({
+      handle: publicHandle,
+      profileId: profile.id,
+      supabase,
+    });
   const { data: vcardData } = await supabase
     .from("vcard_profiles")
     .select("email, phone")
@@ -137,12 +133,6 @@ export default async function PublicProfilePage({ params }: Props) {
       (vcardData as { email?: string | null; phone?: string | null } | null)?.phone?.trim()
   );
 
-  const normalizedLeadForm = leadFormRow?.config
-    ? normalizeLeadFormConfig(
-        leadFormRow.config as LeadFormConfig,
-        leadFormRow.id ?? `form-${publicHandle}`
-      )
-    : null;
   const leadFormTitle = normalizedLeadForm?.title ?? "Contact";
   const hasLeadForm = Boolean(normalizedLeadForm?.fields?.length);
   const displayName = profile.name || account.display_name || publicHandle;
@@ -352,6 +342,7 @@ export default async function PublicProfilePage({ params }: Props) {
                 ) : null}
                 <ShareContactButton
                   handle={publicHandle}
+                  profileId={profile.id}
                   label="Share contact"
                   variant="outline"
                   className="w-full rounded-full sm:w-auto"
@@ -385,6 +376,7 @@ export default async function PublicProfilePage({ params }: Props) {
                   <PublicLeadForm
                     ownerId={profile.user_id}
                     handle={publicHandle}
+                    profileId={profile.id}
                     initialForm={normalizedLeadForm}
                     initialFormId={leadFormRow?.id ?? null}
                     variant="profile"

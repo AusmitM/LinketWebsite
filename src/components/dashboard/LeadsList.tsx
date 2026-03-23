@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { type SetStateAction, useEffect, useMemo, useRef, useState } from "react";
 import {
   Building2,
   Copy,
@@ -125,15 +125,43 @@ function getStatusStorageKey(userId: string) {
   return `linket.leads.statuses.${userId}`;
 }
 
+function readStoredLeadStatuses(userId: string): LeadStatusMap {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(getStatusStorageKey(userId));
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    const next: LeadStatusMap = {};
+    Object.entries(parsed).forEach(([leadId, status]) => {
+      if (isLeadWorkflowStatus(status)) next[leadId] = status;
+    });
+    return next;
+  } catch {
+    return {};
+  }
+}
+
+function pruneSelectedIds(selectedIds: Set<string>, loadedIds: Set<string>) {
+  if (selectedIds.size === 0) return selectedIds;
+  const next = new Set<string>();
+  selectedIds.forEach((id) => {
+    if (loadedIds.has(id)) next.add(id);
+  });
+  return next.size === selectedIds.size ? selectedIds : next;
+}
+
 export default function LeadsList({ userId }: { userId: string }) {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [fieldLabels, setFieldLabels] = useState<FieldLabelMap>({});
-  const [leadStatuses, setLeadStatuses] = useState<LeadStatusMap>({});
+  const storedLeadStatuses = useMemo(() => readStoredLeadStatuses(userId), [userId]);
+  const [leadStatusOverrides, setLeadStatusOverrides] = useState<
+    Record<string, LeadStatusMap>
+  >({});
   const [loading, setLoading] = useState(true);
   const [fetching, setFetching] = useState(false);
   const [q, setQ] = useState("");
   const [hasMore, setHasMore] = useState(false);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [selectedIdState, setSelectedIdState] = useState<Set<string>>(new Set());
   const [sortBy, setSortBy] = useState<LeadSortOption>("newest");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filters, setFilters] = useState<LeadListFilters>(DEFAULT_FILTERS);
@@ -149,22 +177,27 @@ export default function LeadsList({ userId }: { userId: string }) {
   );
 
   const searchQuery = q.trim();
+  const leadStatuses = leadStatusOverrides[userId] ?? storedLeadStatuses;
+  const loadedLeadIds = useMemo(
+    () => new Set(leads.map((lead) => lead.id)),
+    [leads]
+  );
+  const selectedIds = useMemo(
+    () => pruneSelectedIds(selectedIdState, loadedLeadIds),
+    [loadedLeadIds, selectedIdState]
+  );
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      const raw = window.localStorage.getItem(getStatusStorageKey(userId));
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as Record<string, unknown>;
-      const next: LeadStatusMap = {};
-      Object.entries(parsed).forEach(([leadId, status]) => {
-        if (isLeadWorkflowStatus(status)) next[leadId] = status;
-      });
-      setLeadStatuses(next);
-    } catch {
-      setLeadStatuses({});
-    }
-  }, [userId]);
+  function setLeadStatuses(update: SetStateAction<LeadStatusMap>) {
+    setLeadStatusOverrides((prev) => {
+      const current = prev[userId] ?? storedLeadStatuses;
+      const next =
+        typeof update === "function"
+          ? (update as (previous: LeadStatusMap) => LeadStatusMap)(current)
+          : update;
+      if (next === current) return prev;
+      return { ...prev, [userId]: next };
+    });
+  }
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -227,7 +260,10 @@ export default function LeadsList({ userId }: { userId: string }) {
 
   useEffect(() => {
     if (!userId) return;
-    load({ reset: true });
+    const timer = setTimeout(() => {
+      void load({ reset: true });
+    }, 0);
+    return () => clearTimeout(timer);
   }, [userId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -298,7 +334,7 @@ export default function LeadsList({ userId }: { userId: string }) {
               const id = sanitizeLeadId(payload.old);
               if (!id) return;
               setLeads((prev) => prev.filter((lead) => lead.id !== id));
-              setSelectedIds((prev) => {
+              setSelectedIdState((prev) => {
                 if (!prev.has(id)) return prev;
                 const next = new Set(prev);
                 next.delete(id);
@@ -384,11 +420,13 @@ export default function LeadsList({ userId }: { userId: string }) {
     () => leads.filter((lead) => selectedIds.has(lead.id)),
     [leads, selectedIds]
   );
+  const effectiveActiveLeadId =
+    activeLeadId && loadedLeadIds.has(activeLeadId) ? activeLeadId : null;
   const activeLeadView =
-    leadViews.find((row) => row.lead.id === activeLeadId) ??
-    (activeLeadId
+    leadViews.find((row) => row.lead.id === effectiveActiveLeadId) ??
+    (effectiveActiveLeadId
       ? buildDetachedLeadView(
-          leads.find((lead) => lead.id === activeLeadId) ?? null,
+          leads.find((lead) => lead.id === effectiveActiveLeadId) ?? null,
           fieldLabels,
           leadStatuses
         )
@@ -400,21 +438,9 @@ export default function LeadsList({ userId }: { userId: string }) {
     }
   }, [someVisibleSelected]);
 
-  useEffect(() => {
-    const loadedIds = new Set(leads.map((lead) => lead.id));
-    setSelectedIds((prev) => {
-      const next = new Set<string>();
-      prev.forEach((id) => {
-        if (loadedIds.has(id)) next.add(id);
-      });
-      return next.size === prev.size ? prev : next;
-    });
-    if (activeLeadId && !loadedIds.has(activeLeadId)) setActiveLeadId(null);
-  }, [activeLeadId, leads]);
-
   function toggleLeadSelection(id: string) {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
+    setSelectedIdState((prev) => {
+      const next = new Set(pruneSelectedIds(prev, loadedLeadIds));
       if (next.has(id)) next.delete(id);
       else next.add(id);
       return next;
@@ -423,8 +449,8 @@ export default function LeadsList({ userId }: { userId: string }) {
 
   function toggleSelectAllVisible() {
     if (visibleIds.length === 0) return;
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
+    setSelectedIdState((prev) => {
+      const next = new Set(pruneSelectedIds(prev, loadedLeadIds));
       if (allVisibleSelected) visibleIds.forEach((id) => next.delete(id));
       else visibleIds.forEach((id) => next.add(id));
       return next;
@@ -432,7 +458,7 @@ export default function LeadsList({ userId }: { userId: string }) {
   }
 
   function clearSelection() {
-    setSelectedIds(new Set());
+    setSelectedIdState(new Set());
   }
 
   function updateLeadStatus(id: string, status: LeadWorkflowStatus) {
@@ -537,8 +563,8 @@ export default function LeadsList({ userId }: { userId: string }) {
     const ids = entries.map((entry) => entry.lead.id);
     const idSet = new Set(ids);
     setLeads((prev) => prev.filter((lead) => !idSet.has(lead.id)));
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
+    setSelectedIdState((prev) => {
+      const next = new Set(pruneSelectedIds(prev, loadedLeadIds));
       ids.forEach((id) => next.delete(id));
       return next;
     });
