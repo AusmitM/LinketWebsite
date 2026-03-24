@@ -43,7 +43,6 @@ const OUTPUT_SIZE = 640;
 const MIN_ZOOM = 0.7;
 const MAX_ZOOM = 3;
 const ZOOM_STEP = 0.01;
-const AUTOSAVE_DEBOUNCE_MS = 700;
 
 export default function AvatarUploader({
   userId,
@@ -74,8 +73,6 @@ export default function AvatarUploader({
   const cropCorner = Math.round(cropSize * 0.22);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const pointerPosition = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
-  const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const lastUploadSignatureRef = useRef<string | null>(null);
 
   const [sourceFile, setSourceFile] = useState<File | null>(null);
   const [inputFileName, setInputFileName] = useState<string | null>(null);
@@ -132,7 +129,6 @@ export default function AvatarUploader({
     (file: File | null) => {
       resetEditor();
       if (!file) return;
-      lastUploadSignatureRef.current = null;
       const selectedName = file.name || null;
       setInputFileName(selectedName);
       setPersistedFileName(selectedName);
@@ -358,46 +354,8 @@ export default function AvatarUploader({
     resolveUsername,
   ]);
 
-  const uploadSignature = useMemo(() => {
-    if (!sourceUrl || !previewReady || !imageMeta) return null;
-    return JSON.stringify({
-      source: inputFileName ?? sourceFile?.name ?? sourceUrl,
-      zoom: Number(zoom.toFixed(3)),
-      offsetX: Number(offset.x.toFixed(1)),
-      offsetY: Number(offset.y.toFixed(1)),
-    });
-  }, [imageMeta, inputFileName, offset.x, offset.y, previewReady, sourceFile?.name, sourceUrl, zoom]);
-
-  useEffect(() => {
-    if (!uploadSignature || loading || isDragging) {
-      if (autosaveTimerRef.current) {
-        clearTimeout(autosaveTimerRef.current);
-        autosaveTimerRef.current = null;
-      }
-      return;
-    }
-    if (uploadSignature === lastUploadSignatureRef.current) {
-      return;
-    }
-    if (autosaveTimerRef.current) {
-      clearTimeout(autosaveTimerRef.current);
-    }
-    autosaveTimerRef.current = setTimeout(() => {
-      autosaveTimerRef.current = null;
-      lastUploadSignatureRef.current = uploadSignature;
-      void handleUpload();
-    }, AUTOSAVE_DEBOUNCE_MS);
-    return () => {
-      if (autosaveTimerRef.current) {
-        clearTimeout(autosaveTimerRef.current);
-        autosaveTimerRef.current = null;
-      }
-    };
-  }, [handleUpload, isDragging, loading, uploadSignature]);
-
   const handleReset = useCallback(() => {
     if (sourceUrl) {
-      lastUploadSignatureRef.current = null;
       resetEditor();
       setSourceFile(null);
       setInputFileName(null);
@@ -481,16 +439,8 @@ export default function AvatarUploader({
   ]);
 
   const helperText = sourceFile
-    ? "Drag to reposition the image inside the crop."
+    ? "Drag to reposition, adjust the zoom, then save."
     : "Upload a photo to start cropping.";
-
-  useEffect(() => {
-    return () => {
-      if (autosaveTimerRef.current) {
-        clearTimeout(autosaveTimerRef.current);
-      }
-    };
-  }, []);
 
   const cardClassName = cn(
     "rounded-2xl border border-border/70 bg-card/80 shadow-sm",
@@ -571,20 +521,18 @@ export default function AvatarUploader({
               <p className="text-xs text-muted-foreground">
                 Upload a clear headshot or logo. JPG, PNG, or WebP.
               </p>
-              {latestAvatarUrl || sourceUrl ? (
+              {!sourceUrl && latestAvatarUrl ? (
                 <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-3">
-                  {latestAvatarUrl ? (
-                    <Button
-                      type="button"
-                      variant="custom"
-                      size="sm"
-                      className={UPLOADER_ACTION_BUTTON_CLASS}
-                      onClick={handleReCrop}
-                      disabled={loading}
-                    >
-                      Re-crop
-                    </Button>
-                  ) : null}
+                  <Button
+                    type="button"
+                    variant="custom"
+                    size="sm"
+                    className={UPLOADER_ACTION_BUTTON_CLASS}
+                    onClick={handleReCrop}
+                    disabled={loading}
+                  >
+                    Re-crop
+                  </Button>
                   <Button
                     type="button"
                     variant="custom"
@@ -702,8 +650,17 @@ export default function AvatarUploader({
               >
                 {loading
                   ? "Uploading crop..."
-                  : "Crop auto-applies after you stop moving."}
+                  : "Adjust the crop, then save when you're ready."}
               </span>
+              <Button
+                type="button"
+                size="sm"
+                className="h-10 rounded-full px-4 sm:h-8"
+                onClick={() => void handleUpload()}
+                disabled={!previewReady || loading}
+              >
+                Save photo
+              </Button>
               <Button
                 type="button"
                 variant="ghost"
@@ -911,22 +868,38 @@ export default function AvatarUploader({
             )}
 
             <div className="flex items-center gap-3 text-xs">
-              <button
-                type="button"
-                className="text-muted-foreground hover:text-foreground"
-                onClick={handleReset}
-                disabled={!(sourceUrl || latestAvatarUrl)}
-              >
-                Reset
-              </button>
-              <button
-                type="button"
-                className="text-destructive hover:text-destructive/80"
-                onClick={handleRemove}
-                disabled={!(sourceUrl || latestAvatarUrl)}
-              >
-                Remove
-              </button>
+              {sourceUrl ? (
+                <>
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="h-10 rounded-full px-4"
+                    onClick={() => void handleUpload()}
+                    disabled={!previewReady || loading}
+                  >
+                    Save photo
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-10 rounded-full px-4"
+                    onClick={handleReset}
+                    disabled={loading}
+                  >
+                    Cancel
+                  </Button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  className="text-destructive hover:text-destructive/80"
+                  onClick={handleRemove}
+                  disabled={!latestAvatarUrl || loading}
+                >
+                  Remove
+                </button>
+              )}
             </div>
           </div>
         </aside>

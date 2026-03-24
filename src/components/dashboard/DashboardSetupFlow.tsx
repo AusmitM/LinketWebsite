@@ -117,6 +117,8 @@ type AccountDraft = {
 const AUTO_HANDLE_PATTERN = /^user-[0-9a-f]{8}$/i;
 const DEFAULT_LINK_HOST = getConfiguredSiteHost();
 const MAX_LINK_ROWS = 5;
+const PROFILE_EDITOR_SECTION_STORAGE_KEY =
+  "linket:profile-editor:active-section";
 
 const SETUP_STEPS: Array<{
   id: SetupStepId;
@@ -1060,6 +1062,18 @@ export default function DashboardSetupFlow({
           setLastSavedAt(new Date().toISOString());
           setProfileSaveStatus("saved");
           setTheme(savedRecord.theme);
+          setAccount((current) => ({
+            ...current,
+            handle: savedRecord.handle,
+          }));
+
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(
+              new CustomEvent("linket:handle-updated", {
+                detail: { handle: savedRecord.handle },
+              })
+            );
+          }
 
           if (
             buildProfileDraftSignature(profileDraftRef.current) ===
@@ -1474,6 +1488,15 @@ export default function DashboardSetupFlow({
     window.location.assign(path);
   }
 
+  function handleOpenProfileSection(
+    section: "profile" | "contact" | "links" | "lead" | "preview"
+  ) {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(PROFILE_EDITOR_SECTION_STORAGE_KEY, section);
+    }
+    handleContinueToDashboard("/dashboard/profiles");
+  }
+
   if (loading || !profileDraft || !contactDraft || !userId || !previewProfile) {
     return (
       <div className="min-h-[100svh] bg-[var(--background)] px-4 py-8 text-foreground sm:px-6 lg:px-10">
@@ -1725,14 +1748,14 @@ export default function DashboardSetupFlow({
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleContinueToDashboard("/dashboard/leads")}
+                      onClick={() => handleOpenProfileSection("lead")}
                       className={cn("p-4 text-left transition hover:border-border hover:bg-card", softPanelClassName)}
                     >
                       <p className="text-sm font-semibold text-foreground">
                         Turn on lead capture
                       </p>
                       <p className="mt-1 text-sm text-muted-foreground">
-                        Add forms later.
+                        Open the lead form builder.
                       </p>
                     </button>
                     <button
