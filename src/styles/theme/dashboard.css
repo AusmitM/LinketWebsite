@@ -491,6 +491,67 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
   animation: dashboard-button-sheen 760ms var(--ease-smooth) both;
 }
 
+.dashboard-navbar[data-dashboard-theme] {
+  background: var(--premium-topbar-gradient);
+  border-bottom-color: var(--premium-border);
+  box-shadow: var(--premium-shadow), var(--premium-inset);
+}
+
+.dashboard-navbar[data-dashboard-theme] .dashboard-copy-link-button,
+.dashboard-navbar[data-dashboard-theme] .dashboard-view-profile-button,
+.dashboard-navbar[data-dashboard-theme] button[aria-label="Open navigation"],
+.dashboard-navbar[data-dashboard-theme] button[aria-label="Close navigation"] {
+  background: var(--premium-button-gradient);
+  color: var(--button-subtle-foreground);
+  border-color: var(--button-subtle-border);
+  box-shadow:
+    0 14px 26px -22px color-mix(in srgb, var(--ring) 30%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 48%, transparent);
+}
+
+.dashboard-navbar[data-dashboard-theme] .dashboard-copy-link-button:hover,
+.dashboard-navbar[data-dashboard-theme] .dashboard-view-profile-button:hover,
+.dashboard-navbar[data-dashboard-theme] button[aria-label="Open navigation"]:hover,
+.dashboard-navbar[data-dashboard-theme] button[aria-label="Close navigation"]:hover {
+  background: color-mix(in srgb, var(--card) 70%, var(--secondary) 30%);
+  color: var(--button-subtle-foreground-hover);
+  border-color: var(--color-button-secondary-border);
+  box-shadow:
+    0 16px 30px -20px color-mix(in srgb, var(--ring) 30%, transparent),
+    var(--premium-inset);
+}
+
+.dashboard-navbar[data-dashboard-theme] .dashboard-logo,
+.dashboard-navbar[data-dashboard-theme] .dashboard-logo-fallback {
+  border-radius: 999px;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--premium-border) 72%, white 28%);
+}
+
+.dashboard-navbar[data-dashboard-theme] .dashboard-logo::before {
+  content: "";
+  position: absolute;
+  inset-block: 2px;
+  inset-inline: 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--card) 92%, white 8%);
+  box-shadow:
+    0 0 14px color-mix(in srgb, var(--ring) 36%, white 64%),
+    0 0 28px color-mix(in srgb, var(--ring) 22%, transparent);
+  z-index: 0;
+}
+
+.dashboard-navbar[data-dashboard-theme] .dashboard-logo img {
+  position: relative;
+  z-index: 1;
+}
+
+.dashboard-navbar[data-dashboard-theme] .dashboard-logo-fallback {
+  background: color-mix(in srgb, var(--card) 94%, white 6%);
+  box-shadow:
+    0 0 14px color-mix(in srgb, var(--ring) 36%, white 64%),
+    0 0 28px color-mix(in srgb, var(--ring) 22%, transparent);
+}
+
 #dashboard-theme-scope .dashboard-navbar-right > *,
 .dashboard-navbar-right > * {
   transition: transform var(--duration-base) var(--ease-smooth), box-shadow var(--duration-base) var(--ease-smooth);

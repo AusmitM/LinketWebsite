@@ -1169,6 +1169,7 @@ export function Navbar() {
     return (
       <div className={dashboardChromeThemeClassName}>
         <header
+          data-dashboard-theme={dashboardChromeTheme}
           className="dashboard-navbar font-dashboard sticky top-0 z-50 w-full border-b border-border/60 bg-background/90 text-foreground backdrop-blur supports-[backdrop-filter]:bg-background/70"
         >
         {userNeedsEmailVerification && !verificationBannerDismissed ? (
