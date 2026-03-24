@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import "@/styles/theme/public-profile.css";
 import { createClient } from "@/lib/supabase/client";
 import type { ProfileWithLinks } from "@/lib/profile-service";
 import PublicProfilePreview from "@/components/public/PublicProfilePreview";
+import { isDarkTheme, normalizeThemeName } from "@/lib/themes";
 
 type PreviewState = {
   loading: boolean;
@@ -21,7 +22,10 @@ type PreviewState = {
 
 export default function PublicProfilePreviewPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const handle = String(params?.handle ?? "").trim().toLowerCase();
+  const requestedTheme = normalizeThemeName(searchParams.get("theme"), "autumn");
+  const requestedThemeClassName = `theme-${requestedTheme} ${isDarkTheme(requestedTheme) ? "dark" : ""}`;
   const supabase = useMemo(() => createClient(), []);
   const [state, setState] = useState<PreviewState>({
     loading: true,
@@ -97,7 +101,7 @@ export default function PublicProfilePreviewPage() {
 
   if (!handle) {
     return (
-      <div className="min-h-screen bg-background text-foreground">
+      <div className={`min-h-screen bg-background text-foreground ${requestedThemeClassName}`}>
         <div className="mx-auto max-w-3xl px-6 py-12 text-sm text-muted-foreground">
           Preview unavailable.
         </div>
@@ -107,7 +111,7 @@ export default function PublicProfilePreviewPage() {
 
   if (state.loading) {
     return (
-      <div className="min-h-screen bg-background text-foreground">
+      <div className={`min-h-screen bg-background text-foreground ${requestedThemeClassName}`}>
         <div className="mx-auto max-w-3xl px-6 py-12 text-sm text-muted-foreground">
           Loading preview...
         </div>
@@ -117,7 +121,7 @@ export default function PublicProfilePreviewPage() {
 
   if (state.error || !state.profile || !state.account) {
     return (
-      <div className="min-h-screen bg-background text-foreground">
+      <div className={`min-h-screen bg-background text-foreground ${requestedThemeClassName}`}>
         <div className="mx-auto max-w-3xl px-6 py-12 text-sm text-muted-foreground">
           {state.error ?? "Profile unavailable."}
         </div>
@@ -132,6 +136,7 @@ export default function PublicProfilePreviewPage() {
       profile={profile}
       account={account}
       handle={handle}
+      themeOverride={requestedTheme}
     />
   );
 }

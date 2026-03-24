@@ -16,6 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useDashboardUser } from "@/components/dashboard/DashboardSessionContext";
+import { useThemeOptional } from "@/components/theme/theme-provider";
 import { ANALYTICS_BROADCAST_KEY, ANALYTICS_EVENT_NAME } from "@/lib/analytics";
 import type { UserAnalytics } from "@/lib/analytics-service";
 
@@ -504,6 +505,7 @@ function ChecklistItemRow({
 }
 
 function PublicProfilePreviewPanel({ userId }: { userId: string | null }) {
+  const { theme } = useThemeOptional();
   const hasHydrated = useSyncExternalStore(
     () => () => {},
     () => true,
@@ -514,23 +516,10 @@ function PublicProfilePreviewPanel({ userId }: { userId: string | null }) {
   const [publicHandle, setPublicHandle] = useState<string | null>(null);
   const [frameReady, setFrameReady] = useState(false);
   const [frameVersion, setFrameVersion] = useState(0);
-  const reloadTimerRef = useRef<number | null>(null);
 
-  const reloadFrame = useCallback((withSettle = false) => {
+  const reloadFrame = useCallback(() => {
     setFrameReady(false);
     setFrameVersion((value) => value + 1);
-    if (typeof window === "undefined") return;
-    if (reloadTimerRef.current !== null) {
-      window.clearTimeout(reloadTimerRef.current);
-      reloadTimerRef.current = null;
-    }
-    if (!withSettle) return;
-    // Theme saves are async; follow-up refresh picks up the committed theme.
-    reloadTimerRef.current = window.setTimeout(() => {
-      setFrameReady(false);
-      setFrameVersion((value) => value + 1);
-      reloadTimerRef.current = null;
-    }, 1800);
   }, []);
 
   const fetchPublicHandle = useCallback(async () => {
@@ -572,7 +561,6 @@ function PublicProfilePreviewPanel({ userId }: { userId: string | null }) {
         setPublicHandle(resolvedHandle);
         setFrameReady(false);
         setLoading(false);
-        reloadFrame(false);
       } catch (err) {
         if (!active) return;
         setError(err instanceof Error ? err.message : "Preview unavailable.");
@@ -585,15 +573,7 @@ function PublicProfilePreviewPanel({ userId }: { userId: string | null }) {
     return () => {
       active = false;
     };
-  }, [fetchPublicHandle, reloadFrame, userId]);
-
-  useEffect(() => {
-    return () => {
-      if (reloadTimerRef.current !== null && typeof window !== "undefined") {
-        window.clearTimeout(reloadTimerRef.current);
-      }
-    };
-  }, []);
+  }, [fetchPublicHandle, userId]);
 
   useEffect(() => {
     if (!userId || typeof window === "undefined") return;
@@ -603,15 +583,10 @@ function PublicProfilePreviewPanel({ userId }: { userId: string | null }) {
         const nextHandle = await fetchPublicHandle();
         setPublicHandle((prev) => (prev === nextHandle ? prev : nextHandle));
         setError(null);
-        reloadFrame(true);
+        reloadFrame();
       } catch (err) {
         setError(err instanceof Error ? err.message : "Preview unavailable.");
       }
-    };
-
-    const handleThemeChange = () => {
-      if (!publicHandle) return;
-      reloadFrame(true);
     };
 
     const handleProfilesUpdated = () => {
@@ -624,22 +599,19 @@ function PublicProfilePreviewPanel({ userId }: { userId: string | null }) {
       if (nextHandle) {
         setPublicHandle(nextHandle);
         setError(null);
-        reloadFrame(true);
         return;
       }
       void refreshFromServer();
     };
 
-    window.addEventListener("linket:theme-change", handleThemeChange);
     window.addEventListener("linket-profiles:updated", handleProfilesUpdated);
     window.addEventListener("linket:handle-updated", handleHandleUpdated);
 
     return () => {
-      window.removeEventListener("linket:theme-change", handleThemeChange);
       window.removeEventListener("linket-profiles:updated", handleProfilesUpdated);
       window.removeEventListener("linket:handle-updated", handleHandleUpdated);
     };
-  }, [fetchPublicHandle, publicHandle, reloadFrame, userId]);
+  }, [fetchPublicHandle, reloadFrame, userId]);
 
   if (!hasHydrated) {
     return (
@@ -658,7 +630,7 @@ function PublicProfilePreviewPanel({ userId }: { userId: string | null }) {
   }
 
   const previewSrc = publicHandle
-    ? `/${encodeURIComponent(publicHandle)}?overviewPreview=${frameVersion}`
+    ? `/u/${encodeURIComponent(publicHandle)}/preview?overviewPreview=${frameVersion}&theme=${encodeURIComponent(theme)}`
     : null;
 
   return (

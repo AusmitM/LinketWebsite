@@ -3,7 +3,6 @@ import { Geist, Geist_Mono, Quicksand, Nunito } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/site/navbar";
 import PrefetchRoutes from "@/components/site/PrefetchRoutes";
-import { ThemeProvider } from "@/components/theme/theme-provider";
 import Footer from "@/components/site/footer";
 import { Toaster } from "@/components/system/toaster";
 import ServiceWorkerRegister from "@/components/system/ServiceWorkerRegister";
@@ -106,32 +105,30 @@ export default function RootLayout({
         suppressHydrationWarning
         className={`${geistSans.variable} ${geistMono.variable} ${display.variable} ${landing.variable} flex min-h-dvh flex-col antialiased bg-background text-foreground`}
       >
-        <ThemeProvider initial="light" storageKey={null}>
-          <PrefetchRoutes />
-          <AnalyticsBinder />
-          <a
-            href="#main"
-            className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:rounded-lg focus:bg-white focus:px-3 focus:py-2 focus:text-sm focus:shadow"
-          >
-            Skip to content
-          </a>
-          <Navbar />
-          <main id="main" className="flex-1 min-h-0">
-            {children}
-          </main>
-          <Footer />
-          <Script
-            id="product-jsonld"
-            type="application/ld+json"
-            strategy="afterInteractive"
-          >
-            {JSON.stringify(productJsonLd)}
-          </Script>
-          <ServiceWorkerRegister />
-          <GlobalErrorLogger />
-          <DebugErrorOverlay />
-          <Toaster />
-        </ThemeProvider>
+        <PrefetchRoutes />
+        <AnalyticsBinder />
+        <a
+          href="#main"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:rounded-lg focus:bg-white focus:px-3 focus:py-2 focus:text-sm focus:shadow"
+        >
+          Skip to content
+        </a>
+        <Navbar />
+        <main id="main" className="flex-1 min-h-0">
+          {children}
+        </main>
+        <Footer />
+        <Script
+          id="product-jsonld"
+          type="application/ld+json"
+          strategy="afterInteractive"
+        >
+          {JSON.stringify(productJsonLd)}
+        </Script>
+        <ServiceWorkerRegister />
+        <GlobalErrorLogger />
+        <DebugErrorOverlay />
+        <Toaster />
       </body>
     </html>
   );
