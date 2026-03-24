@@ -377,21 +377,29 @@ export default function DashboardOnboardingTour() {
 
   useEffect(() => {
     if (!storageKey || autoStartHandled.current) return;
-    if (searchParams.get(TOUR_QUERY_PARAM) !== TOUR_START_VALUE) return;
-    autoStartHandled.current = true;
+    if (!pathname.startsWith("/dashboard")) return;
+    if (pathname.startsWith("/dashboard/get-started")) return;
 
+    const hasTourQueryParam =
+      searchParams.get(TOUR_QUERY_PARAM) === TOUR_START_VALUE;
     const status = readTourStatus(storageKey);
     let startTimer: ReturnType<typeof setTimeout> | null = null;
     if (!status) {
+      autoStartHandled.current = true;
       startTimer = setTimeout(() => {
         startTour("auto");
       }, 0);
     }
 
-    const nextParams = new URLSearchParams(searchParams.toString());
-    nextParams.delete(TOUR_QUERY_PARAM);
-    const nextPath = nextParams.size ? `${pathname}?${nextParams.toString()}` : pathname;
-    router.replace(nextPath);
+    if (hasTourQueryParam) {
+      autoStartHandled.current = true;
+      const nextParams = new URLSearchParams(searchParams.toString());
+      nextParams.delete(TOUR_QUERY_PARAM);
+      const nextPath = nextParams.size
+        ? `${pathname}?${nextParams.toString()}`
+        : pathname;
+      router.replace(nextPath);
+    }
 
     return () => {
       if (startTimer) clearTimeout(startTimer);
