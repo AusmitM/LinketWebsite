@@ -3,26 +3,20 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Check,
-  ChevronLeft,
-  ChevronRight,
-  Copy,
-  ExternalLink,
-  Mail,
+  CheckCircle2,
+  Clock3,
+  Globe,
+  Link2,
+  Loader2,
   Palette,
-  Phone,
   Plus,
-  QrCode,
-  Sparkles,
   Trash2,
-  Upload,
 } from "lucide-react";
 
 import AvatarUploader from "@/components/dashboard/AvatarUploader";
 import { useDashboardUser } from "@/components/dashboard/DashboardSessionContext";
 import { toast } from "@/components/system/toaster";
 import { useThemeOptional } from "@/components/theme/theme-provider";
-import VCardDownload from "@/components/VCardDownload";
-import PublicProfilePreview from "@/components/public/PublicProfilePreview";
 import { trackEvent } from "@/lib/analytics";
 import { getSignedAvatarUrl } from "@/lib/avatar-client";
 import type { DashboardOnboardingState } from "@/lib/dashboard-onboarding-types";
@@ -119,10 +113,10 @@ const SETUP_STEPS: Array<{
   label: string;
   description: string;
 }> = [
-  { id: "profile", label: "Your page", description: "Photo, name, and public link" },
-  { id: "contact", label: "Save contact", description: "Email or phone for your card" },
-  { id: "links", label: "Theme and links", description: "Pick a look and your first buttons" },
-  { id: "publish", label: "Review and publish", description: "Go live and test once" },
+  { id: "profile", label: "Profile", description: "Photo, name, public URL, and intro" },
+  { id: "contact", label: "Contact card", description: "How people save you" },
+  { id: "links", label: "Links + theme", description: "Add your first buttons, then choose a look" },
+  { id: "publish", label: "Review + publish", description: "Go live and test once" },
 ];
 
 const FEATURED_THEMES: Array<{
@@ -476,6 +470,108 @@ function getInitialStepIndex(input: {
   return 3;
 }
 
+function buildPreviewInitials(value: string) {
+  const parts = value
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2);
+  if (!parts.length) return "LP";
+  return parts.map((part) => part[0]?.toUpperCase() ?? "").join("");
+}
+
+function getThemeSwatchClassName(theme: ThemeName) {
+  return (
+    FEATURED_THEMES.find((option) => option.value === theme)?.swatchClassName ??
+    FEATURED_THEMES[0].swatchClassName
+  );
+}
+
+function SetupLivePreviewCard({
+  avatarUrl,
+  contactEnabled,
+  displayName,
+  headline,
+  links,
+  publicUrl,
+  theme,
+}: {
+  avatarUrl: string | null;
+  contactEnabled: boolean;
+  displayName: string;
+  headline: string;
+  links: ProfileWithLinks["links"];
+  publicUrl: string;
+  theme: ThemeName;
+}) {
+  const previewLinks = links.slice(0, 2);
+  const initials = buildPreviewInitials(displayName);
+
+  return (
+    <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_24px_60px_-42px_rgba(15,23,42,0.28)]">
+      <div className={cn("h-24 w-full", getThemeSwatchClassName(theme))} />
+      <div className="-mt-10 px-5 pb-5">
+        <div className="inline-flex h-20 w-20 items-center justify-center overflow-hidden rounded-[26px] border-4 border-white bg-slate-100 text-lg font-semibold text-slate-700 shadow-sm">
+          {avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={avatarUrl}
+              alt={`${displayName} profile photo`}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            initials
+          )}
+        </div>
+
+        <div className="mt-4 space-y-2">
+          <div className="space-y-1">
+            <p className="text-lg font-semibold text-slate-900">{displayName}</p>
+            <p className="break-all text-xs font-medium uppercase tracking-[0.18em] text-slate-500">
+              {publicUrl.replace(/^https?:\/\//, "")}
+            </p>
+          </div>
+          <p className="min-h-[44px] text-sm leading-6 text-slate-600">
+            {headline.trim() || "Your one-line intro shows up here."}
+          </p>
+        </div>
+
+        <div className="mt-5 space-y-2.5">
+          <div
+            className={cn(
+              "flex min-h-11 items-center justify-center rounded-2xl px-4 text-sm font-semibold transition",
+              contactEnabled
+                ? "bg-slate-900 text-white"
+                : "border border-dashed border-slate-200 bg-slate-50 text-slate-400"
+            )}
+          >
+            {contactEnabled ? "Save Contact" : "Add contact details"}
+          </div>
+
+          {previewLinks.length ? (
+            previewLinks.map((link) => (
+              <div
+                key={link.id}
+                className="flex min-h-11 items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-700"
+              >
+                <span className="truncate font-medium text-slate-900">
+                  {link.title}
+                </span>
+                <Link2 className="h-4 w-4 shrink-0 text-slate-400" />
+              </div>
+            ))
+          ) : (
+            <div className="flex min-h-11 items-center justify-between gap-3 rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 text-sm text-slate-400">
+              <span>Add your first link</span>
+              <Globe className="h-4 w-4 shrink-0" />
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function DashboardSetupFlow({
   initialOnboardingState,
 }: {
@@ -724,22 +820,56 @@ export default function DashboardSetupFlow({
     [account.handle, profileDraft?.handle]
   );
 
-  const saveStatusLabel = useMemo(() => {
-    if (profileSaveStatus === "publishing") return "Publishing your page...";
+  const autosaveLabel = useMemo(() => {
+    if (profileSaveStatus === "publishing") return "Publishing page";
     if (profileSaveStatus === "saving" || contactSaveStatus === "saving") {
-      return "Saving your setup...";
+      return "Saving...";
     }
     if (
       profileSaveStatus === "error" ||
       contactSaveStatus === "error" ||
       saveError
     ) {
-      return "We couldn't save your latest change.";
+      return "Save issue";
     }
     const savedAt = formatSavedTime(lastSavedAt);
-    if (savedAt) return `Saved at ${savedAt}`;
-    return "Auto-save is on";
+    if (savedAt) return `Saved ${savedAt}`;
+    return "Autosave on";
   }, [contactSaveStatus, lastSavedAt, profileSaveStatus, saveError]);
+
+  const profileHasUnsavedChanges =
+    profileDraftSignature !== savedProfileSignatureRef.current;
+  const handleStatus = useMemo(() => {
+    const slug = profileDraft?.handle.trim() ?? "";
+    if (!slug) {
+      return {
+        label: "Add a custom slug",
+        className: "text-slate-500",
+      };
+    }
+    if (handleError) {
+      return {
+        label: "Unavailable",
+        className: "text-red-600",
+      };
+    }
+    if (isAutoHandle(slug)) {
+      return {
+        label: "Choose a custom slug",
+        className: "text-amber-700",
+      };
+    }
+    if (profileSaveStatus === "saving" || profileHasUnsavedChanges) {
+      return {
+        label: "Checking...",
+        className: "text-slate-500",
+      };
+    }
+    return {
+      label: "Available",
+      className: "text-emerald-700",
+    };
+  }, [handleError, profileDraft?.handle, profileHasUnsavedChanges, profileSaveStatus]);
 
   const trackingMeta = (extra?: Record<string, unknown>) => ({
     source: "dashboard_get_started",
@@ -1237,193 +1367,656 @@ export default function DashboardSetupFlow({
 
   const currentStep = SETUP_STEPS[currentStepIndex];
   const checklistItems = [
-    { label: "Photo, name, and public link", done: liveProfileReady },
-    { label: "Save Contact is ready", done: contactReady },
-    { label: "At least one real link", done: linksReady },
-    { label: publishReady ? "Page is live" : "Publish your page", done: publishReady },
-    { label: "Test or share it once", done: shareTestComplete },
+    { label: "Profile basics", done: liveProfileReady },
+    { label: "Contact card", done: contactReady },
+    { label: "First link", done: linksReady },
+    { label: "Publish page", done: publishReady },
+    { label: "Test once", done: shareTestComplete },
   ];
+  const previewDisplayName =
+    profileDraft.name.trim() || account.displayName?.trim() || "Your Name";
+  const stepHeading =
+    currentStep.id === "profile"
+      ? {
+          title: "Profile",
+          description: "Add the basics people see first.",
+        }
+      : currentStep.id === "contact"
+        ? {
+            title: "Contact card",
+            description: "Add the details people should save first.",
+          }
+        : currentStep.id === "links"
+          ? {
+              title: "Links + theme",
+              description:
+                "Add the main actions first, then choose a look that fits.",
+            }
+          : publishReady
+            ? {
+                title: "Review + publish",
+                description:
+                  "Your page is already live. Make one quick check and keep moving.",
+              }
+            : {
+                title: "Review + publish",
+                description:
+                  "Check the essentials, publish, and test your page once.",
+              };
+  const linkButtonLabel =
+    profileDraft.links.length < 2 ? "Add optional link" : "Add another link";
+  const autosaveToneClassName =
+    profileSaveStatus === "error" ||
+    contactSaveStatus === "error" ||
+    saveError
+      ? "border-red-200 bg-red-50 text-red-700"
+      : profileSaveStatus === "saving" ||
+          contactSaveStatus === "saving" ||
+          profileSaveStatus === "publishing"
+        ? "border-slate-200 bg-white text-slate-700"
+        : "border-emerald-200 bg-emerald-50 text-emerald-700";
 
   return (
     <div className="min-h-[100svh] bg-[radial-gradient(circle_at_top_left,rgba(255,183,146,0.34),transparent_27%),radial-gradient(circle_at_top_right,rgba(125,211,252,0.2),transparent_26%),linear-gradient(180deg,#fffaf5_0%,#fffdfb_100%)] px-4 py-5 sm:px-6 sm:py-6 lg:px-10 lg:py-8">
       <div className="mx-auto max-w-7xl space-y-6">
-        <Card className="overflow-hidden rounded-[32px] border-white/70 bg-white/85 shadow-[0_28px_80px_-52px_rgba(15,23,42,0.32)]">
-          <CardContent className="px-6 py-6 sm:px-8 lg:px-10 lg:py-8">
-            <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-              <div className="max-w-3xl space-y-4">
-                <div className="flex flex-wrap items-center gap-3">
-                  <Badge variant="outline" className="rounded-full border-slate-200 bg-white/90 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-600">
-                    3 minute setup
-                  </Badge>
-                  <span className="text-sm font-medium text-slate-500">{saveStatusLabel}</span>
-                </div>
-                <div className="space-y-2">
-                  <h1 className="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
-                    Get your Linket page live without the dashboard noise.
-                  </h1>
-                  <p className="max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
-                    Add the basics, make your contact card work, choose a look, and publish once. You can fine-tune leads, analytics, billing, and settings after your page is live.
-                  </p>
-                </div>
-              </div>
-              <div className="grid w-full gap-3 sm:grid-cols-2 lg:w-[320px] lg:grid-cols-1">
-                <div className="rounded-3xl border border-slate-200/80 bg-slate-50/70 p-4">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Your public URL</p>
-                  <p className="mt-2 break-all text-sm font-medium text-slate-900">{publicUrl.replace(/^https?:\/\//, "")}</p>
-                </div>
-                <div className="rounded-3xl border border-slate-200/80 bg-slate-50/70 p-4">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">First win</p>
-                  <p className="mt-2 text-sm text-slate-700">Publish your page, then copy the link or open the QR once.</p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <section className="space-y-4 px-1">
+          <div className="max-w-3xl space-y-2">
+            <h1 className="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
+              Get your Linket page live
+            </h1>
+            <p className="max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
+              Add the essentials, publish, and test once. You can refine everything
+              else later.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <Badge
+              variant="outline"
+              className="rounded-full border-slate-200 bg-white/90 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-600"
+            >
+              Step {currentStepIndex + 1} of {SETUP_STEPS.length}
+            </Badge>
+            <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-sm text-slate-600">
+              <Clock3 className="h-4 w-4" />
+              ~3 min
+            </span>
+            <span
+              className={cn(
+                "inline-flex items-center gap-2 rounded-full border px-3 py-1 text-sm font-medium",
+                autosaveToneClassName
+              )}
+            >
+              {profileSaveStatus === "saving" ||
+              contactSaveStatus === "saving" ||
+              profileSaveStatus === "publishing" ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Check className="h-4 w-4" />
+              )}
+              {autosaveLabel}
+            </span>
+          </div>
+        </section>
 
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_390px]">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
           <div className="space-y-6">
             {showLaunchHub ? (
               <Card className="rounded-[32px] border-white/70 bg-white/90 shadow-[0_28px_80px_-52px_rgba(15,23,42,0.28)]">
                 <CardHeader className="gap-3 border-b border-slate-200/80 pb-6">
-                  <Badge className="w-fit rounded-full bg-emerald-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-800">Live now</Badge>
-                  <CardTitle className="text-3xl font-semibold tracking-tight text-slate-900">Your Linket page is ready to share.</CardTitle>
-                  <CardDescription className="max-w-2xl text-sm leading-6 text-slate-600">Test it once, then move into the full dashboard when you are ready for leads, analytics, and deeper customization.</CardDescription>
+                  <Badge className="w-fit rounded-full bg-emerald-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-800">
+                    You&apos;re live
+                  </Badge>
+                  <CardTitle className="text-3xl font-semibold tracking-tight text-slate-900">
+                    Copy your link, open your page, or scan the QR once.
+                  </CardTitle>
+                  <CardDescription className="max-w-2xl text-sm leading-6 text-slate-600">
+                    That quick check is the first win. Everything else can happen
+                    after your page is already working.
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6 px-6 py-6 sm:px-8">
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <Button type="button" className="h-12 rounded-2xl text-sm" onClick={handleCopyLink}><Copy className="mr-2 h-4 w-4" />Copy link</Button>
-                    <Button type="button" variant="outline" className="h-12 rounded-2xl text-sm" onClick={handleOpenLiveProfile}><ExternalLink className="mr-2 h-4 w-4" />Open live page</Button>
-                    <div className="rounded-2xl" onClick={() => setShareTestComplete(true)}>
-                      <VCardDownload handle={sanitizeHandleInput(profileDraft.handle)} label="Save contact test" className="h-12 w-full rounded-2xl text-sm" variant="outline" />
-                    </div>
-                    <Button type="button" variant="outline" className="h-12 rounded-2xl text-sm" onClick={handleOpenQr}><QrCode className="mr-2 h-4 w-4" />Share QR</Button>
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <Button
+                      type="button"
+                      className="h-12 rounded-2xl text-sm"
+                      onClick={handleCopyLink}
+                    >
+                      Copy link
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="h-12 rounded-2xl text-sm"
+                      onClick={handleOpenLiveProfile}
+                    >
+                      Open live page
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="h-12 rounded-2xl text-sm"
+                      onClick={handleOpenQr}
+                    >
+                      Show QR
+                    </Button>
                   </div>
                   <div className="grid gap-3 lg:grid-cols-3">
-                    <button type="button" onClick={() => { void trackEvent("linket_claim_started", trackingMeta({ source_cta: "launch_hub" })); handleContinueToDashboard("/dashboard/linkets"); }} className="rounded-3xl border border-slate-200 bg-slate-50/80 p-5 text-left transition hover:border-slate-300 hover:bg-white">
-                      <p className="text-sm font-semibold text-slate-900">Claim a Linket</p>
-                      <p className="mt-2 text-sm leading-6 text-slate-600">Connect NFC hardware after your page is live.</p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        void trackEvent(
+                          "linket_claim_started",
+                          trackingMeta({ source_cta: "launch_hub" })
+                        );
+                        handleContinueToDashboard("/dashboard/linkets");
+                      }}
+                      className="rounded-3xl border border-slate-200 bg-slate-50/80 p-5 text-left transition hover:border-slate-300 hover:bg-white"
+                    >
+                      <p className="text-sm font-semibold text-slate-900">
+                        Claim a Linket
+                      </p>
+                      <p className="mt-2 text-sm leading-6 text-slate-600">
+                        Connect NFC hardware after your page is live.
+                      </p>
                     </button>
-                    <button type="button" onClick={() => handleContinueToDashboard("/dashboard/leads")} className="rounded-3xl border border-slate-200 bg-slate-50/80 p-5 text-left transition hover:border-slate-300 hover:bg-white">
-                      <p className="text-sm font-semibold text-slate-900">Turn on contact capture</p>
-                      <p className="mt-2 text-sm leading-6 text-slate-600">Add lead forms once people can already reach you.</p>
+                    <button
+                      type="button"
+                      onClick={() => handleContinueToDashboard("/dashboard/leads")}
+                      className="rounded-3xl border border-slate-200 bg-slate-50/80 p-5 text-left transition hover:border-slate-300 hover:bg-white"
+                    >
+                      <p className="text-sm font-semibold text-slate-900">
+                        Turn on contact capture
+                      </p>
+                      <p className="mt-2 text-sm leading-6 text-slate-600">
+                        Add lead forms once people can already reach you.
+                      </p>
                     </button>
-                    <button type="button" onClick={() => handleContinueToDashboard("/dashboard/overview")} className="rounded-3xl border border-slate-200 bg-slate-50/80 p-5 text-left transition hover:border-slate-300 hover:bg-white">
-                      <p className="text-sm font-semibold text-slate-900">Continue to dashboard</p>
-                      <p className="mt-2 text-sm leading-6 text-slate-600">Go deeper into analytics, billing, and advanced settings.</p>
+                    <button
+                      type="button"
+                      onClick={() => handleContinueToDashboard("/dashboard/overview")}
+                      className="rounded-3xl border border-slate-200 bg-slate-50/80 p-5 text-left transition hover:border-slate-300 hover:bg-white"
+                    >
+                      <p className="text-sm font-semibold text-slate-900">
+                        Continue to dashboard
+                      </p>
+                      <p className="mt-2 text-sm leading-6 text-slate-600">
+                        Go deeper into analytics, billing, and advanced settings.
+                      </p>
                     </button>
                   </div>
                 </CardContent>
               </Card>
             ) : (
-              <>
-                <Card className="rounded-[32px] border-white/70 bg-white/90 shadow-[0_28px_80px_-52px_rgba(15,23,42,0.28)]">
-                  <CardContent className="px-6 py-6 sm:px-8">
-                    <div className="grid gap-4 sm:grid-cols-4">
-                      {SETUP_STEPS.map((step, index) => {
-                        const isCurrent = index === currentStepIndex;
-                        const isDone = index === 0 ? liveProfileReady : index === 1 ? contactReady : index === 2 ? linksReady : publishReady;
-                        return (
-                          <button key={step.id} type="button" onClick={() => { if (index > currentStepIndex) return; setCurrentStepIndex(index); setStepError(null); }} className={cn("rounded-3xl border px-4 py-4 text-left transition", isCurrent ? "border-slate-900 bg-slate-900 text-white shadow-[0_18px_42px_-30px_rgba(15,23,42,0.45)]" : isDone ? "border-emerald-200 bg-emerald-50 text-emerald-900" : "border-slate-200 bg-slate-50/80 text-slate-700", index > currentStepIndex && "cursor-default")}>
-                            <div className="flex items-center justify-between gap-3">
-                              <span className="text-xs font-semibold uppercase tracking-[0.2em] opacity-70">Step {index + 1}</span>
-                              {isDone ? <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/80 text-emerald-700"><Check className="h-4 w-4" /></span> : <span className="text-sm font-semibold opacity-70">0{index + 1}</span>}
-                            </div>
-                            <p className="mt-3 text-sm font-semibold">{step.label}</p>
-                            <p className={cn("mt-1 text-sm leading-6", isCurrent ? "text-white/80" : "text-slate-500")}>{step.description}</p>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </CardContent>
-                </Card>
-
                 <Card className="rounded-[32px] border-white/70 bg-white/92 shadow-[0_28px_80px_-52px_rgba(15,23,42,0.28)]">
                   <CardHeader className="gap-3 border-b border-slate-200/80 pb-6">
-                    <div className="flex flex-wrap items-center gap-3">
-                      <Badge variant="outline" className="rounded-full border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-600">Step {currentStepIndex + 1} of {SETUP_STEPS.length}</Badge>
-                      <span className="text-sm font-medium text-slate-500">{currentStep.description}</span>
-                    </div>
-                    <CardTitle className="text-3xl font-semibold tracking-tight text-slate-900">{currentStep.id === "profile" ? "This is what people will see first." : currentStep.id === "contact" ? "Make Save Contact work." : currentStep.id === "links" ? "Pick a look and your first buttons." : publishReady ? "Your page is already live. Review and tighten it up." : "Your page is ready to go live."}</CardTitle>
-                    <CardDescription className="max-w-2xl text-sm leading-6 text-slate-600">{currentStep.id === "profile" ? "Keep this simple. Add the essentials, use a clean public link, and move on." : currentStep.id === "contact" ? "Add the best email or phone number for new contacts. Everything else can wait." : currentStep.id === "links" ? "Choose a premium default look, then add the one link you want people to tap first." : "You can keep editing after publishing, so the goal is momentum, not perfection."}</CardDescription>
+                    <CardTitle className="text-3xl font-semibold tracking-tight text-slate-900">
+                      {stepHeading.title}
+                    </CardTitle>
+                    <CardDescription className="max-w-2xl text-sm leading-6 text-slate-600">
+                      {stepHeading.description}
+                    </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6 px-6 py-6 sm:px-8">
                     {currentStep.id === "profile" ? (
-                      <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
+                      <div className="space-y-6">
                         <div className="space-y-3">
-                          <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50/70 p-3">
-                            <AvatarUploader userId={userId} userEmail={userEmail} avatarUrl={avatarPreviewUrl} avatarOriginalFileName={account.avatarOriginalFileName} variant="compact" onUploaded={(payload) => { const hasAvatar = Boolean(payload.path); setAccount((current) => ({ ...current, avatarPath: hasAvatar ? payload.path : null, avatarUpdatedAt: hasAvatar ? payload.version : null, avatarOriginalFileName: payload.originalFileName ?? null })); setAvatarPreviewUrl(hasAvatar ? payload.publicUrl : null); if (hasAvatar) { void trackEvent("photo_uploaded", trackingMeta()); } }} />
+                          <div className="space-y-1">
+                            <p className="text-sm font-semibold text-slate-900">
+                              Profile photo
+                            </p>
+                            <p className="text-sm text-slate-500">
+                              Upload a clear headshot or logo.
+                            </p>
                           </div>
-                          <p className="flex items-center gap-2 text-sm text-slate-500"><Upload className="h-4 w-4" />Add a clear headshot. It speeds up trust.</p>
+                          <AvatarUploader
+                            userId={userId}
+                            userEmail={userEmail}
+                            avatarUrl={avatarPreviewUrl}
+                            avatarOriginalFileName={account.avatarOriginalFileName}
+                            variant="compact"
+                            onUploaded={(payload) => {
+                              const hasAvatar = Boolean(payload.path);
+                              setAccount((current) => ({
+                                ...current,
+                                avatarPath: hasAvatar ? payload.path : null,
+                                avatarUpdatedAt: hasAvatar ? payload.version : null,
+                                avatarOriginalFileName:
+                                  payload.originalFileName ?? null,
+                              }));
+                              setAvatarPreviewUrl(hasAvatar ? payload.publicUrl : null);
+                              if (hasAvatar) {
+                                void trackEvent("photo_uploaded", trackingMeta());
+                              }
+                            }}
+                          />
                         </div>
-                        <div className="space-y-5">
-                          <div className="space-y-2">
-                            <Label htmlFor="setup-name" className="text-sm font-medium text-slate-800">Display name</Label>
-                            <Input id="setup-name" value={profileDraft.name} placeholder="Jane Smith" className="h-12 rounded-2xl border-slate-200 bg-white" onChange={(event) => { const nextName = event.target.value; updateProfileDraft((current) => ({ ...current, name: nextName, handle: handleTouched || !userId ? current.handle : buildSuggestedHandle(nextName, userId) })); updateContactDraft((current) => current.fullName.trim() ? current : { ...current, fullName: nextName }); }} />
+
+                        <div className="space-y-2">
+                          <Label
+                            htmlFor="setup-name"
+                            className="text-sm font-medium text-slate-800"
+                          >
+                            Name
+                          </Label>
+                          <Input
+                            id="setup-name"
+                            value={profileDraft.name}
+                            placeholder="Jane Smith"
+                            className="h-12 rounded-2xl border-slate-200 bg-white"
+                            onChange={(event) => {
+                              const nextName = event.target.value;
+                              updateProfileDraft((current) => ({
+                                ...current,
+                                name: nextName,
+                                handle:
+                                  handleTouched || !userId
+                                    ? current.handle
+                                    : buildSuggestedHandle(nextName, userId),
+                              }));
+                              updateContactDraft((current) =>
+                                current.fullName.trim()
+                                  ? current
+                                  : { ...current, fullName: nextName }
+                              );
+                            }}
+                          />
+                        </div>
+
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between gap-3">
+                            <Label
+                              htmlFor="setup-handle"
+                              className="text-sm font-medium text-slate-800"
+                            >
+                              Public URL
+                            </Label>
+                            {suggestedHandle &&
+                            suggestedHandle !== sanitizeHandleInput(profileDraft.handle) ? (
+                              <Button
+                                type="button"
+                                variant="link"
+                                className="h-auto p-0 text-xs text-slate-500"
+                                onClick={() => {
+                                  setHandleTouched(false);
+                                  updateProfileDraft((current) => ({
+                                    ...current,
+                                    handle: suggestedHandle,
+                                  }));
+                                }}
+                              >
+                                Use suggested slug
+                              </Button>
+                            ) : null}
                           </div>
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between gap-3">
-                              <Label htmlFor="setup-handle" className="text-sm font-medium text-slate-800">Public link</Label>
-                              {suggestedHandle && suggestedHandle !== sanitizeHandleInput(profileDraft.handle) ? <Button type="button" variant="link" className="h-auto p-0 text-xs text-slate-500" onClick={() => { setHandleTouched(false); updateProfileDraft((current) => ({ ...current, handle: suggestedHandle })); }}>Use suggested link</Button> : null}
+                          <div className="space-y-3 rounded-[28px] border border-slate-200 bg-slate-50/80 p-4">
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                              <span className="shrink-0 text-sm font-medium text-slate-500">
+                                {DEFAULT_LINK_HOST}/
+                              </span>
+                              <Input
+                                id="setup-handle"
+                                value={profileDraft.handle}
+                                placeholder="jane-smith"
+                                className="h-12 rounded-2xl border-slate-200 bg-white"
+                                onChange={(event) => {
+                                  setHandleTouched(true);
+                                  updateProfileDraft((current) => ({
+                                    ...current,
+                                    handle: sanitizeHandleInput(
+                                      event.target.value
+                                    ),
+                                  }));
+                                }}
+                              />
                             </div>
-                            <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3">
-                              <div className="flex items-center gap-3">
-                                <span className="text-sm font-medium text-slate-500">{publicUrl.replace(/\/[^/]*$/, "/")}</span>
-                                <Input id="setup-handle" value={profileDraft.handle} placeholder="jane-smith" className="h-12 rounded-2xl border-slate-200 bg-white" onChange={(event) => { setHandleTouched(true); updateProfileDraft((current) => ({ ...current, handle: sanitizeHandleInput(event.target.value) })); }} />
-                              </div>
+                            <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                              <p className="text-slate-500">
+                                Keep it short and easy to share.
+                              </p>
+                              <span
+                                className={cn(
+                                  "inline-flex items-center gap-2 font-medium",
+                                  handleStatus.className
+                                )}
+                              >
+                                {handleStatus.label === "Checking..." ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <CheckCircle2 className="h-4 w-4" />
+                                )}
+                                {handleStatus.label}
+                              </span>
                             </div>
-                            <p className="text-sm text-slate-500">Keep it short and easy to say out loud.</p>
-                            {handleError ? <p className="text-sm text-red-600">{handleError}</p> : null}
                           </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="setup-headline" className="text-sm font-medium text-slate-800">Headline</Label>
-                            <Textarea id="setup-headline" value={profileDraft.headline} placeholder="Product designer helping startups simplify complex ideas." className="min-h-24 rounded-2xl border-slate-200 bg-white" onChange={(event) => updateProfileDraft((current) => ({ ...current, headline: event.target.value }))} />
-                            <p className="text-sm text-slate-500">One sentence is enough. Tell people what you do or why they should connect.</p>
-                          </div>
+                          {handleError ? (
+                            <p className="text-sm text-red-600">{handleError}</p>
+                          ) : null}
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label
+                            htmlFor="setup-headline"
+                            className="text-sm font-medium text-slate-800"
+                          >
+                            One-line intro
+                          </Label>
+                          <Textarea
+                            id="setup-headline"
+                            value={profileDraft.headline}
+                            placeholder="Product designer helping startups simplify complex ideas."
+                            className="min-h-24 rounded-2xl border-slate-200 bg-white"
+                            onChange={(event) =>
+                              updateProfileDraft((current) => ({
+                                ...current,
+                                headline: event.target.value,
+                              }))
+                            }
+                          />
+                          <p className="text-sm text-slate-500">
+                            Tell people what you do in one sentence.
+                          </p>
                         </div>
                       </div>
                     ) : null}
 
                     {currentStep.id === "contact" ? (
-                      <div className="grid gap-5 md:grid-cols-2">
-                        <div className="space-y-2"><Label htmlFor="setup-email" className="text-sm font-medium text-slate-800">Best email</Label><Input id="setup-email" type="email" value={contactDraft.email} placeholder="jane@company.com" className="h-12 rounded-2xl border-slate-200 bg-white" onChange={(event) => updateContactDraft((current) => ({ ...current, email: event.target.value }))} /><p className="flex items-center gap-2 text-sm text-slate-500"><Mail className="h-4 w-4" />This powers the Save Contact card.</p></div>
-                        <div className="space-y-2"><Label htmlFor="setup-phone" className="text-sm font-medium text-slate-800">Best phone</Label><Input id="setup-phone" type="tel" value={contactDraft.phone} placeholder="(555) 123-4567" className="h-12 rounded-2xl border-slate-200 bg-white" onChange={(event) => updateContactDraft((current) => ({ ...current, phone: event.target.value }))} /><p className="flex items-center gap-2 text-sm text-slate-500"><Phone className="h-4 w-4" />Add whichever channel you want new contacts to save.</p></div>
-                        <div className="space-y-2"><Label htmlFor="setup-title" className="text-sm font-medium text-slate-800">Job title</Label><Input id="setup-title" value={contactDraft.title} placeholder="Founder" className="h-12 rounded-2xl border-slate-200 bg-white" onChange={(event) => updateContactDraft((current) => ({ ...current, title: event.target.value }))} /></div>
-                        <div className="space-y-2"><Label htmlFor="setup-company" className="text-sm font-medium text-slate-800">Company</Label><Input id="setup-company" value={contactDraft.company} placeholder="Linket" className="h-12 rounded-2xl border-slate-200 bg-white" onChange={(event) => updateContactDraft((current) => ({ ...current, company: event.target.value }))} /></div>
+                      <div className="space-y-6">
+                        <div className="grid gap-5 md:grid-cols-2">
+                          <div className="space-y-2">
+                            <Label
+                              htmlFor="setup-email"
+                              className="text-sm font-medium text-slate-800"
+                            >
+                              Email
+                            </Label>
+                            <Input
+                              id="setup-email"
+                              type="email"
+                              value={contactDraft.email}
+                              placeholder="jane@company.com"
+                              className="h-12 rounded-2xl border-slate-200 bg-white"
+                              onChange={(event) =>
+                                updateContactDraft((current) => ({
+                                  ...current,
+                                  email: event.target.value,
+                                }))
+                              }
+                            />
+                            <p className="text-sm text-slate-500">
+                              One solid contact method is enough for this step.
+                            </p>
+                          </div>
+                          <div className="space-y-2">
+                            <Label
+                              htmlFor="setup-phone"
+                              className="text-sm font-medium text-slate-800"
+                            >
+                              Phone
+                            </Label>
+                            <Input
+                              id="setup-phone"
+                              type="tel"
+                              value={contactDraft.phone}
+                              placeholder="(555) 123-4567"
+                              className="h-12 rounded-2xl border-slate-200 bg-white"
+                              onChange={(event) =>
+                                updateContactDraft((current) => ({
+                                  ...current,
+                                  phone: event.target.value,
+                                }))
+                              }
+                            />
+                            <p className="text-sm text-slate-500">
+                              Add this too if people should be able to save it.
+                            </p>
+                          </div>
+                        </div>
+                        <div className="space-y-4 rounded-[28px] border border-slate-200 bg-slate-50/80 p-5">
+                          <div>
+                            <p className="text-sm font-semibold text-slate-900">
+                              Optional details
+                            </p>
+                            <p className="mt-1 text-sm text-slate-500">
+                              Add these now if they matter. Otherwise keep moving.
+                            </p>
+                          </div>
+                          <div className="grid gap-5 md:grid-cols-2">
+                            <div className="space-y-2">
+                              <Label
+                                htmlFor="setup-title"
+                                className="text-sm font-medium text-slate-800"
+                              >
+                                Job title
+                              </Label>
+                              <Input
+                                id="setup-title"
+                                value={contactDraft.title}
+                                placeholder="Founder"
+                                className="h-12 rounded-2xl border-slate-200 bg-white"
+                                onChange={(event) =>
+                                  updateContactDraft((current) => ({
+                                    ...current,
+                                    title: event.target.value,
+                                  }))
+                                }
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label
+                                htmlFor="setup-company"
+                                className="text-sm font-medium text-slate-800"
+                              >
+                                Company
+                              </Label>
+                              <Input
+                                id="setup-company"
+                                value={contactDraft.company}
+                                placeholder="Linket"
+                                className="h-12 rounded-2xl border-slate-200 bg-white"
+                                onChange={(event) =>
+                                  updateContactDraft((current) => ({
+                                    ...current,
+                                    company: event.target.value,
+                                  }))
+                                }
+                              />
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     ) : null}
 
                     {currentStep.id === "links" ? (
                       <div className="space-y-8">
                         <div className="space-y-4">
-                          <div className="flex items-center gap-2"><Palette className="h-4 w-4 text-slate-500" /><p className="text-sm font-medium text-slate-800">Featured themes</p></div>
+                          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                            <div>
+                              <p className="text-sm font-semibold text-slate-900">
+                                Your first link
+                              </p>
+                              <p className="mt-1 text-sm text-slate-500">
+                                Start with the button people should tap first. Add a
+                                second one if it helps.
+                              </p>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              className="rounded-2xl"
+                              disabled={profileDraft.links.length >= MAX_LINK_ROWS}
+                              onClick={() =>
+                                updateProfileDraft((current) => ({
+                                  ...current,
+                                  links: [...current.links, buildEmptyLink()],
+                                }))
+                              }
+                            >
+                              <Plus className="mr-2 h-4 w-4" />
+                              {linkButtonLabel}
+                            </Button>
+                          </div>
+                          <div className="space-y-3">
+                            {profileDraft.links.map((link, index) => (
+                              <div
+                                key={link.id || `setup-link-${index}`}
+                                className="space-y-4 rounded-[28px] border border-slate-200 bg-slate-50/80 p-5"
+                              >
+                                <div className="flex items-start justify-between gap-4">
+                                  <div>
+                                    <p className="text-sm font-semibold text-slate-900">
+                                      {index === 0
+                                        ? "First link"
+                                        : index === 1
+                                          ? "Optional second link"
+                                          : `Link ${index + 1}`}
+                                    </p>
+                                    <p className="mt-1 text-sm text-slate-500">
+                                      {index === 0
+                                        ? "Make this the main action on your page."
+                                        : index === 1
+                                          ? "Useful if you need one more destination."
+                                          : "Add another destination if you need it."}
+                                    </p>
+                                  </div>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-11 w-11 rounded-2xl text-slate-500"
+                                    disabled={profileDraft.links.length === 1}
+                                    onClick={() =>
+                                      updateProfileDraft((current) => {
+                                        const nextLinks = current.links.filter(
+                                          (_, itemIndex) => itemIndex !== index
+                                        );
+                                        return {
+                                          ...current,
+                                          links: nextLinks.length
+                                            ? nextLinks
+                                            : [buildEmptyLink()],
+                                        };
+                                      })
+                                    }
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                                <div className="grid gap-3 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.3fr)]">
+                                  <div className="space-y-2">
+                                    <Label className="text-sm font-medium text-slate-800">
+                                      Button text
+                                    </Label>
+                                    <Input
+                                      value={link.title}
+                                      placeholder={
+                                        index === 0 ? "Website" : "Instagram"
+                                      }
+                                      className="h-11 rounded-2xl border-slate-200 bg-white"
+                                      onChange={(event) =>
+                                        updateProfileDraft((current) => ({
+                                          ...current,
+                                          links: current.links.map(
+                                            (item, itemIndex) =>
+                                              itemIndex === index
+                                                ? {
+                                                    ...item,
+                                                    title: event.target.value,
+                                                  }
+                                                : item
+                                          ),
+                                        }))
+                                      }
+                                    />
+                                  </div>
+                                  <div className="space-y-2">
+                                    <Label className="text-sm font-medium text-slate-800">
+                                      URL
+                                    </Label>
+                                    <Input
+                                      value={link.url}
+                                      placeholder={
+                                        index === 0
+                                          ? "yourwebsite.com"
+                                          : "instagram.com/yourname"
+                                      }
+                                      className="h-11 rounded-2xl border-slate-200 bg-white"
+                                      onChange={(event) =>
+                                        updateProfileDraft((current) => ({
+                                          ...current,
+                                          links: current.links.map(
+                                            (item, itemIndex) =>
+                                              itemIndex === index
+                                                ? {
+                                                    ...item,
+                                                    url: event.target.value,
+                                                  }
+                                                : item
+                                          ),
+                                        }))
+                                      }
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="space-y-4">
+                          <div className="flex items-center gap-2">
+                            <Palette className="h-4 w-4 text-slate-500" />
+                            <div>
+                              <p className="text-sm font-semibold text-slate-900">
+                                Choose a theme
+                              </p>
+                              <p className="text-sm text-slate-500">
+                                Pick a starting look. You can refine it later.
+                              </p>
+                            </div>
+                          </div>
                           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                             {FEATURED_THEMES.map((themeOption) => {
                               const selected = profileDraft.theme === themeOption.value;
                               return (
-                                <button key={themeOption.value} type="button" onClick={() => { setTheme(themeOption.value); updateProfileDraft((current) => ({ ...current, theme: themeOption.value })); void trackEvent("theme_selected", trackingMeta({ theme: themeOption.value })); }} className={cn("overflow-hidden rounded-3xl border text-left transition", selected ? "border-slate-900 bg-slate-900 text-white shadow-[0_18px_42px_-30px_rgba(15,23,42,0.45)]" : "border-slate-200 bg-white hover:border-slate-300") }>
-                                  <div className={cn("h-24 w-full", themeOption.swatchClassName)} />
+                                <button
+                                  key={themeOption.value}
+                                  type="button"
+                                  onClick={() => {
+                                    setTheme(themeOption.value);
+                                    updateProfileDraft((current) => ({
+                                      ...current,
+                                      theme: themeOption.value,
+                                    }));
+                                    void trackEvent(
+                                      "theme_selected",
+                                      trackingMeta({ theme: themeOption.value })
+                                    );
+                                  }}
+                                  className={cn(
+                                    "overflow-hidden rounded-3xl border text-left transition",
+                                    selected
+                                      ? "border-slate-900 bg-slate-900 text-white shadow-[0_18px_42px_-30px_rgba(15,23,42,0.45)]"
+                                      : "border-slate-200 bg-white hover:border-slate-300"
+                                  )}
+                                >
+                                  <div
+                                    className={cn("h-24 w-full", themeOption.swatchClassName)}
+                                  />
                                   <div className="space-y-1 px-4 py-4">
-                                    <p className="text-sm font-semibold">{themeOption.label}</p>
-                                    <p className={cn("text-sm", selected ? "text-white/75" : "text-slate-500")}>{themeOption.description}</p>
+                                    <p className="text-sm font-semibold">
+                                      {themeOption.label}
+                                    </p>
+                                    <p
+                                      className={cn(
+                                        "text-sm",
+                                        selected ? "text-white/75" : "text-slate-500"
+                                      )}
+                                    >
+                                      {themeOption.description}
+                                    </p>
                                   </div>
                                 </button>
                               );
                             })}
-                          </div>
-                        </div>
-                        <div className="space-y-4">
-                          <div className="flex items-center justify-between gap-4">
-                            <div><p className="text-sm font-medium text-slate-800">Your first links</p><p className="text-sm text-slate-500">Start with the button you want people to tap first.</p></div>
-                            <Button type="button" variant="outline" className="rounded-2xl" disabled={profileDraft.links.length >= MAX_LINK_ROWS} onClick={() => updateProfileDraft((current) => ({ ...current, links: [...current.links, buildEmptyLink()] }))}><Plus className="mr-2 h-4 w-4" />Add link</Button>
-                          </div>
-                          <div className="space-y-3">
-                            {profileDraft.links.map((link, index) => (
-                              <div key={link.id || `setup-link-${index}`} className="grid gap-3 rounded-3xl border border-slate-200 bg-slate-50/70 p-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)_auto]">
-                                <div className="space-y-2"><Label className="text-sm font-medium text-slate-800">Button label</Label><Input value={link.title} placeholder={index === 0 ? "Website" : "Instagram"} className="h-11 rounded-2xl border-slate-200 bg-white" onChange={(event) => updateProfileDraft((current) => ({ ...current, links: current.links.map((item, itemIndex) => itemIndex === index ? { ...item, title: event.target.value } : item) }))} /></div>
-                                <div className="space-y-2"><Label className="text-sm font-medium text-slate-800">URL</Label><Input value={link.url} placeholder={index === 0 ? "yourwebsite.com" : "instagram.com/yourname"} className="h-11 rounded-2xl border-slate-200 bg-white" onChange={(event) => updateProfileDraft((current) => ({ ...current, links: current.links.map((item, itemIndex) => itemIndex === index ? { ...item, url: event.target.value } : item) }))} /></div>
-                                <div className="flex items-end justify-end"><Button type="button" variant="ghost" size="icon" className="h-11 w-11 rounded-2xl text-slate-500" disabled={profileDraft.links.length === 1} onClick={() => updateProfileDraft((current) => { const nextLinks = current.links.filter((_, itemIndex) => itemIndex !== index); return { ...current, links: nextLinks.length ? nextLinks : [buildEmptyLink()] }; })}><Trash2 className="h-4 w-4" /></Button></div>
-                              </div>
-                            ))}
                           </div>
                         </div>
                       </div>
@@ -1431,21 +2024,69 @@ export default function DashboardSetupFlow({
 
                     {currentStep.id === "publish" ? (
                       <div className="space-y-6">
-                        <div className="grid gap-3 sm:grid-cols-2">
-                          <div className="rounded-3xl border border-slate-200 bg-slate-50/80 p-5"><p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Public URL</p><p className="mt-2 break-all text-sm font-medium text-slate-900">{publicUrl}</p></div>
-                          <div className="rounded-3xl border border-slate-200 bg-slate-50/80 p-5"><p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Ready to publish</p><p className="mt-2 text-sm text-slate-700">You can keep editing after this. The goal is to get a clean, usable page live now.</p></div>
-                        </div>
-                        <div className="rounded-[28px] border border-slate-200 bg-slate-50/70 p-4 xl:hidden">
-                          <div className="mx-auto max-w-[340px]">
-                            <PublicProfilePreview profile={previewProfile} account={{ handle: sanitizeHandleInput(profileDraft.handle), displayName: account.displayName, avatarPath: account.avatarPath, avatarUpdatedAt: account.avatarUpdatedAt }} handle={sanitizeHandleInput(profileDraft.handle)} layout="stacked" forceMobile themeOverride={profileDraft.theme} contactEnabled={contactReady} />
+                        <div className="grid gap-4 md:grid-cols-2">
+                          <div className="rounded-[28px] border border-slate-200 bg-slate-50/80 p-5">
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">
+                              Live URL
+                            </p>
+                            <p className="mt-2 break-all text-sm font-semibold text-slate-900">
+                              {publicUrl}
+                            </p>
+                            <p className="mt-3 text-sm leading-6 text-slate-600">
+                              This becomes public as soon as you publish.
+                            </p>
+                          </div>
+                          <div className="rounded-[28px] border border-slate-200 bg-slate-50/80 p-5">
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">
+                              After publish
+                            </p>
+                            <p className="mt-2 text-sm leading-6 text-slate-600">
+                              Copy the link, open the page, or pull up the QR once
+                              to make sure everything works.
+                            </p>
                           </div>
                         </div>
-                        <div className="grid gap-3 sm:grid-cols-2">
-                          {checklistItems.slice(0, 4).map((item) => (
-                            <div key={item.label} className={cn("rounded-3xl border px-4 py-4 text-sm", item.done ? "border-emerald-200 bg-emerald-50 text-emerald-900" : "border-slate-200 bg-white text-slate-700")}>
-                              <div className="flex items-center gap-3"><span className={cn("inline-flex h-8 w-8 items-center justify-center rounded-full", item.done ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500")}><Check className="h-4 w-4" /></span><span className="font-medium">{item.label}</span></div>
-                            </div>
-                          ))}
+                        <div className="xl:hidden">
+                          <SetupLivePreviewCard
+                            avatarUrl={avatarPreviewUrl}
+                            contactEnabled={contactReady}
+                            displayName={previewDisplayName}
+                            headline={profileDraft.headline}
+                            links={previewProfile.links}
+                            publicUrl={publicUrl}
+                            theme={profileDraft.theme}
+                          />
+                        </div>
+                        <div className="grid gap-4 md:grid-cols-2">
+                          <div className="rounded-[28px] border border-slate-200 bg-white p-5">
+                            <p className="text-sm font-semibold text-slate-900">
+                              Ready to publish
+                            </p>
+                            <p className="mt-2 text-sm leading-6 text-slate-600">
+                              You can keep editing after this. The goal is to get a
+                              clean, usable page live now.
+                            </p>
+                          </div>
+                          <div className="rounded-[28px] border border-slate-200 bg-white p-5">
+                            <p className="text-sm font-semibold text-slate-900">
+                              QR
+                            </p>
+                            <p className="mt-2 text-sm leading-6 text-slate-600">
+                              {publishReady
+                                ? "Your QR is ready. Open it and test the page on a phone."
+                                : "Your QR is ready as soon as the page is published."}
+                            </p>
+                            {publishReady ? (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                className="mt-4 rounded-2xl"
+                                onClick={handleOpenQr}
+                              >
+                                Show QR
+                              </Button>
+                            ) : null}
+                          </div>
                         </div>
                       </div>
                     ) : null}
@@ -1454,51 +2095,84 @@ export default function DashboardSetupFlow({
                     {saveError && !stepError ? <div className="rounded-3xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">{saveError}</div> : null}
 
                     <div className="flex flex-col gap-3 border-t border-slate-200/80 pt-6 sm:flex-row sm:items-center sm:justify-between">
-                      <Button type="button" variant="ghost" className="h-11 rounded-2xl text-sm" disabled={currentStepIndex === 0} onClick={() => { setCurrentStepIndex((current) => Math.max(current - 1, 0)); setStepError(null); window.scrollTo({ top: 0, behavior: "smooth" }); }}><ChevronLeft className="mr-2 h-4 w-4" />Back</Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        className="h-11 rounded-2xl text-sm"
+                        disabled={currentStepIndex === 0}
+                        onClick={() => {
+                          setCurrentStepIndex((current) => Math.max(current - 1, 0));
+                          setStepError(null);
+                          window.scrollTo({ top: 0, behavior: "smooth" });
+                        }}
+                      >
+                        Back
+                      </Button>
                       {currentStep.id === "publish" ? (
-                        <Button type="button" className="h-12 rounded-2xl px-6 text-sm" disabled={profileSaveStatus === "publishing"} onClick={() => void handlePublish()}>
-                          {profileSaveStatus === "publishing" ? "Publishing..." : publishReady ? "Update live page" : "Publish profile"}
-                          <Sparkles className="ml-2 h-4 w-4" />
+                        <Button
+                          type="button"
+                          className="h-12 rounded-2xl px-6 text-sm"
+                          disabled={profileSaveStatus === "publishing"}
+                          onClick={() => void handlePublish()}
+                        >
+                          {profileSaveStatus === "publishing"
+                            ? "Publishing..."
+                            : publishReady
+                              ? "Update live page"
+                              : "Publish page"}
                         </Button>
                       ) : (
-                        <Button type="button" className="h-12 rounded-2xl px-6 text-sm" onClick={() => void handleContinue()}>
+                        <Button
+                          type="button"
+                          className="h-12 rounded-2xl px-6 text-sm"
+                          onClick={() => void handleContinue()}
+                        >
                           Continue
-                          <ChevronRight className="ml-2 h-4 w-4" />
                         </Button>
                       )}
                     </div>
                   </CardContent>
-                </Card>
-              </>
+              </Card>
             )}
           </div>
 
-          <div className="space-y-6">
-            <Card className="hidden rounded-[32px] border-white/70 bg-white/85 shadow-[0_28px_80px_-52px_rgba(15,23,42,0.28)] xl:block">
+          <div className="space-y-4 lg:sticky lg:top-6">
+            <Card className="rounded-[32px] border-white/70 bg-white/88 shadow-[0_28px_80px_-52px_rgba(15,23,42,0.24)]">
               <CardHeader className="gap-2 border-b border-slate-200/80 pb-5">
                 <CardTitle className="text-lg font-semibold text-slate-900">Live preview</CardTitle>
-                <CardDescription className="text-sm text-slate-600">This updates as you go, so you always know what will be public.</CardDescription>
+                <CardDescription className="text-sm text-slate-600">A compact view of what will go public.</CardDescription>
               </CardHeader>
               <CardContent className="px-5 py-5">
-                <div className="sticky top-6 mx-auto max-w-[340px]">
-                  <PublicProfilePreview profile={previewProfile} account={{ handle: sanitizeHandleInput(profileDraft.handle), displayName: account.displayName, avatarPath: account.avatarPath, avatarUpdatedAt: account.avatarUpdatedAt }} handle={sanitizeHandleInput(profileDraft.handle)} layout="stacked" forceMobile themeOverride={profileDraft.theme} contactEnabled={contactReady} />
-                </div>
+                <SetupLivePreviewCard
+                  avatarUrl={avatarPreviewUrl}
+                  contactEnabled={contactReady}
+                  displayName={previewDisplayName}
+                  headline={profileDraft.headline}
+                  links={previewProfile.links}
+                  publicUrl={publicUrl}
+                  theme={profileDraft.theme}
+                />
               </CardContent>
             </Card>
 
-            <Card className="rounded-[32px] border-white/70 bg-white/85 shadow-[0_28px_80px_-52px_rgba(15,23,42,0.24)]">
+            <Card className="rounded-[32px] border-white/70 bg-white/88 shadow-[0_28px_80px_-52px_rgba(15,23,42,0.24)]">
               <CardHeader className="gap-2 border-b border-slate-200/80 pb-5">
-                <CardTitle className="text-lg font-semibold text-slate-900">Completion checklist</CardTitle>
-                <CardDescription className="text-sm text-slate-600">Keep this short. The rest of the product can wait until your page is live.</CardDescription>
+                <CardTitle className="text-lg font-semibold text-slate-900">Checklist</CardTitle>
+                <CardDescription className="text-sm text-slate-600">Keep the form focused. Keep the motivation here.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3 px-5 py-5">
                 {checklistItems.map((item) => (
-                  <div key={item.label} className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-3">
-                    <span className={cn("mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full", item.done ? "bg-emerald-100 text-emerald-700" : "bg-slate-200 text-slate-500")}><Check className="h-4 w-4" /></span>
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-slate-900">{item.label}</p>
-                      {!item.done ? <p className="mt-1 text-sm text-slate-500">{item.label === "Test or share it once" ? "Copy the link, open the live page, or share the QR right after publish." : "This step is still pending."}</p> : null}
-                    </div>
+                  <div
+                    key={item.label}
+                    className={cn(
+                      "flex items-center gap-3 rounded-2xl border px-4 py-3",
+                      item.done
+                        ? "border-emerald-200 bg-emerald-50"
+                        : "border-slate-200 bg-slate-50/80"
+                    )}
+                  >
+                    <span className={cn("inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full", item.done ? "bg-emerald-100 text-emerald-700" : "bg-slate-200 text-slate-500")}><Check className="h-4 w-4" /></span>
+                    <p className="text-sm font-medium text-slate-900">{item.label}</p>
                   </div>
                 ))}
               </CardContent>

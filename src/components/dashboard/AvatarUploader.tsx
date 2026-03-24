@@ -569,11 +569,11 @@ export default function AvatarUploader({
                   onClick={() => fileInputRef.current?.click()}
                   disabled={loading}
                 >
-                  Choose file
+                  Upload
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">
-                Crop to fit the circle. JPG/PNG/WebP.
+                Upload a clear headshot or logo. JPG, PNG, or WebP.
               </p>
               <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-3">
                 <Button
