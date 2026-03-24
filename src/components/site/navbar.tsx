@@ -42,7 +42,6 @@ import { isPublicProfilePathname } from "@/lib/routing";
 import { toast } from "@/components/system/toaster";
 import { getSiteOrigin } from "@/lib/site-url";
 import type { DashboardNotificationItem } from "@/lib/dashboard-notifications";
-import { coerceThemeName, isDarkTheme, type ThemeName } from "@/lib/themes";
 
 type UserLite = {
   id: string;
@@ -103,49 +102,6 @@ const NOTIFICATIONS_LAST_READ_STORAGE_KEY_PREFIX =
 const NOTIFICATIONS_OPENED_AT_STORAGE_KEY_PREFIX =
   "linket:dashboard-notifications:opened-at";
 const NOTIFICATIONS_INBOX_RETENTION_MS = 3 * 24 * 60 * 60 * 1000;
-const DASHBOARD_THEME_STORAGE_KEY = "linket:dashboard-theme";
-const THEME_CLASS_PREFIX = "theme-";
-
-function readThemeFromElement(target: Element | null): ThemeName | null {
-  if (!target) return null;
-  const themeClass = Array.from(target.classList).find((className) =>
-    className.startsWith(THEME_CLASS_PREFIX)
-  );
-  if (!themeClass) return null;
-  return coerceThemeName(themeClass.slice(THEME_CLASS_PREFIX.length));
-}
-
-function readStoredDashboardTheme(): ThemeName | null {
-  if (typeof window === "undefined") return null;
-  try {
-    return coerceThemeName(
-      window.localStorage.getItem(DASHBOARD_THEME_STORAGE_KEY)
-    );
-  } catch {
-    return null;
-  }
-}
-
-function resolveDashboardChromeTheme(): ThemeName {
-  if (typeof document !== "undefined") {
-    const scopedTheme = readThemeFromElement(
-      document.querySelector("#dashboard-theme-scope")
-    );
-    if (scopedTheme) return scopedTheme;
-  }
-
-  const storedTheme = readStoredDashboardTheme();
-  if (storedTheme) return storedTheme;
-
-  if (typeof document !== "undefined") {
-    const rootTheme =
-      readThemeFromElement(document.body) ??
-      readThemeFromElement(document.documentElement);
-    if (rootTheme) return rootTheme;
-  }
-
-  return "autumn";
-}
 
 function toUserLite(
   value: {
@@ -175,9 +131,6 @@ export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = useState<UserLite>(null);
-  const [dashboardChromeTheme, setDashboardChromeTheme] = useState<ThemeName>(
-    () => resolveDashboardChromeTheme()
-  );
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isAtTop, setIsAtTop] = useState(true);
@@ -240,10 +193,6 @@ export function Navbar() {
   const isProfileEditor = pathname?.startsWith("/dashboard/profiles") ?? false;
   const isMarketingPage =
     isPublic && !isLandingPage && !isPublicProfile && !isAuthPage;
-  const dashboardChromeThemeClassName = cn(
-    `theme-${dashboardChromeTheme}`,
-    isDarkTheme(dashboardChromeTheme) && "dark"
-  );
   const userNeedsEmailVerification =
     Boolean(user?.email) && !Boolean(user?.emailConfirmedAt);
   const shouldShowNotifications = Boolean(isDashboard && user);
@@ -361,74 +310,6 @@ export function Navbar() {
       setVerificationBannerDismissed(false);
     }
   }, [isDashboard, user?.emailConfirmedAt, user?.id]);
-
-  useLayoutEffect(() => {
-    if (!isDashboard) return;
-
-    const syncDashboardChromeTheme = () => {
-      setDashboardChromeTheme(resolveDashboardChromeTheme());
-    };
-    let animationFrameId = 0;
-    let themeScopeObserver: MutationObserver | null = null;
-    let observedThemeScope: Element | null = null;
-
-    const observeThemeScope = () => {
-      const themeScope = document.querySelector("#dashboard-theme-scope");
-      if (themeScope === observedThemeScope) {
-        return Boolean(themeScope);
-      }
-
-      themeScopeObserver?.disconnect();
-      observedThemeScope = themeScope;
-
-      if (!themeScope) {
-        themeScopeObserver = null;
-        return false;
-      }
-
-      themeScopeObserver = new MutationObserver(syncDashboardChromeTheme);
-      themeScopeObserver.observe(themeScope, {
-        attributes: true,
-        attributeFilter: ["class"],
-      });
-      return true;
-    };
-
-    const syncDashboardChromeThemeScope = () => {
-      if (animationFrameId) {
-        window.cancelAnimationFrame(animationFrameId);
-        animationFrameId = 0;
-      }
-
-      const hasThemeScope = observeThemeScope();
-      syncDashboardChromeTheme();
-
-      if (!hasThemeScope) {
-        animationFrameId = window.requestAnimationFrame(
-          syncDashboardChromeThemeScope
-        );
-      }
-    };
-
-    syncDashboardChromeThemeScope();
-    window.addEventListener("storage", syncDashboardChromeTheme);
-    window.addEventListener(
-      "linket:theme-change",
-      syncDashboardChromeThemeScope
-    );
-
-    return () => {
-      if (animationFrameId) {
-        window.cancelAnimationFrame(animationFrameId);
-      }
-      themeScopeObserver?.disconnect();
-      window.removeEventListener("storage", syncDashboardChromeTheme);
-      window.removeEventListener(
-        "linket:theme-change",
-        syncDashboardChromeThemeScope
-      );
-    };
-  }, [isDashboard]);
 
   useEffect(() => {
     setNotificationsOpen(false);
@@ -1167,11 +1048,9 @@ export function Navbar() {
 
   if (isDashboard) {
     return (
-      <div className={dashboardChromeThemeClassName}>
-        <header
-          data-dashboard-theme={dashboardChromeTheme}
-          className="dashboard-navbar font-dashboard sticky top-0 z-50 w-full border-b border-border/60 bg-background/90 text-foreground backdrop-blur supports-[backdrop-filter]:bg-background/70"
-        >
+      <header
+        className="dashboard-navbar font-dashboard sticky top-0 z-50 w-full border-b border-border/60 bg-background/90 text-foreground backdrop-blur supports-[backdrop-filter]:bg-background/70"
+      >
         {userNeedsEmailVerification && !verificationBannerDismissed ? (
           <div className="border-b border-amber-200/70 bg-amber-100/70 px-3 py-2">
             <div className="mx-auto flex w-full max-w-6xl flex-col gap-2 text-amber-950 sm:flex-row sm:items-center sm:justify-between">
@@ -1418,8 +1297,7 @@ export function Navbar() {
             </div>
           </PopoverDialog>
         )}
-        </header>
-      </div>
+      </header>
     );
   }
 

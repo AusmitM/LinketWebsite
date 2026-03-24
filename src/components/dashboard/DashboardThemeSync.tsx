@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 
 import type { ThemeName } from "@/lib/themes";
 import { useThemeOptional } from "@/components/theme/theme-provider";
@@ -63,7 +63,7 @@ export default function DashboardThemeSync() {
     };
   }, [hasProvider]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!hasProvider) return;
     if (typeof document === "undefined") return;
     applyTheme(document.body, theme);
