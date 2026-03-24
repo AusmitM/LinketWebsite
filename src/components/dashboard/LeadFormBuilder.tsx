@@ -13,6 +13,12 @@ import { GripVertical, Plus, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
@@ -133,6 +139,19 @@ const ALLOWED_TYPES: Array<{ type: LeadFormFieldType; label: string }> = [
   { type: "file_upload", label: "File upload" },
 ];
 
+const FIELD_TYPES_WITH_ADVANCED_OPTIONS = new Set<LeadFormFieldType>([
+  "multiple_choice",
+  "checkboxes",
+  "dropdown",
+  "linear_scale",
+  "rating",
+  "date",
+  "time",
+  "file_upload",
+  "multiple_choice_grid",
+  "checkbox_grid",
+]);
+
 type Props = {
   userId: string;
   handle: string | null;
@@ -205,6 +224,11 @@ export default function LeadFormBuilder({
       : form.fields.slice();
     return fields;
   }, [form]);
+  const isExternalPreviewLayout =
+    layout === "side" && columns === 2 && !showPreview;
+  const hasAdvancedFieldOptions = Boolean(
+    activeField && FIELD_TYPES_WITH_ADVANCED_OPTIONS.has(activeField.type)
+  );
 
   useEffect(() => {
     if (!userId || !handle) return;
@@ -547,7 +571,7 @@ export default function LeadFormBuilder({
                   {form.title || "Untitled lead form"}
                 </h2>
                 <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
-                  Build questions on the left, adjust form and field settings in the center, and keep the live preview isolated on the right.
+                  Edit the active question in the top workspace, reorder the question rail below, and keep the live preview isolated on the right.
                 </p>
               </div>
             </div>
@@ -563,18 +587,201 @@ export default function LeadFormBuilder({
             </div>
           </div>
         </div>
+        <Card
+          className="rounded-2xl border border-border/60 bg-card/80 shadow-sm"
+        >
+          <CardHeader className="space-y-3">
+            <CardTitle className="text-sm font-semibold whitespace-nowrap">
+              Form setup
+            </CardTitle>
+            <p className="text-xs text-muted-foreground">
+              Use these sections for form-wide copy, submission behavior, and display rules.
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="space-y-3 rounded-2xl border border-border/50 bg-background/55 p-3">
+              <Accordion type="multiple" defaultValue={["form-content"]} className="space-y-3">
+                <AccordionItem
+                  value="form-content"
+                  className="rounded-2xl border border-border/50 bg-background/60 px-4 last:border-b"
+                >
+                  <AccordionTrigger className="py-3 hover:no-underline">
+                    <div className="space-y-1 pr-4 text-left">
+                      <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                        Form content
+                      </div>
+                      <p className="text-xs font-normal text-muted-foreground">
+                        Set the title, intro text, and success message shown after submit.
+                      </p>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="pb-4">
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="lead-form-title">Title</Label>
+                        <Input
+                          id="lead-form-title"
+                          value={form.title}
+                          onChange={(event) => updateForm({ title: event.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="lead-form-description">Subtitle</Label>
+                        <Textarea
+                          id="lead-form-description"
+                          value={form.description}
+                          onChange={(event) => updateForm({ description: event.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="lead-form-confirm">Success message</Label>
+                        <Textarea
+                          id="lead-form-confirm"
+                          value={form.settings.confirmationMessage}
+                          onChange={(event) =>
+                            updateForm({
+                              settings: {
+                                ...form.settings,
+                                confirmationMessage: event.target.value,
+                              },
+                            })
+                          }
+                        />
+                      </div>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem
+                  value="submission-rules"
+                  className="rounded-2xl border border-border/50 bg-background/60 px-4 last:border-b"
+                >
+                  <AccordionTrigger className="py-3 hover:no-underline">
+                    <div className="space-y-1 pr-4 text-left">
+                      <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                        Submission rules
+                      </div>
+                      <p className="text-xs font-normal text-muted-foreground">
+                        Control how many responses a visitor can send and whether they can edit later.
+                      </p>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="pb-4">
+                    <div className="space-y-4">
+                      <label className="flex items-center justify-between gap-3 text-sm text-foreground">
+                        <span>Allow edit after submit</span>
+                        <Switch
+                          checked={form.settings.allowEditAfterSubmit}
+                          onCheckedChange={(value) =>
+                            updateForm({
+                              settings: {
+                                ...form.settings,
+                                allowEditAfterSubmit: Boolean(value),
+                              },
+                            })
+                          }
+                        />
+                      </label>
+                      <label className="flex items-center justify-between gap-3 text-sm text-foreground">
+                        <span>Limit one response</span>
+                        <Switch
+                          checked={form.settings.limitOneResponse === "on"}
+                          onCheckedChange={(value) =>
+                            updateForm({
+                              settings: {
+                                ...form.settings,
+                                limitOneResponse: value ? "on" : "off",
+                              },
+                            })
+                          }
+                        />
+                      </label>
+                      <label className="flex items-center justify-between gap-3 text-sm text-foreground">
+                        <span>Verify email on email fields</span>
+                        <Switch
+                          checked={form.settings.collectEmail === "verified"}
+                          onCheckedChange={(value) =>
+                            updateForm({
+                              settings: {
+                                ...form.settings,
+                                collectEmail: value ? "verified" : "user_input",
+                              },
+                            })
+                          }
+                        />
+                      </label>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem
+                  value="display-options"
+                  className="rounded-2xl border border-border/50 bg-background/60 px-4 last:border-b"
+                >
+                  <AccordionTrigger className="py-3 hover:no-underline">
+                    <div className="space-y-1 pr-4 text-left">
+                      <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                        Display options
+                      </div>
+                      <p className="text-xs font-normal text-muted-foreground">
+                        Decide how structured or dynamic the public form should feel.
+                      </p>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="pb-4">
+                    <div className="space-y-4">
+                      <label className="flex items-center justify-between gap-3 text-sm text-foreground">
+                        <span>Show progress bar</span>
+                        <Switch
+                          checked={form.settings.showProgressBar}
+                          onCheckedChange={(value) =>
+                            updateForm({
+                              settings: {
+                                ...form.settings,
+                                showProgressBar: Boolean(value),
+                              },
+                            })
+                          }
+                        />
+                      </label>
+                      <label className="flex items-center justify-between gap-3 text-sm text-foreground">
+                        <span>Shuffle question order</span>
+                        <Switch
+                          checked={form.settings.shuffleQuestionOrder}
+                          onCheckedChange={(value) =>
+                            updateForm({
+                              settings: {
+                                ...form.settings,
+                                shuffleQuestionOrder: Boolean(value),
+                              },
+                            })
+                          }
+                        />
+                      </label>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </div>
+          </CardContent>
+        </Card>
         <div
           className={cn(
-            "grid gap-6",
+            "grid gap-6 items-start",
             layout === "side" &&
               (columns === 3
                 ? "lg:grid-cols-[0.92fr_1.06fr_0.98fr]"
+                : isExternalPreviewLayout
+                ? "md:grid-cols-2 lg:grid-cols-[minmax(260px,0.82fr)_minmax(0,1.18fr)]"
                 : "md:grid-cols-2")
           )}
         >
           <Card
-            id="lead-form-field-settings-panel"
-            className="rounded-2xl border border-border/60 bg-card/80 shadow-sm"
+            className={cn(
+              "rounded-2xl border border-border/60 bg-card/80 shadow-sm",
+              isExternalPreviewLayout &&
+                "xl:sticky xl:top-4 xl:flex xl:min-h-[34rem] xl:max-h-[calc(100vh-8rem)] xl:flex-col"
+            )}
           >
             <CardHeader className="space-y-3">
               <div className="flex flex-row items-center justify-between gap-4">
@@ -590,10 +797,16 @@ export default function LeadFormBuilder({
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">
-                Reorder questions here, then open one to edit its settings in the center panel.
+                Reorder questions here, then open one to edit it in the panel to the right.
               </p>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent
+              className={cn(
+                "space-y-3",
+                isExternalPreviewLayout &&
+                  "xl:flex xl:min-h-0 xl:flex-1 xl:flex-col xl:overflow-y-auto xl:pr-1"
+              )}
+            >
               <Button
                 size="sm"
                 onClick={() => setFieldPickerOpen(true)}
@@ -603,7 +816,7 @@ export default function LeadFormBuilder({
               </Button>
               {layout === "side" && columns === 2 && !showPreview ? (
                 <p className="text-xs text-muted-foreground md:hidden">
-                  Tap a question to open its settings below.
+                  Tap a question to open its editor below.
                 </p>
               ) : null}
               {form.fields.length ? (
@@ -657,167 +870,47 @@ export default function LeadFormBuilder({
                   Add a field to start your form.
                 </div>
               )}
+              <div
+                className={cn(
+                  "rounded-xl border border-dashed border-border/50 bg-background/40 px-3 py-3 text-xs text-muted-foreground",
+                  isExternalPreviewLayout && "xl:mt-auto"
+                )}
+              >
+                Preview order follows this list. Drag to reorder, then use the editor panel for the active question.
+              </div>
             </CardContent>
           </Card>
-          <Card className="rounded-2xl border border-border/60 bg-card/80 shadow-sm">
+          <Card
+            id="lead-form-field-settings-panel"
+            className="rounded-2xl border border-border/60 bg-card/80 shadow-sm"
+          >
             <CardHeader className="space-y-3">
-              <CardTitle className="text-sm font-semibold whitespace-nowrap">
-                Settings
-              </CardTitle>
+              <div className="flex flex-wrap items-center gap-2">
+                <CardTitle className="text-sm font-semibold whitespace-nowrap">
+                  Selected field
+                </CardTitle>
+                <Badge variant="outline" className="rounded-full px-2.5 py-0.5 text-[11px]">
+                  {activeField ? `Editing ${activeField.label}` : "Choose a field"}
+                </Badge>
+              </div>
               <p className="text-xs text-muted-foreground">
-                Configure overall form behavior first, then tune the selected field below.
+                Edit the active question here after selecting it from the rail.
               </p>
             </CardHeader>
             <CardContent className="space-y-5">
-              <div className="space-y-4 rounded-2xl border border-border/50 bg-background/55 p-4">
-                <div className="space-y-1">
-                  <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                    Form content
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Set the title, intro text, and success message shown after submit.
-                  </p>
+              {!activeField ? (
+                <div className="rounded-xl border border-dashed border-border/60 px-3 py-5 text-sm text-muted-foreground">
+                  Select a field from the question rail to edit it here.
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="lead-form-title">Title</Label>
-                  <Input
-                    id="lead-form-title"
-                    value={form.title}
-                    onChange={(event) => updateForm({ title: event.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="lead-form-description">Subtitle</Label>
-                  <Textarea
-                    id="lead-form-description"
-                    value={form.description}
-                    onChange={(event) => updateForm({ description: event.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="lead-form-confirm">Success message</Label>
-                  <Textarea
-                    id="lead-form-confirm"
-                    value={form.settings.confirmationMessage}
-                    onChange={(event) =>
-                      updateForm({
-                        settings: {
-                          ...form.settings,
-                          confirmationMessage: event.target.value,
-                        },
-                      })
-                    }
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-4 rounded-2xl border border-border/50 bg-background/55 p-4">
-                <div className="space-y-1">
-                  <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                    Submission rules
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Control how many responses a visitor can send and whether they can edit later.
-                  </p>
-                </div>
-                <label className="flex items-center justify-between gap-3 text-sm text-foreground">
-                  <span>Allow edit after submit</span>
-                  <Switch
-                    checked={form.settings.allowEditAfterSubmit}
-                    onCheckedChange={(value) =>
-                      updateForm({
-                        settings: {
-                          ...form.settings,
-                          allowEditAfterSubmit: Boolean(value),
-                        },
-                      })
-                    }
-                  />
-                </label>
-                <label className="flex items-center justify-between gap-3 text-sm text-foreground">
-                  <span>Limit one response</span>
-                  <Switch
-                    checked={form.settings.limitOneResponse === "on"}
-                    onCheckedChange={(value) =>
-                      updateForm({
-                        settings: {
-                          ...form.settings,
-                          limitOneResponse: value ? "on" : "off",
-                        },
-                      })
-                    }
-                  />
-                </label>
-                <label className="flex items-center justify-between gap-3 text-sm text-foreground">
-                  <span>Verify email on email fields</span>
-                  <Switch
-                    checked={form.settings.collectEmail === "verified"}
-                    onCheckedChange={(value) =>
-                      updateForm({
-                        settings: {
-                          ...form.settings,
-                          collectEmail: value ? "verified" : "user_input",
-                        },
-                      })
-                    }
-                  />
-                </label>
-              </div>
-
-              <div className="space-y-4 rounded-2xl border border-border/50 bg-background/55 p-4">
-                <div className="space-y-1">
-                  <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                    Display options
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Decide how structured or dynamic the public form should feel.
-                  </p>
-                </div>
-                <label className="flex items-center justify-between gap-3 text-sm text-foreground">
-                  <span>Show progress bar</span>
-                  <Switch
-                    checked={form.settings.showProgressBar}
-                    onCheckedChange={(value) =>
-                      updateForm({
-                        settings: {
-                          ...form.settings,
-                          showProgressBar: Boolean(value),
-                        },
-                      })
-                    }
-                  />
-                </label>
-                <label className="flex items-center justify-between gap-3 text-sm text-foreground">
-                  <span>Shuffle question order</span>
-                  <Switch
-                    checked={form.settings.shuffleQuestionOrder}
-                    onCheckedChange={(value) =>
-                      updateForm({
-                        settings: {
-                          ...form.settings,
-                          shuffleQuestionOrder: Boolean(value),
-                        },
-                      })
-                    }
-                  />
-                </label>
-              </div>
-
-              <div className="space-y-4 rounded-2xl border border-border/50 bg-background/55 p-4">
-                <div className="space-y-1">
-                  <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                    Selected field
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Adjust the active question’s copy, requirement, type, and validation.
-                  </p>
-                </div>
-                {!activeField ? (
-                  <div className="rounded-xl border border-dashed border-border/60 px-3 py-5 text-sm text-muted-foreground">
-                    Select a field from the left rail to edit it here.
-                  </div>
-                ) : (
-                  <>
+              ) : (
+                <div
+                  className={cn(
+                    "grid gap-5",
+                    hasAdvancedFieldOptions &&
+                      "xl:grid-cols-[minmax(0,1fr)_minmax(260px,0.78fr)] xl:items-start"
+                  )}
+                >
+                  <div className="space-y-4">
                     <div className="space-y-2">
                       <Label>Label</Label>
                       <Input
@@ -840,7 +933,7 @@ export default function LeadFormBuilder({
                         }
                       />
                     </div>
-                    <label className="flex items-center justify-between gap-3 text-sm text-foreground">
+                    <label className="flex items-center justify-between gap-3 rounded-xl border border-border/40 bg-background/45 px-3 py-2 text-sm text-foreground">
                       <span>Required</span>
                       <Switch
                         checked={activeField.required}
@@ -876,13 +969,25 @@ export default function LeadFormBuilder({
                         updateField(activeField.id, { validation })
                       }
                     />
-                    <FieldTypeEditor
-                      field={activeField}
-                      onChange={(patch) => updateField(activeField.id, patch)}
-                    />
-                  </>
-                )}
-              </div>
+                  </div>
+                  {hasAdvancedFieldOptions ? (
+                    <div className="space-y-4 rounded-2xl border border-border/40 bg-background/45 p-4">
+                      <div className="space-y-1">
+                        <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                          Field options
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Tune the interaction details for this question type.
+                        </p>
+                      </div>
+                      <FieldTypeEditor
+                        field={activeField}
+                        onChange={(patch) => updateField(activeField.id, patch)}
+                      />
+                    </div>
+                  ) : null}
+                </div>
+              )}
 
               {saveError ? (
                 <div className="text-xs text-destructive">{saveError}</div>
