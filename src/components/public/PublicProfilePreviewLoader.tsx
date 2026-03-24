@@ -21,8 +21,8 @@ export default function PublicProfilePreviewLoader({
   return (
     <div
       className={cn(
-        "relative isolate flex items-center justify-center overflow-hidden px-5 py-6 text-center text-foreground",
-        fullscreen ? "min-h-screen" : "h-full min-h-[260px]",
+        "relative isolate flex items-start justify-center overflow-hidden px-5 pt-7 text-center text-foreground",
+        fullscreen ? "min-h-screen pb-8 sm:pt-10" : "h-full min-h-[260px] pb-5",
         overlay ? "absolute inset-0 z-10 bg-background/90 backdrop-blur-[3px]" : "bg-background",
         className
       )}

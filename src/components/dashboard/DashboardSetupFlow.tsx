@@ -27,6 +27,10 @@ import { toast } from "@/components/system/toaster";
 import { useThemeOptional } from "@/components/theme/theme-provider";
 import { trackEvent } from "@/lib/analytics";
 import { getSignedAvatarUrl } from "@/lib/avatar-client";
+import {
+  clearPendingDashboardTheme,
+  writePendingDashboardTheme,
+} from "@/lib/dashboard-theme-pending";
 import { getSignedProfileHeaderUrl } from "@/lib/profile-header-client";
 import { getSignedProfileLogoUrl } from "@/lib/profile-logo-client";
 import type { DashboardOnboardingState } from "@/lib/dashboard-onboarding-types";
@@ -1032,6 +1036,7 @@ export default function DashboardSetupFlow({
       }
 
       const request = (async () => {
+        const requestedTheme = draft.theme;
         setProfileSaveStatus(publish ? "publishing" : "saving");
         setSaveError(null);
         setHandleError(null);
@@ -1067,7 +1072,12 @@ export default function DashboardSetupFlow({
             buildProfileDraftSignature(savedRecord);
           setLastSavedAt(new Date().toISOString());
           setProfileSaveStatus("saved");
-          setTheme(savedRecord.theme);
+          if (savedRecord.theme === requestedTheme) {
+            clearPendingDashboardTheme();
+          }
+          if (publish || profileDraftRef.current?.theme === requestedTheme) {
+            setTheme(savedRecord.theme);
+          }
           setAccount((current) => ({
             ...current,
             handle: savedRecord.handle,
@@ -1095,6 +1105,9 @@ export default function DashboardSetupFlow({
             error instanceof Error ? error.message : "Unable to save your page.";
           setProfileSaveStatus("error");
           setSaveError(message);
+          if (profileDraftRef.current?.theme === requestedTheme) {
+            clearPendingDashboardTheme();
+          }
           if (!quiet) {
             toast({
               title: publish ? "Publish failed" : "Save failed",
@@ -2364,6 +2377,9 @@ export default function DashboardSetupFlow({
                                         key={themeOption.value}
                                         type="button"
                                         onClick={() => {
+                                          if (profileDraft.theme !== themeOption.value) {
+                                            writePendingDashboardTheme(themeOption.value);
+                                          }
                                           setTheme(themeOption.value);
                                           setShowThemeChooser(false);
                                           updateProfileDraft((current) => ({
@@ -2428,27 +2444,6 @@ export default function DashboardSetupFlow({
                             <p className="mt-2 text-sm text-muted-foreground">
                               Open it once on your phone.
                             </p>
-                          </div>
-                        </div>
-                        <div className="hidden sm:block xl:hidden">
-                          <div className="mx-auto w-full max-w-[300px]">
-                            <PhonePreviewCard
-                              profile={{
-                                name: previewDisplayName,
-                                tagline: previewTagline,
-                              }}
-                              avatarUrl={avatarPreviewUrl}
-                              headerImageUrl={headerPreviewUrl}
-                              logoUrl={logoPreviewUrl}
-                              logoShape={profileDraft.logoShape}
-                              logoBackgroundWhite={profileDraft.logoBackgroundWhite}
-                              themeName={profileDraft.theme}
-                              contactEnabled={contactReady}
-                              contactDisabledText="Add email or phone"
-                              links={previewLinks}
-                              showLeadFormSection={false}
-                              showClicks={false}
-                            />
                           </div>
                         </div>
                         <div className={cn("flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between", softPanelClassName)}>
@@ -2543,14 +2538,6 @@ export default function DashboardSetupFlow({
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4 px-4 py-4">
-                <div className="rounded-2xl border border-border/60 bg-muted/40 px-3 py-2">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-                    Public URL
-                  </p>
-                  <p className="mt-1 break-all text-sm font-medium text-foreground">
-                    {publicUrl}
-                  </p>
-                </div>
                 <div className="mx-auto w-full max-w-[304px]">
                   <PhonePreviewCard
                     profile={{
@@ -2612,14 +2599,6 @@ export default function DashboardSetupFlow({
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
-            <div className="rounded-2xl border border-border/60 bg-muted/40 px-3 py-2">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-                Public URL
-              </p>
-              <p className="mt-1 break-all text-sm font-medium text-foreground">
-                {publicUrl}
-              </p>
-            </div>
             <div className="mx-auto w-full max-w-[264px] sm:max-w-[300px]">
               <PhonePreviewCard
                 profile={{

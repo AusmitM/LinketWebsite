@@ -377,8 +377,7 @@ export default function DashboardOnboardingTour() {
 
   useEffect(() => {
     if (!storageKey || autoStartHandled.current) return;
-    if (!pathname.startsWith("/dashboard")) return;
-    if (pathname.startsWith("/dashboard/get-started")) return;
+    if (pathname !== "/dashboard/overview") return;
 
     const hasTourQueryParam =
       searchParams.get(TOUR_QUERY_PARAM) === TOUR_START_VALUE;

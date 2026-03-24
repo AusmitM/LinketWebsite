@@ -5,6 +5,10 @@ import { useEffect, useRef } from "react";
 import { coerceThemeName, type ThemeName } from "@/lib/themes";
 import { useThemeOptional } from "@/components/theme/theme-provider";
 import { useDashboardUser } from "@/components/dashboard/DashboardSessionContext";
+import {
+  clearPendingDashboardTheme,
+  readPendingDashboardTheme,
+} from "@/lib/dashboard-theme-pending";
 
 const THEMES: ThemeName[] = [
   "light",
@@ -20,62 +24,7 @@ const THEMES: ThemeName[] = [
   "maroon",
 ];
 
-const PENDING_THEME_KEY = "linket:dashboard-theme:pending";
-const PENDING_TTL_MS = 8000;
 const THEME_SYNC_INTERVAL_MS = 120_000;
-
-type PendingThemePayload = {
-  theme: ThemeName;
-  at: number;
-};
-
-function readPendingTheme(): PendingThemePayload | null {
-  if (typeof localStorage === "undefined") return null;
-  let raw: string | null = null;
-  try {
-    raw = localStorage.getItem(PENDING_THEME_KEY);
-  } catch {
-    return null;
-  }
-  if (!raw) return null;
-  try {
-    const parsed = JSON.parse(raw) as PendingThemePayload;
-    if (!parsed || typeof parsed.theme !== "string" || typeof parsed.at !== "number") {
-      try {
-        localStorage.removeItem(PENDING_THEME_KEY);
-      } catch {
-        // Ignore storage failures (private browsing / restricted storage).
-      }
-      return null;
-    }
-    const age = Date.now() - parsed.at;
-    if (age > PENDING_TTL_MS) {
-      try {
-        localStorage.removeItem(PENDING_THEME_KEY);
-      } catch {
-        // Ignore storage failures (private browsing / restricted storage).
-      }
-      return null;
-    }
-    return parsed;
-  } catch {
-    try {
-      localStorage.removeItem(PENDING_THEME_KEY);
-    } catch {
-      // Ignore storage failures (private browsing / restricted storage).
-    }
-    return null;
-  }
-}
-
-function clearPendingTheme() {
-  if (typeof localStorage === "undefined") return;
-  try {
-    localStorage.removeItem(PENDING_THEME_KEY);
-  } catch {
-    // Ignore storage failures (private browsing / restricted storage).
-  }
-}
 
 function coerceTheme(value: unknown): ThemeName | null {
   if (typeof value !== "string") return null;
@@ -117,15 +66,15 @@ export default function DashboardThemeRemoteSync() {
       const controller = new AbortController();
       abortRef.current = controller;
       try {
-        const pending = readPendingTheme();
         const nextTheme = await fetchActiveProfileTheme(
           userId,
           controller.signal
         );
         if (!active) return;
+        const pending = readPendingDashboardTheme();
         if (pending?.theme) {
           if (nextTheme === pending.theme) {
-            clearPendingTheme();
+            clearPendingDashboardTheme();
           } else if (nextTheme && nextTheme !== pending.theme) {
             return;
           }

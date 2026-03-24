@@ -17,6 +17,10 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useThemeOptional } from "@/components/theme/theme-provider";
+import {
+  clearPendingDashboardTheme,
+  writePendingDashboardTheme,
+} from "@/lib/dashboard-theme-pending";
 import type { ThemeName } from "@/lib/themes";
 import { useDashboardUser } from "@/components/dashboard/DashboardSessionContext";
 
@@ -79,32 +83,6 @@ const LABELS: Record<ThemeName, string> = {
   "burnt-orange": "Hook 'Em",
   maroon: "Aggie",
 };
-
-const PENDING_THEME_KEY = "linket:dashboard-theme:pending";
-
-type PendingThemePayload = {
-  theme: ThemeName;
-  at: number;
-};
-
-function writePendingTheme(theme: ThemeName) {
-  if (typeof localStorage === "undefined") return;
-  const payload: PendingThemePayload = { theme, at: Date.now() };
-  try {
-    localStorage.setItem(PENDING_THEME_KEY, JSON.stringify(payload));
-  } catch {
-    // Ignore storage failures (private browsing / restricted storage).
-  }
-}
-
-function clearPendingTheme() {
-  if (typeof localStorage === "undefined") return;
-  try {
-    localStorage.removeItem(PENDING_THEME_KEY);
-  } catch {
-    // Ignore storage failures (private browsing / restricted storage).
-  }
-}
 
 export default function ThemeToggle({ showLabel = false }: { showLabel?: boolean }) {
   const { theme, setTheme } = useThemeOptional();
@@ -173,13 +151,13 @@ export default function ThemeToggle({ showLabel = false }: { showLabel?: boolean
         const info = await saveRes.json().catch(() => ({}));
         throw new Error(info?.error || "Unable to update public theme.");
       }
-      clearPendingTheme();
+      clearPendingDashboardTheme();
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") return;
       const message =
         error instanceof Error ? error.message : "Unable to update public theme.";
       console.warn("Theme update failed:", message);
-      clearPendingTheme();
+      clearPendingDashboardTheme();
     }
   }
 
@@ -187,7 +165,7 @@ export default function ThemeToggle({ showLabel = false }: { showLabel?: boolean
     const nextIndex = (index + 1) % ORDER.length;
     const value = ORDER[nextIndex];
     setIndex(nextIndex);
-    writePendingTheme(value);
+    writePendingDashboardTheme(value);
     setTheme(value);
     void syncPublicTheme(value);
   }
@@ -196,7 +174,7 @@ export default function ThemeToggle({ showLabel = false }: { showLabel?: boolean
     const nextIndex = (index - 1 + ORDER.length) % ORDER.length;
     const value = ORDER[nextIndex];
     setIndex(nextIndex);
-    writePendingTheme(value);
+    writePendingDashboardTheme(value);
     setTheme(value);
     void syncPublicTheme(value);
   }
