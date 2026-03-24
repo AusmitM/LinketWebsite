@@ -36,6 +36,10 @@ export default function DashboardAppShell({
   const effectiveRequiresOnboarding =
     onboardingState.requiresOnboarding &&
     !(hasOnboardingCompletionOverride && !isSetupRoute);
+  const effectiveOnboardingState: DashboardOnboardingState = {
+    ...onboardingState,
+    requiresOnboarding: effectiveRequiresOnboarding,
+  };
   const shouldHideChrome = effectiveRequiresOnboarding && isSetupRoute;
   const shouldRedirectToSetup =
     effectiveRequiresOnboarding && !isSetupRoute;
@@ -110,7 +114,7 @@ export default function DashboardAppShell({
     >
       {!shouldHideChrome ? (
         <div className="relative z-30 hidden h-[calc(100vh-var(--dashboard-nav-height))] lg:sticky lg:top-[var(--dashboard-nav-height)] lg:block">
-          <Sidebar onboardingState={onboardingState} />
+          <Sidebar onboardingState={effectiveOnboardingState} />
         </div>
       ) : null}
       <div className="flex flex-1 flex-col overflow-hidden">
@@ -167,7 +171,7 @@ export default function DashboardAppShell({
               </button>
             </div>
             <Sidebar
-              onboardingState={onboardingState}
+              onboardingState={effectiveOnboardingState}
               variant="mobile"
               className="h-full w-full border-r-0 bg-transparent pb-4"
               onNavigate={() => setSidebarOpen(false)}

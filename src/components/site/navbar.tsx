@@ -115,24 +115,33 @@ function readThemeFromElement(target: Element | null): ThemeName | null {
   return coerceThemeName(themeClass.slice(THEME_CLASS_PREFIX.length));
 }
 
+function readStoredDashboardTheme(): ThemeName | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return coerceThemeName(
+      window.localStorage.getItem(DASHBOARD_THEME_STORAGE_KEY)
+    );
+  } catch {
+    return null;
+  }
+}
+
 function resolveDashboardChromeTheme(): ThemeName {
   if (typeof document !== "undefined") {
-    const scopedTheme =
-      readThemeFromElement(document.querySelector("#dashboard-theme-scope")) ??
-      readThemeFromElement(document.body) ??
-      readThemeFromElement(document.documentElement);
+    const scopedTheme = readThemeFromElement(
+      document.querySelector("#dashboard-theme-scope")
+    );
     if (scopedTheme) return scopedTheme;
   }
 
-  if (typeof window !== "undefined") {
-    try {
-      const storedTheme = coerceThemeName(
-        window.localStorage.getItem(DASHBOARD_THEME_STORAGE_KEY)
-      );
-      if (storedTheme) return storedTheme;
-    } catch {
-      // Ignore storage failures (private browsing / restricted storage).
-    }
+  const storedTheme = readStoredDashboardTheme();
+  if (storedTheme) return storedTheme;
+
+  if (typeof document !== "undefined") {
+    const rootTheme =
+      readThemeFromElement(document.body) ??
+      readThemeFromElement(document.documentElement);
+    if (rootTheme) return rootTheme;
   }
 
   return "autumn";
@@ -166,8 +175,9 @@ export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = useState<UserLite>(null);
-  const [dashboardChromeTheme, setDashboardChromeTheme] =
-    useState<ThemeName>("autumn");
+  const [dashboardChromeTheme, setDashboardChromeTheme] = useState<ThemeName>(
+    () => resolveDashboardChromeTheme()
+  );
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isAtTop, setIsAtTop] = useState(true);
@@ -359,29 +369,64 @@ export function Navbar() {
     const syncDashboardChromeTheme = () => {
       setDashboardChromeTheme(resolveDashboardChromeTheme());
     };
+    let animationFrameId = 0;
+    let themeScopeObserver: MutationObserver | null = null;
+    let observedThemeScope: Element | null = null;
 
-    syncDashboardChromeTheme();
+    const observeThemeScope = () => {
+      const themeScope = document.querySelector("#dashboard-theme-scope");
+      if (themeScope === observedThemeScope) {
+        return Boolean(themeScope);
+      }
 
-    const themeScope = document.querySelector("#dashboard-theme-scope");
-    const observer = themeScope
-      ? new MutationObserver(syncDashboardChromeTheme)
-      : null;
+      themeScopeObserver?.disconnect();
+      observedThemeScope = themeScope;
 
-    if (themeScope && observer) {
-      observer.observe(themeScope, {
+      if (!themeScope) {
+        themeScopeObserver = null;
+        return false;
+      }
+
+      themeScopeObserver = new MutationObserver(syncDashboardChromeTheme);
+      themeScopeObserver.observe(themeScope, {
         attributes: true,
         attributeFilter: ["class"],
       });
-    }
+      return true;
+    };
+
+    const syncDashboardChromeThemeScope = () => {
+      if (animationFrameId) {
+        window.cancelAnimationFrame(animationFrameId);
+        animationFrameId = 0;
+      }
+
+      const hasThemeScope = observeThemeScope();
+      syncDashboardChromeTheme();
+
+      if (!hasThemeScope) {
+        animationFrameId = window.requestAnimationFrame(
+          syncDashboardChromeThemeScope
+        );
+      }
+    };
+
+    syncDashboardChromeThemeScope();
     window.addEventListener("storage", syncDashboardChromeTheme);
-    window.addEventListener("linket:theme-change", syncDashboardChromeTheme);
+    window.addEventListener(
+      "linket:theme-change",
+      syncDashboardChromeThemeScope
+    );
 
     return () => {
-      observer?.disconnect();
+      if (animationFrameId) {
+        window.cancelAnimationFrame(animationFrameId);
+      }
+      themeScopeObserver?.disconnect();
       window.removeEventListener("storage", syncDashboardChromeTheme);
       window.removeEventListener(
         "linket:theme-change",
-        syncDashboardChromeTheme
+        syncDashboardChromeThemeScope
       );
     };
   }, [isDashboard]);
