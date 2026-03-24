@@ -119,6 +119,12 @@ const DEFAULT_LINK_HOST = getConfiguredSiteHost();
 const MAX_LINK_ROWS = 5;
 const PROFILE_EDITOR_SECTION_STORAGE_KEY =
   "linket:profile-editor:active-section";
+const ONBOARDING_COMPLETION_SESSION_KEY_PREFIX =
+  "linket:onboarding-complete";
+
+function getOnboardingCompletionSessionKey(userId: string) {
+  return `${ONBOARDING_COMPLETION_SESSION_KEY_PREFIX}:${userId}`;
+}
 
 const SETUP_STEPS: Array<{
   id: SetupStepId;
@@ -1415,6 +1421,12 @@ export default function DashboardSetupFlow({
     const published = await saveProfileDraft({ publish: true, quiet: false });
     if (!published) return;
 
+    if (typeof window !== "undefined" && userId) {
+      window.sessionStorage.setItem(
+        getOnboardingCompletionSessionKey(userId),
+        "1"
+      );
+    }
     setPublishedThisSession(true);
     setShowLaunchHub(true);
     setProfileSaveStatus("saved");

@@ -9,6 +9,13 @@ import DashboardOnboardingTour from "@/components/dashboard/DashboardOnboardingT
 import type { DashboardOnboardingState } from "@/lib/dashboard-onboarding-types";
 import { cn } from "@/lib/utils";
 
+const ONBOARDING_COMPLETION_SESSION_KEY_PREFIX =
+  "linket:onboarding-complete";
+
+function getOnboardingCompletionSessionKey(userId: string) {
+  return `${ONBOARDING_COMPLETION_SESSION_KEY_PREFIX}:${userId}`;
+}
+
 export default function DashboardAppShell({
   children,
   onboardingState,
@@ -20,9 +27,25 @@ export default function DashboardAppShell({
   const pathname = usePathname() ?? "";
   const router = useRouter();
   const isSetupRoute = pathname.startsWith("/dashboard/get-started");
-  const shouldHideChrome = onboardingState.requiresOnboarding && isSetupRoute;
+  const onboardingCompletionSessionKey =
+    getOnboardingCompletionSessionKey(onboardingState.userId);
+  const [hasOnboardingCompletionOverride] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.sessionStorage.getItem(onboardingCompletionSessionKey) === "1";
+  });
+  const effectiveRequiresOnboarding =
+    onboardingState.requiresOnboarding &&
+    !(hasOnboardingCompletionOverride && !isSetupRoute);
+  const shouldHideChrome = effectiveRequiresOnboarding && isSetupRoute;
   const shouldRedirectToSetup =
-    onboardingState.requiresOnboarding && !isSetupRoute;
+    effectiveRequiresOnboarding && !isSetupRoute;
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!onboardingState.requiresOnboarding) {
+      window.sessionStorage.removeItem(onboardingCompletionSessionKey);
+    }
+  }, [onboardingCompletionSessionKey, onboardingState.requiresOnboarding]);
 
   useEffect(() => {
     const onResize = () => {
