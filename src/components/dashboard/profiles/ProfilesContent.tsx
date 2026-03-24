@@ -22,7 +22,11 @@ import { confirmRemove } from "@/lib/confirm-remove";
 import { normalizeThemeName, type ThemeName } from "@/lib/themes";
 import type { ProfileWithLinks } from "@/lib/profile-service";
 import { useDashboardUser } from "@/components/dashboard/DashboardSessionContext";
-import { getSiteOrigin } from "@/lib/site-url";
+import {
+  getDefaultProfileLinkUrl,
+  getSiteHost,
+  getSiteOrigin,
+} from "@/lib/site-url";
 
 const THEME_OPTIONS: Array<{
   id: ThemeName;
@@ -111,7 +115,7 @@ const THEME_OPTIONS: Array<{
 ];
 
 const DEFAULT_THEME: ThemeName = "autumn";
-const DEFAULT_PROFILE_LINK_URL = "https://www.LinketConnect.com";
+const DEFAULT_PROFILE_LINK_URL = getDefaultProfileLinkUrl();
 
 type LinkItem = {
   id: string;
@@ -134,6 +138,7 @@ type LinketProfile = {
 
 export default function ProfilesContent() {
   const dashboardUser = useDashboardUser();
+  const siteHost = useMemo(() => getSiteHost(getSiteOrigin()), []);
   const [userId, setUserId] = useState<string | null>(
     dashboardUser?.id ?? null
   );
@@ -997,7 +1002,7 @@ export default function ProfilesContent() {
                     </label>
                     <div className="relative">
                       <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
-                        linketconnect.com/
+                        {siteHost}/
                       </span>
                       <Input
                         id="profile-handle"

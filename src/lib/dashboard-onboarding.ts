@@ -3,10 +3,11 @@ import "server-only";
 import { createServerSupabaseReadonly } from "@/lib/supabase/server";
 import { getActiveProfileForUser } from "@/lib/profile-service";
 import type { DashboardOnboardingState } from "@/lib/dashboard-onboarding-types";
+import { getConfiguredSiteHost } from "@/lib/site-url";
 import { normalizeThemeName } from "@/lib/themes";
 
 const AUTO_HANDLE_PATTERN = /^user-[0-9a-f]{8}$/i;
-const DEFAULT_LINK_HOST = "linketconnect.com";
+const DEFAULT_LINK_HOST = getConfiguredSiteHost();
 const SHARE_TEST_EVENTS = [
   "share_contact_success",
   "vcard_download_success",

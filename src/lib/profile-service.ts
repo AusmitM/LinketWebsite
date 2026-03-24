@@ -94,6 +94,7 @@ grant select on table public.profile_links to anon;
 import { supabaseAdmin, isSupabaseAdminAvailable } from "@/lib/supabase-admin";
 import { createClient } from "@supabase/supabase-js";
 import { sanitizePublicLinkUrl } from "@/lib/security";
+import { getDefaultProfileLinkUrl } from "@/lib/site-url";
 import { normalizeThemeName, type ThemeName } from "@/lib/themes";
 import type { ProfileLinkRecord, UserProfileRecord } from "@/types/db";
 
@@ -119,7 +120,7 @@ const supabasePublic = createClient(
 
 const PROFILE_TABLE = "user_profiles";
 const PROFILE_LINKS_TABLE = "profile_links";
-const DEFAULT_PROFILE_LINK_URL = "https://www.LinketConnect.com";
+const DEFAULT_PROFILE_LINK_URL = getDefaultProfileLinkUrl();
 
 export class HandleConflictError extends Error {
   suggestions: string[];

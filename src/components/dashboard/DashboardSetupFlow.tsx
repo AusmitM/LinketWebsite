@@ -27,6 +27,11 @@ import { trackEvent } from "@/lib/analytics";
 import { getSignedAvatarUrl } from "@/lib/avatar-client";
 import type { DashboardOnboardingState } from "@/lib/dashboard-onboarding-types";
 import type { ProfileWithLinks } from "@/lib/profile-service";
+import {
+  getConfiguredSiteHost,
+  getSiteOrigin,
+  toPublicProfileUrl,
+} from "@/lib/site-url";
 import { normalizeThemeName, type ThemeName } from "@/lib/themes";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -106,7 +111,7 @@ type AccountDraft = {
 };
 
 const AUTO_HANDLE_PATTERN = /^user-[0-9a-f]{8}$/i;
-const DEFAULT_LINK_HOST = "linketconnect.com";
+const DEFAULT_LINK_HOST = getConfiguredSiteHost();
 const MAX_LINK_ROWS = 5;
 
 const SETUP_STEPS: Array<{
@@ -271,11 +276,7 @@ function getDeviceType() {
 function buildPublicUrl(handle: string) {
   const normalizedHandle = sanitizeHandleInput(handle);
   if (!normalizedHandle) return "";
-  if (typeof window === "undefined") {
-    return `https://linketconnect.com/${normalizedHandle}`;
-  }
-  const base = window.location.origin.replace(/\/+$/, "");
-  return `${base}/${normalizedHandle}`;
+  return toPublicProfileUrl(normalizedHandle, getSiteOrigin());
 }
 
 function buildPreviewProfile(
@@ -283,6 +284,29 @@ function buildPreviewProfile(
   userId: string
 ): ProfileWithLinks {
   const now = new Date().toISOString();
+  const links = draft.links.reduce<ProfileWithLinks["links"]>((items, link, index) => {
+    const normalizedUrl = normalizeLinkUrlInput(link.url);
+    if (!normalizedUrl) {
+      return items;
+    }
+
+    items.push({
+      id: link.id || `preview-link-${index}`,
+      profile_id: draft.id || "preview-profile",
+      user_id: userId,
+      title: deriveLinkTitle(link.title, normalizedUrl),
+      url: normalizedUrl,
+      order_index: index,
+      is_active: link.isActive,
+      is_override: link.isOverride,
+      click_count: 0,
+      created_at: now,
+      updated_at: now,
+    });
+
+    return items;
+  }, []);
+
   return {
     id: draft.id || "preview-profile",
     user_id: userId,
@@ -301,25 +325,7 @@ function buildPreviewProfile(
     is_active: true,
     created_at: draft.createdAt || now,
     updated_at: draft.updatedAt || now,
-    links: draft.links
-      .map((link, index) => {
-        const normalizedUrl = normalizeLinkUrlInput(link.url);
-        if (!normalizedUrl) return null;
-        return {
-          id: link.id || `preview-link-${index}`,
-          profile_id: draft.id || "preview-profile",
-          user_id: userId,
-          title: deriveLinkTitle(link.title, normalizedUrl),
-          url: normalizedUrl,
-          order_index: index,
-          is_active: link.isActive,
-          is_override: link.isOverride,
-          click_count: 0,
-          created_at: now,
-          updated_at: now,
-        };
-      })
-      .filter((link): link is ProfileWithLinks["links"][number] => Boolean(link)),
+    links,
   };
 }
 

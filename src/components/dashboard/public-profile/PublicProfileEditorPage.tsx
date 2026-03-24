@@ -65,6 +65,11 @@ import { shuffleFields } from "@/lib/lead-form";
 import { readLocalStorage, writeLocalStorage } from "@/lib/browser-storage";
 import { toast } from "@/components/system/toaster";
 import { createClient } from "@/lib/supabase/client";
+import {
+  getDefaultProfileLinkUrl,
+  getSiteHost,
+  getSiteOrigin,
+} from "@/lib/site-url";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -155,7 +160,7 @@ const MOBILE_PROFILE_SECTIONS: Array<{ id: SectionId; label: string }> = [
   { id: "preview", label: "Preview" },
 ];
 const ACTIVE_PROFILE_SECTION_STORAGE_KEY = "linket:profile-editor:active-section";
-const DEFAULT_PROFILE_LINK_URL = "https://www.LinketConnect.com";
+const DEFAULT_PROFILE_LINK_URL = getDefaultProfileLinkUrl();
 
 export default function PublicProfileEditorPage() {
   const dashboardUser = useDashboardUser();
@@ -1739,7 +1744,7 @@ function EditorPanel({
             </Label>
             <div className="relative">
               <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground sm:text-xs">
-                linketconnect.com/
+                {getSiteHost(getSiteOrigin())}/
               </span>
               <Input
                 id="profile-handle"

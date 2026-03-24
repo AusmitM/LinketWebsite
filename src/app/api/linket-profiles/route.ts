@@ -14,13 +14,17 @@ import { normalizeThemeName } from "@/lib/themes";
 import { isSupabaseAdminAvailable } from "@/lib/supabase-admin";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { recordConversionEvent } from "@/lib/server-conversion-events";
+import {
+  getConfiguredSiteHost,
+  getDefaultProfileLinkUrl,
+} from "@/lib/site-url";
 import type { ProfileLinkRecord, UserProfileRecord } from "@/types/db";
 
 type ProfileWithLinks = UserProfileRecord & { links: ProfileLinkRecord[] };
-const DEFAULT_PROFILE_LINK_URL = "https://www.LinketConnect.com";
+const DEFAULT_PROFILE_LINK_URL = getDefaultProfileLinkUrl();
 const DEFAULT_PROFILE_NAME = "Linket Public Profile";
 const DEFAULT_THEME = normalizeThemeName("autumn", "autumn");
-const DEFAULT_LINK_HOST = "linketconnect.com";
+const DEFAULT_LINK_HOST = getConfiguredSiteHost();
 
 const linketProfilesQuerySchema = z.object({
   userId: z.string().uuid(),

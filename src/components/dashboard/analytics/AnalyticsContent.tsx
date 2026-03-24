@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { useThemeOptional } from "@/components/theme/theme-provider";
 import { readLocalStorage, writeLocalStorage } from "@/lib/browser-storage";
 import { ANALYTICS_BROADCAST_KEY, ANALYTICS_EVENT_NAME } from "@/lib/analytics";
+import { getSiteHost, getSiteOrigin } from "@/lib/site-url";
 import type { UserAnalytics } from "@/lib/analytics-service";
 import { ResponsiveContainer, LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, Legend } from "recharts";
 import { Download } from "lucide-react";
@@ -66,6 +67,7 @@ type DeltaBadge = {
 export default function AnalyticsContent() {
   const { theme } = useThemeOptional();
   const useDarkDeltaText = DARK_DELTA_TEXT_THEMES.has(theme);
+  const siteHost = useMemo(() => getSiteHost(getSiteOrigin()), []);
   const [userId, setUserId] = useState<string | null>(null);
   const [reloadToken, setReloadToken] = useState(0);
   const [isPhone, setIsPhone] = useState(false);
@@ -625,7 +627,7 @@ export default function AnalyticsContent() {
             ) : analytics?.topProfiles?.length ? (
               <div className="space-y-2">
                 {analytics.topProfiles.map((profile) => {
-                  const subtitle = profile.handle ? `linketconnect.com/${profile.handle}` : profile.nickname || "Unassigned";
+                  const subtitle = profile.handle ? `${siteHost}/${profile.handle}` : profile.nickname || "Unassigned";
                   const conversion = profile.scans > 0 ? profile.leads / profile.scans : 0;
                   return (
                     <div key={`${profile.profileId ?? "np"}-${profile.handle ?? "nh"}`} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border px-3 py-2">

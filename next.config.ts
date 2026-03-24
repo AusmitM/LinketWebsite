@@ -109,6 +109,7 @@ const remoteImageHosts = [
 
 const allowUnsafeEval = process.env.NODE_ENV !== "production";
 const stripeScriptOrigin = "https://js.stripe.com";
+const qrCodeImageOrigin = "https://api.qrserver.com";
 const stripeConnectOrigins = [
   "https://api.stripe.com",
   "https://r.stripe.com",
@@ -123,7 +124,7 @@ const csp = [
   `style-src 'self' 'unsafe-inline'`,
   `img-src 'self' data: blob: ${supabaseOrigin} ${remoteImageHosts
     .map((host) => `https://${host}`)
-    .join(" ")} https://q.stripe.com`,
+    .join(" ")} https://q.stripe.com ${qrCodeImageOrigin}`,
   `connect-src 'self' ${supabaseOrigin} ${stripeConnectOrigins.join(" ")}`,
   `font-src 'self' data:`,
   `frame-src 'self' ${stripeFrameOrigins.join(" ")}`,

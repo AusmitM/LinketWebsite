@@ -2,7 +2,7 @@ const VERSION = "v3";
 const PAGE_CACHE = `linket-pages-${VERSION}`;
 const ASSET_CACHE = `linket-assets-${VERSION}`;
 const CACHE_ALLOWLIST = [PAGE_CACHE, ASSET_CACHE];
-const NETWORK_TIMEOUT_MS = 3500;
+const NETWORK_TIMEOUT_MS = 8000;
 const RESERVED_PATHS = new Set([
   "api",
   "dashboard",
@@ -74,10 +74,18 @@ async function networkFirst(request, cacheName) {
     if (timeoutId) clearTimeout(timeoutId);
     const cached = await cache.match(request);
     if (cached) return cached;
-    return new Response("Offline", {
-      status: 503,
-      headers: { "Content-Type": "text/plain" },
-    });
+    try {
+      const response = await fetch(request);
+      if (response && response.ok) {
+        cache.put(request, response.clone());
+      }
+      return response;
+    } catch {
+      return new Response("Offline", {
+        status: 503,
+        headers: { "Content-Type": "text/plain" },
+      });
+    }
   }
 }
 

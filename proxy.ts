@@ -16,8 +16,79 @@ import {
   readBearerTokenFromHeaders,
   verifySupabaseAccessToken,
 } from "@/lib/supabase/auth-token";
+import { getOptionalConfiguredSiteOrigin } from "@/lib/site-url";
 
-const CANONICAL_HOST = "linketconnect.com";
+type CanonicalHostConfig = {
+  host: string;
+  hostname: string;
+};
+
+function parseHostCsvEnv(value: string | undefined) {
+  return (value ?? "")
+    .split(",")
+    .map((entry) => entry.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+function parseCanonicalHost(value: string | null | undefined) {
+  if (!value) return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  try {
+    const parsed = new URL(
+      trimmed.includes("://") ? trimmed : `https://${trimmed}`
+    );
+    return {
+      host: parsed.host.toLowerCase(),
+      hostname: parsed.hostname.toLowerCase(),
+    } satisfies CanonicalHostConfig;
+  } catch {
+    return null;
+  }
+}
+
+function getCanonicalHostConfig(): CanonicalHostConfig | null {
+  const explicit = parseCanonicalHost(process.env.CANONICAL_HOST);
+  if (explicit) {
+    return explicit;
+  }
+
+  return parseCanonicalHost(getOptionalConfiguredSiteOrigin());
+}
+
+function shouldRedirectToCanonicalHost(
+  requestUrl: URL,
+  canonicalHost: CanonicalHostConfig
+) {
+  const requestHost = requestUrl.host.toLowerCase();
+  const requestHostname = requestUrl.hostname.toLowerCase();
+
+  if (requestHost === canonicalHost.host) {
+    return false;
+  }
+
+  if (
+    requestHostname === "localhost" ||
+    requestHostname === "127.0.0.1" ||
+    requestHostname.endsWith(".vercel.app")
+  ) {
+    return false;
+  }
+
+  const explicitAliases = parseHostCsvEnv(process.env.CANONICAL_HOST_ALIASES);
+  if (
+    explicitAliases.includes(requestHost) ||
+    explicitAliases.includes(requestHostname)
+  ) {
+    return true;
+  }
+
+  const bareCanonicalHost = canonicalHost.hostname.replace(/^www\./, "");
+  const derivedAliases = new Set([bareCanonicalHost, `www.${bareCanonicalHost}`]);
+  derivedAliases.delete(canonicalHost.hostname);
+
+  return derivedAliases.has(requestHostname);
+}
 
 function applyCookies(source: NextResponse, target: NextResponse) {
   for (const cookie of source.cookies.getAll()) {
@@ -219,13 +290,9 @@ export async function proxy(req: NextRequest) {
     );
   }
 
-  if (
-    url.hostname !== CANONICAL_HOST &&
-    !url.hostname.endsWith(".vercel.app") &&
-    url.hostname !== "localhost" &&
-    url.hostname !== "127.0.0.1"
-  ) {
-    url.hostname = CANONICAL_HOST;
+  const canonicalHost = getCanonicalHostConfig();
+  if (canonicalHost && shouldRedirectToCanonicalHost(url, canonicalHost)) {
+    url.host = canonicalHost.host;
     return NextResponse.redirect(url, 308);
   }
 
