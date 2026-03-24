@@ -6,6 +6,7 @@ import "@/styles/theme/public-profile.css";
 import { createClient } from "@/lib/supabase/client";
 import type { ProfileWithLinks } from "@/lib/profile-service";
 import PublicProfilePreview from "@/components/public/PublicProfilePreview";
+import PublicProfilePreviewLoader from "@/components/public/PublicProfilePreviewLoader";
 import { isDarkTheme, normalizeThemeName } from "@/lib/themes";
 
 type PreviewState = {
@@ -112,9 +113,7 @@ export default function PublicProfilePreviewPage() {
   if (state.loading) {
     return (
       <div className={`min-h-screen bg-background text-foreground ${requestedThemeClassName}`}>
-        <div className="mx-auto max-w-3xl px-6 py-12 text-sm text-muted-foreground">
-          Loading preview...
-        </div>
+        <PublicProfilePreviewLoader fullscreen />
       </div>
     );
   }
