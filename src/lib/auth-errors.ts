@@ -5,7 +5,7 @@ export function friendlyAuthError(message: string, code?: string) {
     return "We couldn't match that email and password. Try again or reset your password.";
   }
   if (lowerMessage.includes("email not confirmed")) {
-    return "Please confirm your email before signing in.";
+    return "Please verify your email before signing in. A verification email should already be in your inbox.";
   }
   if (
     lowerMessage.includes("password should contain at least one character of each") ||

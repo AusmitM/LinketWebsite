@@ -18,13 +18,3 @@ export function writeLocalStorage(key: string, value: string): boolean {
     return false;
   }
 }
-
-export function removeLocalStorage(key: string): boolean {
-  if (typeof window === "undefined") return false;
-  try {
-    window.localStorage.removeItem(key);
-    return true;
-  } catch {
-    return false;
-  }
-}

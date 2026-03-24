@@ -33,12 +33,3 @@ export function appendVersion(
   const separator = url.includes("?") ? "&" : "?";
   return `${url}${separator}v=${encodeURIComponent(String(version))}`;
 }
-
-export function buildAvatarPublicUrl(
-  path: string | null | undefined,
-  version?: string | number | null
-): string | null {
-  if (!path) return null;
-  if (!isHttpUrl(path)) return null;
-  return appendVersion(path, version);
-}

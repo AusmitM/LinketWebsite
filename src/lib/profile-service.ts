@@ -231,16 +231,6 @@ function ensureMemoryAccountRecord(
   return record;
 }
 
-function memoryGetAccountByHandle(handle: string): AccountRecord | null {
-  const target = normaliseHandle(handle);
-  for (const record of memoryAccounts.values()) {
-    if (record.username === target) {
-      return cloneAccount(record);
-    }
-  }
-  return null;
-}
-
 function memoryRememberAccount(record: AccountRecord): AccountRecord {
   const normalized = normaliseHandle(record.username);
   const stored: AccountRecord = {
@@ -352,7 +342,6 @@ function buildHandleSuggestions(base: string, existing: Set<string>): string[] {
 }
 
 async function assertHandleAvailable(
-  userId: string,
   handle: string,
   profileId?: string | null
 ) {
@@ -451,9 +440,6 @@ function memorySaveProfileForUser(
   const handle = normaliseHandle(payload.handle);
   const theme = normaliseTheme(payload.theme);
   const headline = payload.headline?.trim() || null;
-  const headerImageUrl = payload.headerImageUrl ?? null;
-  const headerImageUpdatedAt = payload.headerImageUpdatedAt ?? null;
-  const headerImageOriginalFileName = payload.headerImageOriginalFileName ?? null;
   const logoUrl = payload.logoUrl ?? null;
   const logoUpdatedAt = payload.logoUpdatedAt ?? null;
   const logoOriginalFileName = payload.logoOriginalFileName ?? null;
@@ -553,8 +539,6 @@ function memorySaveProfileForUser(
     links,
     existingLinkStateById
   );
-  const selectedOverrideOrderIndex =
-    normalizedLinks.find((link) => link.isOverride)?.order_index ?? null;
   profile.links = normalizedLinks.map((link, index) => {
     const existing = link.id ? existingLinks.get(link.id) : undefined;
     const id = existing?.id || link.id || randomId();
@@ -623,22 +607,6 @@ function memoryGetActiveProfileForUser(
   return match ? normaliseProfileTheme(cloneDeep(match)) : null;
 }
 
-function memoryGetGlobalActiveProfile(): ProfileWithLinks | null {
-  let candidate: ProfileWithLinks | null = null;
-  for (const profiles of memoryProfiles.values()) {
-    for (const profile of profiles) {
-      if (!profile.is_active) continue;
-      const currentScore = Date.parse(profile.updated_at || profile.created_at);
-      const candidateScore = candidate
-        ? Date.parse(candidate.updated_at || candidate.created_at)
-        : Number.NEGATIVE_INFINITY;
-      if (!candidate || currentScore > candidateScore) {
-        candidate = profile;
-      }
-    }
-  }
-  return candidate ? normaliseProfileTheme(cloneDeep(candidate)) : null;
-}
 
 async function fetchProfileWithLinksById(
   profileId: string
@@ -777,7 +745,7 @@ export async function saveProfileForUser(
   if (!name) throw new Error("Profile name is required");
   if (!handle) throw new Error("Handle is required");
 
-  await assertHandleAvailable(userId, handle, profileId);
+  await assertHandleAvailable(handle, profileId);
 
   if (!profileId) {
     const { data, error } = await supabaseAdmin
@@ -1049,25 +1017,6 @@ export async function getActiveProfileForUser(
   return toProfileWithLinks(record);
 }
 
-export async function getGlobalActiveProfile(): Promise<ProfileWithLinks | null> {
-  if (!SUPABASE_ENABLED) {
-    return memoryGetGlobalActiveProfile();
-  }
-  const { data, error } = await supabaseAdmin
-    .from(PROFILE_TABLE)
-    .select(`*, links:${PROFILE_LINKS_TABLE}(*)`)
-    .eq("is_active", true)
-    .order("updated_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  if (error && error.code !== "PGRST116") throw new Error(error.message);
-  if (!data) return null;
-  const record = data as unknown as UserProfileRecord & {
-    links: ProfileLinkRecord[];
-  };
-  return toProfileWithLinks(record);
-}
-
 export async function getAccountHandleForUser(
   userId: string
 ): Promise<string | null> {
@@ -1090,34 +1039,6 @@ export async function getAccountHandleForUser(
   return handle || `user-${userId.slice(0, 8)}`;
 }
 
-export async function getAccountByHandle(
-  handle: string
-): Promise<AccountRecord | null> {
-  const normalised = normaliseHandle(handle);
-  if (!normalised) return null;
-  if (!SUPABASE_ENABLED) {
-    return memoryGetAccountByHandle(normalised);
-  }
-  const { data, error } = await supabaseAdmin
-    .from("profiles")
-    .select("user_id, username, display_name, avatar_url, updated_at")
-    .eq("username", normalised)
-    .maybeSingle();
-  if (error && error.code !== "PGRST116") throw new Error(error.message);
-  if (!data) {
-    return memoryGetAccountByHandle(normalised);
-  }
-  const usernameRaw = (data.username as string | null) ?? null;
-  const username = normaliseHandle(usernameRaw || normalised);
-  const record: AccountRecord = {
-    user_id: data.user_id as string,
-    username,
-    display_name: (data.display_name as string | null) ?? null,
-    avatar_url: (data.avatar_url as string | null) ?? null,
-    avatar_updated_at: (data.updated_at as string | null) ?? null,
-  };
-  return memoryRememberAccount(record);
-}
 
 export async function getActiveProfileForPublicHandle(
   handle: string

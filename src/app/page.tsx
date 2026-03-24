@@ -382,66 +382,6 @@ const JOURNEY_FEATURES = [
   },
 ] as const;
 
-// Testimonials copy for marketing proof.
-type Testimonial = {
-  quote: string;
-  name: string;
-  role: string;
-  result: string;
-};
-
-const TESTIMONIALS: Testimonial[] = [
-  {
-    quote:
-      "Every student left our career fair with Linket saved in their contacts. We saw a 4x increase in follow-up meetings.",
-    name: "Jamila Reyes",
-    role: "Director of Partnerships, CampusLoop",
-    result: "4x follow-up rate",
-  },
-  {
-    quote:
-      "Linket lets our pop-up teams capture leads without juggling tablets. We close same-day sales because the info sticks.",
-    name: "Evan Blake",
-    role: "Retail Ops, Sundrift",
-    result: "+63% qualified leads",
-  },
-  {
-    quote:
-      "The ability to push a new menu to every Linket overnight is the superpower our food truck collective needed.",
-    name: "Mina Chen",
-    role: "Founder, Night Market Co.",
-    result: "Menu swaps in minutes",
-  },
-];
-
-// Slider-ready testimonials (kept for future carousel use).
-const SLIDER_TESTIMONIALS = [
-  {
-    id: 1,
-    quote: TESTIMONIALS[0].quote,
-    name: TESTIMONIALS[0].name,
-    username: TESTIMONIALS[0].role,
-    avatar:
-      "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=600&q=80",
-  },
-  {
-    id: 2,
-    quote: TESTIMONIALS[1].quote,
-    name: TESTIMONIALS[1].name,
-    username: TESTIMONIALS[1].role,
-    avatar:
-      "https://images.unsplash.com/photo-1544723795-3fb6469f5b39?auto=format&fit=crop&w=600&q=80",
-  },
-  {
-    id: 3,
-    quote: TESTIMONIALS[2].quote,
-    name: TESTIMONIALS[2].name,
-    username: TESTIMONIALS[2].role,
-    avatar:
-      "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=600&q=80",
-  },
-] as const;
-
 // FAQ content for the accordion + JSON-LD schema.
 function buildFaq(pricing: PublicPricingSnapshot): FaqItem[] {
   return [

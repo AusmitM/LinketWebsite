@@ -53,7 +53,7 @@ export function getSiteHost(origin = getSiteOrigin()) {
   return normalizeHost(origin) ?? "localhost:3000";
 }
 
-export function toAbsoluteSiteUrl(path = "/", origin = getConfiguredSiteOrigin()) {
+function toAbsoluteSiteUrl(path = "/", origin = getConfiguredSiteOrigin()) {
   const safePath = path.startsWith("/") ? path : `/${path}`;
   return `${origin.replace(/\/$/, "")}${safePath}`;
 }

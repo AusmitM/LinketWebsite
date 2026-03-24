@@ -1,10 +1,10 @@
 "use client";
 
 import type { FormEvent } from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Check } from "lucide-react";
+import { Check, RefreshCw } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "@/components/system/toaster";
 import { trackEvent } from "@/lib/analytics";
@@ -63,15 +63,6 @@ function getAuthErrorCode(error: unknown): string | undefined {
   return undefined;
 }
 
-function isEmailNotConfirmedError(error: unknown) {
-  const code = getAuthErrorCode(error)?.toLowerCase();
-  if (code === "email_not_confirmed") return true;
-  if (error instanceof Error) {
-    return error.message.toLowerCase().includes("email not confirmed");
-  }
-  return false;
-}
-
 export default function AuthPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -89,8 +80,8 @@ export default function AuthPage() {
   const [password, setPassword] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [awaitingVerificationAutoSignIn, setAwaitingVerificationAutoSignIn] =
-    useState(false);
+  const [verificationNotice, setVerificationNotice] = useState<string | null>(null);
+  const [resendingVerification, setResendingVerification] = useState(false);
   const isSignUp = view === "signup";
 
   const passwordRequirementStatus = useMemo(
@@ -153,74 +144,6 @@ export default function AuthPage() {
     [next]
   );
 
-  useEffect(() => {
-    if (!awaitingVerificationAutoSignIn || !isSignUp || !email || !password) {
-      return;
-    }
-
-    let active = true;
-    let inFlight = false;
-
-    const attemptSignIn = async () => {
-      if (inFlight || !active) return;
-      inFlight = true;
-      try {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        if (error) {
-          if (isEmailNotConfirmedError(error)) {
-            return;
-          }
-          throw error;
-        }
-
-        if (!data.session) {
-          return;
-        }
-
-        const destination = await resolveRedirect(data.session);
-        if (!destination || !active) return;
-        setAwaitingVerificationAutoSignIn(false);
-        toast({
-          title: "Email verified",
-          description: "You're being redirected to your dashboard.",
-          variant: "success",
-        });
-        router.replace(destination);
-      } catch (err) {
-        if (!active) return;
-        setAwaitingVerificationAutoSignIn(false);
-        const message =
-          err instanceof Error
-            ? err.message
-            : "Unable to complete sign-in. Please try again.";
-        setError(friendlyAuthError(message, getAuthErrorCode(err)));
-      } finally {
-        inFlight = false;
-      }
-    };
-
-    void attemptSignIn();
-    const intervalId = window.setInterval(() => {
-      void attemptSignIn();
-    }, 5000);
-
-    return () => {
-      active = false;
-      window.clearInterval(intervalId);
-    };
-  }, [
-    awaitingVerificationAutoSignIn,
-    email,
-    isSignUp,
-    password,
-    resolveRedirect,
-    router,
-    supabase,
-  ]);
-
   const handlePasswordSignUp = useCallback(
     async (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
@@ -241,7 +164,7 @@ export default function AuthPage() {
       void trackEvent("signup_start", { method: "email" });
       setPending(true);
       setError(null);
-      setAwaitingVerificationAutoSignIn(false);
+      setVerificationNotice(null);
 
       try {
         const { data, error } = await supabase.auth.signUp({
@@ -259,57 +182,18 @@ export default function AuthPage() {
         }
 
         if (data.session) {
-          // User is immediately signed in
-          const destination = await resolveRedirect(data.session);
-          if (!destination) {
-            throw new Error("We couldn't complete sign-in. Please try again.");
-          }
-
-          toast({
-            title: "Account created!",
-            description: "Welcome to Linket.",
-            variant: "success",
-          });
-
-          router.replace(destination);
-        } else {
-          const { data: signInData, error: signInError } =
-            await supabase.auth.signInWithPassword({
-              email,
-              password,
-            });
-
-          if (signInError) {
-            if (isEmailNotConfirmedError(signInError)) {
-              setAwaitingVerificationAutoSignIn(true);
-              toast({
-                title: "Account created!",
-                description:
-                  "Verify your email from your inbox. We'll sign you in automatically.",
-                variant: "success",
-              });
-              return;
-            }
-            throw signInError;
-          }
-
-          setAwaitingVerificationAutoSignIn(false);
-          const destination = signInData.session
-            ? await resolveRedirect(signInData.session)
-            : next || DEFAULT_NEXT;
-          if (!destination) {
-            throw new Error("We couldn't complete sign-in. Please try again.");
-          }
-
-          toast({
-            title: "Account created!",
-            description:
-              "You're signed in. Please verify your email from your inbox.",
-            variant: "success",
-          });
-
-          router.replace(destination);
+          await supabase.auth.signOut();
         }
+        const message =
+          "Check your email to verify your account before signing in. A verification email has been sent.";
+        setVerificationNotice(message);
+        setPassword("");
+
+        toast({
+          title: "Verification email sent",
+          description: message,
+          variant: "success",
+        });
       } catch (err) {
         const message =
           err instanceof Error
@@ -320,7 +204,7 @@ export default function AuthPage() {
         setPending(false);
       }
     },
-    [email, password, supabase, router, next, resolveRedirect, siteUrl]
+    [email, password, supabase, next, siteUrl]
   );
 
   const handlePasswordSignIn = useCallback(
@@ -333,7 +217,7 @@ export default function AuthPage() {
 
       setPending(true);
       setError(null);
-      setAwaitingVerificationAutoSignIn(false);
+      setVerificationNotice(null);
 
       try {
         const { data, error } = await supabase.auth.signInWithPassword({
@@ -371,6 +255,55 @@ export default function AuthPage() {
     [email, password, supabase, router, next, resolveRedirect]
   );
 
+  const handleResendVerificationEmail = useCallback(async () => {
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) {
+      setError("Enter your email to resend the verification link.");
+      return;
+    }
+
+    setResendingVerification(true);
+    setError(null);
+
+    try {
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email: trimmedEmail,
+        options: {
+          emailRedirectTo: `${siteUrl}/auth/callback?next=${encodeURIComponent(
+            next
+          )}`,
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      const message = "A new verification email has been sent. Check your inbox.";
+      setVerificationNotice(message);
+      toast({
+        title: "Verification email sent",
+        description: message,
+        variant: "success",
+      });
+    } catch (err) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Unable to resend verification email.";
+      const description = friendlyAuthError(message, getAuthErrorCode(err));
+      setError(description);
+      toast({
+        title: "Couldn't resend email",
+        description,
+        variant: "destructive",
+      });
+    } finally {
+      setResendingVerification(false);
+    }
+  }, [email, supabase, siteUrl, next]);
+
   const handleOAuth = useCallback(
     async (provider: "google") => {
       if (view === "signup") {
@@ -378,7 +311,6 @@ export default function AuthPage() {
       }
       setPending(true);
       setError(null);
-      setAwaitingVerificationAutoSignIn(false);
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
@@ -413,7 +345,13 @@ export default function AuthPage() {
     ? friendlyAuthError(error)
     : oauthMessage
     ? friendlyAuthError(oauthMessage, oauthError ?? undefined)
-    : "Authentication failed. Please try again.";
+    : null;
+  const hasEnteredEmail = Boolean(email.trim());
+  const showResendVerificationInNotice =
+    hasEnteredEmail && Boolean(verificationNotice);
+  const showResendVerificationInError =
+    hasEnteredEmail &&
+    Boolean(displayedError?.toLowerCase().includes("verify your email"));
 
   return (
     <div className="min-h-screen bg-[#fff7ed] text-slate-900">
@@ -442,25 +380,52 @@ export default function AuthPage() {
                 </h1>
                 <p className="text-sm text-slate-600">
                   {isSignUp
-                    ? "Sign up to manage your Linkets, profiles, and team templates."
+                    ? "Create your account. We'll send a verification email before you sign in."
                     : "Sign in with your credentials to access your dashboard."}
                 </p>
               </header>
 
-              {(error || oauthError || oauthMessage) && (
-                <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
-                  {displayedError}
+              {verificationNotice ? (
+                <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                  <p>{verificationNotice}</p>
+                  {showResendVerificationInNotice ? (
+                    <button
+                      type="button"
+                      onClick={handleResendVerificationEmail}
+                      disabled={pending || resendingVerification}
+                      className="mt-3 inline-flex items-center gap-2 rounded-full border border-emerald-300 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-700 transition hover:border-emerald-400 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-70"
+                    >
+                      <RefreshCw
+                        className={`h-3.5 w-3.5 ${resendingVerification ? "animate-spin" : ""}`}
+                      />
+                      {resendingVerification
+                        ? "Sending..."
+                        : "Resend verification email"}
+                    </button>
+                  ) : null}
                 </div>
-              )}
-              {awaitingVerificationAutoSignIn &&
-                !error &&
-                !oauthError &&
-                !oauthMessage && (
-                  <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                    Account created. Verify your email from your inbox and we
-                    will sign you in automatically.
-                  </div>
-                )}
+              ) : null}
+
+              {displayedError ? (
+                <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+                  <p>{displayedError}</p>
+                  {showResendVerificationInError ? (
+                    <button
+                      type="button"
+                      onClick={handleResendVerificationEmail}
+                      disabled={pending || resendingVerification}
+                      className="mt-3 inline-flex items-center gap-2 rounded-full border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:border-red-300 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-70"
+                    >
+                      <RefreshCw
+                        className={`h-3.5 w-3.5 ${resendingVerification ? "animate-spin" : ""}`}
+                      />
+                      {resendingVerification
+                        ? "Sending..."
+                        : "Resend verification email"}
+                    </button>
+                  ) : null}
+                </div>
+              ) : null}
 
               <form
                 onSubmit={isSignUp ? handlePasswordSignUp : handlePasswordSignIn}
@@ -541,7 +506,7 @@ export default function AuthPage() {
                 >
                   {pending
                     ? isSignUp
-                      ? "Creating account..."
+                      ? "Sending verification email..."
                       : "Signing in..."
                     : isSignUp
                     ? "Create account"

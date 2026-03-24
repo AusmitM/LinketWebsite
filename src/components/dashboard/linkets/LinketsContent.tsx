@@ -8,7 +8,6 @@ import {
   ExternalLink,
   Loader2,
   RefreshCcw,
-  ShieldCheck,
   Tags,
   Trash2,
 } from "lucide-react";

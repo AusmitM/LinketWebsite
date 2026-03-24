@@ -1,5 +1,4 @@
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { getActiveProfileForUser } from "@/lib/profile-service";
 import type {
   HardwareTagRecord,
   TagAssignmentRecord,
@@ -12,10 +11,6 @@ export type TagAssignmentDetail = {
   tag: HardwareTagRecord;
   profile: Pick<UserProfileRecord, "id" | "name" | "handle" | "is_active"> | null;
 };
-
-function normaliseChipUid(uid: string) {
-  return uid.trim();
-}
 
 function mapAssignmentRow(row: Record<string, unknown>): TagAssignmentDetail {
   const assignment = {
@@ -114,84 +109,6 @@ export async function assertOwnedProfileId(
   return data.id as string;
 }
 
-export async function claimTagForUser(options: {
-  userId: string;
-  chipUid: string;
-  nickname?: string | null;
-  profileId?: string | null;
-}): Promise<TagAssignmentDetail> {
-  const chipUid = normaliseChipUid(options.chipUid);
-  if (!chipUid) throw new Error("chipUid is required");
-  const now = new Date().toISOString();
-
-  const { data: tag, error: tagError } = await supabaseAdmin
-    .from("hardware_tags")
-    .select("id, status")
-    .eq("chip_uid", chipUid)
-    .maybeSingle();
-  if (tagError) throw new Error(tagError.message);
-
-  let tagId: string;
-  if (!tag) {
-    const { data: inserted, error: insertError } = await supabaseAdmin
-      .from("hardware_tags")
-      .insert({ chip_uid: chipUid, claim_code: chipUid, status: "claimed", last_claimed_at: now })
-      .select("id")
-      .single();
-    if (insertError) throw new Error(insertError.message);
-    tagId = inserted.id as string;
-  } else {
-    if (tag.status !== "unclaimed") {
-      throw new Error("Tag is already claimed or unavailable");
-    }
-    const { error: updateError } = await supabaseAdmin
-      .from("hardware_tags")
-      .update({ status: "claimed", last_claimed_at: now })
-      .eq("id", tag.id);
-    if (updateError) throw new Error(updateError.message);
-    tagId = tag.id as string;
-  }
-
-  let profileId = options.profileId ?? null;
-  if (!profileId) {
-    try {
-      const activeProfile = await getActiveProfileForUser(options.userId);
-      profileId = activeProfile?.id ?? null;
-    } catch (error) {
-      console.warn("claimTagForUser:getActiveProfileForUser", error);
-    }
-  }
-  profileId = await assertOwnedProfileId(options.userId, profileId);
-
-  const { data: assignment, error: assignmentError } = await supabaseAdmin
-    .from("tag_assignments")
-    .insert({
-      tag_id: tagId,
-      user_id: options.userId,
-      profile_id: profileId,
-      nickname: options.nickname ?? null,
-    })
-    .select("id")
-    .single();
-  if (assignmentError) throw new Error(assignmentError.message);
-
-  await supabaseAdmin.from("tag_events").insert({
-    tag_id: tagId,
-    event_type: "claim",
-    metadata: {
-      user_id: options.userId,
-      claimer_user_id: options.userId,
-      entitlement_user_id: options.userId,
-      entitlement_source: "linket_claim",
-      giftable: true,
-    },
-  } satisfies Partial<TagEventRecord>);
-
-  const detail = await fetchAssignmentById(assignment.id as string);
-  if (!detail) throw new Error("Assignment not found after creation");
-  return detail;
-}
-
 export async function updateAssignmentForUser(options: {
   assignmentId: string;
   userId: string;
@@ -244,8 +161,4 @@ export async function updateAssignmentForUser(options: {
   }
 
   return fetchAssignmentById(options.assignmentId);
-}
-
-export async function recordTagEvent(event: Partial<TagEventRecord>) {
-  await supabaseAdmin.from("tag_events").insert(event);
 }

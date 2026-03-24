@@ -49,23 +49,6 @@ export type Lead = {
   created_at: string;
 };
 
-export type LeadField = {
-  id: string;
-  user_id: string;
-  handle: string;
-  key?: string | null;
-  label: string;
-  type: "text" | "email" | "phone" | "textarea" | "select" | "checkbox";
-  required: boolean;
-  placeholder: string | null;
-  options?: string[] | null;
-  is_hidden?: boolean | null;
-  validation?: { minLength?: number | null; emailFormat?: boolean } | null;
-  order_index: number;
-  is_active: boolean;
-  created_at: string;
-};
-
 export type HardwareTagRecord = {
   id: string;
   chip_uid: string;

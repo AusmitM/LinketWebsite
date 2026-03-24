@@ -1,4 +1,4 @@
-import { appendVersion, isHttpUrl } from "@/lib/avatar-utils";
+import { isHttpUrl } from "@/lib/avatar-utils";
 
 export function extractProfileLogoPathFromUrl(url: string): string | null {
   try {
@@ -20,13 +20,4 @@ export function normalizeProfileLogoPath(
   if (!path) return null;
   if (isHttpUrl(path)) return extractProfileLogoPathFromUrl(path);
   return path.replace(/^\//, "");
-}
-
-export function buildProfileLogoPublicUrl(
-  path: string | null | undefined,
-  version?: string | number | null
-): string | null {
-  if (!path) return null;
-  if (!isHttpUrl(path)) return null;
-  return appendVersion(path, version);
 }

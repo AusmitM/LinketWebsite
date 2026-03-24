@@ -27,10 +27,6 @@ export const brand = {
   blurb: "Linket keychains share your digital profile instantly with NFC and QR backed by live editing.",
 };
 
-export function hasBrandLogo() {
-  return Boolean(brand.logo);
-}
-
 export function hasBrandMark() {
   return Boolean(brand.logomark || brand.logo);
 }

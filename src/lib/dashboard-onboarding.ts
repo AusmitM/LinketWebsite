@@ -144,13 +144,12 @@ export async function getDashboardOnboardingState(
 
   const activeLinks = activeProfileState.links.filter((link) => link.is_active);
   const hasMeaningfulLink = activeLinks.some((link) => isMeaningfulLink(link.url));
-  const hasPhoto = Boolean(account.avatarPath);
   const hasContact = Boolean(contact.email.trim() || contact.phone.trim());
   const hasCustomHandle =
     Boolean(activeProfileState.handle.trim()) &&
     !AUTO_HANDLE_PATTERN.test(activeProfileState.handle.trim());
   const hasProfileBasics =
-    Boolean(activeProfileState.name.trim()) && hasPhoto && hasCustomHandle;
+    Boolean(activeProfileState.name.trim()) && hasCustomHandle;
   const hasPublished =
     publishEventCount > 0 ||
     (activeProfileState.isActive && hasProfileBasics && hasContact && hasMeaningfulLink);

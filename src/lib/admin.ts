@@ -37,13 +37,3 @@ export async function getCurrentUserWithAdmin(): Promise<CurrentUserAdmin> {
   return { user, isAdmin: !error && Array.isArray(data) && data.length > 0 };
 }
 
-export async function requireAdminOrThrow(): Promise<NonNullable<CurrentUserAdmin["user"]>> {
-  const { user, isAdmin } = await getCurrentUserWithAdmin();
-  if (!user) {
-    throw new Error("Not authenticated");
-  }
-  if (!isAdmin) {
-    throw new Error("Admin privileges required");
-  }
-  return user;
-}

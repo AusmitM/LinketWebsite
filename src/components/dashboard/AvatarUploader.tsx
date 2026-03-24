@@ -498,10 +498,6 @@ export default function AvatarUploader({
   );
   const headerClassName = cn(isCompact && "px-4");
   const titleClassName = cn(isCompact && "text-sm");
-  const descriptionClassName = cn(
-    "text-sm text-muted-foreground",
-    isCompact && "text-xs"
-  );
   const contentClassName = cn(
     "flex flex-col gap-6 lg:flex-row lg:items-start",
     isCompact && "gap-4 px-4"
@@ -575,28 +571,32 @@ export default function AvatarUploader({
               <p className="text-xs text-muted-foreground">
                 Upload a clear headshot or logo. JPG, PNG, or WebP.
               </p>
-              <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-3">
-                <Button
-                  type="button"
-                  variant="custom"
-                  size="sm"
-                  className={UPLOADER_ACTION_BUTTON_CLASS}
-                  onClick={handleReCrop}
-                  disabled={!latestAvatarUrl || loading}
-                >
-                  Re-crop
-                </Button>
-                <Button
-                  type="button"
-                  variant="custom"
-                  size="sm"
-                  className={UPLOADER_ACTION_BUTTON_CLASS}
-                  onClick={handleRemove}
-                  disabled={!(latestAvatarUrl || sourceUrl) || loading}
-                >
-                  Remove
-                </Button>
-              </div>
+              {latestAvatarUrl || sourceUrl ? (
+                <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-3">
+                  {latestAvatarUrl ? (
+                    <Button
+                      type="button"
+                      variant="custom"
+                      size="sm"
+                      className={UPLOADER_ACTION_BUTTON_CLASS}
+                      onClick={handleReCrop}
+                      disabled={loading}
+                    >
+                      Re-crop
+                    </Button>
+                  ) : null}
+                  <Button
+                    type="button"
+                    variant="custom"
+                    size="sm"
+                    className={UPLOADER_ACTION_BUTTON_CLASS}
+                    onClick={handleRemove}
+                    disabled={loading}
+                  >
+                    Remove
+                  </Button>
+                </div>
+              ) : null}
             </div>
           </div>
         ) : null}

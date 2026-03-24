@@ -42,6 +42,7 @@ import { isPublicProfilePathname } from "@/lib/routing";
 import { toast } from "@/components/system/toaster";
 import { getSiteOrigin } from "@/lib/site-url";
 import type { DashboardNotificationItem } from "@/lib/dashboard-notifications";
+import { coerceThemeName, isDarkTheme, type ThemeName } from "@/lib/themes";
 
 type UserLite = {
   id: string;
@@ -85,13 +86,6 @@ const LANDING_LINKS = [
 
 type LandingSectionId = (typeof LANDING_LINKS)[number]["id"];
 
-const DASHBOARD_NAV = [
-  { href: "/dashboard/overview", label: "Overview" },
-  { href: "/dashboard/analytics", label: "Analytics" },
-  { href: "/dashboard/leads", label: "Leads" },
-  { href: "/dashboard/profiles", label: "Public Profile" },
-] as const;
-
 const MARKETING_LINKS: Array<{ href: string; label: string }> = [];
 
 const PROFILE_SECTIONS = [
@@ -109,6 +103,40 @@ const NOTIFICATIONS_LAST_READ_STORAGE_KEY_PREFIX =
 const NOTIFICATIONS_OPENED_AT_STORAGE_KEY_PREFIX =
   "linket:dashboard-notifications:opened-at";
 const NOTIFICATIONS_INBOX_RETENTION_MS = 3 * 24 * 60 * 60 * 1000;
+const DASHBOARD_THEME_STORAGE_KEY = "linket:dashboard-theme";
+const THEME_CLASS_PREFIX = "theme-";
+
+function readThemeFromElement(target: Element | null): ThemeName | null {
+  if (!target) return null;
+  const themeClass = Array.from(target.classList).find((className) =>
+    className.startsWith(THEME_CLASS_PREFIX)
+  );
+  if (!themeClass) return null;
+  return coerceThemeName(themeClass.slice(THEME_CLASS_PREFIX.length));
+}
+
+function resolveDashboardChromeTheme(): ThemeName {
+  if (typeof document !== "undefined") {
+    const scopedTheme =
+      readThemeFromElement(document.querySelector("#dashboard-theme-scope")) ??
+      readThemeFromElement(document.body) ??
+      readThemeFromElement(document.documentElement);
+    if (scopedTheme) return scopedTheme;
+  }
+
+  if (typeof window !== "undefined") {
+    try {
+      const storedTheme = coerceThemeName(
+        window.localStorage.getItem(DASHBOARD_THEME_STORAGE_KEY)
+      );
+      if (storedTheme) return storedTheme;
+    } catch {
+      // Ignore storage failures (private browsing / restricted storage).
+    }
+  }
+
+  return "autumn";
+}
 
 function toUserLite(
   value: {
@@ -138,6 +166,8 @@ export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = useState<UserLite>(null);
+  const [dashboardChromeTheme, setDashboardChromeTheme] =
+    useState<ThemeName>("autumn");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isAtTop, setIsAtTop] = useState(true);
@@ -201,6 +231,10 @@ export function Navbar() {
   const isProfileEditor = pathname?.startsWith("/dashboard/profiles") ?? false;
   const isMarketingPage =
     isPublic && !isLandingPage && !isPublicProfile && !isAuthPage;
+  const dashboardChromeThemeClassName = cn(
+    `theme-${dashboardChromeTheme}`,
+    isDarkTheme(dashboardChromeTheme) && "dark"
+  );
   const userNeedsEmailVerification =
     Boolean(user?.email) && !Boolean(user?.emailConfirmedAt);
   const shouldShowNotifications = Boolean(isDashboard && user);
@@ -318,6 +352,39 @@ export function Navbar() {
       setVerificationBannerDismissed(false);
     }
   }, [isDashboard, user?.emailConfirmedAt, user?.id]);
+
+  useLayoutEffect(() => {
+    if (!isDashboard) return;
+
+    const syncDashboardChromeTheme = () => {
+      setDashboardChromeTheme(resolveDashboardChromeTheme());
+    };
+
+    syncDashboardChromeTheme();
+
+    const themeScope = document.querySelector("#dashboard-theme-scope");
+    const observer = themeScope
+      ? new MutationObserver(syncDashboardChromeTheme)
+      : null;
+
+    if (themeScope && observer) {
+      observer.observe(themeScope, {
+        attributes: true,
+        attributeFilter: ["class"],
+      });
+    }
+    window.addEventListener("storage", syncDashboardChromeTheme);
+    window.addEventListener("linket:theme-change", syncDashboardChromeTheme);
+
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener("storage", syncDashboardChromeTheme);
+      window.removeEventListener(
+        "linket:theme-change",
+        syncDashboardChromeTheme
+      );
+    };
+  }, [isDashboard]);
 
   useEffect(() => {
     setNotificationsOpen(false);
@@ -1125,59 +1192,32 @@ export function Navbar() {
     ) : null;
 
   if (isDashboard) {
-    const overviewHref = "/dashboard/overview";
-    const activeDashboardHref = (() => {
-      if (!pathname) return null;
-      if (!pathname.startsWith("/dashboard")) return null;
-      if (pathname === "/dashboard" || pathname === overviewHref)
-        return overviewHref;
-      let match: string | null = null;
-      for (const item of DASHBOARD_NAV) {
-        if (item.href === overviewHref) continue;
-        if (pathname === item.href || pathname.startsWith(`${item.href}/`)) {
-          if (!match || item.href.length > match.length) {
-            match = item.href;
-          }
-        }
-      }
-      return match;
-    })();
-
-    const isNavActive = (href: string) => activeDashboardHref === href;
-
-    const dashboardLink = (link: (typeof DASHBOARD_NAV)[number]) => {
-      const isActive = isNavActive(link.href);
-      return (
-        <Link
-          key={link.href}
-          href={link.href}
-          data-active={isActive ? "true" : "false"}
-          className={cn(
-            "dashboard-nav-link rounded-full px-4 py-2 text-sm font-semibold tracking-wide transition lg:inline-flex",
-            isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"
-          )}
-        >
-          {link.label}
-        </Link>
-      );
-    };
-
     return (
-      <header
-        className="dashboard-navbar font-dashboard sticky top-0 z-50 w-full border-b border-border/60 bg-background/90 text-foreground backdrop-blur supports-[backdrop-filter]:bg-background/70"
-        style={{ top: `${dashboardNavOffset}px` }}
-      >
+      <div className={dashboardChromeThemeClassName}>
+        <header
+          className="dashboard-navbar font-dashboard sticky top-0 z-50 w-full border-b border-border/60 bg-background/90 text-foreground backdrop-blur supports-[backdrop-filter]:bg-background/70"
+          style={{ top: `${dashboardNavOffset}px` }}
+        >
         {userNeedsEmailVerification && !verificationBannerDismissed ? (
           <div className="border-b border-amber-200/70 bg-amber-100/70 px-3 py-2">
             <div className="mx-auto flex w-full max-w-6xl flex-col gap-2 text-amber-950 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-2 text-xs font-semibold">
                 <MailWarning className="h-4 w-4" aria-hidden />
                 <span>
-                  Verify your email address through your inbox to secure your
-                  account.
+                  You&apos;re already inside your dashboard. Verify your email to
+                  secure your account.
                 </span>
               </div>
               <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  className="h-8 rounded-full bg-amber-900 text-xs text-amber-50 hover:bg-amber-950"
+                  onClick={() => void handleResendVerificationEmail()}
+                  disabled={verificationResending}
+                >
+                  {verificationResending ? "Sending..." : "Verify email"}
+                </Button>
                 <Button
                   type="button"
                   variant="outline"
@@ -1187,15 +1227,6 @@ export function Navbar() {
                   disabled={verificationStatusRefreshing}
                 >
                   {verificationStatusRefreshing ? "Checking..." : "I've verified"}
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  className="h-8 rounded-full bg-amber-900 text-xs text-amber-50 hover:bg-amber-950"
-                  onClick={() => void handleResendVerificationEmail()}
-                  disabled={verificationResending}
-                >
-                  {verificationResending ? "Sending..." : "Resend email"}
                 </Button>
                 <button
                   type="button"
@@ -1413,7 +1444,8 @@ export function Navbar() {
             </div>
           </PopoverDialog>
         )}
-      </header>
+        </header>
+      </div>
     );
   }
 

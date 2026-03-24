@@ -418,13 +418,6 @@ export default function LeadFormBuilder({
     focusFieldSettingsOnPhone();
   };
 
-  const duplicateField = (field: LeadFormField) => {
-    if (!form) return;
-    const copy = { ...field, id: `field_${randomId()}` } as LeadFormField;
-    updateForm({ fields: [...form.fields, copy] });
-    setSelectedFieldId(copy.id);
-  };
-
   const deleteField = (fieldId: string) => {
     let removedField: LeadFormField | null = null;
     let removedIndex = -1;
@@ -1863,11 +1856,6 @@ function ratingIcon(icon: "star" | "heart" | "thumbs") {
   return "*";
 }
 
-function isEmailField(field: LeadFormField) {
-  if (field.type !== "short_text") return false;
-  if (field.validation?.rule === "email") return true;
-  return String(field.label ?? "").toLowerCase().includes("email");
-}
 function formatShortDate(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "Just now";

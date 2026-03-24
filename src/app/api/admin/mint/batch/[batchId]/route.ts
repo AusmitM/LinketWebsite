@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { requireRouteAccess } from "@/lib/api-authorization";
 import { uuidParamSchema } from "@/lib/request-validation";
 import { sanitizeAttachmentFilename } from "@/lib/security";
@@ -60,7 +60,7 @@ function getSiteBase() {
 }
 
 export async function GET(
-  req: NextRequest,
+  _request: Request,
   { params }: { params: Promise<{ batchId: string }> }
 ) {
   if (!isSupabaseAdminAvailable) {

@@ -254,17 +254,6 @@ export async function evaluateApiRateLimit(args: {
   };
 }
 
-export async function limitHit(key: string, limit = 10, windowMs = 60_000) {
-  const state = await consumeRateLimit({
-    identifier: key,
-    limit,
-    prefix: "legacy",
-    scope: "ip",
-    windowMs,
-  });
-  return !state.allowed;
-}
-
 export async function limitRequest(
   req: Request,
   prefix: string,

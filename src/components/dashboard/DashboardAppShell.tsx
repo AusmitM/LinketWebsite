@@ -6,7 +6,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import Sidebar from "@/components/dashboard/Sidebar";
 import DashboardOnboardingTour from "@/components/dashboard/DashboardOnboardingTour";
-import DashboardEmailVerificationPrompt from "@/components/dashboard/DashboardEmailVerificationPrompt";
 import type { DashboardOnboardingState } from "@/lib/dashboard-onboarding-types";
 import { cn } from "@/lib/utils";
 
@@ -76,7 +75,6 @@ export default function DashboardAppShell({
             Taking you to the fastest path to a live Linket profile.
           </p>
         </div>
-        <DashboardEmailVerificationPrompt />
       </div>
     );
   }
@@ -155,7 +153,6 @@ export default function DashboardAppShell({
         </div>
       ) : null}
       {!shouldHideChrome ? <DashboardOnboardingTour /> : null}
-      <DashboardEmailVerificationPrompt />
     </div>
   );
 }

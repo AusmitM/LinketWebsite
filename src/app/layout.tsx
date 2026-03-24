@@ -12,7 +12,6 @@ import GlobalErrorLogger from "@/components/system/GlobalErrorLogger";
 import AnalyticsBinder from "@/components/system/AnalyticsBinder";
 import "@/styles/theme.css";
 import Script from "next/script";
-import { CustomizationProvider } from "@/components/providers/customization-provider";
 import { brand } from "@/config/brand";
 import { getPublicPricingSnapshot } from "@/lib/billing/pricing";
 import { getConfiguredSiteOrigin } from "@/lib/site-url";
@@ -110,30 +109,28 @@ export default function RootLayout({
         <ThemeProvider initial="light" storageKey={null}>
           <PrefetchRoutes />
           <AnalyticsBinder />
-          <CustomizationProvider>
-            <a
-              href="#main"
-              className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:rounded-lg focus:bg-white focus:px-3 focus:py-2 focus:text-sm focus:shadow"
-            >
-              Skip to content
-            </a>
-            <Navbar />
-            <main id="main" className="flex-1 min-h-0">
-              {children}
-            </main>
-            <Footer />
-            <Script
-              id="product-jsonld"
-              type="application/ld+json"
-              strategy="afterInteractive"
-            >
-              {JSON.stringify(productJsonLd)}
-            </Script>
-            <ServiceWorkerRegister />
-            <GlobalErrorLogger />
-            <DebugErrorOverlay />
-            <Toaster />
-          </CustomizationProvider>
+          <a
+            href="#main"
+            className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:rounded-lg focus:bg-white focus:px-3 focus:py-2 focus:text-sm focus:shadow"
+          >
+            Skip to content
+          </a>
+          <Navbar />
+          <main id="main" className="flex-1 min-h-0">
+            {children}
+          </main>
+          <Footer />
+          <Script
+            id="product-jsonld"
+            type="application/ld+json"
+            strategy="afterInteractive"
+          >
+            {JSON.stringify(productJsonLd)}
+          </Script>
+          <ServiceWorkerRegister />
+          <GlobalErrorLogger />
+          <DebugErrorOverlay />
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>

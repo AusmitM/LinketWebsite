@@ -118,16 +118,8 @@ export function ThemeProvider({
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
 
-export function useTheme() {
-  const ctx = useContext(ThemeContext);
-  if (!ctx) throw new Error("useTheme must be used within ThemeProvider");
-  return ctx;
-}
-
 export function useThemeOptional(): { theme: ThemeName; setTheme: (t: ThemeName) => void; hasProvider: boolean } {
   const ctx = useContext(ThemeContext);
   if (ctx) return { ...ctx, hasProvider: true };
   return { theme: "light", setTheme: () => {}, hasProvider: false };
 }
-
-export default ThemeProvider;

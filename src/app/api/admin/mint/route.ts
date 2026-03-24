@@ -56,7 +56,7 @@ function csvEscape(value: unknown) {
   return text;
 }
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   return NextResponse.json(
     { error: "Use POST for minting operations." },
     { status: 405, headers: { Allow: "POST" } }

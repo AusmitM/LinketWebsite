@@ -54,8 +54,7 @@ function buildAnswers(form: LeadFormConfig, contact: ContactPickerContact) {
   const answers: LeadFormSubmission["answers"] = {};
   const orgs = contact.organization ?? [];
   const company = getFirst(orgs);
-  const title =
-    orgs.length > 1 ? orgs.find((value, index) => index > 0) ?? "" : "";
+  const title = orgs.length > 1 ? orgs[1] ?? "" : "";
   const normalizedName = fullName.trim().replace(/\s+/g, " ");
   const [firstName, ...rest] = normalizedName ? normalizedName.split(" ") : [];
   const lastName = rest.join(" ");

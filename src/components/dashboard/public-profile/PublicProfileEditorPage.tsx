@@ -35,10 +35,8 @@ import {
   GripVertical,
   Instagram,
   Link2,
-  Palette,
   Pencil,
   Trash2,
-  User,
   X,
 } from "lucide-react";
 
@@ -64,7 +62,6 @@ import { cn } from "@/lib/utils";
 import { shuffleFields } from "@/lib/lead-form";
 import { readLocalStorage, writeLocalStorage } from "@/lib/browser-storage";
 import { toast } from "@/components/system/toaster";
-import { createClient } from "@/lib/supabase/client";
 import {
   getDefaultProfileLinkUrl,
   getSiteHost,
@@ -165,7 +162,6 @@ const DEFAULT_PROFILE_LINK_URL = getDefaultProfileLinkUrl();
 export default function PublicProfileEditorPage() {
   const dashboardUser = useDashboardUser();
   const { theme } = useThemeOptional();
-  const supabase = useMemo(() => createClient(), []);
   const [userId, setUserId] = useState<string | null>(dashboardUser?.id ?? null);
   const [activeSection, setActiveSection] = useState<SectionId>(() => {
     const saved = readLocalStorage(ACTIVE_PROFILE_SECTION_STORAGE_KEY);

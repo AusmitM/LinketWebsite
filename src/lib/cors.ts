@@ -150,24 +150,6 @@ export function isCrossOriginRequest(
   return normalizedRequestOrigin !== normalizeOrigin(requestUrlOrigin);
 }
 
-export function isOriginAllowed(requestOrigin: string | null) {
-  const normalizedOrigin = normalizeOrigin(requestOrigin);
-  if (!normalizedOrigin) {
-    return false;
-  }
-
-  const config = getCorsConfig();
-  if (!config.enabled) {
-    return false;
-  }
-
-  if (config.allowedOrigins === "*") {
-    return !config.allowCredentials;
-  }
-
-  return config.allowedOrigins.includes(normalizedOrigin);
-}
-
 export function resolveCorsHeaders(
   requestOrigin: string | null,
   options?: {

@@ -95,7 +95,7 @@ export default function ProfileLogoUploader({
   const [isDragging, setIsDragging] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isDraggingOver, setDraggingOver] = useState(false);
+  const [, setDraggingOver] = useState(false);
 
   const baseScale = useMemo(() => {
     if (!imageMeta) return 1;
@@ -228,10 +228,6 @@ export default function ProfileLogoUploader({
 
   const handlePointerUp = useCallback(() => {
     setIsDragging(false);
-  }, []);
-
-  const handleZoomChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    setZoom(Number(event.target.value));
   }, []);
 
   const handleCropReady = useCallback(async () => {

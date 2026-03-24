@@ -39,26 +39,6 @@ export async function kvGet<T = unknown>(key: string): Promise<T | null> {
   return (record?.value as T) ?? null;
 }
 
-export async function kvSet(key: string, value: unknown, ttlSeconds?: number): Promise<"OK" | number> {
-  if (kv) {
-    return ttlSeconds
-      ? (kv.set(key, value, { ex: ttlSeconds }) as Promise<"OK" | number>)
-      : (kv.set(key, value) as Promise<"OK" | number>);
-  }
-  const expiresAt = ttlSeconds ? Date.now() + ttlSeconds * 1000 : undefined;
-  memoryStore.set(key, { value, expiresAt });
-  return "OK";
-}
-
-export async function kvDel(key: string): Promise<number> {
-  if (kv) {
-    return kv.del(key);
-  }
-  const existed = ensureMemoryRecord(key) !== undefined;
-  memoryStore.delete(key);
-  return existed ? 1 : 0;
-}
-
 export async function kvIncr(key: string): Promise<number> {
   if (kv) {
     return kv.incr(key);
