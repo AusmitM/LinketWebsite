@@ -1638,7 +1638,7 @@ export default function DashboardSetupFlow({
     showLaunchHub
       ? {
           title: "You're live",
-          description: "Your page is now live and ready to share.",
+          description: "Your page is live. Next, continue to the dashboard.",
         }
       : currentStep.id === "profile"
       ? {
@@ -1664,7 +1664,7 @@ export default function DashboardSetupFlow({
     showLaunchHub
       ? {
           title: "You're live",
-          description: "Share your page now or keep building.",
+          description: "Continue to the dashboard, then share or keep building anytime.",
         }
       : currentStep.id === "profile"
       ? {
@@ -1803,7 +1803,7 @@ export default function DashboardSetupFlow({
                     You&apos;re live
                   </CardTitle>
                   <CardDescription className="max-w-2xl text-sm text-muted-foreground">
-                    Your page is now live and ready to share.
+                    Your page is live. Continue to the dashboard to keep building.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-5 px-5 py-5 sm:px-6">
@@ -1814,6 +1814,23 @@ export default function DashboardSetupFlow({
                     <p className="break-all text-base font-semibold text-foreground">
                       {publicUrl}
                     </p>
+                  </div>
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">
+                        Next step
+                      </p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Continue to the dashboard to manage your page, leads, and settings.
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      className="h-12 rounded-2xl px-5 text-sm"
+                      onClick={() => handleContinueToDashboard("/dashboard/overview")}
+                    >
+                      Continue to dashboard
+                    </Button>
                   </div>
                   <div className="space-y-3">
                     <div>
@@ -1888,18 +1905,6 @@ export default function DashboardSetupFlow({
                         </p>
                         <p className="mt-1 text-sm text-muted-foreground">
                           Open the lead form builder.
-                        </p>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleContinueToDashboard("/dashboard/overview")}
-                        className={cn("p-4 text-left transition hover:border-border hover:bg-card", softPanelClassName)}
-                      >
-                        <p className="text-sm font-semibold text-foreground">
-                          Open dashboard
-                        </p>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                          Keep refining anytime.
                         </p>
                       </button>
                     </div>
@@ -2729,6 +2734,9 @@ export default function DashboardSetupFlow({
                     <>
                       <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
                         Live status
+                      </p>
+                      <p className="px-1 text-sm text-muted-foreground">
+                        Next step: continue to the dashboard.
                       </p>
                       {postPublishStatusItems.map((item) => (
                         <div key={item.label} className="flex items-center gap-3 px-1 py-1.5">
