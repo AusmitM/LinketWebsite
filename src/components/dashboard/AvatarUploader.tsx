@@ -474,7 +474,7 @@ export default function AvatarUploader({
     const visibleFileName = inputFileName ?? persistedFileName;
     const inputTargetId = inputId ?? "profile-avatar-upload";
     return (
-      <section className="flex flex-col gap-3 rounded-2xl border border-dashed border-muted/70 p-3 sm:gap-4 sm:p-4">
+      <section className="flex flex-col gap-3 sm:gap-4">
         {!sourceUrl ? (
           <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
             <div className="flex w-full justify-center sm:w-auto sm:justify-start">
@@ -490,7 +490,6 @@ export default function AvatarUploader({
               </div>
             </div>
             <div className="min-w-0 flex-1 space-y-2">
-              <Label htmlFor={inputTargetId}>Profile photo</Label>
               <input
                 ref={fileInputRef}
                 id={inputTargetId}
@@ -514,6 +513,7 @@ export default function AvatarUploader({
                   className="h-10 w-full rounded-full"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={loading}
+                  aria-label="Upload profile photo"
                 >
                   Upload
                 </Button>

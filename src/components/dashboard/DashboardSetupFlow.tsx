@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Check,
   CheckCircle2,
-  Clock3,
   Link2,
   Loader2,
   Mail,
@@ -150,8 +149,8 @@ const SETUP_STEPS: Array<{
   },
   {
     id: "links",
-    label: "Links + theme",
-    description: "Add your first buttons, then choose a look",
+    label: "First link",
+    description: "Add your first link, then choose a theme",
     icon: Link2,
   },
   {
@@ -635,7 +634,6 @@ export default function DashboardSetupFlow({
   const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false);
   const [showContactExtras, setShowContactExtras] = useState(false);
   const [showPhoneField, setShowPhoneField] = useState(false);
-  const [showThemeChooser, setShowThemeChooser] = useState(false);
   const [expandedLinkTitleEditors, setExpandedLinkTitleEditors] = useState<
     Record<string, boolean>
   >({});
@@ -939,7 +937,7 @@ export default function DashboardSetupFlow({
     const slug = profileDraft?.handle.trim() ?? "";
     if (!slug) {
       return {
-        label: "Add your link",
+        label: "Pick your link",
         className: "text-muted-foreground",
       };
     }
@@ -951,18 +949,18 @@ export default function DashboardSetupFlow({
     }
     if (isAutoHandle(slug)) {
       return {
-        label: "Choose your link",
+        label: "Pick a short link",
         className: "text-amber-700",
       };
     }
     if (profileSaveStatus === "saving" || profileHasUnsavedChanges) {
       return {
-        label: "Checking...",
+        label: "Checking availability",
         className: "text-muted-foreground",
       };
     }
     return {
-      label: "Ready",
+      label: "Available",
       className: "text-emerald-700",
     };
   }, [handleError, profileDraft?.handle, profileHasUnsavedChanges, profileSaveStatus]);
@@ -1459,22 +1457,26 @@ export default function DashboardSetupFlow({
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  async function copyTextToClipboard(value: string) {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(value);
+      return;
+    }
+    const element = document.createElement("textarea");
+    element.value = value;
+    element.setAttribute("readonly", "");
+    element.style.position = "absolute";
+    element.style.left = "-9999px";
+    document.body.appendChild(element);
+    element.select();
+    document.execCommand("copy");
+    element.remove();
+  }
+
   async function handleCopyLink() {
     if (!publicUrl) return;
     try {
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(publicUrl);
-      } else {
-        const element = document.createElement("textarea");
-        element.value = publicUrl;
-        element.setAttribute("readonly", "");
-        element.style.position = "absolute";
-        element.style.left = "-9999px";
-        document.body.appendChild(element);
-        element.select();
-        document.execCommand("copy");
-        element.remove();
-      }
+      await copyTextToClipboard(publicUrl);
       setShareTestComplete(true);
       toast({
         title: "Link copied",
@@ -1485,6 +1487,24 @@ export default function DashboardSetupFlow({
         "copy_public_link_clicked",
         trackingMeta({ public_url: publicUrl })
       );
+    } catch {
+      toast({
+        title: "Copy failed",
+        description: "Try copying the URL directly from your browser.",
+        variant: "destructive",
+      });
+    }
+  }
+
+  async function handleCopyDraftUrl() {
+    if (!publicUrl) return;
+    try {
+      await copyTextToClipboard(publicUrl);
+      toast({
+        title: "URL copied",
+        description: "This is the URL that will go live after publishing.",
+        variant: "success",
+      });
     } catch {
       toast({
         title: "Copy failed",
@@ -1511,6 +1531,13 @@ export default function DashboardSetupFlow({
 
   function handleContinueToDashboard(path: string) {
     window.location.assign(path);
+  }
+
+  function handleEditPublicUrl() {
+    setCurrentStepIndex(0);
+    setStepError(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    focusFieldById("setup-handle");
   }
 
   function handleOpenProfileSection(
@@ -1550,19 +1577,21 @@ export default function DashboardSetupFlow({
   const currentStep = SETUP_STEPS[currentStepIndex];
   const progressValue = ((currentStepIndex + 1) / SETUP_STEPS.length) * 100;
   const fieldLabelClassName = "text-sm font-medium text-foreground";
-  const fieldHelperClassName = "text-sm text-muted-foreground";
+  const fieldHelperClassName = "text-xs leading-5 text-muted-foreground sm:text-sm";
   const fieldInputClassName =
     "h-12 rounded-2xl border-border/60 bg-background text-foreground";
   const compactFieldInputClassName =
     "h-11 rounded-2xl border-border/60 bg-background text-foreground";
+  const inlineSlugInputClassName =
+    "h-11 border-0 bg-transparent px-0 text-foreground shadow-none focus-visible:ring-0 focus-visible:ring-offset-0";
   const setupCardClassName =
     "rounded-[28px] border-border/60 bg-card/95 shadow-[0_12px_30px_-24px_rgba(15,23,42,0.28)]";
   const softPanelClassName =
     "rounded-2xl border border-border/60 bg-background/40";
   const checklistItems = [
-    { label: "Profile basics", done: liveProfileReady, icon: UserRound },
-    { label: "Contact card", done: contactReady, icon: Mail },
-    { label: "First link", done: linksReady, icon: Link2 },
+    { label: "Add profile basics", done: liveProfileReady, icon: UserRound },
+    { label: "Add contact info", done: contactReady, icon: Mail },
+    { label: "Add your first link", done: linksReady, icon: Link2 },
     { label: "Publish page", done: publishReady, icon: Rocket },
     { label: "Test once", done: shareTestComplete, icon: Smartphone },
   ];
@@ -1582,95 +1611,146 @@ export default function DashboardSetupFlow({
     FEATURED_THEMES.find((themeOption) => themeOption.value === profileDraft.theme) ??
     FEATURED_THEMES[0];
   const canChooseTheme = linksReady;
+  const publishReviewItems = [
+    { label: "Profile basics added", done: liveProfileReady, missing: "Profile basics missing" },
+    { label: "Contact card added", done: contactReady, missing: "Contact card missing" },
+    { label: "First link added", done: linksReady, missing: "Add a first link to continue" },
+    { label: `Theme selected: ${selectedThemeOption.label}`, done: true, missing: "Pick a theme" },
+  ];
+  const prePublishStatusItems = [
+    { label: "Not live yet", tone: "text-muted-foreground" },
+    { label: "Public URL ready", tone: "text-foreground" },
+    { label: "QR available after publish", tone: "text-muted-foreground" },
+  ];
+  const postPublishStatusItems = [
+    { label: "Live", tone: "text-emerald-700" },
+    {
+      label: "Contact card added",
+      tone: contactReady ? "text-foreground" : "text-muted-foreground",
+    },
+    {
+      label: "First link active",
+      tone: linksReady ? "text-foreground" : "text-muted-foreground",
+    },
+    { label: "QR ready", tone: "text-foreground" },
+  ];
+  const pageHeading =
+    showLaunchHub
+      ? {
+          title: "You're live",
+          description: "Your page is now live and ready to share.",
+        }
+      : currentStep.id === "profile"
+      ? {
+          title: "Set up your public profile",
+          description: "Add the basics now. You can edit everything later.",
+        }
+      : currentStep.id === "contact"
+        ? {
+            title: "Set up your contact card",
+            description:
+              "Add the details people save when they download your contact. You can add more later.",
+          }
+      : currentStep.id === "links"
+          ? {
+              title: "Add your first link",
+              description: "Add the main link people should open first.",
+            }
+          : {
+              title: "Review and publish",
+              description: "Check your page once, then go live.",
+            };
   const stepHeading =
-    currentStep.id === "profile"
+    showLaunchHub
+      ? {
+          title: "You're live",
+          description: "Share your page now or keep building.",
+        }
+      : currentStep.id === "profile"
       ? {
           title: "Profile",
-          description: "Add what people see first.",
+          description: "",
         }
       : currentStep.id === "contact"
         ? {
             title: "Contact card",
-            description: "Add the details people can save.",
+            description: "This is what gets saved to a phone contact.",
           }
-        : currentStep.id === "links"
+      : currentStep.id === "links"
           ? {
-              title: "Links + theme",
-              description: "Add your links, then pick a look.",
+              title: "Add your first link",
+              description: "Add your first link, then choose a theme.",
             }
-          : publishReady
-            ? {
-                title: "Review + publish",
-                description: "Your page is live. Test it once and keep going.",
-              }
-            : {
-                title: "Review + publish",
-                description: "Review, publish, and test once.",
-              };
-  const linkButtonLabel =
-    profileDraft.links.length < 2 ? "Add optional link" : "Add another link";
-  const autosaveToneClassName =
+          : {
+              title: "Review + publish",
+              description: "Check your page once, then go live.",
+            };
+  const linkButtonLabel = "Add another link";
+  const autosaveTextToneClassName =
     profileSaveStatus === "error" ||
     contactSaveStatus === "error" ||
     saveError
-      ? "border-red-200 bg-red-50 text-red-700"
-      : profileSaveStatus === "saving" ||
-          contactSaveStatus === "saving" ||
-          profileSaveStatus === "publishing"
-        ? "border-border/60 bg-card text-foreground"
-        : "border-emerald-200 bg-emerald-50 text-emerald-700";
+      ? "text-red-600"
+      : "text-muted-foreground";
+  const continueButtonLabel =
+    currentStep.id === "profile"
+      ? "Continue to contact info"
+      : currentStep.id === "contact"
+        ? "Continue to links"
+        : currentStep.id === "links"
+          ? "Continue to review"
+          : profileSaveStatus === "publishing"
+            ? "Publishing..."
+            : publishReady
+              ? "Update live page"
+              : "Publish page";
+  const meaningfulLinkCount = profileDraft.links.filter((link) =>
+    isMeaningfulLink(link.url)
+  ).length;
+  const footerStatusLabel =
+    currentStep.id === "links" && meaningfulLinkCount > 0
+      ? `${meaningfulLinkCount} link${meaningfulLinkCount === 1 ? "" : "s"} added | ${autosaveLabel}`
+      : autosaveLabel;
+  const sidebarPreviewWrapperClassName =
+    currentStep.id === "profile"
+      ? "max-w-[272px] max-h-[470px]"
+      : "max-w-[286px] max-h-[560px]";
+  const previewDescription =
+    currentStep.id === "contact"
+      ? "This is what someone saves to contacts."
+      : currentStep.id === "links"
+        ? "This updates your first link and theme."
+      : showLaunchHub
+        ? "Your live page is ready to share."
+      : currentStep.id === "publish"
+        ? "Check this once before you publish."
+      : "This updates as you type.";
   const mobilePrimaryActionLabel =
-    currentStep.id === "publish"
-      ? profileSaveStatus === "publishing"
-        ? "Publishing..."
-        : publishReady
-          ? "Update live page"
-          : "Publish page"
-      : "Continue";
+    currentStep.id === "publish" ? continueButtonLabel : continueButtonLabel;
 
   return (
     <div className="dashboard-overview-page min-h-[100svh] bg-[var(--background)] px-4 pb-[calc(env(safe-area-inset-bottom)+8.5rem)] pt-4 text-foreground sm:px-6 sm:py-5 lg:px-10 lg:py-6">
       <div className="mx-auto max-w-6xl space-y-4 sm:space-y-5">
-        <header className="dashboard-overview-header flex flex-col gap-2.5 xl:flex-row xl:items-end xl:justify-between">
+        <header className="dashboard-overview-header flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
           <div className="dashboard-overview-intro max-w-3xl space-y-2">
+            <p className="text-sm font-medium text-muted-foreground">
+              Step {currentStepIndex + 1} of {SETUP_STEPS.length}: {stepHeading.title}
+            </p>
             <h1 className="text-[2rem] font-semibold tracking-tight text-foreground sm:text-4xl">
-              Get your Linket page live
+              {pageHeading.title}
             </h1>
             <p className="max-w-2xl text-sm leading-5 text-muted-foreground sm:text-base sm:leading-6">
-              Add the essentials, publish, and test once. You can refine everything
-              else later.
+              {pageHeading.description}
             </p>
           </div>
-          <div className="w-full max-w-xl space-y-2">
-            <div className="flex flex-wrap items-center gap-2 max-[359px]:gap-1.5">
-              <Badge
-                variant="outline"
-                className="rounded-full border-border/60 bg-background px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground"
-              >
-                Step {currentStepIndex + 1} of {SETUP_STEPS.length}
-              </Badge>
-              <span className="dashboard-date-pill hidden items-center gap-2 rounded-full border border-border/60 bg-card/80 px-3 py-1 text-sm text-muted-foreground shadow-sm min-[401px]:inline-flex">
-                <Clock3 className="h-4 w-4" aria-hidden="true" />
-                ~3 min
-              </span>
-              <span
-                aria-live="polite"
-                aria-atomic="true"
-                className={cn(
-                  "inline-flex items-center gap-2 rounded-full border px-3 py-1 text-sm font-medium",
-                  autosaveToneClassName
-                )}
-              >
-                {profileSaveStatus === "saving" ||
-                contactSaveStatus === "saving" ||
-                profileSaveStatus === "publishing" ? (
-                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-                ) : (
-                  <Check className="h-4 w-4" aria-hidden="true" />
-                )}
-                {autosaveLabel}
-              </span>
-            </div>
+          <div className="w-full max-w-xl space-y-2 xl:max-w-sm">
+            <p
+              aria-live="polite"
+              aria-atomic="true"
+              className={cn("text-sm", autosaveTextToneClassName)}
+            >
+              About 3 min | {autosaveLabel}
+            </p>
             <div
               className="h-2 overflow-hidden rounded-full bg-muted"
               role="progressbar"
@@ -1696,7 +1776,7 @@ export default function DashboardSetupFlow({
                   {stepHeading.title}
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {stepHeading.description}
+                  {stepHeading.description || pageHeading.description}
                 </p>
               </div>
               <Button
@@ -1723,104 +1803,134 @@ export default function DashboardSetupFlow({
                     You&apos;re live
                   </CardTitle>
                   <CardDescription className="max-w-2xl text-sm text-muted-foreground">
-                    Copy your link, open your page, or scan the QR once.
+                    Your page is now live and ready to share.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-5 px-5 py-5 sm:px-6">
-                  <div className="grid gap-3 sm:grid-cols-3">
-                    <Button
-                      type="button"
-                      className="h-12 rounded-2xl text-sm"
-                      onClick={handleCopyLink}
-                    >
-                      Copy link
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="h-12 rounded-2xl text-sm"
-                      onClick={handleOpenLiveProfile}
-                    >
-                      Open live page
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="h-12 rounded-2xl text-sm"
-                      onClick={handleOpenQr}
-                    >
-                      Show QR
-                    </Button>
+                  <div className={cn("space-y-3 p-4", softPanelClassName)}>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+                      Your live link
+                    </p>
+                    <p className="break-all text-base font-semibold text-foreground">
+                      {publicUrl}
+                    </p>
                   </div>
-                  <div className="grid gap-3 lg:grid-cols-3">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        void trackEvent(
-                          "linket_claim_started",
-                          trackingMeta({ source_cta: "launch_hub" })
-                        );
-                        handleContinueToDashboard("/dashboard/linkets");
-                      }}
-                      className={cn("p-4 text-left transition hover:border-border hover:bg-card", softPanelClassName)}
-                    >
+                  <div className="space-y-3">
+                    <div>
                       <p className="text-sm font-semibold text-foreground">
-                        Claim a Linket
+                        Share your page
                       </p>
                       <p className="mt-1 text-sm text-muted-foreground">
-                        Connect hardware next.
+                        Start with the actions most people use first.
                       </p>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleOpenProfileSection("lead")}
-                      className={cn("p-4 text-left transition hover:border-border hover:bg-card", softPanelClassName)}
-                    >
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-3">
+                      <Button
+                        type="button"
+                        className="h-12 rounded-2xl text-sm"
+                        onClick={handleCopyLink}
+                      >
+                        Copy link
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="h-12 rounded-2xl text-sm"
+                        onClick={handleOpenLiveProfile}
+                      >
+                        Open live page
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="h-12 rounded-2xl text-sm"
+                        onClick={handleOpenQr}
+                      >
+                        Show QR
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    <div>
                       <p className="text-sm font-semibold text-foreground">
-                        Turn on lead capture
+                        Keep building
                       </p>
                       <p className="mt-1 text-sm text-muted-foreground">
-                        Open the lead form builder.
+                        These are optional next steps after sharing your page.
                       </p>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleContinueToDashboard("/dashboard/overview")}
-                      className={cn("p-4 text-left transition hover:border-border hover:bg-card", softPanelClassName)}
-                    >
-                      <p className="text-sm font-semibold text-foreground">
-                        Go to dashboard
-                      </p>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        Keep refining anytime.
-                      </p>
-                    </button>
+                    </div>
+                    <div className="grid gap-3 lg:grid-cols-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          void trackEvent(
+                            "linket_claim_started",
+                            trackingMeta({ source_cta: "launch_hub" })
+                          );
+                          handleContinueToDashboard("/dashboard/linkets");
+                        }}
+                        className={cn("p-4 text-left transition hover:border-border hover:bg-card", softPanelClassName)}
+                      >
+                        <p className="text-sm font-semibold text-foreground">
+                          Pair your Linket
+                        </p>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          Connect your device next.
+                        </p>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleOpenProfileSection("lead")}
+                        className={cn("p-4 text-left transition hover:border-border hover:bg-card", softPanelClassName)}
+                      >
+                        <p className="text-sm font-semibold text-foreground">
+                          Set up lead capture
+                        </p>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          Open the lead form builder.
+                        </p>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleContinueToDashboard("/dashboard/overview")}
+                        className={cn("p-4 text-left transition hover:border-border hover:bg-card", softPanelClassName)}
+                      >
+                        <p className="text-sm font-semibold text-foreground">
+                          Open dashboard
+                        </p>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          Keep refining anytime.
+                        </p>
+                      </button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
             ) : (
               <Card className={setupCardClassName}>
-                  <CardHeader className="gap-2 border-b border-border/60 pb-4">
+                  <CardHeader className="gap-1 border-b border-border/60 pb-4">
                     <p className="hidden text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground sm:block">
                       Step {currentStepIndex + 1}
                     </p>
                     <CardTitle className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
                       {stepHeading.title}
                     </CardTitle>
-                    <CardDescription className="max-w-2xl text-sm text-muted-foreground">
-                      {stepHeading.description}
-                    </CardDescription>
+                    {stepHeading.description ? (
+                      <CardDescription className="max-w-2xl text-sm text-muted-foreground">
+                        {stepHeading.description}
+                      </CardDescription>
+                    ) : null}
                   </CardHeader>
-                  <CardContent className="space-y-4 px-5 py-5 sm:px-6">
+                  <CardContent className="space-y-6 px-5 py-5 sm:px-6">
                     {currentStep.id === "profile" ? (
-                      <div className="space-y-4">
-                        <div className="space-y-2">
+                      <div className="space-y-6">
+                        <div className="space-y-3">
                           <div className="space-y-1">
                             <p className="text-sm font-semibold text-foreground">
-                              Profile photo
+                              Profile photo (optional)
                             </p>
                             <p className={fieldHelperClassName}>
-                              Add one now or later.
+                              Optional for now.
                             </p>
                           </div>
                           <AvatarUploader
@@ -1846,7 +1956,7 @@ export default function DashboardSetupFlow({
                           />
                         </div>
 
-                        <div className="space-y-2">
+                        <div className="space-y-2.5">
                           <Label
                             htmlFor="setup-name"
                             className={fieldLabelClassName}
@@ -1875,16 +1985,45 @@ export default function DashboardSetupFlow({
                               );
                             }}
                           />
+                          <p className={fieldHelperClassName}>
+                            What people will see first.
+                          </p>
                         </div>
 
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between gap-3">
-                            <Label
-                              htmlFor="setup-handle"
-                              className={fieldLabelClassName}
-                            >
-                              Public URL
-                            </Label>
+                        <div className="space-y-2.5">
+                          <Label
+                            htmlFor="setup-handle"
+                            className={fieldLabelClassName}
+                          >
+                            Public URL
+                          </Label>
+                          <div className="rounded-2xl border border-border/60 bg-background px-4 py-2.5">
+                            <div className="flex items-center gap-2">
+                              <span className="shrink-0 text-sm font-medium text-muted-foreground">
+                                {DEFAULT_LINK_HOST}/
+                              </span>
+                              <Input
+                                id="setup-handle"
+                                value={profileDraft.handle}
+                                placeholder="your-link"
+                                className={inlineSlugInputClassName}
+                                aria-invalid={Boolean(handleError)}
+                                onChange={(event) => {
+                                  setHandleTouched(true);
+                                  updateProfileDraft((current) => ({
+                                    ...current,
+                                    handle: sanitizeHandleInput(
+                                      event.target.value
+                                    ),
+                                  }));
+                                }}
+                              />
+                            </div>
+                          </div>
+                          <p className={fieldHelperClassName}>
+                            Pick a short link to share. This is the link you&apos;ll send.
+                          </p>
+                          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
                             {suggestedHandle &&
                             suggestedHandle !== sanitizeHandleInput(profileDraft.handle) ? (
                               <Button
@@ -1902,56 +2041,41 @@ export default function DashboardSetupFlow({
                                 Use suggestion
                               </Button>
                             ) : null}
-                          </div>
-                          <div className={cn("space-y-3 p-3.5", softPanelClassName)}>
-                            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                              <span className="shrink-0 text-sm font-medium text-muted-foreground">
-                                {DEFAULT_LINK_HOST}/
-                              </span>
-                              <Input
-                                id="setup-handle"
-                                value={profileDraft.handle}
-                                placeholder="jane-smith"
-                                className={fieldInputClassName}
-                                aria-invalid={Boolean(handleError)}
-                                onChange={(event) => {
-                                  setHandleTouched(true);
-                                  updateProfileDraft((current) => ({
-                                    ...current,
-                                    handle: sanitizeHandleInput(
-                                      event.target.value
-                                    ),
-                                  }));
-                                }}
-                              />
-                            </div>
-                            <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-                              <p className="text-muted-foreground">
-                                Short is easiest to share.
-                              </p>
-                              <span
-                                className={cn(
-                                  "inline-flex items-center gap-2 font-medium",
-                                  handleStatus.className
-                                )}
-                              >
-                                {handleStatus.label === "Checking..." ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : handleStatus.label === "Ready" ? (
-                                  <CheckCircle2 className="h-4 w-4" />
-                                ) : (
-                                  <Link2 className="h-4 w-4" />
-                                )}
-                                {handleStatus.label}
-                              </span>
-                            </div>
+                            <Button
+                              type="button"
+                              variant="link"
+                              className="h-auto p-0 text-xs text-muted-foreground"
+                              disabled={
+                                !profileDraft.handle.trim() ||
+                                profileSaveStatus === "saving" ||
+                                profileSaveStatus === "publishing"
+                              }
+                              onClick={() => void saveProfileDraft({ quiet: true })}
+                            >
+                              Check availability
+                            </Button>
+                            <span
+                              className={cn(
+                                "inline-flex items-center gap-2 font-medium",
+                                handleStatus.className
+                              )}
+                            >
+                              {handleStatus.label === "Checking availability" ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : handleStatus.label === "Available" ? (
+                                <CheckCircle2 className="h-4 w-4" />
+                              ) : (
+                                <Link2 className="h-4 w-4" />
+                              )}
+                              {handleStatus.label}
+                            </span>
                           </div>
                           {handleError ? (
                             <p className="text-sm text-red-600">{handleError}</p>
                           ) : null}
                         </div>
 
-                        <div className="space-y-2">
+                        <div className="space-y-2.5">
                           <Label
                             htmlFor="setup-headline"
                             className={fieldLabelClassName}
@@ -1971,15 +2095,23 @@ export default function DashboardSetupFlow({
                             }
                           />
                           <p className={fieldHelperClassName}>
-                            One sentence is enough.
+                            Keep it short. You can edit later.
                           </p>
                         </div>
                       </div>
                     ) : null}
 
                     {currentStep.id === "contact" ? (
-                      <div className="space-y-4">
-                        <div className="space-y-2">
+                      <div className="space-y-6">
+                        <div className={cn("space-y-1.5 p-4", softPanelClassName)}>
+                          <p className="text-sm font-medium text-foreground">
+                            This is what gets saved when someone taps <span className="font-semibold">Save contact</span>.
+                          </p>
+                          <p className={fieldHelperClassName}>
+                            Start with one detail people can use right away.
+                          </p>
+                        </div>
+                        <div className="space-y-2.5">
                           <div className="flex items-center justify-between gap-3">
                             <Label
                               htmlFor="setup-email"
@@ -2018,165 +2150,151 @@ export default function DashboardSetupFlow({
                               }))
                             }
                           />
-                          <p className={fieldHelperClassName}>
-                            Add one way to reach you.
-                          </p>
                         </div>
-                        {showPhoneField ? (
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between gap-3">
-                              <Label
-                                htmlFor="setup-phone"
-                                className={fieldLabelClassName}
-                              >
-                                Phone
-                              </Label>
-                              {!contactDraft.phone.trim() ? (
+                        <div className="space-y-3">
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                            Optional
+                          </p>
+                          {showPhoneField ? (
+                            <div className={cn("space-y-3 p-4", softPanelClassName)}>
+                              <div className="flex items-center justify-between gap-3">
+                                <Label
+                                  htmlFor="setup-phone"
+                                  className={fieldLabelClassName}
+                                >
+                                  Phone
+                                </Label>
+                                {!contactDraft.phone.trim() ? (
+                                  <Button
+                                    type="button"
+                                    variant="link"
+                                    className="h-auto p-0 text-xs text-muted-foreground"
+                                    onClick={() => setShowPhoneField(false)}
+                                  >
+                                    Hide
+                                  </Button>
+                                ) : null}
+                              </div>
+                              <Input
+                                id="setup-phone"
+                                type="tel"
+                                value={contactDraft.phone}
+                                placeholder="(555) 123-4567"
+                                className={fieldInputClassName}
+                                onChange={(event) =>
+                                  updateContactDraft((current) => ({
+                                    ...current,
+                                    phone: event.target.value,
+                                  }))
+                                }
+                              />
+                            </div>
+                          ) : (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              className="h-12 w-full justify-between rounded-2xl border-border/60 bg-background/55 px-4 text-sm"
+                              onClick={() => setShowPhoneField(true)}
+                            >
+                              Phone (optional)
+                              <Plus className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {showContactExtras ? (
+                            <div className={cn("space-y-3 p-4", softPanelClassName)}>
+                              <div className="flex items-center justify-between gap-3">
+                                <div className="space-y-1">
+                                  <p className="text-sm font-semibold text-foreground">
+                                    Business details (optional)
+                                  </p>
+                                  <p className={fieldHelperClassName}>
+                                    Add company or job title if you want it saved too.
+                                  </p>
+                                </div>
                                 <Button
                                   type="button"
-                                  variant="link"
-                                  className="h-auto p-0 text-xs text-muted-foreground"
-                                  onClick={() => setShowPhoneField(false)}
+                                  variant="ghost"
+                                  className="rounded-2xl text-sm"
+                                  onClick={() => setShowContactExtras(false)}
                                 >
                                   Hide
                                 </Button>
-                              ) : null}
-                            </div>
-                            <Input
-                              id="setup-phone"
-                              type="tel"
-                              value={contactDraft.phone}
-                              placeholder="(555) 123-4567"
-                              className={fieldInputClassName}
-                              onChange={(event) =>
-                                updateContactDraft((current) => ({
-                                  ...current,
-                                  phone: event.target.value,
-                                }))
-                              }
-                            />
-                            <p className={fieldHelperClassName}>
-                              Optional.
-                            </p>
-                          </div>
-                        ) : (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            className="h-12 w-full rounded-2xl justify-between px-4 text-sm"
-                            onClick={() => setShowPhoneField(true)}
-                          >
-                            Add phone
-                            <Plus className="h-4 w-4" />
-                          </Button>
-                        )}
-                        {showContactExtras ? (
-                          <div className={cn("space-y-3 p-4", softPanelClassName)}>
-                            <div className="flex items-center justify-between gap-3">
-                              <div>
-                                <p className="text-sm font-semibold text-foreground">
-                                  More details
-                                </p>
                               </div>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                className="rounded-2xl text-sm"
-                                onClick={() => setShowContactExtras(false)}
-                              >
-                                Hide extras
-                              </Button>
-                            </div>
-                            <div className="grid gap-4 md:grid-cols-2">
-                              <div className="space-y-2">
-                                <Label
-                                  htmlFor="setup-title"
-                                  className={fieldLabelClassName}
-                                >
-                                  Job title
-                                </Label>
-                                <Input
-                                  id="setup-title"
-                                  value={contactDraft.title}
-                                  placeholder="Founder"
-                                  className={fieldInputClassName}
-                                  onChange={(event) =>
-                                    updateContactDraft((current) => ({
-                                      ...current,
-                                      title: event.target.value,
-                                    }))
-                                  }
-                                />
-                              </div>
-                              <div className="space-y-2">
-                                <Label
-                                  htmlFor="setup-company"
-                                  className={fieldLabelClassName}
-                                >
-                                  Company
-                                </Label>
-                                <Input
-                                  id="setup-company"
-                                  value={contactDraft.company}
-                                  placeholder="Linket"
-                                  className={fieldInputClassName}
-                                  onChange={(event) =>
-                                    updateContactDraft((current) => ({
-                                      ...current,
-                                      company: event.target.value,
-                                    }))
-                                  }
-                                />
+                              <div className="grid gap-4 md:grid-cols-2">
+                                <div className="space-y-2">
+                                  <Label
+                                    htmlFor="setup-title"
+                                    className={fieldLabelClassName}
+                                  >
+                                    Job title
+                                  </Label>
+                                  <Input
+                                    id="setup-title"
+                                    value={contactDraft.title}
+                                    placeholder="Founder"
+                                    className={fieldInputClassName}
+                                    onChange={(event) =>
+                                      updateContactDraft((current) => ({
+                                        ...current,
+                                        title: event.target.value,
+                                      }))
+                                    }
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label
+                                    htmlFor="setup-company"
+                                    className={fieldLabelClassName}
+                                  >
+                                    Company
+                                  </Label>
+                                  <Input
+                                    id="setup-company"
+                                    value={contactDraft.company}
+                                    placeholder="Linket"
+                                    className={fieldInputClassName}
+                                    onChange={(event) =>
+                                      updateContactDraft((current) => ({
+                                        ...current,
+                                        company: event.target.value,
+                                      }))
+                                    }
+                                  />
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        ) : (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            className="h-12 w-full rounded-2xl justify-between px-4 text-sm"
-                            onClick={() => setShowContactExtras(true)}
-                          >
-                            Add more details
-                            <Plus className="h-4 w-4" />
-                          </Button>
-                        )}
+                          ) : (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              className="h-12 w-full justify-between rounded-2xl border-border/60 bg-background/55 px-4 text-sm"
+                              onClick={() => setShowContactExtras(true)}
+                            >
+                              Business details (optional)
+                              <Plus className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     ) : null}
 
                     {currentStep.id === "links" ? (
                       <div className="space-y-5">
                         <div className="space-y-3">
-                          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                            <div>
-                              <p className="text-sm font-semibold text-foreground">
-                                Links
-                              </p>
-                              <p className="mt-1 text-sm text-muted-foreground">
-                                Add the main place you want people to visit.
-                              </p>
-                            </div>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              className="rounded-2xl"
-                              disabled={profileDraft.links.length >= MAX_LINK_ROWS}
-                              onClick={() =>
-                                updateProfileDraft((current) => ({
-                                  ...current,
-                                  links: [...current.links, buildEmptyLink()],
-                                }))
-                              }
-                            >
-                              <Plus className="mr-2 h-4 w-4" />
-                              {linkButtonLabel}
-                            </Button>
+                          <div>
+                            <p className="text-sm font-semibold text-foreground">
+                              First link
+                            </p>
+                            <p className="mt-1 text-sm text-muted-foreground">
+                              Add the main link people should open first.
+                            </p>
                           </div>
                           <div className="space-y-3">
                             {profileDraft.links.map((link, index) => (
                               (() => {
                                 const linkFieldKey = getDraftLinkFieldKey(link, index);
                                 const showTitleField =
+                                  index === 0 ||
                                   Boolean(link.title.trim()) ||
                                   Boolean(expandedLinkTitleEditors[linkFieldKey]);
 
@@ -2191,7 +2309,7 @@ export default function DashboardSetupFlow({
                                           {index === 0
                                             ? "First link"
                                             : index === 1
-                                              ? "Optional second link"
+                                              ? "Second link"
                                               : `Link ${index + 1}`}
                                         </p>
                                       </div>
@@ -2223,7 +2341,7 @@ export default function DashboardSetupFlow({
                                       className={cn(
                                         "grid gap-3",
                                         showTitleField
-                                          ? "md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.3fr)]"
+                                          ? "md:grid-cols-[minmax(0,0.72fr)_minmax(0,1.28fr)]"
                                           : ""
                                       )}
                                     >
@@ -2234,9 +2352,9 @@ export default function DashboardSetupFlow({
                                               htmlFor={`setup-link-title-${index}`}
                                               className={fieldLabelClassName}
                                             >
-                                              Button text
+                                              Link label
                                             </Label>
-                                            {!link.title.trim() ? (
+                                            {!link.title.trim() && index !== 0 ? (
                                               <Button
                                                 type="button"
                                                 variant="link"
@@ -2296,7 +2414,7 @@ export default function DashboardSetupFlow({
                                                 }))
                                               }
                                             >
-                                              Add custom text
+                                              Add custom label
                                             </Button>
                                           ) : null}
                                         </div>
@@ -2336,6 +2454,22 @@ export default function DashboardSetupFlow({
                               })()
                             ))}
                           </div>
+                          {profileDraft.links.length < MAX_LINK_ROWS ? (
+                            <Button
+                              type="button"
+                              variant="link"
+                              className="h-auto p-0 text-sm text-muted-foreground"
+                              onClick={() =>
+                                updateProfileDraft((current) => ({
+                                  ...current,
+                                  links: [...current.links, buildEmptyLink()],
+                                }))
+                              }
+                            >
+                              <Plus className="mr-2 h-4 w-4" />
+                              {linkButtonLabel}
+                            </Button>
+                          ) : null}
                         </div>
                         <div className="space-y-3">
                           <div className="flex items-center gap-2">
@@ -2345,72 +2479,61 @@ export default function DashboardSetupFlow({
                                 Theme
                               </p>
                               <p className="text-sm text-muted-foreground">
-                                Pick one. Change it anytime.
+                                Pick a theme. You can change it later.
                               </p>
                             </div>
                           </div>
                           {canChooseTheme ? (
                             <div className={cn("space-y-3 p-4", softPanelClassName)}>
-                              <div className="flex items-center justify-between gap-3">
-                                <div className="min-w-0">
-                                  <p className="text-sm font-semibold text-foreground">
-                                    {selectedThemeOption.label}
-                                  </p>
-                                </div>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  className="h-9 rounded-2xl px-3 text-sm"
-                                  onClick={() =>
-                                    setShowThemeChooser((current) => !current)
-                                  }
-                                >
-                                  {showThemeChooser ? "Hide" : "Choose"}
-                                </Button>
-                              </div>
-                              {showThemeChooser ? (
-                                <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-                                  {FEATURED_THEMES.map((themeOption) => {
-                                    const selected = profileDraft.theme === themeOption.value;
-                                    return (
-                                      <button
-                                        key={themeOption.value}
-                                        type="button"
-                                        onClick={() => {
-                                          if (profileDraft.theme !== themeOption.value) {
-                                            writePendingDashboardTheme(themeOption.value);
-                                          }
-                                          setTheme(themeOption.value);
-                                          setShowThemeChooser(false);
-                                          updateProfileDraft((current) => ({
-                                            ...current,
-                                            theme: themeOption.value,
-                                          }));
-                                          void trackEvent(
-                                            "theme_selected",
-                                            trackingMeta({ theme: themeOption.value })
-                                          );
-                                        }}
-                                        className={cn(
-                                          "overflow-hidden rounded-2xl border text-left transition",
-                                          selected
-                                            ? "border-foreground bg-foreground text-background shadow-[0_18px_42px_-30px_rgba(15,23,42,0.45)]"
-                                            : "border-border/60 bg-card hover:border-border"
-                                        )}
-                                      >
-                                        <div
-                                          className={cn("h-20 w-full", themeOption.swatchClassName)}
-                                        />
-                                        <div className="px-3 py-3">
+                              <p className="text-sm text-muted-foreground">
+                                Selected theme: <span className="font-semibold text-foreground">{selectedThemeOption.label}</span>
+                              </p>
+                              <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                                {FEATURED_THEMES.map((themeOption) => {
+                                  const selected = profileDraft.theme === themeOption.value;
+                                  return (
+                                    <button
+                                      key={themeOption.value}
+                                      type="button"
+                                      onClick={() => {
+                                        if (profileDraft.theme !== themeOption.value) {
+                                          writePendingDashboardTheme(themeOption.value);
+                                        }
+                                        setTheme(themeOption.value);
+                                        updateProfileDraft((current) => ({
+                                          ...current,
+                                          theme: themeOption.value,
+                                        }));
+                                        void trackEvent(
+                                          "theme_selected",
+                                          trackingMeta({ theme: themeOption.value })
+                                        );
+                                      }}
+                                      className={cn(
+                                        "overflow-hidden rounded-2xl border text-left transition",
+                                        selected
+                                          ? "border-foreground bg-foreground text-background shadow-[0_18px_42px_-30px_rgba(15,23,42,0.45)]"
+                                          : "border-border/60 bg-card hover:border-border"
+                                      )}
+                                    >
+                                      <div
+                                        className={cn("h-16 w-full", themeOption.swatchClassName)}
+                                      />
+                                      <div className="flex items-center justify-between gap-2 px-3 py-3">
+                                        <div>
                                           <p className="text-sm font-semibold">
                                             {themeOption.label}
                                           </p>
+                                          <p className="mt-1 text-xs opacity-80">
+                                            {themeOption.description}
+                                          </p>
                                         </div>
-                                      </button>
-                                    );
-                                  })}
-                                </div>
-                              ) : null}
+                                        {selected ? <Check className="h-4 w-4 shrink-0" /> : null}
+                                      </div>
+                                    </button>
+                                  );
+                                })}
+                              </div>
                             </div>
                           ) : (
                             <div className={cn("p-4", softPanelClassName)}>
@@ -2425,48 +2548,80 @@ export default function DashboardSetupFlow({
 
                     {currentStep.id === "publish" ? (
                       <div className="space-y-4">
-                        <div className="grid gap-3 md:grid-cols-[minmax(0,1.25fr)_minmax(0,0.75fr)]">
-                          <div className={cn("p-4", softPanelClassName)}>
-                            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
-                              Live URL
-                            </p>
-                            <p className="mt-2 break-all text-sm font-semibold text-foreground">
-                              {publicUrl}
-                            </p>
-                            <p className="mt-2 text-sm text-muted-foreground">
-                              This is your live link.
-                            </p>
-                          </div>
-                          <div className={cn("p-4", softPanelClassName)}>
-                            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
-                              Test once
-                            </p>
-                            <p className="mt-2 text-sm text-muted-foreground">
-                              Open it once on your phone.
-                            </p>
-                          </div>
-                        </div>
-                        <div className={cn("flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between", softPanelClassName)}>
-                          <div>
-                            <p className="text-sm font-semibold text-foreground">
-                              Publish now. Edit later.
-                            </p>
-                            <p className="mt-1 text-sm text-muted-foreground">
-                              {publishReady
-                                ? "QR is ready when you need it."
-                                : "QR shows up after publish."}
-                            </p>
-                          </div>
-                          {publishReady ? (
+                        <div className={cn("space-y-3 p-4", softPanelClassName)}>
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+                            Your public URL
+                          </p>
+                          <p className="break-all text-base font-semibold text-foreground">
+                            {publicUrl}
+                          </p>
+                          <div className="flex flex-wrap items-center gap-4 text-xs">
                             <Button
                               type="button"
-                              variant="outline"
-                              className="rounded-2xl"
-                              onClick={handleOpenQr}
+                              variant="link"
+                              className="h-auto p-0 text-xs text-muted-foreground"
+                              onClick={() => void handleCopyDraftUrl()}
                             >
-                              Show QR
+                              Copy
                             </Button>
-                          ) : null}
+                            <Button
+                              type="button"
+                              variant="link"
+                              className="h-auto p-0 text-xs text-muted-foreground"
+                              onClick={handleEditPublicUrl}
+                            >
+                              Edit
+                            </Button>
+                          </div>
+                        </div>
+                        <div className={cn("space-y-3 p-4", softPanelClassName)}>
+                          <div>
+                            <p className="text-sm font-semibold text-foreground">
+                              Ready to publish
+                            </p>
+                            <p className="mt-1 text-sm text-muted-foreground">
+                              Make sure the essentials are in place before you go live.
+                            </p>
+                          </div>
+                          <div className="space-y-2.5">
+                            {publishReviewItems.map((item) => (
+                              <div key={item.label} className="flex items-center gap-3">
+                                <span
+                                  className={cn(
+                                    "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border",
+                                    item.done
+                                      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                                      : "border-amber-200 bg-amber-50 text-amber-700"
+                                  )}
+                                >
+                                  <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
+                                </span>
+                                <p className="text-sm font-medium text-foreground">
+                                  {item.done ? item.label : item.missing}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        <div className={cn("space-y-3 p-4", softPanelClassName)}>
+                          <p className="text-sm font-semibold text-foreground">
+                            Before you publish
+                          </p>
+                          <div className="space-y-2 text-sm text-muted-foreground">
+                            <p>Check the preview once.</p>
+                            <p>Make sure your first link opens correctly.</p>
+                            <p>Review how the page looks on mobile.</p>
+                          </div>
+                        </div>
+                        <div className={cn("space-y-3 p-4", softPanelClassName)}>
+                          <p className="text-sm font-semibold text-foreground">
+                            After you publish
+                          </p>
+                          <div className="space-y-2 text-sm text-muted-foreground">
+                            <p>Your page goes live at this URL.</p>
+                            <p>Your QR becomes available.</p>
+                            <p>You can still edit the page anytime.</p>
+                          </div>
                         </div>
                       </div>
                     ) : null}
@@ -2488,41 +2643,46 @@ export default function DashboardSetupFlow({
                       </div>
                     ) : null}
 
-                    <div className="hidden border-t border-border/60 pt-5 sm:flex sm:flex-row sm:items-center sm:justify-between sm:gap-3">
-                      {currentStepIndex > 0 ? (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          className="h-11 rounded-2xl text-sm"
-                          onClick={handleBackStep}
-                        >
-                          Back
-                        </Button>
-                      ) : (
-                        <div className="hidden h-11 sm:block" />
-                      )}
-                      {currentStep.id === "publish" ? (
-                        <Button
-                          type="button"
-                          className="h-12 rounded-2xl px-6 text-sm"
-                          disabled={profileSaveStatus === "publishing"}
-                          onClick={() => void handlePublish()}
-                        >
-                          {profileSaveStatus === "publishing"
-                            ? "Publishing..."
-                            : publishReady
-                              ? "Update live page"
-                              : "Publish page"}
-                        </Button>
-                      ) : (
-                        <Button
-                          type="button"
-                          className="h-12 rounded-2xl px-6 text-sm"
-                          onClick={() => void handleContinue()}
-                        >
-                          Continue
-                        </Button>
-                      )}
+                    <div className="hidden sm:block">
+                      <div className="sticky bottom-4 z-10 flex items-center justify-between gap-4 rounded-[24px] border border-border/60 bg-card/95 px-4 py-3 shadow-[0_18px_40px_-28px_rgba(15,23,42,0.35)] backdrop-blur">
+                        <div className="flex min-w-0 items-center gap-3">
+                          {currentStepIndex > 0 ? (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              className="h-10 rounded-2xl px-3 text-sm"
+                              onClick={handleBackStep}
+                            >
+                              Back
+                            </Button>
+                          ) : null}
+                          <p
+                            aria-live="polite"
+                            aria-atomic="true"
+                            className={cn("text-sm", autosaveTextToneClassName)}
+                          >
+                            {currentStep.id === "publish" ? "You can edit later." : footerStatusLabel}
+                          </p>
+                        </div>
+                        {currentStep.id === "publish" ? (
+                          <Button
+                            type="button"
+                            className="h-12 rounded-2xl px-6 text-sm"
+                            disabled={profileSaveStatus === "publishing"}
+                            onClick={() => void handlePublish()}
+                          >
+                            {continueButtonLabel}
+                          </Button>
+                        ) : (
+                          <Button
+                            type="button"
+                            className="h-12 rounded-2xl px-6 text-sm"
+                            onClick={() => void handleContinue()}
+                          >
+                            {continueButtonLabel}
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </CardContent>
               </Card>
@@ -2531,14 +2691,21 @@ export default function DashboardSetupFlow({
 
           <aside className="hidden space-y-3 lg:sticky lg:top-5 lg:block" aria-label="Setup preview and checklist">
             <Card className={setupCardClassName}>
-              <CardHeader className="gap-1 border-b border-border/60 pb-4">
-                <CardTitle className="text-lg font-semibold text-foreground">Preview</CardTitle>
-                <CardDescription className="text-sm text-muted-foreground">
-                  What people will see.
-                </CardDescription>
+              <CardHeader className="gap-2 border-b border-border/60 pb-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="space-y-1">
+                      <CardTitle className="text-lg font-semibold text-foreground">Live preview</CardTitle>
+                      <CardDescription className="text-sm text-muted-foreground">
+                      {previewDescription}
+                      </CardDescription>
+                    </div>
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                    Step {currentStepIndex + 1} of {SETUP_STEPS.length}
+                  </span>
+                </div>
               </CardHeader>
               <CardContent className="space-y-4 px-4 py-4">
-                <div className="mx-auto w-full max-w-[304px]">
+                <div className={cn("mx-auto w-full overflow-hidden rounded-[32px]", sidebarPreviewWrapperClassName)}>
                   <PhonePreviewCard
                     profile={{
                       name: previewDisplayName,
@@ -2558,32 +2725,64 @@ export default function DashboardSetupFlow({
                   />
                 </div>
                 <div className="space-y-2 border-t border-border/60 pt-4">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-                    Checklist
-                  </p>
-                {checklistItems.map((item) => (
-                  (() => {
-                    const ItemIcon = item.icon;
-                    return (
-                      <div
-                        key={item.label}
-                        className="flex items-center gap-3 px-1 py-1.5"
-                      >
-                        <span
-                          className={cn(
-                            "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border",
-                            item.done
-                              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                              : "border-border/60 bg-background text-muted-foreground"
-                          )}
-                        >
-                          <ItemIcon className="h-4 w-4" aria-hidden="true" />
-                        </span>
-                        <p className="text-sm font-medium text-foreground">{item.label}</p>
-                      </div>
-                    );
-                  })()
-                ))}
+                  {showLaunchHub ? (
+                    <>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                        Live status
+                      </p>
+                      {postPublishStatusItems.map((item) => (
+                        <div key={item.label} className="flex items-center gap-3 px-1 py-1.5">
+                          <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border/60 bg-background text-muted-foreground">
+                            <CheckCircle2 className={cn("h-4 w-4", item.tone)} aria-hidden="true" />
+                          </span>
+                          <p className={cn("text-sm font-medium", item.tone)}>{item.label}</p>
+                        </div>
+                      ))}
+                    </>
+                  ) : currentStep.id === "publish" ? (
+                    <>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                        Status
+                      </p>
+                      {prePublishStatusItems.map((item) => (
+                        <div key={item.label} className="flex items-center gap-3 px-1 py-1.5">
+                          <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border/60 bg-background text-muted-foreground">
+                            <CheckCircle2 className={cn("h-4 w-4", item.tone)} aria-hidden="true" />
+                          </span>
+                          <p className={cn("text-sm font-medium", item.tone)}>{item.label}</p>
+                        </div>
+                      ))}
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                        To finish setup
+                      </p>
+                      {checklistItems.map((item) => (
+                        (() => {
+                          const ItemIcon = item.icon;
+                          return (
+                            <div
+                              key={item.label}
+                              className="flex items-center gap-3 px-1 py-1.5"
+                            >
+                              <span
+                                className={cn(
+                                  "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border",
+                                  item.done
+                                    ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                                    : "border-border/60 bg-background text-muted-foreground"
+                                )}
+                              >
+                                <ItemIcon className="h-4 w-4" aria-hidden="true" />
+                              </span>
+                              <p className="text-sm font-medium text-foreground">{item.label}</p>
+                            </div>
+                          );
+                        })()
+                      ))}
+                    </>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -2595,8 +2794,11 @@ export default function DashboardSetupFlow({
         <DialogContent className="w-[calc(100vw-1rem)] max-w-[21rem] rounded-[24px] border-border/60 bg-card/95 p-4 sm:max-w-md sm:p-5 lg:hidden">
           <DialogHeader>
             <DialogTitle className="text-xl font-semibold text-foreground">
-              Preview
+              Live preview
             </DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">
+              {previewDescription}
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <div className="mx-auto w-full max-w-[264px] sm:max-w-[300px]">
