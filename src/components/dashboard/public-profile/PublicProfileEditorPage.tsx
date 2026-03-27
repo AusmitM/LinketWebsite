@@ -2328,7 +2328,16 @@ function faviconForUrl(url: string) {
     const host = parsed.hostname.toLowerCase();
     if (!host) return null;
     if (host === "instagr.am" || host.endsWith(".instagram.com") || host === "instagram.com") {
-      return "/icons/instagram-glyph-gradient.png";
+      return "/icons/instagram-logo.png";
+    }
+    if (host.endsWith(".github.com") || host === "github.com") {
+      return "/icons/github-logo.png";
+    }
+    if (host.endsWith(".tiktok.com") || host === "tiktok.com") {
+      return "/icons/tiktok-logo.png";
+    }
+    if (host.endsWith(".youtube.com") || host === "youtube.com") {
+      return "/icons/yt-logo.png";
     }
     return `/api/favicon?u=${encodeURIComponent(parsed.toString())}`;
   } catch {
