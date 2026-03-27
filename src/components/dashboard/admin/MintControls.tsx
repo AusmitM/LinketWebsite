@@ -220,7 +220,7 @@ export default function MintControls({ defaultQty, defaultLabel }: MintControlsP
           <Button
             type="submit"
             disabled={pending}
-            className="rounded-full border border-foreground/40 bg-background px-6 text-foreground hover:bg-foreground/10"
+            className="rounded-full px-6"
             aria-busy={pending}
           >
             {pending ? "Minting..." : "Generate CSV"}

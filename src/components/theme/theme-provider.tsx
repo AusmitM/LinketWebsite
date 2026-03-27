@@ -1,8 +1,19 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useSyncExternalStore } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useSyncExternalStore,
+} from "react";
 import type { ReactNode } from "react";
-import { isDarkTheme, type ThemeName } from "@/lib/themes";
+import {
+  coerceThemeName,
+  isDarkTheme,
+  type ThemeName,
+} from "@/lib/themes";
 
 type ThemeContextValue = {
   theme: ThemeName;
@@ -43,28 +54,41 @@ export function ThemeProvider({
   initial,
   scopeSelector,
   storageKey,
+  allowedThemes,
 }: {
   children: ReactNode;
   initial?: ThemeName;
   scopeSelector?: string;
   storageKey?: string | null;
+  allowedThemes?: readonly ThemeName[];
 }) {
   const storage = storageKey ?? STORAGE_KEY;
   const persist = storageKey !== null;
+  const fallbackTheme = initial || "light";
+
+  const sanitizeTheme = useCallback(
+    (value: string | ThemeName | null | undefined) => {
+      const normalized = coerceThemeName(value) ?? fallbackTheme;
+      if (!allowedThemes?.length) return normalized;
+      return allowedThemes.includes(normalized) ? normalized : fallbackTheme;
+    },
+    [allowedThemes, fallbackTheme]
+  );
 
   const getSnapshot = useCallback(() => {
-    if (!persist) return initial || "light";
-    if (typeof window === "undefined") return initial || "light";
+    if (!persist) return sanitizeTheme(fallbackTheme);
+    if (typeof window === "undefined") return sanitizeTheme(fallbackTheme);
     try {
-      return (
-        (localStorage.getItem(storage) as ThemeName | null) ||
-        initial ||
-        "light"
-      );
+      const stored = localStorage.getItem(storage);
+      const nextTheme = sanitizeTheme(stored);
+      if (stored !== nextTheme) {
+        localStorage.setItem(storage, nextTheme);
+      }
+      return nextTheme;
     } catch {
-      return initial || "light";
+      return sanitizeTheme(fallbackTheme);
     }
-  }, [initial, persist, storage]);
+  }, [fallbackTheme, persist, sanitizeTheme, storage]);
 
   const subscribe = useCallback(
     (callback: () => void) => {
@@ -87,7 +111,7 @@ export function ThemeProvider({
   const theme = useSyncExternalStore(
     subscribe,
     getSnapshot,
-    () => initial || "light"
+    () => sanitizeTheme(fallbackTheme)
   );
 
   useEffect(() => {
@@ -97,20 +121,25 @@ export function ThemeProvider({
 
   const setTheme = useCallback(
     (t: ThemeName) => {
+      const nextTheme = sanitizeTheme(t);
       if (persist && typeof localStorage !== "undefined") {
         try {
-          localStorage.setItem(storage, t);
+          localStorage.setItem(storage, nextTheme);
         } catch {
           // Ignore storage failures (private browsing / restricted storage).
         }
       }
-      const scope = scopeSelector ? (typeof document !== "undefined" ? document.querySelector(scopeSelector) : null) : undefined;
-      applyThemeClass(t, scope ?? undefined);
+      const scope = scopeSelector
+        ? typeof document !== "undefined"
+          ? document.querySelector(scopeSelector)
+          : null
+        : undefined;
+      applyThemeClass(nextTheme, scope ?? undefined);
       if (typeof window !== "undefined") {
         window.dispatchEvent(new Event(THEME_EVENT));
       }
     },
-    [scopeSelector, storage, persist]
+    [persist, sanitizeTheme, scopeSelector, storage]
   );
 
   const value = useMemo(() => ({ theme, setTheme }), [theme, setTheme]);

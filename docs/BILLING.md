@@ -2,7 +2,7 @@
 
 This document explains the billing implementation in this repository end-to-end:
 
-- Product pricing model and plan semantics
+- Product pricing model, plan semantics, and feature access
 - Stripe + Supabase architecture
 - Database schema used by billing
 - API endpoints and request/response behavior
@@ -60,6 +60,21 @@ The public pricing model is hardcoded in `src/lib/billing/pricing.ts`.
   - software per user monthly: `$6`
 
 Business pricing is represented in UI copy but Stripe subscription accrual/loyalty logic is scoped to personal plan signals.
+
+### 1.3 Feature access by plan
+
+The current product access rules are:
+
+- `Free Web-Only`
+  - only includes the `light` and `dark` themes
+  - does not allow lead form customization; users are limited to the default `Name`, `Email`, and `Note` fields
+  - only includes analytics for public profile visits to `linketconnect.com/{handle}`
+  - does not include lead labeling features
+- `Paid users`
+  - paid access includes all features
+  - this applies to active Paid Web-Only (Pro) subscriptions and to users currently covered by bundle-provided Pro entitlement
+
+In short: free users receive a restricted starter experience, while paid users receive full product access.
 
 ---
 

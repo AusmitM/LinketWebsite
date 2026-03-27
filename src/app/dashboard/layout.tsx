@@ -9,6 +9,7 @@ import DashboardPrefetcher from "@/components/dashboard/DashboardPrefetcher";
 import DashboardThemeSync from "@/components/dashboard/DashboardThemeSync";
 import DashboardThemeRemoteSync from "@/components/dashboard/DashboardThemeRemoteSync";
 import { getDashboardOnboardingState } from "@/lib/dashboard-onboarding";
+import { getDashboardPlanAccessForUser } from "@/lib/plan-access.server";
 import { createServerSupabaseReadonly } from "@/lib/supabase/server";
 import { DashboardSessionProvider } from "@/components/dashboard/DashboardSessionContext";
 import DashboardAppShell from "@/components/dashboard/DashboardAppShell";
@@ -28,7 +29,10 @@ export default async function DashboardLayout({
     redirect("/auth?view=signin&next=%2Fdashboard");
   }
 
-  const onboardingState = await getDashboardOnboardingState(user.id);
+  const [onboardingState, planAccess] = await Promise.all([
+    getDashboardOnboardingState(user.id),
+    getDashboardPlanAccessForUser(user.id),
+  ]);
   const initialDashboardTheme = onboardingState.activeProfile.theme;
   const bootstrapDashboardThemeScript = `
     (() => {
@@ -57,8 +61,11 @@ export default async function DashboardLayout({
         initial={initialDashboardTheme}
         scopeSelector="#dashboard-theme-scope"
         storageKey="linket:dashboard-theme"
+        allowedThemes={
+          planAccess.hasPaidAccess ? undefined : planAccess.allowedThemes
+        }
       >
-        <DashboardSessionProvider user={user}>
+        <DashboardSessionProvider user={user} planAccess={planAccess}>
           <DashboardThemeSync />
           <DashboardThemeRemoteSync />
           <DashboardAppShell onboardingState={onboardingState}>

@@ -116,7 +116,7 @@
   --color-button-success-border: color-mix(in srgb, var(--foreground) 58%, var(--success) 42%);
   --color-button-success-shadow: color-mix(in srgb, var(--success) 42%, transparent);
   --color-button-disabled-bg: color-mix(in srgb, var(--muted) 78%, var(--card) 22%);
-  --color-button-disabled-fg: color-mix(in srgb, var(--foreground) 68%, var(--muted-foreground) 32%);
+  --color-button-disabled-fg: color-mix(in srgb, var(--foreground) 82%, var(--muted-foreground) 18%);
   --color-button-disabled-border: color-mix(in srgb, var(--muted-foreground) 76%, var(--card) 24%);
   --color-button-selected-bg: var(--color-button-primary-bg);
   --color-button-selected-fg: var(--color-button-primary-fg);

@@ -14,8 +14,12 @@ import PublicProfileLinksList from "@/components/public/PublicProfileLinksList";
 import PublicProfileLiteMode from "@/components/public/PublicProfileLiteMode";
 import PublicLeadForm from "@/components/public/PublicLeadForm";
 import PublicProfileImage from "@/components/public/PublicProfileImage";
+import PublicProfileViewTracker from "@/components/public/PublicProfileViewTracker";
 import VCardDownload from "@/components/VCardDownload";
 import ShareContactButton from "@/components/ShareContactButton";
+import { applyFreeLeadFormLimits } from "@/lib/lead-form";
+import { sanitizeThemeForPlan } from "@/lib/plan-access";
+import { getDashboardPlanAccessForUser } from "@/lib/plan-access.server";
 
 export const revalidate = 60;
 
@@ -101,6 +105,7 @@ export default async function PublicProfilePage({ params }: Props) {
   if (!payload) notFound();
 
   const { account, profile } = payload;
+  const planAccess = await getDashboardPlanAccessForUser(profile.user_id);
   const avatar = await getSignedAvatarUrl(
     account.avatar_url,
     account.avatar_updated_at
@@ -123,6 +128,13 @@ export default async function PublicProfilePage({ params }: Props) {
       profileId: profile.id,
       supabase,
     });
+  const resolvedLeadForm =
+    normalizedLeadForm && !planAccess.canCustomizeLeadForm
+      ? applyFreeLeadFormLimits(
+          normalizedLeadForm,
+          leadFormRow?.id ?? `form-${profile.user_id}`
+        )
+      : normalizedLeadForm;
   const { data: vcardData } = await supabase
     .from("vcard_profiles")
     .select("email, phone")
@@ -133,10 +145,13 @@ export default async function PublicProfilePage({ params }: Props) {
       (vcardData as { email?: string | null; phone?: string | null } | null)?.phone?.trim()
   );
 
-  const leadFormTitle = normalizedLeadForm?.title ?? "Contact";
-  const hasLeadForm = Boolean(normalizedLeadForm?.fields?.length);
+  const leadFormTitle = resolvedLeadForm?.title ?? "Contact";
+  const hasLeadForm = Boolean(resolvedLeadForm?.fields?.length);
   const displayName = profile.name || account.display_name || publicHandle;
-  const resolvedTheme = normalizeThemeName(profile.theme, "autumn");
+  const resolvedTheme = sanitizeThemeForPlan(
+    normalizeThemeName(profile.theme, "autumn"),
+    planAccess
+  );
   const isDark = isDarkTheme(resolvedTheme);
   const themeClass = `theme-${resolvedTheme} ${isDark ? "dark" : ""}`;
   const headline = profile.headline?.trim() ?? "";
@@ -146,6 +161,7 @@ export default async function PublicProfilePage({ params }: Props) {
 
   return (
     <div className={`public-profile-shell min-h-screen text-foreground ${themeClass}`}>
+      <PublicProfileViewTracker handle={publicHandle} />
       <PublicProfileLiteMode />
       <div className="relative overflow-hidden">
         <div className="pointer-events-none absolute inset-0 -z-10 public-profile-backdrop-entrance public-profile-heavy">
@@ -377,7 +393,7 @@ export default async function PublicProfilePage({ params }: Props) {
                     ownerId={profile.user_id}
                     handle={publicHandle}
                     profileId={profile.id}
-                    initialForm={normalizedLeadForm}
+                    initialForm={resolvedLeadForm}
                     initialFormId={leadFormRow?.id ?? null}
                     variant="profile"
                     showHeader={false}

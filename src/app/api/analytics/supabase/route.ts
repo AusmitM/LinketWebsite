@@ -1,15 +1,37 @@
-// app/api/analytics/supabase/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { requireRouteAccess } from "@/lib/api-authorization";
-import { getUserAnalytics } from "@/lib/analytics-service";
-import { createServerSupabase } from "@/lib/supabase/server";
-import { isSupabaseAdminAvailable } from "@/lib/supabase-admin";
+import {
+  getUserAnalytics,
+  type UserAnalytics,
+} from "@/lib/analytics-service";
+import { getDashboardPlanAccessForUser } from "@/lib/plan-access.server";
 import { validateSearchParams } from "@/lib/request-validation";
+import { createServerSupabase } from "@/lib/supabase/server";
+import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
 
 const MINUTE_MS = 60_000;
 const DAY_MS = 86_400_000;
+
+type LeadRow = {
+  company: string | null;
+  created_at: string;
+  email: string | null;
+  id: string;
+  message: string | null;
+  name: string | null;
+  phone: string | null;
+};
+
+type ActiveProfileHandleRow = {
+  handle: string | null;
+};
+
+type PublicProfileVisitRow = {
+  created_at: string;
+  timestamp: string | null;
+};
 
 function buildEmptyTimeline(days: number, timezoneOffsetMinutes: number) {
   const localNow = new Date(Date.now() - timezoneOffsetMinutes * MINUTE_MS);
@@ -38,6 +60,29 @@ function normalizeTimezoneOffsetMinutes(value: string | null) {
   const parsed = Number.parseInt(value ?? "0", 10);
   if (!Number.isFinite(parsed)) return 0;
   return Math.max(-840, Math.min(840, parsed));
+}
+
+function buildTimelineWindow(days: number, timezoneOffsetMinutes: number) {
+  const localNow = new Date(Date.now() - timezoneOffsetMinutes * MINUTE_MS);
+  const localTodayStartMs = Date.UTC(
+    localNow.getUTCFullYear(),
+    localNow.getUTCMonth(),
+    localNow.getUTCDate()
+  );
+  const startLocalDayMs = localTodayStartMs - (days - 1) * DAY_MS;
+  const endLocalDayMs = localTodayStartMs + DAY_MS - 1;
+
+  return {
+    todayKey: formatIsoDay(localNow),
+    startUtc: new Date(startLocalDayMs + timezoneOffsetMinutes * MINUTE_MS),
+    endUtc: new Date(endLocalDayMs + timezoneOffsetMinutes * MINUTE_MS),
+  };
+}
+
+function dayKey(input: string, timezoneOffsetMinutes: number) {
+  const date = new Date(input);
+  if (Number.isNaN(date.getTime())) return null;
+  return formatIsoDay(new Date(date.getTime() - timezoneOffsetMinutes * MINUTE_MS));
 }
 
 function buildEmptyFunnel() {
@@ -87,7 +132,7 @@ function buildEmptyFunnel() {
     completedSteps: 0,
     totalSteps: 5,
     completionRate: 0,
-  };
+  } satisfies UserAnalytics["funnel"];
 }
 
 function buildEmptyOnboarding() {
@@ -127,6 +172,201 @@ function buildEmptyOnboarding() {
     completedCount: 0,
     totalCount: 5,
     progress: 0,
+  } satisfies UserAnalytics["onboarding"];
+}
+
+function buildAnalyticsPayload(options: {
+  days: number;
+  timezoneOffsetMinutes: number;
+  available: boolean;
+  accessLevel: UserAnalytics["meta"]["accessLevel"];
+  analyticsScope: UserAnalytics["meta"]["analyticsScope"];
+  publicProfileHandle?: string | null;
+  recentLeads?: UserAnalytics["recentLeads"];
+}): UserAnalytics {
+  return {
+    meta: {
+      available: options.available,
+      generatedAt: new Date().toISOString(),
+      days: options.days,
+      accessLevel: options.accessLevel,
+      analyticsScope: options.analyticsScope,
+      publicProfileHandle: options.publicProfileHandle ?? null,
+    },
+    totals: {
+      scansToday: 0,
+      leadsToday: 0,
+      scans7d: 0,
+      leads7d: 0,
+      conversionRate7d: 0,
+      activeTags: 0,
+      lastScanAt: null,
+    },
+    timeline: buildEmptyTimeline(options.days, options.timezoneOffsetMinutes),
+    topProfiles: [],
+    topLinks: [],
+    recentLeads: options.recentLeads ?? [],
+    funnel: buildEmptyFunnel(),
+    onboarding: buildEmptyOnboarding(),
+  };
+}
+
+function isMissingRelationError(message: string) {
+  const lowered = message.toLowerCase();
+  return (
+    lowered.includes("does not exist") ||
+    lowered.includes("relation") ||
+    lowered.includes("schema cache")
+  );
+}
+
+async function fetchRecentLeads(userId: string) {
+  const supabase = await createServerSupabase();
+  const { data: leads, error } = await supabase
+    .from("leads")
+    .select("id,name,email,phone,company,message,created_at")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(10);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return ((leads ?? []) as LeadRow[]).map((lead) => ({
+    id: lead.id,
+    name: lead.name ?? "",
+    email: lead.email ?? "",
+    phone: lead.phone ?? null,
+    company: lead.company ?? null,
+    message: lead.message ?? null,
+    source_url: null,
+    handle: null,
+    created_at: lead.created_at,
+  }));
+}
+
+async function fetchActiveProfileHandle(userId: string) {
+  const db = isSupabaseAdminAvailable
+    ? supabaseAdmin
+    : await createServerSupabase();
+
+  const activeResult = await db
+    .from("user_profiles")
+    .select("handle")
+    .eq("user_id", userId)
+    .eq("is_active", true)
+    .limit(1)
+    .maybeSingle<ActiveProfileHandleRow | null>();
+
+  if (activeResult.error && activeResult.error.code !== "PGRST116") {
+    throw new Error(activeResult.error.message);
+  }
+
+  if (activeResult.data?.handle?.trim()) {
+    return activeResult.data.handle.trim().toLowerCase();
+  }
+
+  const fallbackResult = await db
+    .from("user_profiles")
+    .select("handle")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle<ActiveProfileHandleRow | null>();
+
+  if (fallbackResult.error && fallbackResult.error.code !== "PGRST116") {
+    throw new Error(fallbackResult.error.message);
+  }
+
+  return fallbackResult.data?.handle?.trim().toLowerCase() ?? null;
+}
+
+function getOccurredAt(row: PublicProfileVisitRow) {
+  return row.timestamp ?? row.created_at;
+}
+
+async function buildFreeAnalytics(
+  userId: string,
+  days: number,
+  timezoneOffsetMinutes: number
+) {
+  const publicProfileHandle = await fetchActiveProfileHandle(userId);
+  const analytics = buildAnalyticsPayload({
+    days,
+    timezoneOffsetMinutes,
+    available: true,
+    accessLevel: "free",
+    analyticsScope: "public_profile_visits",
+    publicProfileHandle,
+  });
+
+  if (!publicProfileHandle) {
+    return analytics;
+  }
+
+  const db = isSupabaseAdminAvailable
+    ? supabaseAdmin
+    : await createServerSupabase();
+  const { startUtc, endUtc, todayKey } = buildTimelineWindow(
+    days,
+    timezoneOffsetMinutes
+  );
+
+  const { data, error } = await db
+    .from("conversion_events")
+    .select("created_at,timestamp")
+    .eq("user_id", userId)
+    .eq("event_id", "public_profile_view")
+    .filter("meta->>handle", "eq", publicProfileHandle)
+    .gte("created_at", startUtc.toISOString())
+    .lte("created_at", endUtc.toISOString())
+    .order("created_at", { ascending: true })
+    .returns<PublicProfileVisitRow[]>();
+
+  if (error) {
+    if (isMissingRelationError(error.message)) {
+      return {
+        ...analytics,
+        meta: {
+          ...analytics.meta,
+          available: false,
+        },
+      };
+    }
+    throw new Error(error.message);
+  }
+
+  let scansToday = 0;
+  let lastScanAt: string | null = null;
+
+  for (const row of data ?? []) {
+    const occurredAt = getOccurredAt(row);
+    const key = dayKey(occurredAt, timezoneOffsetMinutes);
+    if (!key) continue;
+    const point = analytics.timeline.find((entry) => entry.date === key);
+    if (!point) continue;
+    point.scans += 1;
+    if (key === todayKey) {
+      scansToday += 1;
+    }
+    if (!lastScanAt || new Date(occurredAt) > new Date(lastScanAt)) {
+      lastScanAt = occurredAt;
+    }
+  }
+
+  const scans7d = analytics.timeline
+    .slice(-Math.min(7, analytics.timeline.length))
+    .reduce((total, point) => total + point.scans, 0);
+
+  return {
+    ...analytics,
+    totals: {
+      ...analytics.totals,
+      scansToday,
+      scans7d,
+      lastScanAt,
+    },
   };
 }
 
@@ -135,16 +375,6 @@ const analyticsQuerySchema = z.object({
   tzOffsetMinutes: z.coerce.number().int().min(-840).max(840).optional().default(0),
   userId: z.string().uuid(),
 });
-
-type LeadRow = {
-  company: string | null;
-  created_at: string;
-  email: string | null;
-  id: string;
-  message: string | null;
-  name: string | null;
-  phone: string | null;
-};
 
 export async function GET(request: NextRequest) {
   const parsedQuery = validateSearchParams(
@@ -159,6 +389,8 @@ export async function GET(request: NextRequest) {
   const timezoneOffsetMinutes = normalizeTimezoneOffsetMinutes(
     String(tzOffsetMinutes)
   );
+  let accessLevel: UserAnalytics["meta"]["accessLevel"] = "paid";
+  let analyticsScope: UserAnalytics["meta"]["analyticsScope"] = "full";
 
   try {
     const access = await requireRouteAccess("GET /api/analytics/supabase", {
@@ -166,6 +398,25 @@ export async function GET(request: NextRequest) {
     });
     if (access instanceof NextResponse) {
       return access;
+    }
+
+    const planAccess = await getDashboardPlanAccessForUser(userId);
+    accessLevel = planAccess.canViewAdvancedAnalytics ? "paid" : "free";
+    analyticsScope = planAccess.canViewAdvancedAnalytics
+      ? "full"
+      : "public_profile_visits";
+
+    if (!planAccess.canViewAdvancedAnalytics) {
+      const analytics = await buildFreeAnalytics(
+        userId,
+        days,
+        timezoneOffsetMinutes
+      );
+      return NextResponse.json(analytics, {
+        headers: {
+          "Cache-Control": "no-store, max-age=0",
+        },
+      });
     }
 
     if (isSupabaseAdminAvailable) {
@@ -180,43 +431,15 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const supabase = await createServerSupabase();
-    const { data: leads, error: leadsError } = await supabase
-      .from("leads")
-      .select("id,name,email,phone,company,message,created_at")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false })
-      .limit(10);
-    if (leadsError) {
-      throw new Error(leadsError.message);
-    }
-
-    const analytics = {
-      meta: { available: false, generatedAt: new Date().toISOString(), days },
-      totals: {
-        scansToday: 0,
-        leadsToday: 0,
-        scans7d: 0,
-        leads7d: 0,
-        conversionRate7d: 0,
-        activeTags: 0,
-        lastScanAt: null,
-      },
-      timeline: buildEmptyTimeline(days, timezoneOffsetMinutes),
-      topProfiles: [],
-      topLinks: [],
-      recentLeads: ((leads ?? []) as LeadRow[]).map((lead) => ({
-        id: lead.id,
-        name: lead.name ?? null,
-        email: lead.email ?? null,
-        phone: lead.phone ?? null,
-        company: lead.company ?? null,
-        message: lead.message ?? null,
-        created_at: lead.created_at,
-      })),
-      funnel: buildEmptyFunnel(),
-      onboarding: buildEmptyOnboarding(),
-    };
+    const recentLeads = await fetchRecentLeads(userId);
+    const analytics = buildAnalyticsPayload({
+      days,
+      timezoneOffsetMinutes,
+      available: false,
+      accessLevel: "paid",
+      analyticsScope: "full",
+      recentLeads,
+    });
 
     return NextResponse.json(analytics, {
       headers: {
@@ -230,7 +453,14 @@ export async function GET(request: NextRequest) {
       {
         error:
           error instanceof Error ? error.message : "Failed to fetch analytics",
-        meta: { available: false, generatedAt: new Date().toISOString(), days },
+        meta: {
+          available: false,
+          generatedAt: new Date().toISOString(),
+          days,
+          accessLevel,
+          analyticsScope,
+          publicProfileHandle: null,
+        },
       },
       { status: 500 }
     );

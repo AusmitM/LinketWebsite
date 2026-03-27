@@ -17,6 +17,40 @@ const DEFAULT_FORM_TITLE = "Let's Connect!";
 const DEFAULT_CONFIRMATION =
   "Thanks for reaching out. We will follow up soon.";
 
+export function createFreeLeadFormConfig(id: string): LeadFormConfig {
+  const now = new Date().toISOString();
+  return {
+    id,
+    title: DEFAULT_FORM_TITLE,
+    description: "",
+    status: "published",
+    settings: {
+      collectEmail: "user_input",
+      allowEditAfterSubmit: false,
+      limitOneResponse: "off",
+      showProgressBar: false,
+      shuffleQuestionOrder: false,
+      confirmationMessage: DEFAULT_CONFIRMATION,
+    },
+    fields: [
+      createField("short_text", "Name", {
+        id: "free_name",
+        helpText: "Ex. John Doe",
+        required: true,
+      }),
+      createField("short_text", "Email", {
+        id: "free_email",
+        helpText: "JDoe@LinketConnect.com",
+        validation: { rule: "email" },
+      }),
+      createField("long_text", "Note", {
+        id: "free_note",
+      }),
+    ],
+    meta: { createdAt: now, updatedAt: now, version: 1 },
+  };
+}
+
 export function createDefaultLeadFormConfig(id: string): LeadFormConfig {
   const now = new Date().toISOString();
   return {
@@ -47,6 +81,21 @@ export function createDefaultLeadFormConfig(id: string): LeadFormConfig {
       createField("long_text", "Note"),
     ],
     meta: { createdAt: now, updatedAt: now, version: 1 },
+  };
+}
+
+export function applyFreeLeadFormLimits(
+  raw: Partial<LeadFormConfig> | null | undefined,
+  fallbackId: string
+): LeadFormConfig {
+  const normalized = normalizeLeadFormConfig(raw, fallbackId);
+  const base = createFreeLeadFormConfig(normalized.id);
+
+  return {
+    ...base,
+    id: normalized.id,
+    status: "published",
+    meta: normalized.meta,
   };
 }
 
@@ -502,6 +551,32 @@ export function validateSubmission(
     if (validationError) errors.push(validationError);
   }
   return errors;
+}
+
+export function sanitizeSubmissionAnswers(
+  config: LeadFormConfig,
+  answers: LeadFormSubmission["answers"] | null | undefined
+) {
+  const allowedFieldIds = new Set(
+    config.fields
+      .filter((field) => field.type !== "section")
+      .map((field) => field.id)
+  );
+  const sanitized: LeadFormSubmission["answers"] = {};
+  const unexpectedFieldIds: string[] = [];
+
+  Object.entries(answers ?? {}).forEach(([fieldId, entry]) => {
+    if (!allowedFieldIds.has(fieldId)) {
+      unexpectedFieldIds.push(fieldId);
+      return;
+    }
+    sanitized[fieldId] = entry;
+  });
+
+  return {
+    answers: sanitized,
+    unexpectedFieldIds,
+  };
 }
 
 export function shuffleFields(fields: LeadFormField[]) {

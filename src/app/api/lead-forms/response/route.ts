@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
-import { validateSubmission } from "@/lib/lead-form";
+import { sanitizeSubmissionAnswers, validateSubmission } from "@/lib/lead-form";
+import { getPlanScopedLeadFormConfig } from "@/lib/lead-form.server";
 import { limitRequest } from "@/lib/rate-limit";
 import type { LeadFormConfig, LeadFormSubmission } from "@/types/lead-form";
 
@@ -214,7 +215,11 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const config = formPayload.config;
+    const { config } = await getPlanScopedLeadFormConfig(
+      formPayload.user_id,
+      formPayload.config,
+      formPayload.id
+    );
     if (!config.settings.allowEditAfterSubmit) {
       return NextResponse.json(
         { error: "Response editing is disabled for this form" },
@@ -222,7 +227,11 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const validationErrors = validateSubmission(config, answers);
+    const { answers: sanitizedAnswers } = sanitizeSubmissionAnswers(
+      config,
+      answers
+    );
+    const validationErrors = validateSubmission(config, sanitizedAnswers);
     if (validationErrors.length) {
       return NextResponse.json(
         { error: "Validation failed", fields: validationErrors },
@@ -232,7 +241,7 @@ export async function PUT(request: NextRequest) {
 
     const updatedAt = new Date().toISOString();
     const payload = {
-      answers,
+      answers: sanitizedAnswers,
       updated_at: updatedAt,
       responder_email: responderEmail ?? null,
     };
@@ -261,10 +270,10 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Response not found" }, { status: 404 });
     }
 
-    const leadValues = inferLeadFields(answers, config);
+    const leadValues = inferLeadFields(sanitizedAnswers, config);
     const emailValue = leadValues.email || responderEmail || null;
     const sourceUrl = normaliseSourceUrl(pageUrl, request.headers.get("referer"));
-    const customFields = mapLeadFields(answers, config);
+    const customFields = mapLeadFields(sanitizedAnswers, config);
 
     const leadUpdatePayload: Record<string, unknown> = {
       custom_fields: customFields,

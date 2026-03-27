@@ -740,7 +740,7 @@ export default function DashboardOnboardingTour() {
               type="button"
               size="sm"
               onClick={handleNext}
-              className="rounded-full text-foreground hover:text-foreground"
+              className="rounded-full"
               disabled={isNavigating}
             >
               {isLastStep ? "Finish" : "Next"}

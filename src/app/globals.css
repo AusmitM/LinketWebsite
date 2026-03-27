@@ -324,6 +324,41 @@ html {
   box-shadow: none;
 }
 
+/* Keep shared button labels readable even if a local utility class tries to override them. */
+[data-slot="button"][data-variant="default"] {
+  color: var(--color-button-primary-fg) !important;
+}
+
+[data-slot="button"][data-variant="default"]:hover,
+[data-slot="button"][data-variant="default"]:focus-visible,
+[data-slot="button"][data-variant="default"]:active {
+  color: var(--color-button-primary-fg) !important;
+}
+
+[data-slot="button"][data-variant="destructive"] {
+  color: var(--color-button-destructive-fg) !important;
+}
+
+[data-slot="button"][data-variant="destructive"]:hover,
+[data-slot="button"][data-variant="destructive"]:focus-visible,
+[data-slot="button"][data-variant="destructive"]:active {
+  color: var(--color-button-destructive-fg) !important;
+}
+
+[data-slot="button"][data-variant="success"] {
+  color: var(--color-button-success-fg) !important;
+}
+
+[data-slot="button"][data-variant="success"]:hover,
+[data-slot="button"][data-variant="success"]:focus-visible,
+[data-slot="button"][data-variant="success"]:active {
+  color: var(--color-button-success-fg) !important;
+}
+
+[data-slot="button"]:disabled {
+  color: var(--color-button-disabled-fg) !important;
+}
+
 .auth-divider {
   position: relative;
 }

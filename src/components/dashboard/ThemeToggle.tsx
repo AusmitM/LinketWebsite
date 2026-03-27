@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -21,8 +21,12 @@ import {
   clearPendingDashboardTheme,
   writePendingDashboardTheme,
 } from "@/lib/dashboard-theme-pending";
+import { FREE_THEME_NAMES, sanitizeThemeForPlan } from "@/lib/plan-access";
 import type { ThemeName } from "@/lib/themes";
-import { useDashboardUser } from "@/components/dashboard/DashboardSessionContext";
+import {
+  useDashboardPlanAccess,
+  useDashboardUser,
+} from "@/components/dashboard/DashboardSessionContext";
 
 const ORDER: ThemeName[] = [
   "light",
@@ -87,19 +91,27 @@ const LABELS: Record<ThemeName, string> = {
 export default function ThemeToggle({ showLabel = false }: { showLabel?: boolean }) {
   const { theme, setTheme } = useThemeOptional();
   const user = useDashboardUser();
+  const planAccess = useDashboardPlanAccess();
   const abortRef = useRef<AbortController | null>(null);
   const [mounted, setMounted] = useState(false);
-  const [index, setIndex] = useState(Math.max(0, ORDER.indexOf(theme)));
+  const availableThemes = useMemo(
+    () => (planAccess.hasPaidAccess ? ORDER : [...FREE_THEME_NAMES]),
+    [planAccess.hasPaidAccess]
+  );
+  const activeTheme = sanitizeThemeForPlan(theme, planAccess);
+  const [index, setIndex] = useState(
+    Math.max(0, availableThemes.indexOf(activeTheme))
+  );
 
   useEffect(() => {
-    setIndex(Math.max(0, ORDER.indexOf(theme)));
-  }, [theme]);
+    setIndex(Math.max(0, availableThemes.indexOf(activeTheme)));
+  }, [activeTheme, availableThemes]);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  async function syncPublicTheme(nextTheme: ThemeName) {
+  const syncPublicTheme = useCallback(async (nextTheme: ThemeName) => {
     if (!user?.id) return;
 
     abortRef.current?.abort();
@@ -159,11 +171,18 @@ export default function ThemeToggle({ showLabel = false }: { showLabel?: boolean
       console.warn("Theme update failed:", message);
       clearPendingDashboardTheme();
     }
-  }
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!mounted || theme === activeTheme) return;
+    writePendingDashboardTheme(activeTheme);
+    setTheme(activeTheme);
+    void syncPublicTheme(activeTheme);
+  }, [activeTheme, mounted, setTheme, syncPublicTheme, theme]);
 
   function next() {
-    const nextIndex = (index + 1) % ORDER.length;
-    const value = ORDER[nextIndex];
+    const nextIndex = (index + 1) % availableThemes.length;
+    const value = availableThemes[nextIndex];
     setIndex(nextIndex);
     writePendingDashboardTheme(value);
     setTheme(value);
@@ -171,15 +190,15 @@ export default function ThemeToggle({ showLabel = false }: { showLabel?: boolean
   }
 
   function previous() {
-    const nextIndex = (index - 1 + ORDER.length) % ORDER.length;
-    const value = ORDER[nextIndex];
+    const nextIndex = (index - 1 + availableThemes.length) % availableThemes.length;
+    const value = availableThemes[nextIndex];
     setIndex(nextIndex);
     writePendingDashboardTheme(value);
     setTheme(value);
     void syncPublicTheme(value);
   }
 
-  const current = ORDER[index] || ORDER[0];
+  const current = availableThemes[index] || availableThemes[0];
   const Icon = ICONS[current];
   const label = LABELS[current];
 
@@ -258,10 +277,19 @@ export default function ThemeToggle({ showLabel = false }: { showLabel?: boolean
         title={`Theme: ${label}`}
         className="flex flex-1 items-center gap-2 rounded-lg px-2 text-xs"
       >
-        <Icon className="h-4 w-4 shrink-0" />
-        <span className="font-medium text-muted-foreground whitespace-nowrap">
-          {label}
-        </span>
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <Icon className="h-4 w-4 shrink-0" />
+            <span className="font-medium text-muted-foreground whitespace-nowrap">
+              {label}
+            </span>
+          </div>
+          {!planAccess.hasPaidAccess ? (
+            <div className="truncate text-[10px] text-muted-foreground/80">
+              Paid unlocks more themes
+            </div>
+          ) : null}
+        </div>
       </div>
       <Button
         type="button"

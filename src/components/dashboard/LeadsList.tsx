@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { type SetStateAction, useEffect, useMemo, useRef, useState } from "react";
 import {
   Building2,
@@ -17,6 +18,7 @@ import {
 } from "lucide-react";
 
 import { toast } from "@/components/system/toaster";
+import { useDashboardPlanAccess } from "@/components/dashboard/DashboardSessionContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -151,6 +153,8 @@ function pruneSelectedIds(selectedIds: Set<string>, loadedIds: Set<string>) {
 }
 
 export default function LeadsList({ userId }: { userId: string }) {
+  const planAccess = useDashboardPlanAccess();
+  const canLabelLeads = planAccess.canLabelLeads;
   const [leads, setLeads] = useState<Lead[]>([]);
   const [fieldLabels, setFieldLabels] = useState<FieldLabelMap>({});
   const storedLeadStatuses = useMemo(() => readStoredLeadStatuses(userId), [userId]);
@@ -383,7 +387,11 @@ export default function LeadsList({ userId }: { userId: string }) {
         detailFields.flatMap((field) => field.fileLinks ?? [])
       );
       const spamSuspected = detectSpamLead(lead);
-      const status = leadStatuses[lead.id] ?? (spamSuspected ? "spam" : "new");
+      const status = canLabelLeads
+        ? leadStatuses[lead.id] ?? (spamSuspected ? "spam" : "new")
+        : spamSuspected
+        ? "spam"
+        : "new";
       const createdAt = new Date(lead.created_at);
       return {
         lead,
@@ -409,7 +417,7 @@ export default function LeadsList({ userId }: { userId: string }) {
         return matchesLeadSearch(row, searchQuery);
       })
       .sort((a, b) => compareLeadViews(a, b, sortBy));
-  }, [fieldLabels, filters, leadStatuses, leads, searchQuery, sortBy]);
+  }, [canLabelLeads, fieldLabels, filters, leadStatuses, leads, searchQuery, sortBy]);
 
   const visibleIds = useMemo(() => leadViews.map((row) => row.lead.id), [leadViews]);
   const allVisibleSelected =
@@ -428,7 +436,8 @@ export default function LeadsList({ userId }: { userId: string }) {
       ? buildDetachedLeadView(
           leads.find((lead) => lead.id === effectiveActiveLeadId) ?? null,
           fieldLabels,
-          leadStatuses
+          leadStatuses,
+          canLabelLeads
         )
       : null);
 
@@ -462,6 +471,7 @@ export default function LeadsList({ userId }: { userId: string }) {
   }
 
   function updateLeadStatus(id: string, status: LeadWorkflowStatus) {
+    if (!canLabelLeads) return;
     setLeadStatuses((prev) => ({ ...prev, [id]: status }));
   }
 
@@ -520,7 +530,13 @@ export default function LeadsList({ userId }: { userId: string }) {
     ];
     const rows = targetLeads.map((lead) => [
       safeCsv(lead.created_at),
-      safeCsv(leadStatuses[lead.id] ?? (detectSpamLead(lead) ? "spam" : "new")),
+      safeCsv(
+        canLabelLeads
+          ? leadStatuses[lead.id] ?? (detectSpamLead(lead) ? "spam" : "new")
+          : detectSpamLead(lead)
+          ? "spam"
+          : "new"
+      ),
       safeCsv(lead.name),
       safeCsv(lead.email),
       safeCsv(lead.phone || ""),
@@ -614,6 +630,23 @@ export default function LeadsList({ userId }: { userId: string }) {
   return (
     <>
       <div className="space-y-4">
+        {!canLabelLeads ? (
+          <div className="rounded-[1.6rem] border border-primary/20 bg-primary/5 px-4 py-4 shadow-sm">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="space-y-1">
+                <div className="text-sm font-semibold text-foreground">
+                  Paid unlocks lead labeling
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Upgrade to label leads as Contacted, Qualified, Spam, or Archived so your inbox stays organized as submissions grow.
+                </p>
+              </div>
+              <Button asChild size="sm" className="w-full sm:w-auto">
+                <Link href={planAccess.upgradeHref}>Unlock paid features</Link>
+              </Button>
+            </div>
+          </div>
+        ) : null}
         <div className="sticky top-4 z-20 rounded-[1.75rem] border border-border/60 bg-card/90 p-4 shadow-[0_20px_48px_-36px_rgba(15,23,42,0.4)] backdrop-blur">
           <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
             <div className="min-w-0 flex-1">
@@ -911,7 +944,9 @@ export default function LeadsList({ userId }: { userId: string }) {
                   </div>
                 </div>
                 <DialogDescription className="max-w-2xl text-sm text-muted-foreground">
-                  Review the full submission, update its workflow status, and handle follow-up actions here.
+                  {canLabelLeads
+                    ? "Review the full submission, update its workflow status, and handle follow-up actions here."
+                    : "Review the full submission and follow up. Paid unlocks lead labels and workflow status updates."}
                 </DialogDescription>
               </DialogHeader>
               <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4 lg:px-6">
@@ -921,23 +956,35 @@ export default function LeadsList({ userId }: { userId: string }) {
                       <section className="space-y-3">
                         <SectionLabel>Status</SectionLabel>
                         <div className="rounded-2xl border border-border/50 bg-card/70 p-4">
-                          <div className="flex flex-wrap gap-2">
-                            {(Object.keys(STATUS_META) as LeadWorkflowStatus[]).map((status) => (
-                              <button
-                                key={status}
-                                type="button"
-                                onClick={() => updateLeadStatus(activeLeadView.lead.id, status)}
-                                className={cn(
-                                  "rounded-full border px-3 py-1.5 text-sm font-medium transition",
-                                  activeLeadView.status === status
-                                    ? STATUS_META[status].className
-                                    : "border-border/60 bg-background/70 text-foreground hover:bg-muted/50"
-                                )}
-                              >
-                                {STATUS_META[status].label}
-                              </button>
-                            ))}
-                          </div>
+                          {canLabelLeads ? (
+                            <div className="flex flex-wrap gap-2">
+                              {(Object.keys(STATUS_META) as LeadWorkflowStatus[]).map((status) => (
+                                <button
+                                  key={status}
+                                  type="button"
+                                  onClick={() => updateLeadStatus(activeLeadView.lead.id, status)}
+                                  className={cn(
+                                    "rounded-full border px-3 py-1.5 text-sm font-medium transition",
+                                    activeLeadView.status === status
+                                      ? STATUS_META[status].className
+                                      : "border-border/60 bg-background/70 text-foreground hover:bg-muted/50"
+                                  )}
+                                >
+                                  {STATUS_META[status].label}
+                                </button>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="space-y-3">
+                              <StatusBadge status={activeLeadView.status} />
+                              <p className="text-sm text-muted-foreground">
+                                Paid unlocks lead labels and workflow tracking.
+                              </p>
+                              <Button asChild size="sm" variant="outline">
+                                <Link href={planAccess.upgradeHref}>Upgrade to Paid</Link>
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       </section>
 
@@ -1073,13 +1120,15 @@ export default function LeadsList({ userId }: { userId: string }) {
                     <Paperclip className="h-4 w-4" aria-hidden />
                     Download attachments
                   </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    onClick={() => updateLeadStatus(activeLeadView.lead.id, "contacted")}
-                  >
-                    Mark contacted
-                  </Button>
+                  {canLabelLeads ? (
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => updateLeadStatus(activeLeadView.lead.id, "contacted")}
+                    >
+                      Mark contacted
+                    </Button>
+                  ) : null}
                   <Button
                     type="button"
                     variant="destructive"
@@ -1102,13 +1151,18 @@ export default function LeadsList({ userId }: { userId: string }) {
 function buildDetachedLeadView(
   lead: Lead | null,
   fieldLabels: FieldLabelMap,
-  leadStatuses: LeadStatusMap
+  leadStatuses: LeadStatusMap,
+  canLabelLeads: boolean
 ) {
   if (!lead) return null;
   const detailFields = collectLeadFieldEntries(lead, fieldLabels);
   const attachments = dedupeFileLinks(detailFields.flatMap((field) => field.fileLinks ?? []));
   const spamSuspected = detectSpamLead(lead);
-  const status = leadStatuses[lead.id] ?? (spamSuspected ? "spam" : "new");
+  const status = canLabelLeads
+    ? leadStatuses[lead.id] ?? (spamSuspected ? "spam" : "new")
+    : spamSuspected
+    ? "spam"
+    : "new";
   const createdAt = new Date(lead.created_at);
   return {
     lead,

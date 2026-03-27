@@ -1788,7 +1788,7 @@ function EditorPanel({
                 <Button
                   variant="default"
                   size="sm"
-                  className="justify-center rounded-full px-6 text-foreground hover:text-foreground dark:text-foreground dark:hover:text-foreground"
+                  className="justify-center rounded-full px-6"
                   onClick={onAddLink}
                 >
                   Add link
@@ -2582,7 +2582,7 @@ function LinkModal({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button className="text-foreground hover:text-foreground dark:text-foreground dark:hover:text-foreground" onClick={onSave}>
+          <Button onClick={onSave}>
             {mode === "add" ? "Add link" : "Done"}
           </Button>
         </DialogFooter>

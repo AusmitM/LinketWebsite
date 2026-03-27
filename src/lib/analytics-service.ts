@@ -101,6 +101,9 @@ export type UserAnalytics = {
     days: number;
     generatedAt: string;
     available: boolean;
+    accessLevel: "free" | "paid";
+    analyticsScope: "full" | "public_profile_visits";
+    publicProfileHandle: string | null;
   };
 };
 
@@ -174,6 +177,9 @@ export async function getUserAnalytics(
         days,
         generatedAt: new Date().toISOString(),
         available: false,
+        accessLevel: "paid",
+        analyticsScope: "full",
+        publicProfileHandle: null,
       },
     };
   }
@@ -418,6 +424,9 @@ export async function getUserAnalytics(
       days,
       generatedAt: new Date().toISOString(),
       available: true,
+      accessLevel: "paid",
+      analyticsScope: "full",
+      publicProfileHandle: null,
     },
   };
 }

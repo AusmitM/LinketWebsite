@@ -165,6 +165,8 @@ export default function OverviewContent() {
       onboarding.totalCount > 0 &&
       onboarding.completedCount >= onboarding.totalCount
   );
+  const isFreeAnalytics =
+    analytics?.meta.analyticsScope === "public_profile_visits";
   const leads = analytics?.recentLeads ?? [];
   const recentLeads = leads.slice(0, 5);
   const recentLeadsLoading = loading && !analytics;
@@ -239,6 +241,16 @@ export default function OverviewContent() {
 
     checklistCompletionRef.current = checklistComplete;
   }, [checklistComplete, loading, onboarding]);
+
+  if (isFreeAnalytics && analytics) {
+    return (
+      <FreeOverviewPanel
+        analytics={analytics}
+        error={error}
+        userId={userId}
+      />
+    );
+  }
 
 
   return (
@@ -442,6 +454,102 @@ export default function OverviewContent() {
           </Card>
         </div>
 
+      </div>
+    </div>
+  );
+}
+
+function FreeOverviewPanel({
+  analytics,
+  error,
+  userId,
+}: {
+  analytics: UserAnalytics;
+  error: string | null;
+  userId: string | null;
+}) {
+  const publicProfileLabel = analytics.meta.publicProfileHandle
+    ? `linketconnect.com/${analytics.meta.publicProfileHandle}`
+    : "your public profile";
+
+  return (
+    <div className="dashboard-overview-page space-y-6">
+      <header className="dashboard-overview-header flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="dashboard-overview-intro space-y-1">
+          <h1 className="text-2xl font-semibold text-foreground">Dashboard</h1>
+          <p className="text-sm text-muted-foreground">
+            Free tracks visits to {publicProfileLabel}. Paid unlocks lead analytics, conversion insights, and inbox labels.
+          </p>
+        </div>
+      </header>
+
+      {error ? (
+        <Card className="rounded-3xl border border-destructive/40 bg-destructive/10 shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-lg font-semibold text-destructive">
+              Analytics unavailable
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-destructive">{error}</p>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      <div className="grid gap-6 lg:grid-cols-12">
+        <div className="space-y-6 lg:col-span-7">
+          <Card className="rounded-3xl border border-border/70 bg-card/90 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
+            <CardHeader className="space-y-1">
+              <CardTitle className="text-lg font-semibold text-foreground">
+                Public profile visits
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Counts for {publicProfileLabel}.
+              </p>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <MetricRow
+                icon={Sparkles}
+                label="Visits in the past week"
+                value={numberFormatter.format(analytics.totals.scans7d)}
+                loading={false}
+              />
+              <MetricRow
+                icon={Calendar}
+                label="Visits today"
+                value={numberFormatter.format(analytics.totals.scansToday)}
+                loading={false}
+              />
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-3xl border border-primary/20 bg-primary/5 shadow-sm">
+            <CardHeader className="space-y-1">
+              <CardTitle className="text-lg font-semibold text-foreground">
+                Paid unlocks deeper insight
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                See lead trends, conversion rate, top links, and label leads as they move through your pipeline.
+              </p>
+            </CardHeader>
+            <CardContent className="flex flex-wrap gap-3">
+              <Button asChild size="sm">
+                <Link href="/dashboard/billing">Unlock Paid</Link>
+              </Button>
+              <Button asChild size="sm" variant="outline">
+                <Link href="/dashboard/leads">Open leads inbox</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="hidden md:block lg:col-span-5">
+          <Card className="h-full rounded-[44px] border border-border/70 bg-card/90 py-3 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
+            <CardContent className="flex h-full items-stretch px-6 py-2">
+              <PublicProfilePreviewPanel userId={userId} />
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

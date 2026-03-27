@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import {
   Check,
   CheckCircle2,
@@ -18,7 +19,10 @@ import {
 } from "lucide-react";
 
 import AvatarUploader from "@/components/dashboard/AvatarUploader";
-import { useDashboardUser } from "@/components/dashboard/DashboardSessionContext";
+import {
+  useDashboardPlanAccess,
+  useDashboardUser,
+} from "@/components/dashboard/DashboardSessionContext";
 import PhonePreviewCard, {
   type PhonePreviewLinkItem,
 } from "@/components/dashboard/public-profile/PhonePreviewCard";
@@ -39,6 +43,10 @@ import {
   getSiteOrigin,
   toPublicProfileUrl,
 } from "@/lib/site-url";
+import {
+  isThemeAvailableForPlan,
+  sanitizeThemeForPlan,
+} from "@/lib/plan-access";
 import { normalizeThemeName, type ThemeName } from "@/lib/themes";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -167,6 +175,20 @@ const FEATURED_THEMES: Array<{
   description: string;
   swatchClassName: string;
 }> = [
+  {
+    value: "light",
+    label: "Light",
+    description: "Clean, bright, and minimal",
+    swatchClassName:
+      "bg-[linear-gradient(135deg,#f8fafc_0%,#ffffff_45%,#dbeafe_100%)]",
+  },
+  {
+    value: "dark",
+    label: "Dark",
+    description: "Simple, polished, and high contrast",
+    swatchClassName:
+      "bg-[linear-gradient(135deg,#0f172a_0%,#1e293b_45%,#475569_100%)]",
+  },
   {
     value: "autumn",
     label: "Autumn",
@@ -578,6 +600,7 @@ export default function DashboardSetupFlow({
   previewMode?: boolean;
 }) {
   const user = useDashboardUser();
+  const planAccess = useDashboardPlanAccess();
   const { setTheme } = useThemeOptional();
   const userId = user?.id ?? null;
   const userEmail = user?.email ?? null;
@@ -753,6 +776,24 @@ export default function DashboardSetupFlow({
     setTheme(previewProfileDraft.theme);
     setLoading(false);
   }, [previewContactDraft, previewMode, previewProfileDraft, setTheme]);
+
+  useEffect(() => {
+    if (!profileDraft) return;
+    const nextTheme = sanitizeThemeForPlan(profileDraft.theme, planAccess);
+    if (nextTheme === profileDraft.theme) return;
+
+    setProfileDraft((current) =>
+      current
+        ? {
+            ...current,
+            theme: nextTheme,
+            updatedAt: new Date().toISOString(),
+          }
+        : current
+    );
+    writePendingDashboardTheme(nextTheme);
+    setTheme(nextTheme);
+  }, [planAccess, profileDraft, setTheme]);
 
   useEffect(() => {
     if (previewMode) return;
@@ -1607,8 +1648,16 @@ export default function DashboardSetupFlow({
     isOverride: link.is_override,
     clicks: link.click_count ?? 0,
   }));
+  const availableThemeOptions = FEATURED_THEMES.filter((themeOption) =>
+    isThemeAvailableForPlan(themeOption.value, planAccess)
+  );
+  const lockedThemeOptions = FEATURED_THEMES.filter(
+    (themeOption) => !isThemeAvailableForPlan(themeOption.value, planAccess)
+  );
+  const selectedThemeValue = sanitizeThemeForPlan(profileDraft.theme, planAccess);
   const selectedThemeOption =
-    FEATURED_THEMES.find((themeOption) => themeOption.value === profileDraft.theme) ??
+    FEATURED_THEMES.find((themeOption) => themeOption.value === selectedThemeValue) ??
+    availableThemeOptions[0] ??
     FEATURED_THEMES[0];
   const canChooseTheme = linksReady;
   const publishReviewItems = [
@@ -2493,15 +2542,20 @@ export default function DashboardSetupFlow({
                               <p className="text-sm text-muted-foreground">
                                 Selected theme: <span className="font-semibold text-foreground">{selectedThemeOption.label}</span>
                               </p>
+                              {!planAccess.hasPaidAccess ? (
+                                <p className="text-xs text-muted-foreground">
+                                  Free includes Light and Dark. Paid unlocks the full theme library.
+                                </p>
+                              ) : null}
                               <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-                                {FEATURED_THEMES.map((themeOption) => {
-                                  const selected = profileDraft.theme === themeOption.value;
+                                {availableThemeOptions.map((themeOption) => {
+                                  const selected = selectedThemeValue === themeOption.value;
                                   return (
                                     <button
                                       key={themeOption.value}
                                       type="button"
                                       onClick={() => {
-                                        if (profileDraft.theme !== themeOption.value) {
+                                        if (selectedThemeValue !== themeOption.value) {
                                           writePendingDashboardTheme(themeOption.value);
                                         }
                                         setTheme(themeOption.value);
@@ -2539,6 +2593,46 @@ export default function DashboardSetupFlow({
                                   );
                                 })}
                               </div>
+                              {!planAccess.hasPaidAccess && lockedThemeOptions.length > 0 ? (
+                                <div className="space-y-3 rounded-2xl border border-dashed border-border/60 bg-background/55 p-3">
+                                  <div className="space-y-1">
+                                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                                      Paid themes
+                                    </p>
+                                    <p className="text-sm text-muted-foreground">
+                                      Unlock Autumn, Dream, Honey, Forest, Midnight, and Rose with Paid.
+                                    </p>
+                                  </div>
+                                  <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                                    {lockedThemeOptions.map((themeOption) => (
+                                      <div
+                                        key={themeOption.value}
+                                        className="overflow-hidden rounded-2xl border border-border/60 bg-card/70 opacity-70"
+                                      >
+                                        <div
+                                          className={cn("h-16 w-full", themeOption.swatchClassName)}
+                                        />
+                                        <div className="flex items-center justify-between gap-2 px-3 py-3">
+                                          <div>
+                                            <p className="text-sm font-semibold text-foreground">
+                                              {themeOption.label}
+                                            </p>
+                                            <p className="mt-1 text-xs text-muted-foreground">
+                                              {themeOption.description}
+                                            </p>
+                                          </div>
+                                          <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-primary">
+                                            Paid
+                                          </span>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                  <Button asChild size="sm" className="w-full sm:w-auto">
+                                    <Link href={planAccess.upgradeHref}>Unlock paid themes</Link>
+                                  </Button>
+                                </div>
+                              ) : null}
                             </div>
                           ) : (
                             <div className={cn("p-4", softPanelClassName)}>

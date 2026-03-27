@@ -7,6 +7,7 @@ import DashboardSetupFlow from "@/components/dashboard/DashboardSetupFlow";
 import { DashboardSessionProvider } from "@/components/dashboard/DashboardSessionContext";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import type { DashboardOnboardingState } from "@/lib/dashboard-onboarding-types";
+import { getDefaultDashboardPlanAccess } from "@/lib/plan-access";
 import { normalizeThemeName, type ThemeName } from "@/lib/themes";
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
@@ -163,7 +164,10 @@ export default async function OnboardingPreviewPage({
         scopeSelector="#dashboard-theme-scope"
         storageKey={null}
       >
-        <DashboardSessionProvider user={mockUser}>
+        <DashboardSessionProvider
+          user={mockUser}
+          planAccess={getDefaultDashboardPlanAccess()}
+        >
           <div id="dashboard-theme-scope" className="font-dashboard min-h-[100svh] bg-[var(--background)]">
             <DashboardSetupFlow
               initialOnboardingState={initialOnboardingState}

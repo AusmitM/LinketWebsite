@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -373,12 +374,22 @@ export default function AnalyticsContent() {
     if (!analytics?.topLinks?.length) return 0;
     return analytics.topLinks.reduce((total, item) => total + item.clicks, 0);
   }, [analytics]);
+  const isFreeAnalytics =
+    analytics?.meta.analyticsScope === "public_profile_visits";
+  const publicProfileLabel = analytics?.meta.publicProfileHandle
+    ? `${siteHost}/${analytics.meta.publicProfileHandle}`
+    : "your public profile";
 
   const handleExport = useCallback(() => {
     if (!analytics) return;
-    const rows = ["date,scans,leads"].concat(
-      analytics.timeline.map((point) => `${point.date},${point.scans},${point.leads}`)
-    );
+    const rows =
+      analytics.meta.analyticsScope === "public_profile_visits"
+        ? ["date,visits"].concat(
+            analytics.timeline.map((point) => `${point.date},${point.scans}`)
+          )
+        : ["date,scans,leads"].concat(
+            analytics.timeline.map((point) => `${point.date},${point.scans},${point.leads}`)
+          );
     const csv = rows.join("\r\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -390,6 +401,23 @@ export default function AnalyticsContent() {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   }, [analytics, range]);
+
+  if (isFreeAnalytics && analytics) {
+    return (
+      <FreeAnalyticsView
+        analytics={analytics}
+        chartData={chartData}
+        currentTimelineDate={currentTimelineDate}
+        error={error}
+        isPhone={isPhone}
+        publicProfileLabel={publicProfileLabel}
+        range={range}
+        onExport={handleExport}
+        onRangeChange={setRange}
+        onRefresh={() => setReloadToken((value) => value + 1)}
+      />
+    );
+  }
 
   return (
     <div className="dashboard-analytics-page w-full space-y-6" data-tour="analytics-overview">
@@ -739,6 +767,198 @@ export default function AnalyticsContent() {
   );
 }
 
+function FreeAnalyticsView({
+  analytics,
+  chartData,
+  currentTimelineDate,
+  error,
+  isPhone,
+  publicProfileLabel,
+  range,
+  onExport,
+  onRangeChange,
+  onRefresh,
+}: {
+  analytics: UserAnalytics;
+  chartData: TimelineDatum[];
+  currentTimelineDate: string | null;
+  error: string | null;
+  isPhone: boolean;
+  publicProfileLabel: string;
+  range: number;
+  onExport: () => void;
+  onRangeChange: (range: number) => void;
+  onRefresh: () => void;
+}) {
+  const visitsInRange = analytics.timeline.reduce(
+    (total, point) => total + point.scans,
+    0
+  );
+
+  return (
+    <div className="dashboard-analytics-page w-full space-y-6" data-tour="analytics-overview">
+      <header className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+        <div className="space-y-1">
+          <h1 className="text-xl font-semibold text-foreground">Analytics</h1>
+          <p className="text-sm text-muted-foreground">
+            Free tracks visits to {publicProfileLabel}. Paid unlocks lead, conversion, and link performance analytics.
+          </p>
+        </div>
+        <div className="flex w-full flex-nowrap items-center gap-2 overflow-x-auto pb-1 sm:w-auto sm:flex-wrap sm:overflow-visible sm:pb-0">
+          {RANGES.map((option) => (
+            <Button
+              key={option.value}
+              variant="outline"
+              size="sm"
+              className={cn(
+                "rounded-full transition",
+                range === option.value
+                  ? "border-accent bg-accent text-accent-foreground"
+                  : "border-border/60 text-muted-foreground"
+              )}
+              onClick={() => onRangeChange(option.value)}
+            >
+              {option.label}
+            </Button>
+          ))}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="rounded-full shrink-0"
+            onClick={onExport}
+            disabled={analytics.timeline.length === 0}
+          >
+            <Download className="mr-2 h-4 w-4" /> Export CSV
+          </Button>
+        </div>
+      </header>
+
+      {error ? (
+        <Card className="rounded-3xl border bg-card/80 shadow-sm">
+          <CardContent className="space-y-4 py-6">
+            <p className="text-sm text-destructive">{error}</p>
+            <Button type="button" variant="outline" size="sm" onClick={onRefresh}>
+              Retry analytics
+            </Button>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <StatCard
+          label="Profile visits"
+          value={numberFormatter.format(visitsInRange)}
+          helper={`Last ${range} days`}
+        />
+        <StatCard
+          label="Visits this week"
+          value={numberFormatter.format(analytics.totals.scans7d)}
+          helper="Last 7 days"
+        />
+        <Card className="dashboard-analytics-card min-w-0 rounded-3xl border border-primary/20 bg-primary/5 shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-sm text-foreground">
+              Paid analytics
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm text-muted-foreground">
+            <p>Unlock lead capture trends, conversion rate, top links, and link-by-link performance.</p>
+            <Button asChild size="sm" className="w-full sm:w-auto">
+              <Link href="/dashboard/billing">Unlock paid analytics</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </section>
+
+      <Card className="dashboard-analytics-card rounded-3xl border bg-card/80 shadow-sm">
+        <CardHeader>
+          <CardTitle className="text-lg font-semibold">Public profile visits</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Daily visits to {publicProfileLabel}.
+          </p>
+        </CardHeader>
+        <CardContent>
+          {chartData.length === 0 ? (
+            <EmptyState
+              message="No profile visits recorded in this range."
+              actionLabel="Refresh"
+              onAction={onRefresh}
+            />
+          ) : isPhone ? (
+            <PhoneScansLeadsChart
+              data={chartData.map((point) => ({
+                ...point,
+                leads: null,
+              }))}
+            />
+          ) : (
+            <div className="dashboard-analytics-chart h-64 w-full sm:h-72">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart
+                  data={chartData}
+                  margin={isPhone ? { left: -10, right: 14, top: 8, bottom: 0 } : { left: 0, right: 14, top: 12, bottom: 0 }}
+                >
+                  <CartesianGrid vertical={false} strokeDasharray="4 4" className="stroke-muted" />
+                  <XAxis
+                    dataKey="label"
+                    tickLine={false}
+                    axisLine={false}
+                    minTickGap={isPhone ? 30 : 22}
+                    interval="preserveStartEnd"
+                    tickMargin={isPhone ? 6 : 8}
+                    tick={{ fontSize: isPhone ? 10 : 12 }}
+                    className="text-xs text-muted-foreground"
+                  />
+                  <YAxis
+                    tickFormatter={(val) => numberFormatter.format(val as number)}
+                    tickLine={false}
+                    axisLine={false}
+                    width={isPhone ? 36 : 48}
+                    tickCount={isPhone ? 4 : 6}
+                    allowDecimals={false}
+                    tick={{ fontSize: isPhone ? 10 : 12 }}
+                    className="text-xs text-muted-foreground"
+                  />
+                  <Tooltip content={<SeriesTooltip />} wrapperStyle={{ outline: "none" }} />
+                  <Line
+                    type="monotone"
+                    dataKey="scans"
+                    name="Visits"
+                    stroke="var(--primary)"
+                    strokeWidth={2}
+                    dot={
+                      <CurrentTimelineDot
+                        targetDate={currentTimelineDate}
+                        color="var(--primary)"
+                      />
+                    }
+                    connectNulls={false}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card className="dashboard-analytics-card rounded-3xl border border-dashed border-border/60 bg-card/80 shadow-sm">
+        <CardHeader>
+          <CardTitle className="text-lg font-semibold">Upgrade for more insight</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Paid adds lead analytics, conversion trendlines, and top-performing links so you can see what turns profile traffic into conversations.
+          </p>
+        </CardHeader>
+        <CardContent>
+          <Button asChild size="sm">
+            <Link href="/dashboard/billing">See Paid features</Link>
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 type StatCardProps = {
   label: string;
   value: string;
@@ -778,9 +998,12 @@ function StatCard({ label, value, helper, delta, darkDeltaText = false }: StatCa
 
 function PhoneScansLeadsChart({ data }: { data: TimelineDatum[] }) {
   const points = data.slice(-7);
+  const showLeads = points.some((point) => point.leads !== null);
   const maxValue = Math.max(
     1,
-    ...points.map((point) => Math.max(point.scans ?? 0, point.leads ?? 0))
+    ...points.map((point) =>
+      Math.max(point.scans ?? 0, showLeads ? point.leads ?? 0 : 0)
+    )
   );
 
   return (
@@ -788,12 +1011,14 @@ function PhoneScansLeadsChart({ data }: { data: TimelineDatum[] }) {
       <div className="flex items-center gap-3 text-[11px] font-medium text-muted-foreground">
         <span className="inline-flex items-center gap-1.5">
           <span className="h-2 w-2 rounded-full bg-primary" />
-          Scans
+          {showLeads ? "Scans" : "Visits"}
         </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span className="h-2 w-2 rounded-full bg-accent" />
-          Leads
-        </span>
+        {showLeads ? (
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-full bg-accent" />
+            Leads
+          </span>
+        ) : null}
       </div>
       <div
         className="grid gap-2"
@@ -812,18 +1037,26 @@ function PhoneScansLeadsChart({ data }: { data: TimelineDatum[] }) {
                   style={{ height: `${scansHeight}%` }}
                   aria-label={`${scans} scans`}
                 />
-                <div
-                  className="w-2 rounded-full bg-accent/90"
-                  style={{ height: `${leadsHeight}%` }}
-                  aria-label={`${leads} leads`}
-                />
+                {showLeads ? (
+                  <div
+                    className="w-2 rounded-full bg-accent/90"
+                    style={{ height: `${leadsHeight}%` }}
+                    aria-label={`${leads} leads`}
+                  />
+                ) : null}
               </div>
               <div className="text-center text-[10px] font-medium text-muted-foreground">
                 {formatMobileDate(point.date)}
               </div>
               <div className="text-center text-[9px] leading-tight">
-                <span className="block font-medium text-primary">{numberFormatter.format(scans)} scans</span>
-                <span className="block font-medium text-accent">{numberFormatter.format(leads)} leads</span>
+                <span className="block font-medium text-primary">
+                  {numberFormatter.format(scans)} {showLeads ? "scans" : "visits"}
+                </span>
+                {showLeads ? (
+                  <span className="block font-medium text-accent">
+                    {numberFormatter.format(leads)} leads
+                  </span>
+                ) : null}
               </div>
             </div>
           );
@@ -869,7 +1102,11 @@ type SeriesTooltipProps = {
 
 function SeriesTooltip({ active, payload, label }: SeriesTooltipProps) {
   if (!active || !payload || payload.length === 0) return null;
-  const scans = payload.find((item) => item.name === "Scans")?.value ?? null;
+  const primarySeries =
+    payload.find((item) => item.name === "Scans") ??
+    payload.find((item) => item.name === "Visits") ??
+    payload[0];
+  const scans = primarySeries?.value ?? null;
   const leads = payload.find((item) => item.name === "Leads")?.value ?? null;
   const hasData = typeof scans === "number" || typeof leads === "number";
   return (
@@ -878,13 +1115,17 @@ function SeriesTooltip({ active, payload, label }: SeriesTooltipProps) {
       {hasData ? (
         <div className="mt-1 space-y-1">
           <div className="flex items-center justify-between gap-6">
-            <span className="text-muted-foreground">Scans</span>
+            <span className="text-muted-foreground">
+              {primarySeries?.name ?? "Scans"}
+            </span>
             <span className="font-medium text-foreground">{numberFormatter.format(scans ?? 0)}</span>
           </div>
-          <div className="flex items-center justify-between gap-6">
-            <span className="text-muted-foreground">Leads</span>
-            <span className="font-medium text-foreground">{numberFormatter.format(leads ?? 0)}</span>
-          </div>
+          {typeof leads === "number" ? (
+            <div className="flex items-center justify-between gap-6">
+              <span className="text-muted-foreground">Leads</span>
+              <span className="font-medium text-foreground">{numberFormatter.format(leads ?? 0)}</span>
+            </div>
+          ) : null}
         </div>
       ) : (
         <div className="mt-1 text-muted-foreground">No data yet.</div>

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getPlanScopedLeadFormConfig } from "@/lib/lead-form.server";
 import { createServerSupabaseReadonly } from "@/lib/supabase/server";
 import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
 import { limitRequest } from "@/lib/rate-limit";
@@ -71,7 +72,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const field = typedFormRow.config.fields.find((item) => item.id === fieldId);
+    const { config } = await getPlanScopedLeadFormConfig(
+      typedFormRow.user_id,
+      typedFormRow.config,
+      typedFormRow.id
+    );
+    const field = config.fields.find((item) => item.id === fieldId);
     if (!field || field.type !== "file_upload") {
       return NextResponse.json(
         { error: "File upload field not found." },

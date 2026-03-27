@@ -1,5 +1,6 @@
 import "server-only";
 
+import { ensurePublishedLeadFormRow } from "@/lib/lead-form.server";
 import { normalizeLeadFormConfig } from "@/lib/lead-form";
 import { createServerSupabaseReadonly } from "@/lib/supabase/server";
 import type { LeadFormConfig } from "@/types/lead-form";
@@ -8,11 +9,18 @@ type ReadonlySupabase = Awaited<ReturnType<typeof createServerSupabaseReadonly>>
 
 type LeadFormRow = {
   id: string;
+  user_id: string;
   profile_id: string | null;
   handle: string | null;
   status: "draft" | "published";
   config: LeadFormConfig | null;
   updated_at: string | null;
+};
+
+type PublicProfileOwnerRow = {
+  id: string;
+  user_id: string;
+  handle: string | null;
 };
 
 export type PublicLeadFormLookup = {
@@ -33,7 +41,7 @@ async function fetchPublishedLeadFormByProfileId(
 ) {
   const { data, error } = await supabase
     .from("lead_forms")
-    .select("id, profile_id, handle, status, config, updated_at")
+    .select("id, user_id, profile_id, handle, status, config, updated_at")
     .eq("profile_id", profileId)
     .eq("status", "published")
     .order("updated_at", { ascending: false })
@@ -53,7 +61,7 @@ async function fetchPublishedLeadFormByHandle(
 ) {
   const { data, error } = await supabase
     .from("lead_forms")
-    .select("id, profile_id, handle, status, config, updated_at")
+    .select("id, user_id, profile_id, handle, status, config, updated_at")
     .eq("handle", handle)
     .eq("status", "published")
     .order("updated_at", { ascending: false })
@@ -65,6 +73,44 @@ async function fetchPublishedLeadFormByHandle(
   }
 
   return (data as LeadFormRow | null) ?? null;
+}
+
+async function fetchPublicProfileOwnerByProfileId(
+  supabase: ReadonlySupabase,
+  profileId: string
+) {
+  const { data, error } = await supabase
+    .from("user_profiles")
+    .select("id, user_id, handle")
+    .eq("id", profileId)
+    .eq("is_active", true)
+    .limit(1)
+    .maybeSingle();
+
+  if (error && error.code !== "PGRST116") {
+    throw new Error(error.message);
+  }
+
+  return (data as PublicProfileOwnerRow | null) ?? null;
+}
+
+async function fetchPublicProfileOwnerByHandle(
+  supabase: ReadonlySupabase,
+  handle: string
+) {
+  const { data, error } = await supabase
+    .from("user_profiles")
+    .select("id, user_id, handle")
+    .eq("handle", handle)
+    .eq("is_active", true)
+    .limit(1)
+    .maybeSingle();
+
+  if (error && error.code !== "PGRST116") {
+    throw new Error(error.message);
+  }
+
+  return (data as PublicProfileOwnerRow | null) ?? null;
 }
 
 export async function getPublishedLeadForm({
@@ -82,6 +128,24 @@ export async function getPublishedLeadForm({
 
   if ((!row || !row.config) && normalizedHandle) {
     row = await fetchPublishedLeadFormByHandle(client, normalizedHandle);
+  }
+
+  if (!row?.config) {
+    const owner =
+      (normalizedProfileId
+        ? await fetchPublicProfileOwnerByProfileId(client, normalizedProfileId)
+        : null) ??
+      (normalizedHandle
+        ? await fetchPublicProfileOwnerByHandle(client, normalizedHandle)
+        : null);
+
+    if (owner?.user_id && (owner.handle?.trim() || normalizedHandle)) {
+      row = await ensurePublishedLeadFormRow({
+        userId: owner.user_id,
+        profileId: owner.id,
+        handle: owner.handle?.trim().toLowerCase() || normalizedHandle || "",
+      });
+    }
   }
 
   if (!row?.config) {

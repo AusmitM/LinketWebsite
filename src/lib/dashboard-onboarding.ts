@@ -1,5 +1,7 @@
 import "server-only";
 
+import { sanitizeThemeForPlan } from "@/lib/plan-access";
+import { getDashboardPlanAccessForUser } from "@/lib/plan-access.server";
 import { createServerSupabaseReadonly } from "@/lib/supabase/server";
 import { getActiveProfileForUser } from "@/lib/profile-service";
 import type { DashboardOnboardingState } from "@/lib/dashboard-onboarding-types";
@@ -107,7 +109,15 @@ async function loadContactState(userId: string) {
 export async function getDashboardOnboardingState(
   userId: string
 ): Promise<DashboardOnboardingState> {
-  const [activeProfile, accountResult, contactResult, publishEventCount, shareTestCount, claimedLinketCount] =
+  const [
+    activeProfile,
+    accountResult,
+    contactResult,
+    publishEventCount,
+    shareTestCount,
+    claimedLinketCount,
+    planAccess,
+  ] =
     await Promise.all([
       getActiveProfileForUser(userId).catch(() => null),
       loadAccountState(userId),
@@ -115,6 +125,7 @@ export async function getDashboardOnboardingState(
       countEventsForUser(userId, ["profile_published"]).catch(() => 0),
       countEventsForUser(userId, SHARE_TEST_EVENTS).catch(() => 0),
       countClaimedLinketsForUser(userId).catch(() => 0),
+      getDashboardPlanAccessForUser(userId),
     ]);
 
   const account = {
@@ -137,7 +148,10 @@ export async function getDashboardOnboardingState(
     name: activeProfile?.name ?? account.displayName ?? "",
     handle: activeProfile?.handle ?? fallbackHandle,
     headline: activeProfile?.headline ?? "",
-    theme: normalizeThemeName(activeProfile?.theme, "autumn"),
+    theme: sanitizeThemeForPlan(
+      normalizeThemeName(activeProfile?.theme, "autumn"),
+      planAccess
+    ),
     links: activeProfile?.links ?? [],
     isActive: activeProfile?.is_active ?? false,
   };

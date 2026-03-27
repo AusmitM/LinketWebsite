@@ -7,8 +7,12 @@ import { createServerSupabase } from "@/lib/supabase/server";
 import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
 import {
   createDefaultLeadFormConfig,
-  normalizeLeadFormConfig,
 } from "@/lib/lead-form";
+import {
+  ensurePublishedLeadFormRow,
+  getPlanScopedLeadFormConfig,
+  type LeadFormRecord,
+} from "@/lib/lead-form.server";
 import type {
   LeadFormConfig,
   LeadFormField,
@@ -26,19 +30,6 @@ const leadFormsPutSchema = z.object({
   profileId: z.string().uuid().nullable().optional(),
   userId: z.string().uuid(),
 });
-
-type LeadFormRow = {
-  id: string;
-  user_id: string;
-  profile_id: string | null;
-  handle: string | null;
-  status: "draft" | "published";
-  title: string | null;
-  description: string | null;
-  config: LeadFormConfig;
-  created_at: string;
-  updated_at: string;
-};
 
 function buildLegacyConfig(
   handle: string,
@@ -215,11 +206,11 @@ export async function GET(request: NextRequest) {
       if (fallback.error && fallback.error.code !== "PGRST116") {
         throw new Error(fallback.error.message);
       }
-      data = fallback.data as LeadFormRow | null;
+      data = fallback.data as LeadFormRecord | null;
     }
 
     let config: LeadFormConfig | null = null;
-    let formRow: LeadFormRow | null = (data as LeadFormRow) || null;
+    let formRow: LeadFormRecord | null = (data as LeadFormRecord) || null;
 
     if (!formRow && handle) {
       config = await fetchLegacyConfig(supabase, userId, handle);
@@ -239,12 +230,22 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const resolvedConfig = normalizeLeadFormConfig(
-      formRow?.config,
+    if (!formRow && handle) {
+      formRow = await ensurePublishedLeadFormRow({
+        client: supabase,
+        userId,
+        handle,
+        profileId,
+      });
+    }
+
+    const { config: resolvedConfig, planAccess } = await getPlanScopedLeadFormConfig(
+      userId,
+      formRow?.config ?? config,
       formRow?.id || `form-${userId}`
     );
 
-    const stats = formRow?.id
+    const stats = planAccess.canViewAdvancedAnalytics && formRow?.id
       ? await getResponseStats(supabase, formRow.id)
       : { count: 0, lastSubmittedAt: null };
 
@@ -297,8 +298,15 @@ export async function PUT(request: NextRequest) {
     const supabase = await createServerSupabase();
 
     const now = new Date().toISOString();
-    const normalized = normalizeLeadFormConfig(config, config.id || handle);
-    normalized.status = "published";
+    const { config: normalizedConfig } = await getPlanScopedLeadFormConfig(
+      userId,
+      config,
+      config.id || handle
+    );
+    const normalized = {
+      ...normalizedConfig,
+      status: "published" as const,
+    };
     const nextVersion = (normalized.meta.version || 1) + 1;
     normalized.meta = {
       ...normalized.meta,
@@ -306,33 +314,26 @@ export async function PUT(request: NextRequest) {
       version: nextVersion,
     };
 
-    const payload = {
-      user_id: userId,
+    const data = await ensurePublishedLeadFormRow({
+      client: supabase,
+      userId,
       handle,
-      profile_id: profileId ?? null,
-      status: "published",
-      title: normalized.title,
-      description: normalized.description,
-      config: normalized,
-      updated_at: now,
-    };
-
-    const { data, error: saveError } = await supabase
-      .from("lead_forms")
-      .upsert(payload, { onConflict: "user_id,handle" })
-      .select("*")
-      .single();
-    if (saveError) throw new Error(saveError.message);
+      profileId,
+      rawConfig: normalized,
+    });
+    if (!data) {
+      throw new Error("Unable to save lead form");
+    }
 
     if (isSupabaseAdminAvailable) {
       await supabaseAdmin
         .from("lead_forms")
         .update({ config: normalized })
-        .eq("id", (data as LeadFormRow).id);
+        .eq("id", data.id);
     }
 
     return NextResponse.json(
-      { form: normalized, formId: (data as LeadFormRow).id },
+      { form: normalized, formId: data.id },
       { headers: { "Cache-Control": "no-store, max-age=0" } }
     );
   } catch (error) {

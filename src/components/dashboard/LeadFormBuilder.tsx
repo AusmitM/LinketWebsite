@@ -9,8 +9,10 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { GripVertical, Plus, Trash2 } from "lucide-react";
 
+import { useDashboardPlanAccess } from "@/components/dashboard/DashboardSessionContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -35,6 +37,8 @@ import { toast } from "@/components/system/toaster";
 import { confirmRemove } from "@/lib/confirm-remove";
 import { cn } from "@/lib/utils";
 import {
+  applyFreeLeadFormLimits,
+  createFreeLeadFormConfig,
   createDefaultLeadFormConfig,
   createField,
   normalizeLeadFormConfig,
@@ -178,6 +182,8 @@ export default function LeadFormBuilder({
   columns = 2,
   onRegisterReorder,
 }: Props) {
+  const planAccess = useDashboardPlanAccess();
+  const canCustomizeLeadForm = planAccess.canCustomizeLeadForm;
   const [form, setForm] = useState<LeadFormConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -256,16 +262,24 @@ export default function LeadFormBuilder({
           payload.form,
           payload.form?.id || `form-${userId}`
         );
-        setForm(normalized);
-        setSelectedFieldId(normalized.fields[0]?.id ?? null);
+        const resolvedForm =
+          canCustomizeLeadForm
+            ? normalized
+            : applyFreeLeadFormLimits(normalized, normalized.id);
+        setForm(resolvedForm);
+        setSelectedFieldId(resolvedForm.fields[0]?.id ?? null);
         setStats(payload.meta?.stats ?? { count: 0, lastSubmittedAt: null });
-        lastSnapshot.current = JSON.stringify(normalized);
-        setLastSavedAt(payload.form?.meta?.updatedAt || null);
+        lastSnapshot.current = JSON.stringify(resolvedForm);
+        setLastSavedAt(resolvedForm.meta.updatedAt || null);
       } catch (error) {
         const message =
           error instanceof Error ? error.message : "Unable to load form";
         setSaveError(message);
-        setForm(createDefaultLeadFormConfig(`form-${userId}`));
+        setForm(
+          canCustomizeLeadForm
+            ? createDefaultLeadFormConfig(`form-${userId}`)
+            : createFreeLeadFormConfig(`form-${userId}`)
+        );
         toast({
           title: "Lead form unavailable",
           description: message,
@@ -275,7 +289,7 @@ export default function LeadFormBuilder({
         setLoading(false);
       }
     })();
-  }, [handle, profileId, userId]);
+  }, [canCustomizeLeadForm, handle, profileId, userId]);
 
   useEffect(() => {
     if (!form || !onPreviewChange) return;
@@ -298,9 +312,13 @@ export default function LeadFormBuilder({
       }
       const payload = (await response.json()) as { form: LeadFormConfig };
       const normalized = normalizeLeadFormConfig(payload.form, form.id);
-      setForm(normalized);
-      lastSnapshot.current = JSON.stringify(normalized);
-      setLastSavedAt(normalized.meta.updatedAt);
+      const resolvedForm =
+        canCustomizeLeadForm
+          ? normalized
+          : applyFreeLeadFormLimits(normalized, normalized.id);
+      setForm(resolvedForm);
+      lastSnapshot.current = JSON.stringify(resolvedForm);
+      setLastSavedAt(resolvedForm.meta.updatedAt);
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Unable to save form";
@@ -311,7 +329,7 @@ export default function LeadFormBuilder({
     } finally {
       setSaving(false);
     }
-  }, [form, handle, profileId, saveError, userId]);
+  }, [canCustomizeLeadForm, form, handle, profileId, saveError, userId]);
 
   useEffect(() => {
     if (!form || !isDirty || loading) return;
@@ -521,6 +539,23 @@ export default function LeadFormBuilder({
   }
   return (
     <div className="space-y-6">
+      {!canCustomizeLeadForm ? (
+        <Card className="rounded-2xl border border-primary/20 bg-primary/5 shadow-sm">
+          <CardContent className="flex flex-col gap-4 py-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-1">
+              <div className="text-sm font-semibold text-foreground">
+                Paid unlocks custom lead forms
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Free profiles use the default Name, Email, and Note form. Upgrade to add fields, change copy, and customize the submission experience.
+              </p>
+            </div>
+            <Button asChild size="sm" className="w-full sm:w-auto">
+              <Link href={planAccess.upgradeHref}>Unlock paid features</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      ) : null}
       <div className="space-y-6" data-layout={layout}>
         <div className="rounded-[1.8rem] border border-border/60 bg-card/85 px-5 py-5 shadow-[0_20px_52px_-38px_rgba(15,23,42,0.38)]">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -580,9 +615,13 @@ export default function LeadFormBuilder({
             </div>
           </div>
         </div>
-        <Card
-          className="rounded-2xl border border-border/60 bg-card/80 shadow-sm"
-        >
+        <div className="relative">
+          <Card
+            className={cn(
+              "rounded-2xl border border-border/60 bg-card/80 shadow-sm",
+              !canCustomizeLeadForm && "pointer-events-none select-none opacity-65"
+            )}
+          >
           <CardHeader className="space-y-3">
             <CardTitle className="text-sm font-semibold whitespace-nowrap">
               Form setup
@@ -757,7 +796,11 @@ export default function LeadFormBuilder({
               </Accordion>
             </div>
           </CardContent>
-        </Card>
+          </Card>
+          {!canCustomizeLeadForm ? (
+            <LockedFeatureOverlay upgradeHref={planAccess.upgradeHref} />
+          ) : null}
+        </div>
         <div
           className={cn(
             "grid gap-6 items-start",
@@ -769,13 +812,15 @@ export default function LeadFormBuilder({
                 : "md:grid-cols-2")
           )}
         >
-          <Card
-            className={cn(
-              "rounded-2xl border border-border/60 bg-card/80 shadow-sm",
-              isExternalPreviewLayout &&
-                "xl:sticky xl:top-4 xl:flex xl:min-h-[34rem] xl:max-h-[calc(100vh-8rem)] xl:flex-col"
-            )}
-          >
+          <div className="relative">
+            <Card
+              className={cn(
+                "rounded-2xl border border-border/60 bg-card/80 shadow-sm",
+                isExternalPreviewLayout &&
+                  "xl:sticky xl:top-4 xl:flex xl:min-h-[34rem] xl:max-h-[calc(100vh-8rem)] xl:flex-col",
+                !canCustomizeLeadForm && "pointer-events-none select-none opacity-65"
+              )}
+            >
             <CardHeader className="space-y-3">
               <div className="flex flex-row items-center justify-between gap-4">
                 <CardTitle className="text-sm font-semibold whitespace-nowrap">
@@ -872,11 +917,19 @@ export default function LeadFormBuilder({
                 Preview order follows this list. Drag to reorder, then use the editor panel for the active question.
               </div>
             </CardContent>
-          </Card>
-          <Card
-            id="lead-form-field-settings-panel"
-            className="rounded-2xl border border-border/60 bg-card/80 shadow-sm"
-          >
+            </Card>
+            {!canCustomizeLeadForm ? (
+              <LockedFeatureOverlay upgradeHref={planAccess.upgradeHref} />
+            ) : null}
+          </div>
+          <div className="relative">
+            <Card
+              id="lead-form-field-settings-panel"
+              className={cn(
+                "rounded-2xl border border-border/60 bg-card/80 shadow-sm",
+                !canCustomizeLeadForm && "pointer-events-none select-none opacity-65"
+              )}
+            >
             <CardHeader className="space-y-3">
               <div className="flex flex-wrap items-center gap-2">
                 <CardTitle className="text-sm font-semibold whitespace-nowrap">
@@ -986,7 +1039,11 @@ export default function LeadFormBuilder({
                 <div className="text-xs text-destructive">{saveError}</div>
               ) : null}
             </CardContent>
-          </Card>
+            </Card>
+            {!canCustomizeLeadForm ? (
+              <LockedFeatureOverlay upgradeHref={planAccess.upgradeHref} />
+            ) : null}
+          </div>
 
           {showPreview ? (
             <Card className="rounded-2xl border border-border/60 bg-card/80 shadow-sm">
@@ -1788,6 +1845,24 @@ function getValidationOptions(type: LeadFormFieldType) {
     default:
       return [{ value: "none", label: "None" }];
   }
+}
+
+function LockedFeatureOverlay({ upgradeHref }: { upgradeHref: string }) {
+  return (
+    <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-background/78 p-4 text-center backdrop-blur-[2px]">
+      <div className="max-w-sm space-y-3 rounded-2xl border border-primary/20 bg-card/95 p-4 shadow-lg">
+        <div className="text-sm font-semibold text-foreground">
+          Paid unlocks lead form customization
+        </div>
+        <p className="text-sm text-muted-foreground">
+          Add custom questions, rewrite the form copy, and control the submission experience with Paid.
+        </p>
+        <Button asChild size="sm">
+          <Link href={upgradeHref}>Upgrade to Paid</Link>
+        </Button>
+      </div>
+    </div>
+  );
 }
 
 function needsValidationValue(rule: string) {
