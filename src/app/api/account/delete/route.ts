@@ -12,77 +12,6 @@ async function removeStorageFolder(bucket: string, prefix: string) {
   await supabaseAdmin.storage.from(bucket).remove(paths);
 }
 
-function isMissingRelationError(error: { code?: string; message?: string } | null) {
-  if (!error) return false;
-  if (error.code === "42P01" || error.code === "PGRST205") return true;
-  const message = (error.message ?? "").toLowerCase();
-  return (
-    message.includes("does not exist") ||
-    message.includes("could not find the table")
-  );
-}
-
-async function deleteByUserColumn(table: string, userColumn: string, userId: string) {
-  const { error } = await supabaseAdmin.from(table).delete().eq(userColumn, userId);
-  if (error && !isMissingRelationError(error)) {
-    throw new Error(`[${table}] ${error.message}`);
-  }
-}
-
-async function deleteUserAuthoredNotifications(userId: string) {
-  const { error } = await supabaseAdmin
-    .from("dashboard_notifications")
-    .delete()
-    .or(`created_by.eq.${userId},updated_by.eq.${userId}`);
-  if (error && !isMissingRelationError(error)) {
-    throw new Error(`[dashboard_notifications] ${error.message}`);
-  }
-}
-
-async function releaseUserTagAssignments(userId: string) {
-  const { data, error } = await supabaseAdmin
-    .from("tag_assignments")
-    .select("id, tag_id")
-    .eq("user_id", userId);
-  if (error) {
-    if (isMissingRelationError(error)) return;
-    throw new Error(`[tag_assignments] ${error.message}`);
-  }
-
-  const assignments =
-    (data as Array<{ id: string; tag_id: string | null }> | null) ?? [];
-  if (assignments.length === 0) return;
-
-  const tagIds = Array.from(
-    new Set(
-      assignments
-        .map((assignment) => assignment.tag_id)
-        .filter((tagId): tagId is string => Boolean(tagId))
-    )
-  );
-
-  const { error: deleteAssignmentsError } = await supabaseAdmin
-    .from("tag_assignments")
-    .delete()
-    .eq("user_id", userId);
-  if (deleteAssignmentsError && !isMissingRelationError(deleteAssignmentsError)) {
-    throw new Error(`[tag_assignments] ${deleteAssignmentsError.message}`);
-  }
-
-  if (tagIds.length > 0) {
-    const { error: resetTagsError } = await supabaseAdmin
-      .from("hardware_tags")
-      .update({
-        status: "unclaimed",
-        last_claimed_at: null,
-      })
-      .in("id", tagIds);
-    if (resetTagsError && !isMissingRelationError(resetTagsError)) {
-      throw new Error(`[hardware_tags] ${resetTagsError.message}`);
-    }
-  }
-}
-
 export async function POST() {
   if (!isSupabaseAdminAvailable) {
     return NextResponse.json(
@@ -99,19 +28,6 @@ export async function POST() {
   const userId = access.user.id;
 
   try {
-    await releaseUserTagAssignments(userId);
-
-    await deleteByUserColumn("conversion_events", "user_id", userId);
-    await deleteByUserColumn("lead_form_settings", "user_id", userId);
-    await deleteByUserColumn("lead_form_fields", "user_id", userId);
-    await deleteByUserColumn("lead_forms", "user_id", userId);
-    await deleteByUserColumn("profile_links", "user_id", userId);
-    await deleteByUserColumn("user_profiles", "user_id", userId);
-    await deleteByUserColumn("vcard_profiles", "user_id", userId);
-    await deleteByUserColumn("profiles", "user_id", userId);
-    await deleteByUserColumn("admin_users", "user_id", userId);
-    await deleteUserAuthoredNotifications(userId);
-
     await supabaseAdmin.storage.from("avatars").remove([
       `${userId}/avatar.webp`,
       `${userId}/avatar_128.webp`,

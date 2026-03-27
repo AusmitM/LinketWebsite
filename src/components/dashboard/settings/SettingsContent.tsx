@@ -226,8 +226,9 @@ export default function SettingsContent() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="rounded-2xl border border-destructive/15 bg-destructive/5 p-4 text-sm text-muted-foreground">
-              Deleting your account removes your profile, links, lead forms, stored
-              images, and related records. This cannot be undone.
+              Deleting your account removes your profile, Linket assignments,
+              analytics and claim metadata, lead forms, stored images, billing
+              records, and related account data. This cannot be undone.
             </div>
             <Button
               variant="destructive"
@@ -246,7 +247,8 @@ export default function SettingsContent() {
             <DialogTitle>Delete account</DialogTitle>
             <DialogDescription>
               This permanently deletes your account and removes your profile,
-              links, lead forms, and stored images. This action cannot be undone.
+              Linket metadata, analytics history, lead forms, billing records,
+              and stored images. This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
