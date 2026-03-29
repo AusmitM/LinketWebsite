@@ -2516,20 +2516,15 @@ function LinkModal({
             </div>
             <div className="space-y-2">
               <Label htmlFor="link-url">URL</Label>
-              <div className="relative">
-                <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
-                  https://
-                </span>
-                <Input
-                  id="link-url"
-                  value={stripLinkScheme(link.url)}
-                  placeholder="www.website.com"
-                  className="pl-20 text-left"
-                  onChange={(event) =>
-                    onChange({ ...link, url: normalizeLinkUrl(event.target.value) })
-                  }
-                />
-              </div>
+              <Input
+                id="link-url"
+                value={stripLinkScheme(link.url)}
+                placeholder="https://www.website.com/"
+                className="text-left"
+                onChange={(event) =>
+                  onChange({ ...link, url: normalizeLinkUrl(event.target.value) })
+                }
+              />
             </div>
             <div className="space-y-3 rounded-xl border border-border/60 px-3 py-3">
               <label className="flex items-center justify-between gap-3">
