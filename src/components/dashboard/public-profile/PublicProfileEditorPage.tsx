@@ -1630,6 +1630,7 @@ function EditorPanel({
           ) : (
             <div className="h-20 rounded-2xl border border-dashed border-border/60 bg-muted/30" />
           )}
+          <div className="h-px bg-border/60" aria-hidden="true" />
           {userId && draft?.id ? (
             <ProfileHeaderUploader
               userId={userId}
@@ -1706,6 +1707,7 @@ function EditorPanel({
           ) : (
             <div className="h-24 rounded-2xl border border-dashed border-border/60 bg-muted/30" />
           )}
+          <div className="h-px bg-border/60" aria-hidden="true" />
 
           <div className="space-y-2">
             <Label htmlFor="profile-name" className="text-[11px] text-muted-foreground sm:text-xs">
