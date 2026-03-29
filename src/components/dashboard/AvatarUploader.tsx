@@ -476,9 +476,9 @@ export default function AvatarUploader({
     return (
       <section className="flex flex-col gap-3 sm:gap-4">
         {!sourceUrl ? (
-          <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+          <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:gap-5">
             <div className="flex w-full justify-center sm:w-auto sm:justify-start">
-              <div className="h-28 w-28 overflow-hidden rounded-full border-2 border-[var(--accent)] bg-muted sm:h-20 sm:w-20">
+              <div className="h-32 w-32 overflow-hidden rounded-full border-2 border-[var(--accent)] bg-muted sm:h-28 sm:w-28">
                 {displayUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={displayUrl} alt="Profile photo" className="h-full w-full object-cover" />
@@ -489,7 +489,7 @@ export default function AvatarUploader({
                 )}
               </div>
             </div>
-            <div className="min-w-0 flex-1 space-y-2">
+            <div className="min-w-0 flex-1 space-y-2 sm:max-w-sm">
               <input
                 ref={fileInputRef}
                 id={inputTargetId}

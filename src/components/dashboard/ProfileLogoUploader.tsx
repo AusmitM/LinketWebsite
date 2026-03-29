@@ -459,11 +459,11 @@ export default function ProfileLogoUploader({
     return (
       <section className="flex flex-col gap-3 rounded-2xl border border-dashed border-muted/70 p-3 sm:gap-4 sm:p-4">
         {!sourceUrl ? (
-          <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+          <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:gap-5">
             <div className="flex w-full justify-center sm:w-auto sm:justify-start">
               <div
                 className={cn(
-                  "h-28 w-28 overflow-hidden border-2 border-[var(--accent)] sm:h-20 sm:w-20",
+                  "h-32 w-32 overflow-hidden border-2 border-[var(--accent)] sm:h-28 sm:w-28",
                   logoFrameClassName,
                   logoFrameBgClassName
                 )}
@@ -478,7 +478,7 @@ export default function ProfileLogoUploader({
                 )}
               </div>
             </div>
-            <div className="min-w-0 flex-1 space-y-2">
+            <div className="min-w-0 flex-1 space-y-2 sm:max-w-sm">
               <Label htmlFor={inputTargetId}>Logo badge</Label>
               <input
                 ref={fileInputRef}
