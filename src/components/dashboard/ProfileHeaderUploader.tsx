@@ -495,7 +495,7 @@ export default function ProfileHeaderUploader({
     const visibleFileName = inputFileName ?? persistedFileName;
     const inputTargetId = inputId ?? "profile-header-upload";
     return (
-      <section className="flex flex-col gap-3 rounded-2xl border border-dashed border-muted/70 p-3 sm:gap-4 sm:p-4">
+      <section className="flex flex-col gap-3 p-3 sm:gap-4 sm:p-4">
         {!sourceUrl ? (
           <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:gap-5">
             <div className="flex w-full justify-center sm:w-auto sm:justify-start">

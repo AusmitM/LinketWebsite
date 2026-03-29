@@ -1643,6 +1643,7 @@ function EditorPanel({
           ) : (
             <div className="h-24 rounded-2xl border border-dashed border-border/60 bg-muted/30" />
           )}
+          <div className="h-px bg-border/60" aria-hidden="true" />
           {userId && draft?.id ? (
             <ProfileLogoUploader
               userId={userId}
