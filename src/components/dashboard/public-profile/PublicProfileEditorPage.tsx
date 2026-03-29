@@ -2508,6 +2508,7 @@ function LinkModal({
               <Input
                 id="link-label"
                 value={link.label}
+                placeholder="New Link"
                 className="text-left"
                 onChange={(event) =>
                   onChange({ ...link, label: event.target.value })
@@ -2627,7 +2628,7 @@ function createLink(): LinkItem {
   const base = ICON_OPTIONS[0];
   return {
     id: `link-${cryptoRandom()}`,
-    label: "New link",
+    label: "",
     url: DEFAULT_PROFILE_LINK_URL,
     icon: base.value,
     color: base.color,
