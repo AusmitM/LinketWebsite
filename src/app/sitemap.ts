@@ -1,8 +1,51 @@
 import type { MetadataRoute } from "next";
+import { DISCOVER_PAGES } from "@/config/discover-pages";
 import { createServerSupabaseReadonly } from "@/lib/supabase/server";
 import { getConfiguredSiteOrigin } from "@/lib/site-url";
 
-const STATIC_ROUTES = ["/", "/accessibility", "/privacy", "/security", "/terms"] as const;
+type StaticSitemapRoute = {
+  path: string;
+  changeFrequency: NonNullable<MetadataRoute.Sitemap[number]["changeFrequency"]>;
+  priority: number;
+};
+
+const STATIC_ROUTES: readonly StaticSitemapRoute[] = [
+  {
+    path: "/",
+    changeFrequency: "weekly",
+    priority: 1,
+  },
+  ...DISCOVER_PAGES.map<StaticSitemapRoute>((page) => ({
+    path: page.href,
+    changeFrequency: "weekly",
+    priority: 0.85,
+  })),
+  {
+    path: "/accessibility",
+    changeFrequency: "monthly",
+    priority: 0.6,
+  },
+  {
+    path: "/privacy",
+    changeFrequency: "monthly",
+    priority: 0.6,
+  },
+  {
+    path: "/security",
+    changeFrequency: "monthly",
+    priority: 0.6,
+  },
+  {
+    path: "/terms",
+    changeFrequency: "monthly",
+    priority: 0.6,
+  },
+  {
+    path: "/warranty",
+    changeFrequency: "monthly",
+    priority: 0.6,
+  },
+];
 
 type PublicHandleRow = {
   handle: string | null;
@@ -15,23 +58,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const base = getConfiguredSiteOrigin();
   const now = new Date();
-  const entries: MetadataRoute.Sitemap = [
-    {
-      url: `${base}/`,
-      lastModified: now,
-      changeFrequency: "weekly",
-      priority: 1,
-    },
-  ];
-
-  for (const route of STATIC_ROUTES.slice(1)) {
-    entries.push({
-      url: `${base}${route}`,
-      lastModified: now,
-      changeFrequency: "monthly",
-      priority: 0.7,
-    });
-  }
+  const entries: MetadataRoute.Sitemap = STATIC_ROUTES.map((route) => ({
+    url: `${base}${route.path}`,
+    lastModified: now,
+    changeFrequency: route.changeFrequency,
+    priority: route.priority,
+  }));
 
   try {
     const supabase = await createServerSupabaseReadonly();

@@ -40,6 +40,7 @@ import { brand } from "@/config/brand";
 import { AdaptiveNavPill } from "@/components/ui/3d-adaptive-navigation-bar";
 import { isPublicProfilePathname } from "@/lib/routing";
 import { toast } from "@/components/system/toaster";
+import { DISCOVER_PAGES } from "@/config/discover-pages";
 import { getSiteOrigin } from "@/lib/site-url";
 import type { DashboardNotificationItem } from "@/lib/dashboard-notifications";
 
@@ -85,7 +86,12 @@ const LANDING_LINKS = [
 
 type LandingSectionId = (typeof LANDING_LINKS)[number]["id"];
 
-const MARKETING_LINKS: Array<{ href: string; label: string }> = [];
+const MARKETING_LINKS: Array<{ href: string; label: string }> = DISCOVER_PAGES.map(
+  (page) => ({
+    href: page.href,
+    label: page.navLabel,
+  })
+);
 
 const PROFILE_SECTIONS = [
   { id: "profile", label: "Profile", icon: User },

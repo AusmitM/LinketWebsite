@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import Script from "next/script";
@@ -14,6 +15,13 @@ import { createServerSupabaseReadonly } from "@/lib/supabase/server";
 import { DashboardSessionProvider } from "@/components/dashboard/DashboardSessionContext";
 import DashboardAppShell from "@/components/dashboard/DashboardAppShell";
 import { isDarkTheme } from "@/lib/themes";
+
+export const metadata: Metadata = {
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 export default async function DashboardLayout({
   children,

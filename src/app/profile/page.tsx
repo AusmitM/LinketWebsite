@@ -1,9 +1,18 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import ProfilesContent from "@/components/dashboard/profiles/ProfilesContent";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+export const metadata: Metadata = {
+  title: "Profile settings | Linket Connect",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 const SESSION_COOKIES = ["sb-access-token", "sb:token", "sb-refresh-token", "supabase-auth-token"] as const;
 

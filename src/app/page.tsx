@@ -36,6 +36,7 @@ import {
 } from "@/lib/billing/pricing";
 import { cn } from "@/lib/utils";
 import { brand } from "@/config/brand";
+import { DISCOVER_PAGES } from "@/config/discover-pages";
 import { getActiveProfileForPublicHandle } from "@/lib/profile-service";
 import type { ProfileWithLinks } from "@/lib/profile-service";
 import { getConfiguredSiteOrigin } from "@/lib/site-url";
@@ -44,16 +45,16 @@ import { getConfiguredSiteOrigin } from "@/lib/site-url";
 // Landing page metadata and runtime configuration.
 // -----------------------------------------------------------------------------
 export const metadata: Metadata = {
-  title: "Linket Connect",
+  title: "Linket Connect | NFC keychains, digital profiles, and lead capture",
   description:
-    "Linket keychains share your digital profile with a single tap. Customize the hardware, control every link, and see analytics from the very first introduction.",
+    "Linket Connect combines NFC keychains, live digital profiles, and built-in lead capture so students, creators, and teams can share contact info, update links instantly, and track every scan.",
   alternates: {
     canonical: "/",
   },
   openGraph: {
-    title: "Linket -- Stay Connected",
+    title: "Linket Connect | NFC keychains and live digital profiles",
     description:
-      "From the first tap to saved contact, Linket keeps intros warm. NFC + QR hardware, live editing, and analytics built for students, creators, and teams.",
+      "Share contact info with one tap, keep your profile current, and capture leads with NFC + QR hardware built for students, creators, and teams.",
     images: [
       {
         url: "/og.png",
@@ -65,9 +66,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Stay Connected",
+    title: "Linket Connect | NFC keychains and live digital profiles",
     description:
-      "Linket is the customizable tap-to-share keychain that keeps your information current with every scan.",
+      "NFC keychains, live digital profiles, and lead capture that keep every intro current from the first tap onward.",
     images: ["/og.png"],
   },
 };
@@ -88,6 +89,12 @@ type PublicPreviewAccount = {
 type FaqItem = {
   question: string;
   answer: string;
+};
+
+type ExplorePageCard = {
+  title: string;
+  href: string;
+  description: string;
 };
 
 // -----------------------------------------------------------------------------
@@ -301,8 +308,21 @@ async function loadPublicProfilePreview() {
   }
 }
 
-// Footer link groups (kept minimal to match current nav).
+const EXPLORE_PAGES: readonly ExplorePageCard[] = DISCOVER_PAGES.map((page) => ({
+  title: page.label,
+  href: page.href,
+  description: page.cardDescription,
+}));
+
+// Footer link groups expose the public buying and policy pages.
 const FOOTER_LINK_GROUPS = [
+  {
+    title: "Explore",
+    links: EXPLORE_PAGES.map((page) => ({
+      label: page.title,
+      href: page.href,
+    })),
+  },
   {
     title: "Legal",
     links: [
@@ -313,7 +333,7 @@ const FOOTER_LINK_GROUPS = [
       { label: "Warranty", href: "/warranty" },
     ],
   },
-] as const;
+];
 
 // Footer social icons + URLs.
 const FOOTER_SOCIALS = [
@@ -457,6 +477,14 @@ export default async function Home() {
     ],
   };
 
+  const websiteSchema = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: brand.name,
+    alternateName: brand.shortName,
+    url: siteUrl,
+  };
+
   return (
     // Page wrapper keeps the landing background consistent across sections.
     <div className="relative overflow-hidden bg-[#fff7ed] text-foreground">
@@ -472,6 +500,7 @@ export default async function Home() {
           <HeroSection />
           <TrustedBy />
           <JourneySection />
+          <ExplorePagesSection />
         </div>
       </div>
       {/* Dark feature spotlight section. */}
@@ -496,6 +525,9 @@ export default async function Home() {
       </Script>
       <Script id="linket-organization-schema" type="application/ld+json">
         {JSON.stringify(organizationSchema)}
+      </Script>
+      <Script id="linket-website-schema" type="application/ld+json">
+        {JSON.stringify(websiteSchema)}
       </Script>
     </div>
   );
@@ -820,6 +852,48 @@ function JourneySection() {
         autoPlayInterval={4000}
         imageHeight="lg:h-[420px]"
       />
+    </section>
+  );
+}
+
+function ExplorePagesSection() {
+  return (
+    <section className="landing-alt-font mx-auto max-w-6xl px-4 pb-10 sm:px-6 sm:pb-12">
+      <div className="landing-fade-up overflow-hidden rounded-[28px] border border-foreground/10 bg-white/90 p-6 shadow-[0_30px_70px_rgba(15,23,42,0.08)] sm:rounded-[36px] sm:p-8">
+        <div className="max-w-3xl">
+          <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-[#fff7ed] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-500 sm:text-xs sm:tracking-[0.35em]">
+            <span className="h-2 w-2 rounded-full bg-[#ff9776]" />
+            Explore
+          </span>
+          <h2 className="landing-serif mt-4 text-2xl font-normal tracking-[-0.03em] text-slate-900 sm:text-4xl">
+            Explore the questions people search before they buy
+          </h2>
+          <p className="mt-4 max-w-2xl text-sm text-slate-600 sm:text-base">
+            These pages break down the buying intents around digital business
+            cards, NFC sharing, and link-in-bio tools so visitors and search
+            assistants can find a direct answer instead of guessing.
+          </p>
+        </div>
+        <div className="mt-8 grid gap-4 md:grid-cols-3">
+          {EXPLORE_PAGES.map((page) => (
+            <Link
+              key={page.href}
+              href={page.href}
+              className="group rounded-3xl border border-slate-200 bg-[#fff7ed] p-5 shadow-[0_16px_36px_rgba(15,23,42,0.06)] transition-transform duration-300 hover:-translate-y-1 hover:border-[#ffb166]/70"
+            >
+              <p className="text-sm font-semibold text-slate-900 sm:text-base">
+                {page.title}
+              </p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                {page.description}
+              </p>
+              <span className="mt-4 inline-flex text-sm font-semibold text-[#9a3412] transition-transform duration-300 group-hover:translate-x-1">
+                Read guide
+              </span>
+            </Link>
+          ))}
+        </div>
+      </div>
     </section>
   );
 }
