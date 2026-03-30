@@ -1,5 +1,11 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Quicksand, Nunito } from "next/font/google";
+import {
+  Averia_Serif_Libre,
+  Geist,
+  Geist_Mono,
+  Nunito,
+  Quicksand,
+} from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/site/navbar";
 import PrefetchRoutes from "@/components/site/PrefetchRoutes";
@@ -35,6 +41,12 @@ const landing = Nunito({
   subsets: ["latin"],
 });
 
+const landingSerif = Averia_Serif_Libre({
+  variable: "--font-landing-serif",
+  weight: ["300", "400", "700"],
+  subsets: ["latin"],
+});
+
 const defaultTitle = `${brand.name} - ${brand.tagline}`;
 
 export const metadata: Metadata = {
@@ -44,8 +56,11 @@ export const metadata: Metadata = {
   },
   description: brand.blurb,
   icons: {
-    icon: [{ url: "/favicon.png", type: "image/png" }],
-    shortcut: ["/favicon.png"],
+    icon: [
+      { url: "/favicon-search-96.png", type: "image/png", sizes: "96x96" },
+      { url: "/favicon-search-192.png", type: "image/png", sizes: "192x192" },
+    ],
+    shortcut: ["/favicon-search-96.png"],
     apple: "/apple-touch-icon.png",
   },
   metadataBase: new URL(getConfiguredSiteOrigin()),
@@ -100,10 +115,10 @@ export default function RootLayout({
     },
   };
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning data-scroll-behavior="smooth">
       <body
         suppressHydrationWarning
-        className={`${geistSans.variable} ${geistMono.variable} ${display.variable} ${landing.variable} flex min-h-dvh flex-col antialiased bg-background text-foreground`}
+        className={`${geistSans.variable} ${geistMono.variable} ${display.variable} ${landing.variable} ${landingSerif.variable} flex min-h-dvh flex-col antialiased bg-background text-foreground`}
       >
         <PrefetchRoutes />
         <AnalyticsBinder />

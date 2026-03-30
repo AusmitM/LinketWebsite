@@ -370,7 +370,11 @@ export default async function PublicProfilePage({ params }: Props) {
                   <h2 className="public-profile-links-label text-sm font-semibold uppercase tracking-[0.3em] text-muted-foreground">
                     Links
                   </h2>
-                  <PublicProfileLinksList links={links} trackClicks />
+                  <PublicProfileLinksList
+                    links={links}
+                    themeName={resolvedTheme}
+                    trackClicks
+                  />
                 </div>
               ) : null}
             </div>

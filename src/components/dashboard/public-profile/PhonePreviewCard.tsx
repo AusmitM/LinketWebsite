@@ -23,8 +23,9 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { Globe, GripVertical, Instagram, Link2, X } from "lucide-react";
 
+import { getLinkFaviconSrc } from "@/lib/link-favicon";
 import { shuffleFields } from "@/lib/lead-form";
-import type { ThemeName } from "@/lib/themes";
+import { isDarkTheme, type ThemeName } from "@/lib/themes";
 import { cn } from "@/lib/utils";
 import type { LeadFormConfig, LeadFormField } from "@/types/lead-form";
 
@@ -152,6 +153,7 @@ export default function PhonePreviewCard({
   const submitLabel = "Submit";
   const resolvedTheme = themeName;
   const showContactButton = contactEnabled || Boolean(contactDisabledText);
+  const useDarkThemeIcons = resolvedTheme ? isDarkTheme(resolvedTheme) : false;
   const profileInitials = useMemo(
     () => buildPreviewInitials(profile.name),
     [profile.name]
@@ -294,6 +296,7 @@ export default function PhonePreviewCard({
                         disabled={!allowLinkReorder}
                         showClicks={showClicks}
                         showHandle={allowLinkReorder}
+                        useDarkThemeIcons={useDarkThemeIcons}
                       />
                     ))
                   ) : (
@@ -421,39 +424,18 @@ function PreviewLeadField({ field }: { field: LeadFormField }) {
   }
 }
 
-function faviconForUrl(url: string) {
-  try {
-    const parsed = new URL(url);
-    const host = parsed.hostname.toLowerCase();
-    if (!host) return null;
-    if (host === "instagr.am" || host.endsWith(".instagram.com") || host === "instagram.com") {
-      return "/icons/instagram-logo.png";
-    }
-    if (host.endsWith(".github.com") || host === "github.com") {
-      return "/icons/github-logo.png";
-    }
-    if (host.endsWith(".tiktok.com") || host === "tiktok.com") {
-      return "/icons/tiktok-logo.png";
-    }
-    if (host.endsWith(".youtube.com") || host === "youtube.com") {
-      return "/icons/yt-logo.png";
-    }
-    return `/api/favicon?u=${encodeURIComponent(parsed.toString())}`;
-  } catch {
-    return null;
-  }
-}
-
 function LinkListItem({
   link,
   disabled,
   showClicks,
   showHandle,
+  useDarkThemeIcons,
 }: {
   link: PhonePreviewLinkItem;
   disabled: boolean;
   showClicks: boolean;
   showHandle: boolean;
+  useDarkThemeIcons: boolean;
 }) {
   const {
     attributes,
@@ -466,7 +448,9 @@ function LinkListItem({
   const Icon =
     ICON_OPTIONS.find((item) => item.value === link.icon)?.icon ?? Link2;
   const clicks = link.clicks ?? 0;
-  const favicon = faviconForUrl(link.url);
+  const favicon = getLinkFaviconSrc(link.url, {
+    darkTheme: useDarkThemeIcons,
+  });
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,

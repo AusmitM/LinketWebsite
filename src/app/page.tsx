@@ -516,7 +516,9 @@ function HeroSection() {
         <div className="mx-auto max-w-4xl py-10 sm:py-12">
           {/* Primary headline + brand callout. */}
           <h1 className="landing-fade-up landing-delay-1 mt-8 text-[2rem] font-semibold leading-tight tracking-tight text-slate-900 sm:mt-10 sm:text-5xl lg:text-[4.5rem] lg:leading-[1.1]">
-            <span className="landing-alt-font">Don&apos;t just share it...</span>{" "}
+            <span className="landing-serif font-normal tracking-[-0.04em]">
+              Don&apos;t just share it...
+            </span>{" "}
             <span className="block bg-[linear-gradient(100deg,_#ff9776_0%,_#ffd27f_40%,_#7dd3fc_70%,_#2f80ed_100%)] bg-clip-text text-6xl font-black italic leading-[0.92] tracking-tight text-transparent sm:text-8xl lg:text-[5.25rem]">
               LINKET!
             </span>
@@ -845,7 +847,7 @@ function ExperienceSection() {
           </p>
           {/* Section headline + explanation. */}
           <div>
-            <p className="text-2xl font-semibold sm:text-4xl">
+            <p className="landing-serif text-2xl font-normal tracking-[-0.03em] sm:text-4xl">
               <span className="text-white/80">
                 Generate, tweak, and deploy Linket hardware{" "}
               </span>
@@ -911,7 +913,7 @@ function LiveDemoSection({ media }: { media: LandingDemoMedia }) {
             <span className="h-2 w-2 rounded-full bg-[#ffb48a]" />
             Product demo
           </span>
-          <h2 className="mt-6 font-semibold text-2xl tracking-tight text-slate-900 sm:text-4xl">
+          <h2 className="landing-serif mt-6 text-2xl font-normal tracking-[-0.03em] text-slate-900 sm:text-4xl">
             See Linket in action
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-sm text-slate-600 sm:text-base">
@@ -984,7 +986,7 @@ function PublicProfilePreviewSection({
               Public profile preview
             </div>
             <div className="space-y-4">
-              <h2 className="font-semibold text-2xl tracking-tight sm:text-4xl">
+              <h2 className="landing-serif text-2xl font-normal tracking-[-0.03em] sm:text-4xl">
                 A premium page that looks ready for the spotlight
               </h2>
               <p className="text-sm text-slate-600 sm:text-base">
@@ -1088,7 +1090,7 @@ function FAQSection({ items }: { items: FaqItem[] }) {
         <span className="inline-flex items-center gap-2 rounded-full border border-foreground/10 bg-foreground/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground sm:tracking-[0.35em]">
           FAQ
         </span>
-        <h2 className="mt-4 font-semibold text-2xl tracking-tight sm:text-4xl">
+        <h2 className="landing-serif mt-4 text-2xl font-normal tracking-[-0.03em] sm:text-4xl">
           Answers before you tap
         </h2>
         <p className="mt-4 text-sm text-muted-foreground sm:text-base">

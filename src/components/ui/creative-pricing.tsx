@@ -60,7 +60,7 @@ function CreativePricing({
         >
           {tag}
         </span>
-        <h2 className="mt-5 font-display text-2xl font-semibold tracking-tight text-[#0f172a] sm:text-4xl">
+        <h2 className="landing-serif mt-5 text-2xl font-normal tracking-[-0.03em] text-[#0f172a] sm:text-4xl">
           {title}
         </h2>
         <p className="mt-3 text-sm text-slate-600 sm:text-base">{description}</p>

@@ -3,33 +3,11 @@
 import { useCallback, useState, type CSSProperties } from "react";
 import { ArrowUpRight } from "lucide-react";
 import { emitAnalyticsEvent } from "@/lib/analytics";
+import { getLinkFaviconSrc } from "@/lib/link-favicon";
 import { sanitizePublicLinkUrl } from "@/lib/security";
-import type { ProfileLinkRecord } from "@/types/db";
 import { coerceThemeName, isDarkTheme } from "@/lib/themes";
-import ThemeToggle from "../dashboard/ThemeToggle";
-
-function faviconForUrl(url: string) {
-  try {
-    const parsed = new URL(url);
-    const host = parsed.hostname.toLowerCase();
-    if (!host) return null;
-    if (host === "instagr.am" || host.endsWith(".instagram.com") || host === "instagram.com") {
-      return "/icons/instagram-logo.png";
-    }
-    if (host.endsWith(".github.com") || host === "github.com") {
-      return "/icons/github-logo.png";
-    }
-    if (host.endsWith(".tiktok.com") || host === "tiktok.com") {
-      return "/icons/tiktok-logo.png";
-    }
-    if (host.endsWith(".youtube.com") || host === "youtube.com") {
-      return "/icons/yt-logo.png";
-    }
-    return `/api/favicon?u=${encodeURIComponent(parsed.toString())}&v=2`;
-  } catch {
-    return null;
-  }
-}
+import type { ThemeName } from "@/lib/themes";
+import type { ProfileLinkRecord } from "@/types/db";
 
 function toLinkMonogram(title: string) {
   const cleaned = title.trim();
@@ -40,9 +18,20 @@ function toLinkMonogram(title: string) {
   return `${words[0][0] ?? ""}${words[1][0] ?? ""}`.toUpperCase();
 }
 
-function LinkIcon({ title, url }: { title: string; url: string }) {
+function LinkIcon({
+  title,
+  url,
+  useDarkThemeIcons,
+}: {
+  title: string;
+  url: string;
+  useDarkThemeIcons: boolean;
+}) {
   const [failed, setFailed] = useState(false);
-  const src = faviconForUrl(url);
+  const src = getLinkFaviconSrc(url, {
+    apiVersion: "2",
+    darkTheme: useDarkThemeIcons,
+  });
   const monogram = toLinkMonogram(title);
 
   if (!src || failed) {
@@ -69,11 +58,15 @@ function LinkIcon({ title, url }: { title: string; url: string }) {
 
 export default function PublicProfileLinksList({
   links,
+  themeName,
   trackClicks = false,
 }: {
   links: ProfileLinkRecord[];
+  themeName?: ThemeName | string | null;
   trackClicks?: boolean;
 }) {
+  const resolvedTheme = coerceThemeName(themeName);
+  const useDarkThemeIcons = resolvedTheme ? isDarkTheme(resolvedTheme) : false;
   const safeLinks = links
     .map((link) => {
       try {
@@ -123,7 +116,11 @@ export default function PublicProfileLinksList({
           className="public-profile-link public-profile-link-entrance group flex min-w-0 items-center justify-between gap-4 overflow-hidden rounded-2xl border border-border/60 bg-card/80 px-4 py-3 transition hover:border-[color:var(--ring)] hover:shadow-[0_18px_45px_-35px_var(--ring)] focus-visible:outline-none focus-visible:[box-shadow:0_0_0_2px_var(--color-button-focus-offset),0_0_0_5px_var(--color-button-focus-ring),0_18px_45px_-35px_var(--ring)]"
         >
           <div className="flex min-w-0 flex-1 items-center gap-3">
-            <LinkIcon title={link.title} url={link.url} />
+            <LinkIcon
+              title={link.title}
+              url={link.url}
+              useDarkThemeIcons={useDarkThemeIcons}
+            />
             <div className="min-w-0">
               <div className="truncate text-base font-semibold text-foreground">
                 {link.title}

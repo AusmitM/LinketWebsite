@@ -238,6 +238,10 @@
   font-family: var(--font-landing), var(--font-geist-sans), system-ui, sans-serif;
 }
 
+.landing-serif {
+  font-family: var(--font-landing-serif), var(--font-display), Georgia, serif;
+}
+
 .landing-delay-1 {
   animation-delay: 0.08s;
 }

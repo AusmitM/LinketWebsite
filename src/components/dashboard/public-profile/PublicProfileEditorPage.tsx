@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  type ComponentPropsWithoutRef,
   useCallback,
   useEffect,
   useMemo,
@@ -36,6 +37,7 @@ import {
   Instagram,
   Link2,
   Pencil,
+  Star,
   Trash2,
   X,
 } from "lucide-react";
@@ -57,6 +59,7 @@ import {
 import { getSignedAvatarUrl } from "@/lib/avatar-client";
 import { getSignedProfileHeaderUrl } from "@/lib/profile-header-client";
 import { getSignedProfileLogoUrl } from "@/lib/profile-logo-client";
+import { getLinkFaviconSrc } from "@/lib/link-favicon";
 import { confirmRemove } from "@/lib/confirm-remove";
 import { cn } from "@/lib/utils";
 import { shuffleFields } from "@/lib/lead-form";
@@ -81,7 +84,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { normalizeThemeName, type ThemeName } from "@/lib/themes";
+import { isDarkTheme, normalizeThemeName, type ThemeName } from "@/lib/themes";
 import type { ProfileWithLinks } from "@/lib/profile-service";
 import type { LeadFormConfig, LeadFormField } from "@/types/lead-form";
 
@@ -1887,30 +1890,22 @@ function EditorPanel({
                       }}
                       className="h-9 text-left text-sm"
                     />
-                    <div className="relative">
-                      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
-                        https://
-                      </span>
-                      <Input
-                        value={stripLinkScheme(link.url)}
-                        placeholder="www.website.com"
-                        className="h-9 pl-20 text-left text-sm"
-                        onChange={(event) =>
-                          onUpdateLink(link.id, { url: normalizeLinkUrl(event.target.value) })
-                        }
-                        onDragStart={(event) => {
-                          event.preventDefault();
-                          event.stopPropagation();
-                        }}
-                      />
-                    </div>
-                    <label className="mt-1 flex items-start gap-2 rounded-md border border-border/50 bg-muted/20 px-2 py-2">
-                      <Switch
+                    <LinkUrlInput
+                      value={link.url}
+                      placeholder="www.website.com"
+                      className="h-9 text-sm"
+                      onValueChange={(url) => onUpdateLink(link.id, { url })}
+                      onDragStart={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                      }}
+                    />
+                    <div className="mt-1 flex items-start gap-2 rounded-md border border-border/50 bg-muted/20 px-2 py-2">
+                      <DirectLinkStarToggle
                         checked={link.isOverride}
-                        onCheckedChange={(value) =>
-                          onSetOverrideLink(link.id, Boolean(value))
-                        }
+                        onPressedChange={(value) => onSetOverrideLink(link.id, value)}
                         aria-label={`Use ${link.label || "this link"} for Direct-to-link mode`}
+                        className="mt-0.5"
                       />
                       <span className="space-y-0.5 text-left">
                         <span className="block text-xs font-medium text-foreground">
@@ -1920,7 +1915,7 @@ function EditorPanel({
                           Linket scans skip your public page and open this link directly.
                         </span>
                       </span>
-                    </label>
+                    </div>
                 </div>
                 <div className="flex flex-col gap-2">
                   <Button
@@ -2109,6 +2104,7 @@ function PhonePreviewCard({
   );
   const submitLabel = "Submit";
   const resolvedTheme = themeName;
+  const useDarkThemeIcons = resolvedTheme ? isDarkTheme(resolvedTheme) : false;
 
   return (
     <div
@@ -2207,7 +2203,11 @@ function PhonePreviewCard({
               >
                 <div className="space-y-3">
                   {visibleLinks.map((link) => (
-                    <LinkListItem key={link.id} link={link} />
+                    <LinkListItem
+                      key={link.id}
+                      link={link}
+                      useDarkThemeIcons={useDarkThemeIcons}
+                    />
                   ))}
                 </div>
               </SortableContext>
@@ -2325,33 +2325,12 @@ function PreviewLeadField({ field }: { field: LeadFormField }) {
   }
 }
 
-function faviconForUrl(url: string) {
-  try {
-    const parsed = new URL(url);
-    const host = parsed.hostname.toLowerCase();
-    if (!host) return null;
-    if (host === "instagr.am" || host.endsWith(".instagram.com") || host === "instagram.com") {
-      return "/icons/instagram-logo.png";
-    }
-    if (host.endsWith(".github.com") || host === "github.com") {
-      return "/icons/github-logo.png";
-    }
-    if (host.endsWith(".tiktok.com") || host === "tiktok.com") {
-      return "/icons/tiktok-logo.png";
-    }
-    if (host.endsWith(".youtube.com") || host === "youtube.com") {
-      return "/icons/yt-logo.png";
-    }
-    return `/api/favicon?u=${encodeURIComponent(parsed.toString())}`;
-  } catch {
-    return null;
-  }
-}
-
 function LinkListItem({
   link,
+  useDarkThemeIcons,
 }: {
   link: LinkItem;
+  useDarkThemeIcons: boolean;
 }) {
   const {
     attributes,
@@ -2363,7 +2342,9 @@ function LinkListItem({
   } = useSortable({ id: link.id });
   const Icon = ICON_OPTIONS.find((item) => item.value === link.icon)?.icon ?? Link2;
   const clicks = link.clicks ?? 0;
-  const favicon = faviconForUrl(link.url);
+  const favicon = getLinkFaviconSrc(link.url, {
+    darkTheme: useDarkThemeIcons,
+  });
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -2414,6 +2395,105 @@ function LinkListItem({
         </div>
       </div>
     </div>
+  );
+}
+
+function LinkUrlInput({
+  value,
+  onValueChange,
+  className,
+  onBlur,
+  onFocus,
+  ...inputProps
+}: {
+  value: string;
+  onValueChange: (value: string) => void;
+} & Omit<ComponentPropsWithoutRef<typeof Input>, "value" | "onChange">) {
+  const [draftValue, setDraftValue] = useState(() => getEditableLinkValue(value));
+  const [isFocused, setIsFocused] = useState(false);
+  const inputValue = isFocused ? draftValue : getEditableLinkValue(value);
+
+  return (
+    <div className="relative">
+      <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-xs text-muted-foreground">
+        https://
+      </span>
+      <Input
+        {...inputProps}
+        value={inputValue}
+        className={cn("pl-20 text-left", className)}
+        onFocus={(event) => {
+          setIsFocused(true);
+          setDraftValue(getEditableLinkValue(value));
+          onFocus?.(event);
+        }}
+        onChange={(event) => {
+          const nextValue = event.target.value;
+          setDraftValue(nextValue);
+          onValueChange(normalizeEditableLinkUrl(nextValue));
+        }}
+        onBlur={(event) => {
+          setIsFocused(false);
+          const nextValue = getEditableLinkValue(event.target.value);
+          setDraftValue(nextValue);
+          onValueChange(normalizeEditableLinkUrl(nextValue));
+          onBlur?.(event);
+        }}
+      />
+    </div>
+  );
+}
+
+function DirectLinkStarToggle({
+  checked,
+  onPressedChange,
+  className,
+  ...buttonProps
+}: Omit<ComponentPropsWithoutRef<"button">, "onClick"> & {
+  checked: boolean;
+  onPressedChange: (checked: boolean) => void;
+}) {
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
+
+  const handleClick = () => {
+    const button = buttonRef.current;
+    const prefersReducedMotion =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    if (button && typeof button.animate === "function" && !prefersReducedMotion) {
+      button.getAnimations().forEach((animation) => animation.cancel());
+      button.animate(
+        [
+          { opacity: 1, transform: "scale(1)" },
+          { opacity: 0.15, transform: "scale(0.92)", offset: 0.32 },
+          { opacity: 1, transform: "scale(1.08)", offset: 0.68 },
+          { opacity: 1, transform: "scale(1)" },
+        ],
+        { duration: 260, easing: "ease-out" }
+      );
+    }
+
+    onPressedChange(!checked);
+  };
+
+  return (
+    <button
+      ref={buttonRef}
+      type="button"
+      aria-pressed={checked}
+      onClick={handleClick}
+      className={cn(
+        "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]",
+        checked
+          ? "border-amber-400/70 bg-amber-400/15 text-amber-500 shadow-[0_10px_20px_-16px_rgba(245,158,11,0.75)]"
+          : "border-border/60 bg-background text-muted-foreground hover:bg-muted/60",
+        className
+      )}
+      {...buttonProps}
+    >
+      <Star className={cn("h-4 w-4", checked && "fill-current")} aria-hidden />
+    </button>
   );
 }
 
@@ -2517,14 +2597,19 @@ function LinkModal({
             </div>
             <div className="space-y-2">
               <Label htmlFor="link-url">URL</Label>
-              <Input
+              <LinkUrlInput
                 id="link-url"
-                value={stripLinkScheme(link.url)}
-                placeholder="https://www.website.com/"
-                className="text-left"
-                onChange={(event) =>
-                  onChange({ ...link, url: normalizeLinkUrl(event.target.value) })
-                }
+                value={link.url}
+                placeholder="www.website.com"
+                onValueChange={(url) => onChange({ ...link, url })}
+                onKeyDown={(event) => {
+                  if (mode !== "add" || event.key !== "Enter" || event.nativeEvent.isComposing) {
+                    return;
+                  }
+                  if (!getEditableLinkValue(link.url).trim()) return;
+                  event.preventDefault();
+                  onSave();
+                }}
               />
             </div>
             <div className="space-y-3 rounded-xl border border-border/60 px-3 py-3">
@@ -2549,7 +2634,7 @@ function LinkModal({
                   }
                 />
               </label>
-              <label className="flex items-center justify-between gap-3">
+              <div className="flex items-center justify-between gap-3">
                 <span className="space-y-0.5">
                   <span className="block text-sm font-medium text-foreground">
                     Direct-to-link mode
@@ -2566,14 +2651,17 @@ function LinkModal({
                     </span>
                   ) : null}
                 </span>
-                <Switch
+                <DirectLinkStarToggle
                   id="link-override"
                   checked={link.isOverride}
-                  onCheckedChange={(value) =>
-                    onOverrideToggle(Boolean(value))
+                  onPressedChange={onOverrideToggle}
+                  aria-label={
+                    link.isOverride
+                      ? "Disable Direct-to-link mode"
+                      : "Enable Direct-to-link mode"
                   }
                 />
-              </label>
+              </div>
             </div>
           </div>
         ) : null}
@@ -2747,6 +2835,22 @@ function normalizeLinkUrl(value: string) {
     return `https://${trimmed.slice("http://".length)}`;
   }
   return `https://${trimmed.replace(/^\/+/, "")}`;
+}
+
+function getEditableLinkValue(value: string) {
+  const stripped = stripLinkScheme(value).trim();
+  if (!stripped) return "";
+  const match = stripped.match(/^([^/?#]+)(.*)$/);
+  if (!match) return stripped;
+  const [, host, suffix] = match;
+  if (!host.includes(".") || host.toLowerCase().startsWith("www.")) {
+    return stripped;
+  }
+  return `www.${host}${suffix}`;
+}
+
+function normalizeEditableLinkUrl(value: string) {
+  return normalizeLinkUrl(getEditableLinkValue(value));
 }
 
 function stripLinkScheme(value: string) {
