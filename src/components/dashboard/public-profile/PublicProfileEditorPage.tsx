@@ -2629,7 +2629,7 @@ function createLink(): LinkItem {
   return {
     id: `link-${cryptoRandom()}`,
     label: "",
-    url: DEFAULT_PROFILE_LINK_URL,
+    url: "",
     icon: base.value,
     color: base.color,
     visible: true,
