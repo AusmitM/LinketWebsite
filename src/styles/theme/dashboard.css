@@ -1239,12 +1239,57 @@ body.theme-forest .dashboard-forest-pin {
   transform: translateY(-2px) rotate(-4deg);
 }
 
-/* Gilded theme: boost selected analytics range contrast */
+/* Gilded theme: matte black chrome with polished gold active states */
+#dashboard-theme-scope.theme-gilded .dashboard-navbar::after {
+  background: linear-gradient(
+    110deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.03) 34%,
+    rgba(255, 216, 111, 0.38) 50%,
+    transparent 68%
+  );
+}
+
+#dashboard-theme-scope.theme-gilded .dashboard-nav-link[data-active="true"] {
+  background: linear-gradient(180deg, rgba(24, 22, 19, 0.98) 0%, rgba(12, 12, 11, 0.94) 100%);
+  border-color: rgba(244, 183, 24, 0.48);
+  box-shadow:
+    0 14px 28px -20px rgba(0, 0, 0, 0.72),
+    inset 0 1px 0 rgba(255, 224, 88, 0.24),
+    0 0 0 1px rgba(255, 224, 88, 0.14),
+    0 0 18px rgba(244, 183, 24, 0.18);
+  color: var(--foreground);
+}
+
+#dashboard-theme-scope.theme-gilded .dashboard-nav-link[data-active="true"]::before {
+  height: 1.5px;
+  background: linear-gradient(90deg, rgba(212, 152, 42, 0.24) 0%, rgba(255, 216, 111, 1) 50%, rgba(212, 152, 42, 0.24) 100%);
+}
+
+#dashboard-theme-scope.theme-gilded .dashboard-nav-link[data-active="false"]:hover {
+  background: linear-gradient(180deg, rgba(19, 19, 20, 0.92) 0%, rgba(11, 11, 12, 0.88) 100%);
+  border-color: rgba(244, 183, 24, 0.34);
+}
+
 #dashboard-theme-scope.theme-gilded .dashboard-analytics-range-button[data-selected="true"] {
-  background: var(--color-button-selected-bg);
-  border-color: var(--color-button-selected-border);
-  color: var(--color-button-selected-fg);
-  box-shadow: 0 14px 30px rgba(211, 172, 44, 0.35), 0 0 0 2px color-mix(in srgb, var(--color-button-selected-border) 42%, transparent);
+  background: linear-gradient(135deg, #a56f1b 0%, #e59d2a 24%, #f7bf45 42%, #ffd97d 52%, #ecae3a 70%, #ab7420 100%);
+  border-color: rgba(255, 224, 88, 0.66);
+  color: #151006;
+  box-shadow:
+    0 16px 34px rgba(0, 0, 0, 0.4),
+    0 12px 28px rgba(200, 133, 26, 0.38),
+    0 0 0 2px rgba(255, 224, 88, 0.38);
+}
+
+#dashboard-theme-scope.theme-gilded .dashboard-analytics-range-button[data-selected="false"] {
+  background: linear-gradient(180deg, rgba(20, 20, 21, 0.9) 0%, rgba(10, 10, 11, 0.86) 100%);
+  border-color: rgba(244, 183, 24, 0.28);
+  color: var(--button-subtle-foreground);
+}
+
+#dashboard-theme-scope.theme-gilded .dashboard-analytics-range-button[data-selected="false"]:hover {
+  border-color: rgba(244, 183, 24, 0.44);
+  color: var(--foreground);
 }
 
 /* Forest theme: boost selected range contrast */

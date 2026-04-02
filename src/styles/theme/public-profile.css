@@ -349,6 +349,142 @@
   letter-spacing: 0.06em;
 }
 
+/* Gilded: matte black surfaces with polished gold contour lines */
+.theme-gilded.public-profile-shell,
+.theme-gilded .public-profile-shell,
+.public-profile-preview.theme-gilded {
+  --profile-hero-foreground: #f4eee3;
+  --profile-hero-muted-foreground: rgba(244, 238, 227, 0.76);
+  --profile-section-label: #efcb79;
+  --profile-contact-button-bg: linear-gradient(135deg, #a56f1b 0%, #e59d2a 24%, #f7bf45 42%, #ffd97d 52%, #ecae3a 70%, #ab7420 100%);
+  --profile-contact-button-bg-hover: linear-gradient(135deg, #af7720 0%, #eca531 24%, #fdc954 42%, #ffe08e 52%, #f2b843 70%, #b57e24 100%);
+  --profile-contact-button-bg-active: linear-gradient(135deg, #946116 0%, #cf8f22 24%, #ecb53a 42%, #f6cf6d 52%, #dca330 70%, #99661a 100%);
+  --profile-contact-button-fg: #151006;
+  --profile-contact-button-border: rgba(255, 224, 88, 0.6);
+  --profile-contact-button-preview-shadow: 0 18px 32px -18px rgba(180, 117, 25, 0.44);
+  --profile-submit-button-bg: linear-gradient(135deg, #a56f1b 0%, #e59d2a 24%, #f7bf45 42%, #ffd97d 52%, #ecae3a 70%, #ab7420 100%);
+  --profile-submit-button-bg-hover: linear-gradient(135deg, #af7720 0%, #eca531 24%, #fdc954 42%, #ffe08e 52%, #f2b843 70%, #b57e24 100%);
+  --profile-submit-button-bg-active: linear-gradient(135deg, #946116 0%, #cf8f22 24%, #ecb53a 42%, #f6cf6d 52%, #dca330 70%, #99661a 100%);
+  --profile-submit-button-fg: #151006;
+  --profile-submit-button-border: rgba(255, 224, 88, 0.6);
+  --profile-submit-button-disabled-bg: linear-gradient(180deg, rgba(24, 24, 25, 0.92) 0%, rgba(13, 13, 14, 0.9) 100%);
+  --profile-submit-button-disabled-fg: rgba(244, 238, 227, 0.54);
+  --profile-submit-button-disabled-border: rgba(244, 183, 24, 0.28);
+  --profile-preview-hero-foreground: #f4eee3;
+  --profile-preview-hero-muted-foreground: rgba(244, 238, 227, 0.74);
+  --profile-preview-section-label: #efcb79;
+  --profile-preview-link-foreground: #f4eee3;
+  --profile-preview-link-muted-foreground: #bba97f;
+  background-image:
+    radial-gradient(200px 150px at 12% 0%, rgba(255, 216, 111, 0.15) 0%, transparent 74%),
+    radial-gradient(260px 180px at 88% 0%, rgba(229, 178, 58, 0.15) 0%, transparent 76%),
+    linear-gradient(180deg, #0a0a0a 0%, #050505 100%);
+}
+
+.theme-gilded .public-profile-backdrop {
+  overflow: hidden;
+  background: linear-gradient(
+    180deg,
+    rgba(10, 10, 10, 0.95),
+    rgba(5, 5, 5, 0.98)
+  );
+}
+
+.theme-gilded .public-profile-backdrop-grid {
+  --public-profile-grid-opacity: 0.07;
+}
+
+.theme-gilded .public-profile-backdrop::before,
+.theme-gilded .public-profile-backdrop::after {
+  content: "";
+  position: absolute;
+  inset-inline: -6%;
+  pointer-events: none;
+}
+
+.theme-gilded .public-profile-backdrop::before {
+  inset-block: -10% 34%;
+  background:
+    radial-gradient(82% 84% at 50% -30%, rgba(20, 20, 21, 0.98) 0%, rgba(12, 12, 13, 0.98) 55%, transparent 56%),
+    radial-gradient(74% 74% at 50% 4%, rgba(18, 18, 19, 0.96) 0%, rgba(10, 10, 11, 0.96) 58%, transparent 59%),
+    radial-gradient(66% 64% at 50% 34%, rgba(14, 14, 15, 0.94) 0%, rgba(8, 8, 9, 0.94) 61%, transparent 62%);
+  opacity: 0.98;
+}
+
+.theme-gilded .public-profile-backdrop::after {
+  inset-block: -9% 36%;
+  background:
+    radial-gradient(82% 84% at 50% -30%, transparent 54.4%, rgba(255, 224, 88, 0.98) 54.9%, rgba(255, 224, 88, 0.98) 55.5%, transparent 56.1%),
+    radial-gradient(74% 74% at 50% 4%, transparent 57.4%, rgba(248, 196, 42, 0.84) 57.9%, rgba(248, 196, 42, 0.84) 58.5%, transparent 59.1%),
+    radial-gradient(66% 64% at 50% 34%, transparent 60.2%, rgba(232, 170, 20, 0.68) 60.7%, rgba(232, 170, 20, 0.68) 61.3%, transparent 61.9%);
+  opacity: 0.92;
+}
+
+.theme-gilded .public-profile-card {
+  background: linear-gradient(165deg, rgba(18, 18, 19, 0.95) 0%, rgba(12, 12, 13, 0.9) 58%, rgba(8, 8, 9, 0.94) 100%);
+  border-color: rgba(244, 183, 24, 0.3);
+  box-shadow:
+    0 30px 56px -40px rgba(0, 0, 0, 0.72),
+    0 0 0 1px rgba(255, 224, 88, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+}
+
+.theme-gilded .public-profile-link {
+  background: linear-gradient(165deg, rgba(19, 19, 20, 0.94) 0%, rgba(12, 12, 13, 0.88) 58%, rgba(8, 8, 9, 0.92) 100%);
+  border-color: rgba(244, 183, 24, 0.28);
+  box-shadow:
+    0 22px 44px -36px rgba(0, 0, 0, 0.64),
+    0 0 0 1px rgba(255, 224, 88, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.theme-gilded .public-profile-link-action {
+  background: linear-gradient(180deg, rgba(22, 22, 23, 0.94) 0%, rgba(12, 12, 13, 0.9) 100%);
+  border-color: rgba(244, 183, 24, 0.3);
+  color: var(--color-button-outline-fg);
+}
+
+.theme-gilded .public-profile-link-action:hover,
+.theme-gilded .public-profile-link:hover .public-profile-link-action {
+  background: linear-gradient(180deg, rgba(28, 27, 25, 0.96) 0%, rgba(15, 15, 14, 0.92) 100%);
+  color: var(--color-button-outline-fg-hover);
+}
+
+.theme-gilded .public-profile-actions [data-slot=button]:not(.public-profile-cta-primary) {
+  background: linear-gradient(180deg, rgba(22, 22, 23, 0.96) 0%, rgba(12, 12, 13, 0.92) 100%);
+  color: var(--color-button-secondary-fg);
+  border: 1px solid rgba(244, 183, 24, 0.3);
+  box-shadow: 0 16px 32px -24px rgba(0, 0, 0, 0.62), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.theme-gilded .public-profile-actions [data-slot=button]:not(.public-profile-cta-primary):hover {
+  background: linear-gradient(180deg, rgba(28, 27, 25, 0.98) 0%, rgba(15, 15, 14, 0.94) 100%);
+  color: var(--color-button-secondary-fg-hover);
+  border-color: rgba(244, 183, 24, 0.44);
+}
+
+.theme-gilded .public-profile-cta-primary {
+  background: linear-gradient(135deg, #a56f1b 0%, #e59d2a 24%, #f7bf45 42%, #ffd97d 52%, #ecae3a 70%, #ab7420 100%) !important;
+  color: #151006 !important;
+  border: 1px solid rgba(255, 224, 88, 0.62);
+  box-shadow: 0 24px 44px -28px rgba(0, 0, 0, 0.54), 0 16px 30px -20px rgba(198, 130, 28, 0.38);
+}
+
+.theme-gilded .public-profile-cta-primary::after {
+  border-color: rgba(255, 239, 188, 0.5);
+  opacity: 0.84;
+}
+
+.theme-gilded .public-profile-cta-primary:hover {
+  background: linear-gradient(135deg, #af7720 0%, #eca531 24%, #fdc954 42%, #ffe08e 52%, #f2b843 70%, #b57e24 100%) !important;
+}
+
+.theme-gilded .public-profile-links h2,
+.theme-gilded .public-profile-links-label {
+  color: #efcb79;
+}
+
 /* Hook 'Em: layered copper glow with readable cream surfaces */
 .theme-burnt-orange.public-profile-shell,
 .theme-burnt-orange .public-profile-shell,

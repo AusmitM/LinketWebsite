@@ -33,7 +33,7 @@ This reference documents the live theme palettes currently defined in:
 | `Midnight` | `#050414` | `#f7f5ff` | `rgba(18, 15, 46, 0.94)` | `#8d5fff` | `#231b50`, subtle actions `#ebe4ff` | accent `#352a6b`, ring `#8d5fff` | border `#261f56`, sidebar `#0c0923` | Deep violet night palette with neon-style purple focus states and premium dark dashboard surfaces |
 | `Dream` | `#f4e9ff` | `#1d1f3d` | `rgba(255, 255, 255, 0.96)` | `#3a2ad6` | `#f2a3db`, subtle actions `#3f3dab` | accent `#b8a6ff`, ring `#3a2ad6` | border `#d8cbed`, sidebar `#efe1ff` | Pastel lavender dashboard chrome, soft violet public profile gradients, dreamy white-violet cards, blue-violet CTAs |
 | `Forest` | `#273529` | `#f7f0e2` | `rgba(70, 89, 74, 0.94)` | `#a45b3e` | `#4a5d4f`, subtle actions `#f7f0e2` | accent `#c79c7e`, ring `#c79c7e` | border `#516556`, sidebar `#273529` | Woodland dashboard shell with ember accents, tree-line pattern in public profiles, stronger border emphasis, warm tan focus glows |
-| `Gilded` | `#010203` | `#f7f0e2` | `rgba(29, 29, 31, 0.9)` | `#b16c04` | `#3b3130`, subtle actions `#f4e6c3` | accent `#d3ac2c`, ring `#d3ac2c` | border `#3b3130`, sidebar `#1d1d1f` | Velvet black dashboard surfaces with molten gold highlights; premium chrome is mostly generated from the shared token system |
+| `Gilded` | `#050505` | `#f4eee3` | `rgba(16, 16, 17, 0.94)` | `#e5b23a` | `#171718`, subtle actions `#e8dcc1` | accent `#ffd86f`, ring `#ffd86f` | border `#2d2617`, sidebar `#0d0d0e` | Matte black shell with a warmer orange-gold highlight, brighter CTA sheen, and a contour-lined public profile backdrop |
 | `Rose` | `#ffe0d2` | `#4a1713` | `rgba(255, 236, 226, 0.96)` | `#df4d3a` | `#ffcaa0`, subtle actions `#7c2f22` | accent `#f5b16f`, ring `#9a3412` | border `#f0b9a2`, sidebar `#ffd8c4` | Rosy coral dashboard top bar, warm blush public profile cards, soft orange support surfaces, warm brown action text |
 | `Autumn` | `#f3d9b2` | `#3c2012` | `rgba(255, 246, 231, 0.97)` | `#bd5230` | `#e5bf69`, subtle actions `#682c13` | accent `#d98f47`, ring `#9a3412` | border `#ddb686`, sidebar `#efd09d` | Amber-and-spice dashboard chrome, layered autumn public profile glows, warm cream cards, copper CTA emphasis |
 | `Honey` | `#f7dcab` | `#3f1f0c` | `rgba(255, 242, 217, 0.95)` | `#df6206` | `#f4c25a`, subtle actions `#6d350d` | accent `#ebaa32`, ring `#9a3412` | border `#f4c25a`, sidebar `#fddb9c` | Honeycomb/hex pattern in public profiles, warm golden dashboard top bar, glowing logo pill, amber-orange CTAs and support surfaces |
@@ -42,9 +42,10 @@ This reference documents the live theme palettes currently defined in:
 
 ## Theme-Specific Surface Notes
 
-- `Light`, `Dream`, `Rose`, `Autumn`, and `Honey` define extra dashboard top-bar, nav, card, and logo treatments in `src/styles/theme/variants.css`.
+- `Light`, `Dream`, `Rose`, `Autumn`, `Honey`, and `Gilded` define extra dashboard top-bar, nav, card, and logo treatments in `src/styles/theme/variants.css`.
 - `Forest` adds a tree-line pattern to public profiles and preview shells, and it increases dashboard border emphasis for better contrast.
-- `Dark`, `Midnight`, and `Gilded` rely mostly on the shared premium dashboard/public profile styling, so their look comes primarily from the semantic tokens above rather than separate per-theme override blocks.
+- `Dark` and `Midnight` rely mostly on the shared premium dashboard/public profile styling, so their look comes primarily from the semantic tokens above rather than separate per-theme override blocks.
+- `Gilded` now adds dedicated matte-black dashboard chrome plus a layered black-and-gold contour backdrop for public profiles and previews.
 - `Hook 'Em` and `Aggie` have the most custom public-profile styling: dedicated hero gradients, cream/blush card treatments, branded CTA gradients, and custom logo glow states.
 
 ## Derived State Colors
