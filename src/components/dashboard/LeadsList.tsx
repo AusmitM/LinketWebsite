@@ -68,6 +68,7 @@ type LeadView = {
   preview: string;
   detailFields: LeadFieldEntry[];
   submittedLabel: string;
+  submittedShortLabel: string;
   submittedSortValue: number;
   spamSuspected: boolean;
 };
@@ -401,6 +402,7 @@ export default function LeadsList({ userId }: { userId: string }) {
         preview: buildLeadPreview(lead, detailFields),
         detailFields,
         submittedLabel: createdAt.toLocaleString(),
+        submittedShortLabel: formatLeadSubmittedShort(createdAt),
         submittedSortValue: createdAt.getTime(),
         spamSuspected,
       };
@@ -647,7 +649,7 @@ export default function LeadsList({ userId }: { userId: string }) {
             </div>
           </div>
         ) : null}
-        <div className="sticky top-4 z-20 rounded-[1.75rem] border border-border/60 bg-card/90 p-4 shadow-[0_20px_48px_-36px_rgba(15,23,42,0.4)] backdrop-blur">
+        <div className="sticky top-3 z-20 rounded-[1.75rem] border border-border/60 bg-card/90 p-3 shadow-[0_20px_48px_-36px_rgba(15,23,42,0.4)] backdrop-blur sm:top-4 sm:p-4">
           <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
             <div className="min-w-0 flex-1">
               <Input
@@ -658,12 +660,13 @@ export default function LeadsList({ userId }: { userId: string }) {
                 className="h-11 rounded-2xl"
               />
             </div>
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
               <Button
                 type="button"
                 variant={filtersOpen || hasActiveFilters(filters) ? "secondary" : "outline"}
                 size="sm"
                 onClick={() => setFiltersOpen((value) => !value)}
+                className="h-10 rounded-2xl sm:h-9"
               >
                 <Filter className="h-4 w-4" aria-hidden />
                 Filters
@@ -672,7 +675,7 @@ export default function LeadsList({ userId }: { userId: string }) {
                 value={sortBy}
                 onValueChange={(value) => setSortBy(value as LeadSortOption)}
               >
-                <SelectTrigger className="h-9 min-w-[160px] rounded-2xl bg-background/70">
+                <SelectTrigger className="h-10 w-full min-w-0 rounded-2xl bg-background/70 sm:h-9 sm:min-w-[170px]">
                   <SelectValue placeholder="Sort" />
                 </SelectTrigger>
                 <SelectContent className="rounded-2xl border-border/60 bg-popover/95">
@@ -682,7 +685,13 @@ export default function LeadsList({ userId }: { userId: string }) {
                   <SelectItem value="name-desc">Name Z-A</SelectItem>
                 </SelectContent>
               </Select>
-              <Button type="button" variant="outline" size="sm" onClick={() => load({ reset: true })}>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => load({ reset: true })}
+                className="h-10 rounded-2xl sm:h-9"
+              >
                 <RefreshCw className={cn("h-4 w-4", fetching && "animate-spin")} aria-hidden />
                 Refresh
               </Button>
@@ -691,6 +700,7 @@ export default function LeadsList({ userId }: { userId: string }) {
                   type="button"
                   size="sm"
                   onClick={() => setExportMenuOpen((value) => !value)}
+                  className="h-10 w-full rounded-2xl sm:h-9 sm:w-auto"
                 >
                   <Download className="h-4 w-4" aria-hidden />
                   Export
@@ -780,15 +790,33 @@ export default function LeadsList({ userId }: { userId: string }) {
           )}
 
           {selectedIds.size > 0 ? (
-            <div className="mt-3 flex flex-wrap items-center gap-2 rounded-2xl border border-border/50 bg-background/80 px-3 py-2">
+            <div className="mt-3 flex flex-col items-start gap-2 rounded-2xl border border-border/50 bg-background/80 px-3 py-2 sm:flex-row sm:flex-wrap sm:items-center">
               <span className="text-sm font-medium">{selectedIds.size} selected</span>
-              <Button type="button" variant="outline" size="sm" onClick={() => exportCsv(selectedLeads)}>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="w-full sm:w-auto"
+                onClick={() => exportCsv(selectedLeads)}
+              >
                 Export selected
               </Button>
-              <Button type="button" variant="destructive" size="sm" onClick={deleteSelected}>
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                className="w-full sm:w-auto"
+                onClick={deleteSelected}
+              >
                 Delete selected
               </Button>
-              <Button type="button" variant="ghost" size="sm" onClick={clearSelection}>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="w-full sm:w-auto"
+                onClick={clearSelection}
+              >
                 Clear selection
               </Button>
             </div>
@@ -811,8 +839,138 @@ export default function LeadsList({ userId }: { userId: string }) {
             </div>
           ) : (
             <>
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[1040px] text-left text-sm">
+              <div className="border-b border-border/40 px-4 py-3 md:hidden">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-foreground">
+                      {leadViews.length} visible {leadViews.length === 1 ? "lead" : "leads"}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {selectedIds.size > 0
+                        ? `${selectedIds.size} selected for export or deletion`
+                        : "Tap any card to review the full submission."}
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="shrink-0 rounded-xl"
+                    onClick={toggleSelectAllVisible}
+                  >
+                    {allVisibleSelected ? "Clear all" : "Select all"}
+                  </Button>
+                </div>
+              </div>
+
+              <div className="space-y-3 p-3 md:hidden">
+                {leadViews.map((row) => (
+                  <article
+                    key={row.lead.id}
+                    className="overflow-hidden rounded-[1.5rem] border border-border/50 bg-background/65 shadow-[0_18px_42px_-34px_rgba(15,23,42,0.45)]"
+                  >
+                    <div className="flex items-start gap-3 p-4">
+                      <div className="pt-1">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(row.lead.id)}
+                          onChange={() => toggleLeadSelection(row.lead.id)}
+                          aria-label={`Select ${row.lead.name || row.lead.email || "lead"}`}
+                          className="h-4 w-4 rounded border-border"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        className="min-w-0 flex-1 text-left"
+                        onClick={() => setActiveLeadId(row.lead.id)}
+                      >
+                        <div className="flex flex-wrap items-center gap-2">
+                          <StatusBadge status={row.status} />
+                          {row.attachments.length > 0 ? (
+                            <span className="inline-flex items-center gap-1 rounded-full border border-border/50 bg-card/80 px-2.5 py-1 text-[11px] font-medium text-foreground">
+                              <Paperclip className="h-3.5 w-3.5" aria-hidden />
+                              {row.attachments.length}
+                            </span>
+                          ) : null}
+                          <span className="text-xs text-muted-foreground">
+                            {row.submittedShortLabel}
+                          </span>
+                        </div>
+                        <div className="mt-3 min-w-0">
+                          <div className="truncate text-base font-semibold text-foreground">
+                            {row.lead.name || "Unnamed lead"}
+                          </div>
+                          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                            {row.lead.company ? (
+                              <span className="rounded-full border border-border/50 bg-card/80 px-2.5 py-1">
+                                {row.lead.company}
+                              </span>
+                            ) : null}
+                            <span className="rounded-full border border-border/50 bg-card/80 px-2.5 py-1">
+                              {row.lead.handle || "Unknown form"}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="mt-3 space-y-2">
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Mail className="h-4 w-4 shrink-0" aria-hidden />
+                            <span className="truncate">
+                              {row.lead.email || "No email provided"}
+                            </span>
+                          </div>
+                          {row.lead.phone ? (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Phone className="h-4 w-4 shrink-0" aria-hidden />
+                              <span className="truncate">{row.lead.phone}</span>
+                            </div>
+                          ) : null}
+                        </div>
+                        {row.preview ? (
+                          <p className="mt-3 line-clamp-3 rounded-2xl border border-border/40 bg-card/80 px-3 py-3 text-sm text-foreground/90">
+                            {row.preview}
+                          </p>
+                        ) : null}
+                        <p className="mt-3 text-xs font-medium text-muted-foreground">
+                          Tap to review full submission
+                        </p>
+                      </button>
+                    </div>
+                    <div className="flex flex-wrap gap-2 border-t border-border/40 px-4 py-3">
+                      <Button
+                        type="button"
+                        size="sm"
+                        className="flex-1 rounded-xl"
+                        onClick={() => setActiveLeadId(row.lead.id)}
+                      >
+                        Open
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 rounded-xl"
+                        disabled={!row.lead.email}
+                        onClick={() => copyToClipboard(row.lead.email, "Email copied")}
+                      >
+                        Copy email
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        className="w-full rounded-xl"
+                        onClick={() => deleteLead(row.lead.id)}
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+
+              <div className="hidden md:block">
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[1040px] text-left text-sm">
                   <thead className="bg-muted/50 text-xs uppercase tracking-[0.18em] text-muted-foreground">
                     <tr>
                       <th className="px-4 py-3">
@@ -909,12 +1067,19 @@ export default function LeadsList({ userId }: { userId: string }) {
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                  </table>
+                </div>
               </div>
 
               {hasMore ? (
                 <div className="border-t border-border/40 px-4 py-4">
-                  <Button type="button" variant="outline" onClick={() => load()} disabled={fetching}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full sm:w-auto"
+                    onClick={() => load()}
+                    disabled={fetching}
+                  >
                     {fetching ? "Loading..." : "Load more leads"}
                   </Button>
                 </div>
@@ -933,7 +1098,7 @@ export default function LeadsList({ userId }: { userId: string }) {
             <div className="flex h-full min-h-0 flex-col">
               <DialogHeader className="shrink-0 border-b border-border/50 px-5 py-4 text-left lg:px-6">
                 <div className="space-y-2">
-                  <DialogTitle className="pr-10 text-[1.9rem] font-semibold leading-tight">
+                  <DialogTitle className="pr-10 text-2xl font-semibold leading-tight sm:text-[1.9rem]">
                     {activeLeadView.lead.name || "Unnamed lead"}
                   </DialogTitle>
                   <div className="flex flex-wrap items-center gap-2">
@@ -1084,11 +1249,12 @@ export default function LeadsList({ userId }: { userId: string }) {
                 </div>
               </div>
               <div className="shrink-0 border-t border-border/50 px-5 py-3 lg:px-6">
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
+                    className="w-full justify-center sm:w-auto"
                     disabled={!activeLeadView.lead.email}
                     onClick={() =>
                       copyToClipboard(activeLeadView.lead.email, "Email copied")
@@ -1101,6 +1267,7 @@ export default function LeadsList({ userId }: { userId: string }) {
                     type="button"
                     variant="outline"
                     size="sm"
+                    className="w-full justify-center sm:w-auto"
                     onClick={() => downloadVCard(activeLeadView.lead)}
                   >
                     <FileText className="h-4 w-4" aria-hidden />
@@ -1110,6 +1277,7 @@ export default function LeadsList({ userId }: { userId: string }) {
                     type="button"
                     variant="outline"
                     size="sm"
+                    className="w-full justify-center sm:w-auto"
                     disabled={activeLeadView.attachments.length === 0}
                     onClick={() => {
                       activeLeadView.attachments.forEach((file) =>
@@ -1124,6 +1292,7 @@ export default function LeadsList({ userId }: { userId: string }) {
                     <Button
                       type="button"
                       size="sm"
+                      className="w-full justify-center sm:w-auto"
                       onClick={() => updateLeadStatus(activeLeadView.lead.id, "contacted")}
                     >
                       Mark contacted
@@ -1133,6 +1302,7 @@ export default function LeadsList({ userId }: { userId: string }) {
                     type="button"
                     variant="destructive"
                     size="sm"
+                    className="w-full justify-center sm:w-auto"
                     onClick={() => deleteLead(activeLeadView.lead.id)}
                   >
                     <Trash2 className="h-4 w-4" aria-hidden />
@@ -1172,9 +1342,20 @@ function buildDetachedLeadView(
     preview: buildLeadPreview(lead, detailFields),
     detailFields,
     submittedLabel: createdAt.toLocaleString(),
+    submittedShortLabel: formatLeadSubmittedShort(createdAt),
     submittedSortValue: createdAt.getTime(),
     spamSuspected,
   } satisfies LeadView;
+}
+
+function formatLeadSubmittedShort(createdAt: Date) {
+  if (Number.isNaN(createdAt.getTime())) return "Unknown date";
+  return createdAt.toLocaleString([], {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
 }
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
