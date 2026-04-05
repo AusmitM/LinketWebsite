@@ -861,11 +861,7 @@ function ExplorePagesSection() {
     <section className="landing-alt-font mx-auto max-w-6xl px-4 pb-10 sm:px-6 sm:pb-12">
       <div className="landing-fade-up overflow-hidden rounded-[28px] border border-foreground/10 bg-white/90 p-6 shadow-[0_30px_70px_rgba(15,23,42,0.08)] sm:rounded-[36px] sm:p-8">
         <div className="max-w-3xl">
-          <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-[#fff7ed] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-500 sm:text-xs sm:tracking-[0.35em]">
-            <span className="h-2 w-2 rounded-full bg-[#ff9776]" />
-            Explore
-          </span>
-          <h2 className="landing-serif mt-4 text-2xl font-normal tracking-[-0.03em] text-slate-900 sm:text-4xl">
+          <h2 className="landing-serif text-2xl font-normal tracking-[-0.03em] text-slate-900 sm:text-4xl">
             Explore the questions people search before they buy
           </h2>
           <p className="mt-4 max-w-2xl text-sm text-slate-600 sm:text-base">
@@ -1054,11 +1050,7 @@ function PublicProfilePreviewSection({
       <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
         <div className="grid items-center gap-8 sm:gap-12 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="landing-fade-up space-y-6 text-slate-900 sm:space-y-8">
-            {/* Section label + headline. */}
-            <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-white/60 bg-white/70 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-500 shadow-[0_10px_25px_rgba(15,23,42,0.08)] backdrop-blur sm:gap-3 sm:px-4 sm:text-xs sm:tracking-[0.35em]">
-              <span className="h-2 w-2 rounded-full bg-[#1e3a8a]" />
-              Public profile preview
-            </div>
+            {/* Section headline. */}
             <div className="space-y-4">
               <h2 className="landing-serif text-2xl font-normal tracking-[-0.03em] sm:text-4xl">
                 A premium page that looks ready for the spotlight
