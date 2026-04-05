@@ -54,7 +54,7 @@ type UserLite = {
 const LANDING_LINKS = [
   {
     id: "how-it-works",
-    label: "How it Works",
+    label: "How it works",
     gradient: "linear-gradient(120deg,#ff9776 0%,#ffb166 100%)",
     shadow: "0 10px 24px rgba(255,151,118,0.35)",
   },

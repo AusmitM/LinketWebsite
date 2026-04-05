@@ -350,7 +350,7 @@ type JourneyStep = {
   accent: string;
 };
 
-// Journey steps shown in the "How Linket flows" section.
+// Journey steps shown in the "How it works" section.
 const JOURNEY_STEPS: JourneyStep[] = [
   {
     title: "Invite with a tap",
@@ -848,7 +848,7 @@ function JourneySection() {
       <FeatureSteps
         className="landing-fade-up mt-8 rounded-[28px] border border-foreground/5 bg-white/90 shadow-[0_35px_80px_rgba(15,23,42,0.08)] sm:rounded-[36px]"
         features={JOURNEY_FEATURES}
-        title="How Linket flows"
+        title="How it works"
         autoPlayInterval={4000}
         imageHeight="lg:h-[420px]"
       />
