@@ -59,7 +59,7 @@ export function AdaptiveNavPill({
               aria-selected={isActive}
               aria-current={isActive ? "page" : undefined}
               className={cn(
-                "relative flex h-12 items-center justify-center rounded-full px-5 text-sm font-semibold uppercase tracking-[0.08em] transition-all duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0f4c81]",
+                "relative flex h-12 items-center justify-center rounded-full px-5 text-sm font-semibold uppercase tracking-[0.08em] transition-[transform,color,background-color,box-shadow] duration-200 ease-out motion-reduce:transform-none motion-reduce:transition-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0f4c81] active:scale-[0.985]",
                 isActive ? "text-[#0b1220]" : "text-[#606b85] hover:-translate-y-0.5"
               )}
               style={{

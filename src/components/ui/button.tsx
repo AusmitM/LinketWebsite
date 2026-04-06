@@ -14,7 +14,7 @@ const buttonVariants = cva(
         landingPrimary:
           "button-landing-primary active:scale-[0.985]",
         landingSecondary:
-          "button-landing-secondary",
+          "button-landing-secondary active:scale-[0.985]",
         destructive:
           "[background:var(--color-button-destructive-bg)] [color:var(--color-button-destructive-fg)] border-[color:var(--color-button-destructive-border)] shadow-[0_14px_30px_-24px_var(--color-button-destructive-shadow)] hover:[background:var(--color-button-destructive-bg-hover)] active:[background:var(--color-button-destructive-bg-active)] active:scale-[0.98]",
         success:

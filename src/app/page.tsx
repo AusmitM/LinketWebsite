@@ -350,6 +350,15 @@ type JourneyStep = {
   accent: string;
 };
 
+type DemoProofStep = {
+  title: string;
+  description: string;
+  detail: string;
+  metric: string;
+  icon: LucideIcon;
+  accent: string;
+};
+
 // Journey steps shown in the "How it works" section.
 const JOURNEY_STEPS: JourneyStep[] = [
   {
@@ -400,6 +409,39 @@ const JOURNEY_FEATURES = [
     image:
       "https://images.unsplash.com/photo-1485217988980-11786ced9454?auto=format&fit=crop&w=1600&q=80",
   },
+] as const;
+
+const DEMO_PROOF_STEPS: readonly DemoProofStep[] = [
+  {
+    title: "Tap or scan",
+    description: "The profile opens in the browser instantly.",
+    detail: "NFC first, etched QR fallback, no app download needed.",
+    metric: "2-second handoff",
+    icon: Sparkles,
+    accent: "from-[#ff9776]/35 via-[#ffd27f]/22 to-transparent text-[#ffd27f]",
+  },
+  {
+    title: "Save the contact",
+    description: "Visitors get the essentials without asking what to do next.",
+    detail: "Your card, hero links, and book-now actions land in one clean view.",
+    metric: "Contact + links in one place",
+    icon: Download,
+    accent: "from-[#7dd3fc]/32 via-[#93c5fd]/16 to-transparent text-[#93c5fd]",
+  },
+  {
+    title: "See the follow-up",
+    description: "Scans and lead signals route back into the dashboard.",
+    detail: "You know who engaged, what they tapped, and where to pick up the thread.",
+    metric: "Realtime lead signal",
+    icon: LineChart,
+    accent: "from-[#86efac]/30 via-[#34d399]/16 to-transparent text-[#86efac]",
+  },
+] as const;
+
+const DEMO_SIGNAL_CARDS = [
+  { label: "Profile opened", value: "00:02" },
+  { label: "Contact saved", value: "00:08" },
+  { label: "Lead logged", value: "Live" },
 ] as const;
 
 // FAQ content for the accordion + JSON-LD schema.
@@ -615,7 +657,7 @@ function HeroDashboardPreview() {
   } 110 L ${trendPoints[0].x} 110 Z`;
 
   return (
-    <div className="landing-fade-up landing-delay-4 landing-float relative w-full max-w-6xl rounded-[24px] border border-[#f5d7b0]/80 bg-white/85 p-4 text-left text-slate-900 shadow-[0_45px_120px_rgba(254,215,170,0.45)] backdrop-blur transition-transform duration-500 hover:-translate-y-2 sm:rounded-[32px] sm:p-6">
+    <div className="landing-fade-up landing-delay-4 relative w-full max-w-6xl rounded-[24px] border border-[#f5d7b0]/80 bg-white/85 p-4 text-left text-slate-900 shadow-[0_45px_120px_rgba(254,215,170,0.45)] backdrop-blur transition-[transform,box-shadow] duration-300 ease-out motion-reduce:transform-none motion-reduce:transition-none hover:-translate-y-1 sm:rounded-[32px] sm:p-6">
       {/* Top bar: user badge, tabs, search, date range, and download CTA. */}
       <div className="flex flex-col gap-4 border-b border-orange-100 pb-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex max-w-full items-center gap-3 rounded-full border border-[#ffd4c2] bg-[#fff6ef] px-3 py-2 sm:px-4">
@@ -844,12 +886,11 @@ function JourneySection() {
       id="how-it-works"
       className="landing-alt-font mx-auto max-w-6xl px-4 pt-6 pb-10 sm:px-6"
     >
-      {/* FeatureSteps handles the image + text carousel. */}
+      {/* FeatureSteps handles the guided image + copy walkthrough. */}
       <FeatureSteps
         className="landing-fade-up mt-8 rounded-[28px] border border-foreground/5 bg-white/90 shadow-[0_35px_80px_rgba(15,23,42,0.08)] sm:rounded-[36px]"
         features={JOURNEY_FEATURES}
         title="How it works"
-        autoPlayInterval={4000}
         imageHeight="lg:h-[420px]"
       />
     </section>
@@ -972,6 +1013,160 @@ function ExperienceSection() {
   );
 }
 
+function DemoExperienceFallback() {
+  return (
+    <div className="grid h-full w-full gap-4 p-4 sm:p-6 lg:grid-cols-[0.88fr_1.12fr] lg:p-8">
+      <div className="grid gap-3">
+        {DEMO_PROOF_STEPS.map((step) => {
+          const Icon = step.icon;
+
+          return (
+            <div
+              key={step.title}
+              className="rounded-[28px] border border-white/12 bg-white/[0.045] p-4 shadow-[0_18px_50px_rgba(2,6,23,0.28)] backdrop-blur"
+            >
+              <div className="flex items-start gap-3">
+                <div
+                  className={cn(
+                    "flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br",
+                    step.accent
+                  )}
+                >
+                  <Icon className="h-5 w-5" aria-hidden />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-white">{step.title}</p>
+                  <p className="mt-1 text-sm leading-6 text-slate-300">
+                    {step.description}
+                  </p>
+                </div>
+              </div>
+              <div className="mt-4 flex items-center justify-between gap-3 rounded-[22px] border border-white/10 bg-white/[0.035] px-3 py-2 text-xs">
+                <span className="text-slate-400">{step.detail}</span>
+                <span className="rounded-full bg-white/10 px-2.5 py-1 font-semibold text-white">
+                  {step.metric}
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="relative overflow-hidden rounded-[32px] border border-white/12 bg-[#0b1220] shadow-[0_30px_90px_rgba(2,6,23,0.45)]">
+        <div
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(255,151,118,0.22),transparent_36%),radial-gradient(circle_at_82%_16%,rgba(125,211,252,0.18),transparent_34%),linear-gradient(180deg,rgba(15,23,42,0.15),rgba(2,6,23,0.78))]"
+          aria-hidden
+        />
+        <div className="relative flex h-full flex-col p-5 sm:p-6">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-white/45">
+                Interactive proof
+              </p>
+              <h3 className="mt-2 text-xl font-semibold text-white sm:text-2xl">
+                What the handoff actually feels like
+              </h3>
+            </div>
+            <span className="rounded-full border border-white/15 bg-white/6 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-white/70">
+              Browser first
+            </span>
+          </div>
+          <div className="mt-5 grid flex-1 gap-4 xl:grid-cols-[0.88fr_1.12fr]">
+            <div className="rounded-[28px] border border-white/12 bg-white/[0.045] p-4 backdrop-blur">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/45">
+                On their phone
+              </p>
+              <div className="mt-4 rounded-[26px] border border-white/10 bg-slate-950/55 p-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[#ff9776] via-[#ffd27f] to-[#7dd3fc] text-sm font-semibold text-slate-950">
+                    PK
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-white">
+                      Punit Kothakonda
+                    </p>
+                    <p className="text-xs text-white/55">
+                      Engineer | Founder | Digital Media
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-4 space-y-2">
+                  {[
+                    "Save contact card",
+                    "Open portfolio and social links",
+                    "Share info back with a quick lead form",
+                  ].map((item) => (
+                    <div
+                      key={item}
+                      className="rounded-2xl border border-white/8 bg-white/[0.04] px-3 py-2 text-sm text-slate-200"
+                    >
+                      {item}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="grid gap-4">
+              <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-3">
+                {DEMO_SIGNAL_CARDS.map((card) => (
+                  <div
+                    key={card.label}
+                    className="rounded-[24px] border border-white/12 bg-white/[0.045] px-4 py-3"
+                  >
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-white/40">
+                      {card.label}
+                    </p>
+                    <p className="mt-2 text-xl font-semibold text-white">
+                      {card.value}
+                    </p>
+                  </div>
+                ))}
+              </div>
+              <div className="rounded-[28px] border border-white/12 bg-white/[0.045] p-4">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/45">
+                  Back in your dashboard
+                </p>
+                <div className="mt-4 space-y-3">
+                  {[
+                    {
+                      label: "New lead",
+                      detail: "Contact details captured and ready for follow-up.",
+                    },
+                    {
+                      label: "Top tap",
+                      detail: "Portfolio link pulled the most attention in this intro.",
+                    },
+                    {
+                      label: "Best next move",
+                      detail: "Send a follow-up while the conversation is still warm.",
+                    },
+                  ].map((item) => (
+                    <div
+                      key={item.label}
+                      className="flex items-start justify-between gap-3 rounded-2xl border border-white/8 bg-slate-950/45 px-3 py-3"
+                    >
+                      <div>
+                        <p className="text-sm font-semibold text-white">
+                          {item.label}
+                        </p>
+                        <p className="mt-1 text-sm text-slate-300">
+                          {item.detail}
+                        </p>
+                      </div>
+                      <span className="mt-0.5 rounded-full bg-emerald-500/15 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-200">
+                        Live
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Video demo section that shows the product flow.
 function LiveDemoSection({ media }: { media: LandingDemoMedia }) {
   return (
@@ -979,11 +1174,7 @@ function LiveDemoSection({ media }: { media: LandingDemoMedia }) {
       <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
         <div className="landing-fade-up mx-auto max-w-3xl text-center">
           {/* Section heading + lead-in copy. */}
-          <span className="inline-flex max-w-full items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-500 shadow-sm sm:px-4 sm:text-xs sm:tracking-[0.35em]">
-            <span className="h-2 w-2 rounded-full bg-[#ffb48a]" />
-            Product demo
-          </span>
-          <h2 className="landing-serif mt-6 text-2xl font-normal tracking-[-0.03em] text-slate-900 sm:text-4xl">
+          <h2 className="landing-serif text-2xl font-normal tracking-[-0.03em] text-slate-900 sm:text-4xl">
             See Linket in action
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-sm text-slate-600 sm:text-base">
@@ -993,7 +1184,12 @@ function LiveDemoSection({ media }: { media: LandingDemoMedia }) {
         </div>
 
         <div className="relative mx-auto mt-10 max-w-5xl sm:mt-12">
-          <div className="landing-fade-up landing-delay-2 relative overflow-hidden rounded-[32px] border border-slate-200 bg-[#111317] shadow-[0_45px_120px_rgba(15,23,42,0.25)] transition-transform duration-500 hover:-translate-y-1">
+          <div
+            className={cn(
+              "landing-fade-up landing-delay-2 relative overflow-hidden rounded-[32px] border border-slate-200 bg-[#111317] shadow-[0_45px_120px_rgba(15,23,42,0.25)] transition-[transform,box-shadow] duration-300 ease-out motion-reduce:transform-none motion-reduce:transition-none hover:-translate-y-1",
+              media.videoSrc ? "aspect-video" : "min-h-[620px] sm:min-h-[560px]"
+            )}
+          >
             {media.videoSrc ? (
               <video
                 className="aspect-video w-full"
@@ -1006,20 +1202,13 @@ function LiveDemoSection({ media }: { media: LandingDemoMedia }) {
                 Your browser does not support the video tag.
               </video>
             ) : (
-              <div className="aspect-video grid place-content-center px-6 text-center">
-                <p className="text-lg font-semibold text-white">
-                  Demo video is being updated
-                </p>
-                <p className="mt-2 text-sm text-slate-300">
-                  Use the live public profile preview below to test the flow.
-                </p>
-              </div>
+              <DemoExperienceFallback />
             )}
           </div>
           {/* Quick feature chips. */}
           <div className="mt-5 flex flex-wrap items-center justify-center gap-2 text-[11px] text-slate-500 sm:gap-3 sm:text-xs">
             <span className="rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-center transition-transform duration-300 hover:-translate-y-0.5">
-              {media.videoSrc ? "0:30 walkthrough" : "Interactive preview available"}
+              {media.videoSrc ? "0:30 walkthrough" : "Interactive handoff story"}
             </span>
             <span className="rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-center transition-transform duration-300 hover:-translate-y-0.5">
               Public profile + lead capture

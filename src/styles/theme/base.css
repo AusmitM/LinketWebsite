@@ -210,28 +210,12 @@
   }
 }
 
-@keyframes landing-float {
-  0% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-8px);
-  }
-  100% {
-    transform: translateY(0);
-  }
-}
-
 .landing-fade-up {
   animation: landing-fade-up 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .landing-fade-in {
   animation: landing-fade-in 0.85s ease both;
-}
-
-.landing-float {
-  animation: landing-float 8s ease-in-out infinite;
 }
 
 .landing-alt-font {
@@ -264,8 +248,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .landing-fade-up,
-  .landing-fade-in,
-  .landing-float {
+  .landing-fade-in {
     animation: none;
   }
 }

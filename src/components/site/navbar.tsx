@@ -800,7 +800,7 @@ export function Navbar() {
   const overlayMode = isPublic && isAtTop && isLandingPage;
 
   const headerClassName = cn(
-    "top-0 z-50 w-full border-b transition-all duration-300",
+    "top-0 z-50 w-full border-b transition-[background-color,border-color,color,backdrop-filter] duration-200 ease-out",
     isDashboard
       ? "sticky border-border/60 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60"
       : "fixed border-white/70 bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60",

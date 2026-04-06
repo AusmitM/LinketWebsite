@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
-import { AnimatePresence, motion } from "framer-motion";
 
 import { cn } from "@/lib/utils";
 
@@ -17,32 +16,21 @@ interface FeatureStepsProps {
   features: readonly Feature[];
   className?: string;
   title?: string;
-  autoPlayInterval?: number;
   imageHeight?: string;
 }
 
 export function FeatureSteps({
   features,
   className,
-  title = "How to get Started",
-  autoPlayInterval = 3000,
+  title = "How it works",
   imageHeight = "h-[400px]",
 }: FeatureStepsProps) {
   const [currentFeature, setCurrentFeature] = useState(0);
-  const [progress, setProgress] = useState(0);
+  const activeFeature = features[currentFeature] ?? features[0];
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      if (progress < 100) {
-        setProgress((prev) => prev + 100 / (autoPlayInterval / 100));
-      } else {
-        setCurrentFeature((prev) => (prev + 1) % features.length);
-        setProgress(0);
-      }
-    }, 100);
-
-    return () => clearInterval(timer);
-  }, [progress, features.length, autoPlayInterval]);
+  if (!activeFeature) {
+    return null;
+  }
 
   return (
     <div className={cn("p-4 sm:p-6 md:p-12", className)}>
@@ -51,74 +39,96 @@ export function FeatureSteps({
           {title}
         </h2>
 
-        <div className="flex flex-col gap-5 sm:gap-6 md:grid md:grid-cols-2 md:gap-10">
-          <div className="order-2 space-y-6 sm:space-y-8 md:order-1">
-            {features.map((feature, index) => (
-              <motion.div
-                key={`${feature.step}-${index}`}
-                className="flex items-start gap-4 sm:items-center sm:gap-6 md:gap-8"
-                initial={{ opacity: 0.85 }}
-                animate={{ opacity: index === currentFeature ? 1 : 0.85 }}
-                transition={{ duration: 0.5 }}
-              >
-                <motion.div
-                  className={cn(
-                    "flex h-8 w-8 items-center justify-center rounded-full border-2 md:h-10 md:w-10",
-                    index === currentFeature
-                      ? "bg-primary border-primary text-primary-foreground scale-110"
-                      : "bg-muted border-muted-foreground"
-                  )}
-                >
-                  {index <= currentFeature ? (
-                    <span className="text-base font-bold">&#10003;</span>
-                  ) : (
-                    <span className="text-lg font-semibold">{index + 1}</span>
-                  )}
-                </motion.div>
+        <div className="flex flex-col gap-6 sm:gap-8 md:grid md:grid-cols-[0.9fr_1.1fr] md:gap-10">
+          <div className="order-2 md:order-1">
+            <div aria-label={`${title} steps`} className="space-y-3 sm:space-y-4">
+              {features.map((feature, index) => {
+                const isActive = index === currentFeature;
 
-                <div className="min-w-0 flex-1">
-                  <h3 className="text-lg font-semibold sm:text-xl md:text-2xl">
-                    {feature.title || feature.step}
-                  </h3>
-                  <p className="text-sm text-slate-600 sm:text-base md:text-lg">
-                    {feature.content}
-                  </p>
-                </div>
-              </motion.div>
-            ))}
+                return (
+                  <button
+                    key={`${feature.step}-${index}`}
+                    type="button"
+                    aria-pressed={isActive}
+                    onClick={() => setCurrentFeature(index)}
+                    className={cn(
+                      "group flex w-full items-start gap-4 rounded-[28px] border px-4 py-4 text-left transition-[transform,border-color,background-color,box-shadow] duration-200 ease-out motion-reduce:transform-none motion-reduce:transition-none sm:gap-5 sm:px-5",
+                      isActive
+                        ? "border-[#ffb166]/70 bg-[#fff8f1] shadow-[0_18px_36px_rgba(15,23,42,0.08)]"
+                        : "border-transparent bg-transparent hover:border-[#f3dece] hover:bg-white/70 active:scale-[0.985]"
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border text-sm font-semibold transition-[transform,background-color,border-color,color] duration-200 ease-out motion-reduce:transform-none motion-reduce:transition-none",
+                        isActive
+                          ? "border-[#ffb166] bg-[#ffeddc] text-[#9a3412]"
+                          : "border-slate-200 bg-white text-slate-500 group-hover:-translate-y-0.5"
+                      )}
+                    >
+                      {index + 1}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-400">
+                        {feature.step}
+                      </p>
+                      <h3 className="mt-2 text-lg font-semibold text-slate-900 sm:text-xl md:text-2xl">
+                        {feature.title || feature.step}
+                      </h3>
+                      <p className="mt-2 text-sm leading-6 text-slate-600 sm:text-base">
+                        {feature.content}
+                      </p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           <div
             className={cn(
-              "order-1 relative h-[180px] overflow-hidden rounded-lg sm:h-[220px] md:order-2 md:h-[300px] lg:h-[400px]",
+              "order-1 relative overflow-hidden rounded-[28px] border border-slate-200 bg-[#111317] shadow-[0_24px_60px_rgba(15,23,42,0.18)] md:order-2",
+              "h-[240px] sm:h-[300px] md:h-[360px] lg:h-[420px]",
               imageHeight
             )}
           >
-            <AnimatePresence mode="wait">
-              {features.map(
-                (feature, index) =>
-                  index === currentFeature && (
-                    <motion.div
-                      key={`${feature.step}-${feature.image}`}
-                      className="absolute inset-0 overflow-hidden rounded-lg"
-                      initial={{ y: 100, opacity: 0, rotateX: -20 }}
-                      animate={{ y: 0, opacity: 1, rotateX: 0 }}
-                      exit={{ y: -100, opacity: 0, rotateX: 20 }}
-                      transition={{ duration: 0.5, ease: "easeInOut" }}
-                    >
-                      <Image
-                        src={feature.image}
-                        alt={feature.step}
-                        className="h-full w-full object-cover transition-transform"
-                        width={1000}
-                        height={500}
-                        sizes="(min-width: 1024px) 50vw, 100vw"
-                      />
-                      <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-background via-background/50 to-transparent" />
-                    </motion.div>
-                  )
-              )}
-            </AnimatePresence>
+            {features.map((feature, index) => {
+              const isActive = index === currentFeature;
+
+              return (
+                <div
+                  key={`${feature.step}-${feature.image}`}
+                  aria-hidden={!isActive}
+                  className={cn(
+                    "absolute inset-0 overflow-hidden transition-[opacity,transform] duration-300 ease-out motion-reduce:transform-none motion-reduce:transition-none",
+                    isActive
+                      ? "translate-y-0 opacity-100"
+                      : "pointer-events-none translate-y-3 opacity-0"
+                  )}
+                >
+                  <Image
+                    src={feature.image}
+                    alt={isActive ? feature.title || feature.step : ""}
+                    className="h-full w-full object-cover"
+                    width={1000}
+                    height={500}
+                    priority={index === 0}
+                    sizes="(min-width: 1024px) 50vw, 100vw"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/15 to-transparent" />
+                </div>
+              );
+            })}
+            <div className="absolute inset-x-0 bottom-0 z-10 p-4 sm:p-6">
+              <div className="max-w-sm rounded-[24px] border border-white/15 bg-slate-950/65 px-4 py-3 text-white shadow-[0_20px_45px_rgba(2,6,23,0.38)] backdrop-blur">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/55">
+                  {activeFeature.step}
+                </p>
+                <p className="mt-2 text-base font-semibold sm:text-lg">
+                  {activeFeature.title || activeFeature.step}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
