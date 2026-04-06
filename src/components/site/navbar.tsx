@@ -138,6 +138,7 @@ export function Navbar() {
   const router = useRouter();
   const [user, setUser] = useState<UserLite>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [dashboardAuthResolved, setDashboardAuthResolved] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isAtTop, setIsAtTop] = useState(true);
   const [currentHash, setCurrentHash] = useState("");
@@ -215,6 +216,7 @@ export function Navbar() {
     if (!isDashboard) {
       setUser(null);
       setAccountHandle(null);
+      setDashboardAuthResolved(false);
       return;
     }
 
@@ -222,15 +224,26 @@ export function Navbar() {
     let unsubscribe: (() => void) | null = null;
 
     (async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!active) return;
+        setUser(toUserLite(user ?? null));
+      } finally {
+        if (active) {
+          setDashboardAuthResolved(true);
+        }
+      }
+    })().catch(() => {
       if (!active) return;
-      setUser(toUserLite(user ?? null));
-    })();
+      setUser(null);
+      setDashboardAuthResolved(true);
+    });
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(toUserLite(session?.user ?? null));
+      setDashboardAuthResolved(true);
     });
     unsubscribe = () => sub.subscription.unsubscribe();
 
@@ -800,6 +813,10 @@ export function Navbar() {
   }
 
   const overlayMode = isPublic && isAtTop && isLandingPage;
+  const isDashboardAuthPending = isDashboard && !dashboardAuthResolved;
+  const showDashboardSignedInChrome = isDashboard && Boolean(user);
+  const showDashboardSignedOutChrome =
+    isDashboard && dashboardAuthResolved && !user;
 
   const headerClassName = cn(
     "top-0 z-50 w-full border-b transition-[background-color,border-color,color,backdrop-filter] duration-200 ease-out",
@@ -975,7 +992,18 @@ export function Navbar() {
   const activeLandingId = (activeLandingSection ??
     LANDING_LINKS[0].id) as LandingSectionId;
 
-  const dashboardAvatar = user ? (
+  const dashboardSignInButton = (
+    <Button
+      variant="outline"
+      size="sm"
+      asChild
+      className="rounded-full border-border/60 bg-card/80 text-foreground hover:bg-card"
+    >
+      <Link href="/auth?view=signin">Sign in</Link>
+    </Button>
+  );
+
+  const dashboardAvatar = showDashboardSignedInChrome ? (
     <button
       type="button"
       ref={accountButtonRef}
@@ -994,18 +1022,11 @@ export function Navbar() {
         getUserInitials(user.fullName ?? user.email ?? "PK")
       )}
     </button>
-  ) : (
-    <Button
-      variant="outline"
-      size="sm"
-      asChild
-      className="rounded-full border-border/60 bg-card/80 text-foreground hover:bg-card"
-    >
-      <Link href="/auth?view=signin">Sign in</Link>
-    </Button>
-  );
+  ) : showDashboardSignedOutChrome ? (
+    dashboardSignInButton
+  ) : null;
 
-  const dashboardProfileActions = user ? (
+  const dashboardProfileActions = showDashboardSignedInChrome ? (
     <div className="dashboard-nav-actions hidden items-center gap-2 md:flex">
       <Button
         type="button"
@@ -1035,7 +1056,7 @@ export function Navbar() {
   ) : null;
 
   const dashboardNotificationsButton =
-    user && shouldShowNotifications ? (
+    showDashboardSignedInChrome && shouldShowNotifications ? (
       <button
         type="button"
         ref={notificationsButtonRef}
@@ -1177,7 +1198,7 @@ export function Navbar() {
           <div className="dashboard-navbar-right flex shrink-0 items-center gap-3">
             {dashboardProfileActions}
             {dashboardNotificationsButton}
-            {user ? (
+            {showDashboardSignedInChrome ? (
               <Button
                 type="button"
                 size="sm"
@@ -1193,46 +1214,52 @@ export function Navbar() {
                 </span>
               </Button>
             ) : null}
-            <Button
-              asChild
-              size="sm"
-              className="dashboard-new-linket-button hidden rounded-full lg:inline-flex"
-            >
-              <Link href="/dashboard/linkets">New Linket</Link>
-            </Button>
-            <Button
-              asChild
-              size="sm"
-              className="dashboard-new-linket-button dashboard-new-linket-button--mobile rounded-full lg:hidden"
-            >
-              <Link
-                href="/dashboard/linkets"
-                aria-label="Create new Linket"
-                className="inline-flex items-center gap-1.5"
+            {showDashboardSignedInChrome ? (
+              <Button
+                asChild
+                size="sm"
+                className="dashboard-new-linket-button hidden rounded-full lg:inline-flex"
               >
-                <Plus
-                  className="dashboard-new-linket-icon h-4 w-4"
-                  aria-hidden="true"
-                />
-                <span className="dashboard-new-linket-label">New Linket</span>
-              </Link>
-            </Button>
+                <Link href="/dashboard/linkets">New Linket</Link>
+              </Button>
+            ) : null}
+            {showDashboardSignedInChrome ? (
+              <Button
+                asChild
+                size="sm"
+                className="dashboard-new-linket-button dashboard-new-linket-button--mobile rounded-full lg:hidden"
+              >
+                <Link
+                  href="/dashboard/linkets"
+                  aria-label="Create new Linket"
+                  className="inline-flex items-center gap-1.5"
+                >
+                  <Plus
+                    className="dashboard-new-linket-icon h-4 w-4"
+                    aria-hidden="true"
+                  />
+                  <span className="dashboard-new-linket-label">New Linket</span>
+                </Link>
+              </Button>
+            ) : null}
             {dashboardAvatar}
-            <button
-              type="button"
-              className="dashboard-mobile-toggle inline-flex items-center justify-center rounded-full border border-border/60 p-2 text-foreground lg:hidden"
-              onClick={handleDashboardMenuToggle}
-              aria-label={
-                dashboardSidebarOpen ? "Close navigation" : "Open navigation"
-              }
-              aria-expanded={dashboardSidebarOpen}
-            >
-              {dashboardSidebarOpen ? (
-                <X className="h-5 w-5" aria-hidden />
-              ) : (
-                <Menu className="h-5 w-5" aria-hidden />
-              )}
-            </button>
+            {showDashboardSignedInChrome && !isDashboardAuthPending ? (
+              <button
+                type="button"
+                className="dashboard-mobile-toggle inline-flex items-center justify-center rounded-full border border-border/60 p-2 text-foreground lg:hidden"
+                onClick={handleDashboardMenuToggle}
+                aria-label={
+                  dashboardSidebarOpen ? "Close navigation" : "Open navigation"
+                }
+                aria-expanded={dashboardSidebarOpen}
+              >
+                {dashboardSidebarOpen ? (
+                  <X className="h-5 w-5" aria-hidden />
+                ) : (
+                  <Menu className="h-5 w-5" aria-hidden />
+                )}
+              </button>
+            ) : null}
           </div>
         </nav>
         {user && (
