@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { ArrowLeft, KeyRound, Loader2, Mail } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { Loader2, Mail } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 
-import { supabase } from "@/lib/supabase";
 import {
   Card,
   CardContent,
@@ -17,199 +16,63 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/components/system/toaster";
-import { createPasswordResetClient } from "@/lib/password-reset-auth";
-import {
-  clearPasswordResetVerification,
-  clearPasswordResetSession,
-  readPasswordResetEmail,
-  writePasswordResetEmail,
-  writePasswordResetSession,
-  writePasswordResetVerification,
-} from "@/lib/password-reset-email";
 import { friendlyAuthError } from "@/lib/auth-errors";
-
-const RESEND_COOLDOWN_MS = 60_000;
-
-function formatOtpError(error: unknown) {
-  const message =
-    error instanceof Error
-      ? error.message
-      : "Unable to verify that code. Request a new one and try again.";
-  const lowerMessage = message.toLowerCase();
-
-  if (
-    lowerMessage.includes("expired") ||
-    lowerMessage.includes("token") ||
-    lowerMessage.includes("otp")
-  ) {
-    return "That verification code is invalid or expired. Request a new code and try again.";
-  }
-
-  return friendlyAuthError(message);
-}
+import { getSiteOrigin } from "@/lib/site-url";
+import { createClient } from "@/lib/supabase/client";
 
 export default function ForgotPasswordPage() {
-  const router = useRouter();
-  const resetAuth = useMemo(() => createPasswordResetClient(), []);
-  const [email, setEmail] = useState("");
-  const [code, setCode] = useState("");
-  const [step, setStep] = useState<"email" | "code">("email");
+  const searchParams = useSearchParams();
+  const supabase = useMemo(() => createClient(), []);
+  const [email, setEmail] = useState(() => searchParams.get("email")?.trim() ?? "");
   const [loading, setLoading] = useState(false);
-  const [verifying, setVerifying] = useState(false);
+  const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
-  const [resendAvailableAt, setResendAvailableAt] = useState<number | null>(
-    null
-  );
-  const [resendCountdownNow, setResendCountdownNow] = useState(() => Date.now());
 
-  useEffect(() => {
-    const storedEmail = readPasswordResetEmail();
-    if (!storedEmail) return;
-    setEmail((current) => (current.trim() ? current : storedEmail));
-  }, []);
-
-  const resendSecondsRemaining = useMemo(() => {
-    if (!resendAvailableAt) return 0;
-    return Math.max(
-      0,
-      Math.ceil((resendAvailableAt - resendCountdownNow) / 1000)
-    );
-  }, [resendAvailableAt, resendCountdownNow]);
-
-  useEffect(() => {
-    if (!resendAvailableAt) return;
-
-    const interval = window.setInterval(() => {
-      if (Date.now() >= resendAvailableAt) {
-        setResendAvailableAt(null);
-        window.clearInterval(interval);
-      } else {
-        setResendCountdownNow(Date.now());
-      }
-    }, 1000);
-
-    return () => window.clearInterval(interval);
-  }, [resendAvailableAt]);
-
-  async function sendCode(targetEmail: string) {
-    const normalizedEmail = targetEmail.trim().toLowerCase();
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const normalizedEmail = email.trim().toLowerCase();
     if (!normalizedEmail) {
-      setError("Please enter your email address");
-      return false;
+      setError("Please enter your email address.");
+      return;
     }
 
-    clearPasswordResetVerification();
-    clearPasswordResetSession();
     setLoading(true);
     setError("");
 
     try {
-      const { error: otpError } = await resetAuth.auth.signInWithOtp({
-        email: normalizedEmail,
-        options: {
-          shouldCreateUser: false,
-        },
-      });
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(
+        normalizedEmail,
+        {
+          redirectTo: `${getSiteOrigin()}/reset-password`,
+        }
+      );
 
-      if (otpError) {
-        throw otpError;
+      if (resetError) {
+        throw resetError;
       }
 
-      writePasswordResetEmail(normalizedEmail);
       setEmail(normalizedEmail);
-      setCode("");
-      setStep("code");
-      setResendAvailableAt(Date.now() + RESEND_COOLDOWN_MS);
+      setSent(true);
       toast({
         title: "Check your email",
         description:
-          "If that address matches an account, we sent a 6-digit verification code.",
+          "If that address matches an account, we sent a password reset link.",
         variant: "success",
       });
-      return true;
     } catch (err) {
       const message =
         err instanceof Error
           ? err.message
-          : "Failed to send verification code. Please try again.";
-      setError(friendlyAuthError(message));
-      toast({
-        title: "Couldn't send code",
-        description: friendlyAuthError(message),
-        variant: "destructive",
-      });
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    if (step === "email") {
-      await sendCode(email);
-      return;
-    }
-
-    const normalizedEmail = email.trim().toLowerCase();
-    const normalizedCode = code.trim();
-    if (!normalizedCode) {
-      setError("Enter the verification code from your email.");
-      return;
-    }
-
-    setVerifying(true);
-    setError("");
-
-    try {
-      const { data, error: verifyError } = await resetAuth.auth.verifyOtp({
-        email: normalizedEmail,
-        token: normalizedCode,
-        type: "email",
-      });
-
-      if (verifyError) {
-        throw verifyError;
-      }
-
-      if (!data.user?.email) {
-        throw new Error(
-          "We couldn't verify which account this code belongs to. Request a new code and try again."
-        );
-      }
-
-      const verifiedEmail = data.user.email.trim().toLowerCase();
-      const accessToken = data.session?.access_token?.trim() ?? "";
-      const refreshToken = data.session?.refresh_token?.trim() ?? "";
-      if (!accessToken || !refreshToken) {
-        throw new Error(
-          "We couldn't establish a secure password reset session. Request a new code and try again."
-        );
-      }
-      writePasswordResetEmail(verifiedEmail);
-      writePasswordResetVerification(verifiedEmail);
-      writePasswordResetSession({
-        accessToken,
-        refreshToken,
-        email: verifiedEmail,
-      });
-
-      toast({
-        title: "Code verified",
-        description: "Choose a new password for your account.",
-        variant: "success",
-      });
-      router.replace("/reset-password");
-    } catch (err) {
-      const description = formatOtpError(err);
+          : "Failed to send reset email. Please try again.";
+      const description = friendlyAuthError(message);
       setError(description);
       toast({
-        title: "Couldn't verify code",
+        title: "Couldn't send reset email",
         description,
         variant: "destructive",
       });
     } finally {
-      setVerifying(false);
+      setLoading(false);
     }
   }
 
@@ -218,12 +81,10 @@ export default function ForgotPasswordPage() {
       <Card className="w-full max-w-md border border-foreground/10 bg-card/80 shadow-xl backdrop-blur">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-semibold text-foreground">
-            {step === "email" ? "Reset your password" : "Enter verification code"}
+            Reset your password
           </CardTitle>
           <CardDescription>
-            {step === "email"
-              ? "Enter your email address and we'll send a 6-digit verification code. No reset link required."
-              : `We emailed a 6-digit code to ${email || "your address"}. Enter it below to continue to a new password.`}
+            Enter your email address and we&apos;ll send a secure password reset link.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -233,6 +94,13 @@ export default function ForgotPasswordPage() {
                 {error}
               </div>
             )}
+
+            {sent ? (
+              <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+                If <span className="font-medium">{email}</span> matches an account,
+                a reset link is on the way. Open that link to choose a new password.
+              </div>
+            ) : null}
 
             <div className="space-y-2">
               <Label
@@ -250,97 +118,41 @@ export default function ForgotPasswordPage() {
                   id="email"
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (sent) {
+                      setSent(false);
+                    }
+                  }}
                   autoComplete="email"
                   placeholder="you@example.com"
                   className="pl-9"
-                  disabled={loading || verifying || step === "code"}
+                  disabled={loading}
                   required
                 />
               </div>
             </div>
 
-            {step === "code" ? (
-              <div className="space-y-2">
-                <Label
-                  htmlFor="verificationCode"
-                  className="text-sm font-medium text-foreground"
-                >
-                  Verification code
-                </Label>
-                <div className="relative">
-                  <KeyRound
-                    className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-                    aria-hidden
-                  />
-                  <Input
-                    id="verificationCode"
-                    type="text"
-                    inputMode="numeric"
-                    autoComplete="one-time-code"
-                    value={code}
-                    onChange={(event) =>
-                      setCode(event.target.value.replace(/\s+/g, "").slice(0, 6))
-                    }
-                    placeholder="123456"
-                    className="pl-9 tracking-[0.35em]"
-                    disabled={loading || verifying}
-                    required
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Check your inbox and spam folder. The code expires automatically.
-                </p>
-              </div>
-            ) : null}
-
             <Button
               type="submit"
               className="w-full rounded-full"
-              disabled={loading || verifying}
+              disabled={loading}
             >
-              {loading || verifying ? (
+              {loading ? (
                 <span className="inline-flex items-center gap-2 text-sm">
                   <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-                  {step === "email" ? "Sending..." : "Verifying..."}
+                  Sending...
                 </span>
               ) : (
-                step === "email" ? "Send verification code" : "Verify code"
+                sent ? "Send another reset link" : "Send reset link"
               )}
             </Button>
 
             <div className="flex flex-col items-center gap-3 text-center">
-              {step === "code" ? (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setStep("email");
-                      setCode("");
-                      setError("");
-                    }}
-                    className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900"
-                  >
-                    <ArrowLeft className="h-4 w-4" aria-hidden />
-                    Use a different email
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (resendSecondsRemaining > 0 || loading || verifying) {
-                        return;
-                      }
-                      void sendCode(email);
-                    }}
-                    disabled={resendSecondsRemaining > 0 || loading || verifying}
-                    className="text-sm font-medium text-blue-600 hover:underline disabled:cursor-not-allowed disabled:text-slate-400 disabled:no-underline"
-                  >
-                    {resendSecondsRemaining > 0
-                      ? `Resend code in ${resendSecondsRemaining}s`
-                      : "Resend code"}
-                  </button>
-                </>
-              ) : null}
+              <p className="text-xs text-muted-foreground">
+                Check your inbox and spam folder. The link will open a secure page
+                where you can choose a new password.
+              </p>
               <Link
                 href="/auth?view=signin"
                 className="text-sm font-medium text-blue-600 hover:underline"

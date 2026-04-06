@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, Loader2, LockKeyhole } from "lucide-react";
@@ -16,15 +16,8 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { createPasswordResetClient } from "@/lib/password-reset-auth";
 import { friendlyAuthError } from "@/lib/auth-errors";
-import {
-  clearPasswordResetVerification,
-  clearPasswordResetSession,
-  readPasswordResetVerification,
-  readPasswordResetSession,
-  writePasswordResetEmail,
-} from "@/lib/password-reset-email";
+import { createClient } from "@/lib/supabase/client";
 
 const PASSWORD_LENGTH_ERROR = "Password must be at least 6 characters.";
 const PASSWORD_STRENGTH_ERROR =
@@ -59,7 +52,7 @@ function getAuthErrorCode(error: unknown): string | undefined {
 
 export default function ResetPasswordPage() {
   const router = useRouter();
-  const resetAuth = useMemo(() => createPasswordResetClient(), []);
+  const supabase = useMemo(() => createClient(), []);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [initializing, setInitializing] = useState(true);
@@ -69,83 +62,85 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState<string | null>(null);
   const [accountEmail, setAccountEmail] = useState("");
 
-  const handleRequestNewResetLink = useCallback(() => {
-    writePasswordResetEmail(accountEmail);
-    clearPasswordResetVerification();
-    clearPasswordResetSession();
-    router.push("/forgot-password");
-  }, [accountEmail, router]);
-
   useEffect(() => {
     let active = true;
+    let invalidLinkTimeout = 0;
+
+    const applyRecoverySession = (email: string | null | undefined) => {
+      const normalizedEmail = email?.trim() ?? "";
+      if (!normalizedEmail || !active) return false;
+      window.clearTimeout(invalidLinkTimeout);
+      setAccountEmail(normalizedEmail);
+      setReady(true);
+      setError(null);
+      setInitializing(false);
+      return true;
+    };
+
+    const failRecovery = (message: string, code?: string) => {
+      if (!active) return;
+      window.clearTimeout(invalidLinkTimeout);
+      setReady(false);
+      setError(friendlyAuthError(message, code));
+      setInitializing(false);
+    };
 
     const initializeRecovery = async () => {
       setInitializing(true);
       setError(null);
 
       try {
-        const verificationState = readPasswordResetVerification();
-        const resetSession = readPasswordResetSession();
-        if (!verificationState || !resetSession) {
-          throw new Error(
-            "Your verification code has expired or was not confirmed in this tab. Request a new code and try again."
-          );
-        }
-
-        const { error: sessionError } = await resetAuth.auth.setSession({
-          access_token: resetSession.accessToken,
-          refresh_token: resetSession.refreshToken,
-        });
+        const {
+          data: { session },
+          error: sessionError,
+        } = await supabase.auth.getSession();
         if (sessionError) throw sessionError;
 
-        const {
-          data: { user },
-          error: userError,
-        } = await resetAuth.auth.getUser();
-        if (userError) throw userError;
-        const resolvedEmail = user?.email?.trim() ?? "";
-        if (!resolvedEmail) {
-          throw new Error(
-            "We couldn't verify which account this code belongs to. Request a new code and try again."
-          );
+        if (applyRecoverySession(session?.user.email)) {
+          return;
         }
 
-        if (resolvedEmail.toLowerCase() !== verificationState.email.toLowerCase()) {
-          throw new Error(
-            "This browser session does not match the account you just verified. Request a new code and try again."
+        invalidLinkTimeout = window.setTimeout(() => {
+          failRecovery(
+            "This reset link is invalid or has expired. Request a new reset link and try again."
           );
-        }
-        if (resolvedEmail.toLowerCase() !== resetSession.email.toLowerCase()) {
-          throw new Error(
-            "This reset session no longer matches the verified account. Request a new code and try again."
-          );
-        }
-
-        if (!active) return;
-        setReady(true);
-        setAccountEmail(resolvedEmail);
-        writePasswordResetEmail(resolvedEmail);
+        }, 1500);
       } catch (err) {
-        if (!active) return;
         const message =
           err instanceof Error
             ? err.message
             : "We couldn't verify this reset link. Request a new one and try again.";
-        setError(friendlyAuthError(message, getAuthErrorCode(err)));
-        setReady(false);
-      } finally {
-        if (active) {
-          setInitializing(false);
-        }
+        failRecovery(message, getAuthErrorCode(err));
       }
     };
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT") {
+        failRecovery(
+          "Your recovery session ended. Request a new reset link and try again."
+        );
+        return;
+      }
+
+      if (
+        event === "PASSWORD_RECOVERY" ||
+        event === "SIGNED_IN" ||
+        event === "TOKEN_REFRESHED"
+      ) {
+        applyRecoverySession(session?.user.email);
+      }
+    });
 
     void initializeRecovery();
 
     return () => {
       active = false;
+      window.clearTimeout(invalidLinkTimeout);
+      subscription.unsubscribe();
     };
-  }, [resetAuth.auth]);
+  }, [supabase]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -174,14 +169,12 @@ export default function ResetPasswordPage() {
     setSubmitting(true);
 
     try {
-      const { error: updateError } = await resetAuth.auth.updateUser({
+      const { error: updateError } = await supabase.auth.updateUser({
         password,
       });
       if (updateError) throw updateError;
 
-      clearPasswordResetVerification();
-      clearPasswordResetSession();
-      await resetAuth.auth.signOut({ scope: "global" });
+      await supabase.auth.signOut({ scope: "global" });
       setSuccess(true);
       toast({
         title: "Password updated",
@@ -273,7 +266,13 @@ export default function ResetPasswordPage() {
                 <div className="mt-3">
                   <button
                     type="button"
-                    onClick={handleRequestNewResetLink}
+                    onClick={() =>
+                      router.push(
+                        accountEmail
+                          ? `/forgot-password?email=${encodeURIComponent(accountEmail)}`
+                          : "/forgot-password"
+                      )
+                    }
                     className="font-medium text-red-700 underline underline-offset-4"
                   >
                     Request a new reset link
