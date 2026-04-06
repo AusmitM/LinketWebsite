@@ -217,18 +217,18 @@ export default function ThemeToggle({ showLabel = false }: { showLabel?: boolean
       );
     }
     return (
-      <div className="flex w-full max-w-full items-center gap-1.5 rounded-xl border border-border/60 bg-card/80 px-1.5 py-1.5 shadow-sm backdrop-blur sm:gap-2 sm:px-2">
+      <div className="grid w-full max-w-full grid-cols-[1.75rem_minmax(0,1fr)_1.75rem] items-center gap-1.5 rounded-xl border border-border/60 bg-card/80 px-1.5 py-1.5 shadow-sm backdrop-blur sm:grid-cols-[2rem_minmax(0,1fr)_2rem] sm:gap-2 sm:px-2">
         <Button
           type="button"
           variant="ghost"
           size="icon"
           aria-label="Previous theme"
-          className="h-7 w-7 shrink-0 rounded-lg sm:h-8 sm:w-8"
+          className="h-7 w-full rounded-lg sm:h-8"
           disabled
         >
           <ChevronLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
         </Button>
-        <div className="flex min-w-0 flex-1 items-center gap-1.5 rounded-lg px-1.5 text-xs text-muted-foreground sm:gap-2 sm:px-2">
+        <div className="flex min-w-0 items-center justify-center gap-1.5 rounded-lg px-1 text-xs text-muted-foreground sm:gap-2 sm:px-2">
           <Sun className="h-4 w-4 shrink-0" />
           <span className="font-medium whitespace-nowrap">Theme</span>
         </div>
@@ -237,7 +237,7 @@ export default function ThemeToggle({ showLabel = false }: { showLabel?: boolean
           variant="ghost"
           size="icon"
           aria-label="Next theme"
-          className="h-7 w-7 shrink-0 rounded-lg sm:h-8 sm:w-8"
+          className="h-7 w-full rounded-lg sm:h-8"
           disabled
         >
           <ChevronRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
@@ -261,24 +261,24 @@ export default function ThemeToggle({ showLabel = false }: { showLabel?: boolean
   }
 
   return (
-    <div className="flex w-full max-w-full items-center gap-1.5 rounded-xl border border-border/60 bg-card/80 px-1.5 py-1.5 shadow-sm backdrop-blur sm:gap-2 sm:px-2">
+    <div className="grid w-full max-w-full grid-cols-[1.75rem_minmax(0,1fr)_1.75rem] items-center gap-1.5 rounded-xl border border-border/60 bg-card/80 px-1.5 py-1.5 shadow-sm backdrop-blur sm:grid-cols-[2rem_minmax(0,1fr)_2rem] sm:gap-2 sm:px-2">
       <Button
         type="button"
         variant="ghost"
         size="icon"
         onClick={previous}
         aria-label="Previous theme"
-        className="h-7 w-7 shrink-0 rounded-lg sm:h-8 sm:w-8"
+        className="h-7 w-full rounded-lg sm:h-8"
       >
         <ChevronLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
       </Button>
       <div
         aria-label={`Theme: ${label}`}
         title={`Theme: ${label}`}
-        className="flex min-w-0 flex-1 items-center gap-1.5 rounded-lg px-1.5 text-xs sm:gap-2 sm:px-2"
+        className="flex min-w-0 items-center justify-center rounded-lg px-1 text-xs sm:px-2"
       >
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
+        <div className="min-w-0 text-center">
+          <div className="flex items-center justify-center gap-2">
             <Icon className="h-4 w-4 shrink-0" />
             <span className="font-medium text-muted-foreground whitespace-nowrap">
               {label}
@@ -297,7 +297,7 @@ export default function ThemeToggle({ showLabel = false }: { showLabel?: boolean
         size="icon"
         onClick={next}
         aria-label="Next theme"
-        className="h-7 w-7 shrink-0 rounded-lg sm:h-8 sm:w-8"
+        className="h-7 w-full rounded-lg sm:h-8"
       >
         <ChevronRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
       </Button>

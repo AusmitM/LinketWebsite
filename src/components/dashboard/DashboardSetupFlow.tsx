@@ -1624,7 +1624,7 @@ export default function DashboardSetupFlow({
   const compactFieldInputClassName =
     "h-11 rounded-2xl border-border/60 bg-background text-foreground";
   const inlineSlugInputClassName =
-    "h-11 border-0 bg-transparent px-0 text-foreground shadow-none focus-visible:ring-0 focus-visible:ring-offset-0";
+    "h-11 border-0 bg-transparent px-2 text-foreground shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 sm:px-3";
   const setupCardClassName =
     "rounded-[28px] border-border/60 bg-card/95 shadow-[0_12px_30px_-24px_rgba(15,23,42,0.28)]";
   const softPanelClassName =
@@ -2051,8 +2051,8 @@ export default function DashboardSetupFlow({
                           >
                             Public URL
                           </Label>
-                          <div className="rounded-2xl border border-border/60 bg-background px-4 py-2.5">
-                            <div className="flex items-center gap-2">
+                          <div className="rounded-2xl border border-border/60 bg-background px-5 py-3 sm:px-6">
+                            <div className="flex items-center gap-3">
                               <span className="shrink-0 text-sm font-medium text-muted-foreground">
                                 {DEFAULT_LINK_HOST}/
                               </span>
@@ -2095,19 +2095,6 @@ export default function DashboardSetupFlow({
                                 Use suggestion
                               </Button>
                             ) : null}
-                            <Button
-                              type="button"
-                              variant="link"
-                              className="h-auto p-0 text-xs text-muted-foreground"
-                              disabled={
-                                !profileDraft.handle.trim() ||
-                                profileSaveStatus === "saving" ||
-                                profileSaveStatus === "publishing"
-                              }
-                              onClick={() => void saveProfileDraft({ quiet: true })}
-                            >
-                              Check availability
-                            </Button>
                             <span
                               className={cn(
                                 "inline-flex items-center gap-2 font-medium",
