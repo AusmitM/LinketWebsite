@@ -2,7 +2,6 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { Mail, Loader2, CheckCircle2 } from "lucide-react";
 
 import { supabase } from "@/lib/supabase";
@@ -12,27 +11,29 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/components/system/toaster";
 import { getSiteOrigin } from "@/lib/site-url";
-
-const SITE_URL = getSiteOrigin();
+import {
+  readPasswordResetEmail,
+  writePasswordResetEmail,
+} from "@/lib/password-reset-email";
 
 export default function ForgotPasswordPage() {
-  const searchParams = useSearchParams();
-  const prefilledEmail = searchParams.get("email")?.trim() ?? "";
-  const [email, setEmail] = useState(prefilledEmail);
+  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!prefilledEmail) return;
-    setEmail((current) => (current.trim() ? current : prefilledEmail));
-  }, [prefilledEmail]);
+    const storedEmail = readPasswordResetEmail();
+    if (!storedEmail) return;
+    setEmail((current) => (current.trim() ? current : storedEmail));
+  }, []);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
 
-    if (!email) {
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) {
       setError("Please enter your email address");
       return;
     }
@@ -40,10 +41,11 @@ export default function ForgotPasswordPage() {
     setLoading(true);
 
     try {
+      const siteUrl = getSiteOrigin();
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(
-        email,
+        trimmedEmail,
         {
-          redirectTo: `${SITE_URL}/reset-password`,
+          redirectTo: `${siteUrl}/reset-password`,
         }
       );
 
@@ -51,6 +53,8 @@ export default function ForgotPasswordPage() {
         throw resetError;
       }
 
+      setEmail(trimmedEmail);
+      writePasswordResetEmail(trimmedEmail);
       setSent(true);
       toast({
         title: "Check your email",

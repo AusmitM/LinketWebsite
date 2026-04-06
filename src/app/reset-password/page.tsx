@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CheckCircle2, Loader2, LockKeyhole } from "lucide-react";
@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
 import { friendlyAuthError } from "@/lib/auth-errors";
+import { writePasswordResetEmail } from "@/lib/password-reset-email";
 
 const PASSWORD_LENGTH_ERROR = "Password must be at least 6 characters.";
 const PASSWORD_STRENGTH_ERROR =
@@ -61,9 +62,15 @@ export default function ResetPasswordPage() {
   const [ready, setReady] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [accountEmail, setAccountEmail] = useState("");
 
   const queryErrorMessage =
     searchParams.get("error_description") || searchParams.get("message");
+
+  const handleRequestNewResetLink = useCallback(() => {
+    writePasswordResetEmail(accountEmail);
+    router.push("/forgot-password");
+  }, [accountEmail, router]);
 
   useEffect(() => {
     let active = true;
@@ -83,29 +90,17 @@ export default function ResetPasswordPage() {
         const refreshToken = hashParams.get("refresh_token");
         const recoveryType =
           hashParams.get("type") ?? searchParams.get("type") ?? null;
+        const hasRecoveryCode = Boolean(code);
+        const hasRecoveryTokens = Boolean(accessToken && refreshToken);
 
         if (queryErrorMessage) {
           throw new Error(queryErrorMessage);
         }
 
-        if (code) {
-          const { error } = await supabase.auth.exchangeCodeForSession(code);
-          if (error) throw error;
-        } else if (accessToken && refreshToken) {
-          const { error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken,
-          });
-          if (error) throw error;
-        } else {
-          const {
-            data: { session },
-          } = await supabase.auth.getSession();
-          if (!session) {
-            throw new Error(
-              "This password reset link is missing or has expired. Request a new one to continue."
-            );
-          }
+        if (!hasRecoveryCode && !hasRecoveryTokens) {
+          throw new Error(
+            "This password reset link is missing or has expired. Request a new one to continue."
+          );
         }
 
         if (recoveryType && recoveryType !== "recovery") {
@@ -114,13 +109,39 @@ export default function ResetPasswordPage() {
           );
         }
 
+        if (hasRecoveryCode) {
+          const { error } = await supabase.auth.exchangeCodeForSession(code);
+          if (error) throw error;
+        } else {
+          const { error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+          if (error) throw error;
+        }
+
+        const {
+          data: { user },
+          error: userError,
+        } = await supabase.auth.getUser();
+        if (userError) throw userError;
+        const resolvedEmail = user?.email?.trim() ?? "";
+        if (!resolvedEmail) {
+          throw new Error(
+            "We couldn't verify which account this reset link belongs to. Request a new reset email and try again."
+          );
+        }
+
         if (!active) return;
         setReady(true);
+        setAccountEmail(resolvedEmail);
+        writePasswordResetEmail(resolvedEmail);
 
         if (window.location.hash || code) {
           const nextUrl = new URL(window.location.href);
           nextUrl.hash = "";
           nextUrl.searchParams.delete("code");
+          nextUrl.searchParams.delete("email");
           nextUrl.searchParams.delete("type");
           nextUrl.searchParams.delete("error");
           nextUrl.searchParams.delete("error_code");
@@ -221,8 +242,9 @@ export default function ResetPasswordPage() {
             </div>
             <CardTitle className="text-2xl">Password updated</CardTitle>
             <CardDescription>
-              Your password has been reset successfully. Sign in with your new
-              password to continue.
+              {accountEmail
+                ? `Your password for ${accountEmail} has been reset successfully. Sign in with your new password to continue.`
+                : "Your password has been reset successfully. Sign in with your new password to continue."}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -253,8 +275,9 @@ export default function ResetPasswordPage() {
             </div>
           </div>
           <CardDescription>
-            Choose a new password for your account. Once saved, use it the next
-            time you sign in.
+            {accountEmail
+              ? `Choose a new password for ${accountEmail}. Once saved, use it the next time you sign in.`
+              : "Choose a new password for your account. Once saved, use it the next time you sign in."}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
@@ -270,12 +293,13 @@ export default function ResetPasswordPage() {
               <p>{error}</p>
               {!ready ? (
                 <div className="mt-3">
-                  <Link
-                    href="/forgot-password"
+                  <button
+                    type="button"
+                    onClick={handleRequestNewResetLink}
                     className="font-medium text-red-700 underline underline-offset-4"
                   >
                     Request a new reset link
-                  </Link>
+                  </button>
                 </div>
               ) : null}
             </div>

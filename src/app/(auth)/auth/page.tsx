@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/client";
 import { toast } from "@/components/system/toaster";
 import { trackEvent } from "@/lib/analytics";
 import { getSiteOrigin } from "@/lib/site-url";
+import { writePasswordResetEmail } from "@/lib/password-reset-email";
 import {
   SIGNUP_VERIFICATION_NOTICE,
   friendlyAuthError,
@@ -359,20 +360,9 @@ export default function AuthPage() {
   const showResendVerificationInError =
     hasEnteredEmail &&
     Boolean(displayedError?.toLowerCase().includes("verify your email"));
-  const forgotPasswordHref = useMemo(() => {
-    const params = new URLSearchParams();
-    const trimmedEmail = email.trim();
-
-    if (next) {
-      params.set("next", next);
-    }
-    if (trimmedEmail) {
-      params.set("email", trimmedEmail);
-    }
-
-    const query = params.toString();
-    return query ? `/forgot-password?${query}` : "/forgot-password";
-  }, [email, next]);
+  const handleForgotPasswordClick = useCallback(() => {
+    writePasswordResetEmail(email);
+  }, [email]);
 
   return (
     <div className="min-h-screen bg-[#fff7ed] text-slate-900">
@@ -534,7 +524,8 @@ export default function AuthPage() {
                 {!isSignUp && (
                   <div className="flex justify-end">
                     <Link
-                      href={forgotPasswordHref}
+                      href="/forgot-password"
+                      onClick={handleForgotPasswordClick}
                       className="text-sm font-medium text-slate-600 transition hover:text-slate-900"
                     >
                       Forgot password?
