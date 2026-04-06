@@ -9,7 +9,10 @@ import { createClient } from "@/lib/supabase/client";
 import { toast } from "@/components/system/toaster";
 import { trackEvent } from "@/lib/analytics";
 import { getSiteOrigin } from "@/lib/site-url";
-import { friendlyAuthError } from "@/lib/auth-errors";
+import {
+  SIGNUP_VERIFICATION_NOTICE,
+  friendlyAuthError,
+} from "@/lib/auth-errors";
 
 const DEFAULT_NEXT = "/dashboard";
 const PASSWORD_LENGTH_ERROR = "Password must be at least 6 characters.";
@@ -147,7 +150,8 @@ export default function AuthPage() {
   const handlePasswordSignUp = useCallback(
     async (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
-      if (!email || !password) {
+      const trimmedEmail = email.trim();
+      if (!trimmedEmail || !password) {
         setError("Email and password are required.");
         return;
       }
@@ -167,25 +171,28 @@ export default function AuthPage() {
       setVerificationNotice(null);
 
       try {
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: `${siteUrl}/auth/callback?next=${encodeURIComponent(
-              next
-            )}`,
-          },
+        const response = await fetch("/api/auth/signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: trimmedEmail,
+            password,
+            next,
+          }),
         });
+        const payload = (await response.json().catch(() => null)) as
+          | { error?: string; verificationNotice?: string | null }
+          | null;
 
-        if (error) {
-          throw error;
+        if (!response.ok) {
+          throw new Error(
+            payload?.error || "Unable to create account. Please try again."
+          );
         }
 
-        if (data.session) {
-          await supabase.auth.signOut();
-        }
         const message =
-          "Check your email to verify your account before signing in. A verification email has been sent.";
+          payload?.verificationNotice || SIGNUP_VERIFICATION_NOTICE;
+        setEmail(trimmedEmail);
         setVerificationNotice(message);
         setPassword("");
 
@@ -204,7 +211,7 @@ export default function AuthPage() {
         setPending(false);
       }
     },
-    [email, password, supabase, next, siteUrl]
+    [email, password, next]
   );
 
   const handlePasswordSignIn = useCallback(
