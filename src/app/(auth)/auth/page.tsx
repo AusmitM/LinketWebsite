@@ -386,12 +386,9 @@ export default function AuthPage() {
         <section className="relative mx-auto w-full max-w-6xl px-6 pb-16 pt-28 lg:pb-20 lg:pt-32">
           <div className="grid gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
             <section className="w-full rounded-[32px] border border-white/70 bg-white/80 p-8 shadow-[0_28px_70px_-55px_rgba(15,23,42,0.45)] backdrop-blur">
-              <div className="flex items-center justify-between text-xs uppercase tracking-[0.3em] text-slate-400">
+              <div className="text-xs uppercase tracking-[0.3em] text-slate-400">
                 <span className="font-display text-sm font-semibold text-slate-900">
                   Linket
-                </span>
-                <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-[0.6rem] font-semibold text-slate-500">
-                  Secure access
                 </span>
               </div>
 
