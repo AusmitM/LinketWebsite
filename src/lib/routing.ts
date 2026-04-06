@@ -3,6 +3,7 @@ const RESERVED_PUBLIC_ROUTES = new Set([
   "dashboard",
   "auth",
   "forgot-password",
+  "reset-password",
   "profile",
   "admin",
   "pricing",

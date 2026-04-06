@@ -195,7 +195,9 @@ export function Navbar() {
   const isPublic = !isDashboard;
   const isLandingPage = pathname === "/";
   const isAuthPage =
-    pathname?.startsWith("/auth") || pathname?.startsWith("/forgot-password");
+    pathname?.startsWith("/auth") ||
+    pathname?.startsWith("/forgot-password") ||
+    pathname?.startsWith("/reset-password");
   const isProfileEditor = pathname?.startsWith("/dashboard/profiles") ?? false;
   const isMarketingPage =
     isPublic && !isLandingPage && !isPublicProfile && !isAuthPage;

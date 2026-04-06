@@ -17,7 +17,10 @@ export function Footer() {
   const isDashboard = pathname?.startsWith("/dashboard");
   const isLanding = pathname === "/";
   const isPublicProfile = isPublicProfilePathname(pathname);
-  const isAuth = pathname?.startsWith("/auth") || pathname?.startsWith("/forgot-password");
+  const isAuth =
+    pathname?.startsWith("/auth") ||
+    pathname?.startsWith("/forgot-password") ||
+    pathname?.startsWith("/reset-password");
 
   if (isLanding) {
     return null;
