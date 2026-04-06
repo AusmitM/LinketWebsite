@@ -1336,44 +1336,7 @@ export function Navbar() {
     );
   }
 
-  if (isAuthPage) {
-    return (
-      <header role="banner" className={headerClassName} aria-label="Site header">
-        <nav className={navClassName} aria-label="Main">
-          <div className="flex flex-1 items-center gap-3 md:gap-4">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]"
-              aria-label={`${brand.name} home`}
-            >
-              {brand.logo ? (
-                <span className="relative block h-[3.5rem] w-28 sm:h-[3.75rem] sm:w-32 md:h-[4.5rem] md:w-40">
-                  <Image
-                    src={brand.logo}
-                    alt={`${brand.name} logo`}
-                    fill
-                    className="object-contain"
-                    priority
-                    sizes="(max-width: 1024px) 160px, 200px"
-                  />
-                </span>
-              ) : (
-                <span
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-foreground text-sm font-bold text-background"
-                  aria-hidden
-                >
-                  {(brand.shortName ?? brand.name).slice(0, 2)}
-                </span>
-              )}
-              {!brand.logo && (
-                <span className={brandNameClass}>{brand.name}</span>
-              )}
-            </Link>
-          </div>
-        </nav>
-      </header>
-    );
-  }
+  if (isAuthPage) return null;
 
   return (
     <header role="banner" className={headerClassName} aria-label="Site header">
