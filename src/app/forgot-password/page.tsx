@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Mail, Loader2, CheckCircle2 } from "lucide-react";
 
 import { supabase } from "@/lib/supabase";
@@ -15,10 +16,17 @@ import { getSiteOrigin } from "@/lib/site-url";
 const SITE_URL = getSiteOrigin();
 
 export default function ForgotPasswordPage() {
-  const [email, setEmail] = useState("");
+  const searchParams = useSearchParams();
+  const prefilledEmail = searchParams.get("email")?.trim() ?? "";
+  const [email, setEmail] = useState(prefilledEmail);
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!prefilledEmail) return;
+    setEmail((current) => (current.trim() ? current : prefilledEmail));
+  }, [prefilledEmail]);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();

@@ -359,6 +359,20 @@ export default function AuthPage() {
   const showResendVerificationInError =
     hasEnteredEmail &&
     Boolean(displayedError?.toLowerCase().includes("verify your email"));
+  const forgotPasswordHref = useMemo(() => {
+    const params = new URLSearchParams();
+    const trimmedEmail = email.trim();
+
+    if (next) {
+      params.set("next", next);
+    }
+    if (trimmedEmail) {
+      params.set("email", trimmedEmail);
+    }
+
+    const query = params.toString();
+    return query ? `/forgot-password?${query}` : "/forgot-password";
+  }, [email, next]);
 
   return (
     <div className="min-h-screen bg-[#fff7ed] text-slate-900">
@@ -523,9 +537,7 @@ export default function AuthPage() {
                 {!isSignUp && (
                   <div className="flex justify-end">
                     <Link
-                      href={`/forgot-password${
-                        next ? `?next=${encodeURIComponent(next)}` : ""
-                      }`}
+                      href={forgotPasswordHref}
                       className="text-sm font-medium text-slate-600 transition hover:text-slate-900"
                     >
                       Forgot password?
