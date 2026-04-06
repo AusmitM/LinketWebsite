@@ -6,10 +6,13 @@ import { ArrowLeft, ArrowRight, Sparkles, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { useDashboardUser } from "@/components/dashboard/DashboardSessionContext";
-import { readLocalStorage, writeLocalStorage } from "@/lib/browser-storage";
+import {
+  getDashboardTourStorageKey,
+  readDashboardTourStatus,
+  writeDashboardTourStatus,
+  type DashboardTourStatus,
+} from "@/lib/dashboard-onboarding-tour";
 import { trackEvent } from "@/lib/analytics";
-
-type TourStatus = "completed" | "dismissed";
 
 type TourStep = {
   id: string;
@@ -32,7 +35,6 @@ type BoxRect = FocusRect & {
   bottom: number;
 };
 
-const TOUR_VERSION = "v1";
 const TOUR_QUERY_PARAM = "tour";
 const TOUR_START_VALUE = "welcome";
 const TOUR_START_EVENT = "linket:onboarding-tour:start";
@@ -132,7 +134,7 @@ const TOUR_STEPS: TourStep[] = [
     path: "/dashboard/overview",
     title: "You are ready to launch",
     description:
-      "Your core setup path is complete. You can restart this walkthrough anytime from the Overview checklist card.",
+      "Your core setup path is complete. Use the Overview checklist to track anything still left before launch.",
     selectors: [],
   },
 ];
@@ -145,13 +147,6 @@ const TOUR_PATH_LABELS: Record<string, string> = {
   "/dashboard/overview": "Overview",
   "/dashboard/settings": "Settings",
 };
-
-function readTourStatus(key: string | null): TourStatus | null {
-  if (!key) return null;
-  const raw = readLocalStorage(key);
-  if (raw === "completed" || raw === "dismissed") return raw;
-  return null;
-}
 
 function isVisibleElement(element: HTMLElement) {
   const styles = window.getComputedStyle(element);
@@ -221,7 +216,7 @@ export default function DashboardOnboardingTour() {
   const [panelSize, setPanelSize] = useState<{ width: number; height: number } | null>(null);
 
   const storageKey = useMemo(
-    () => (userId ? `linket:onboarding-tour:${TOUR_VERSION}:${userId}` : null),
+    () => (userId ? getDashboardTourStorageKey(userId) : null),
     [userId]
   );
 
@@ -232,14 +227,12 @@ export default function DashboardOnboardingTour() {
   const pathLabel = TOUR_PATH_LABELS[currentStep.path] ?? "Dashboard";
 
   const closeTour = useCallback(
-    (status: TourStatus) => {
+    (status: DashboardTourStatus) => {
       setIsOpen(false);
       setFocusRect(null);
       focusTargetRef.current = null;
       pendingPathRef.current = null;
-      if (storageKey) {
-        writeLocalStorage(storageKey, status);
-      }
+      writeDashboardTourStatus(storageKey, status);
       if (status === "completed") {
         void trackEvent("onboarding_walkthrough_completed", {
           totalSteps: TOUR_STEPS.length,
@@ -256,6 +249,7 @@ export default function DashboardOnboardingTour() {
 
   const startTour = useCallback(
     (source: "auto" | "manual") => {
+      writeDashboardTourStatus(storageKey, "started");
       setStepIndex(0);
       setFocusRect(null);
       focusTargetRef.current = null;
@@ -266,7 +260,7 @@ export default function DashboardOnboardingTour() {
       }
       void trackEvent("onboarding_walkthrough_started", { source });
     },
-    []
+    [storageKey]
   );
 
   const handleNext = useCallback(() => {
@@ -381,9 +375,9 @@ export default function DashboardOnboardingTour() {
 
     const hasTourQueryParam =
       searchParams.get(TOUR_QUERY_PARAM) === TOUR_START_VALUE;
-    const status = readTourStatus(storageKey);
+    const status = readDashboardTourStatus(storageKey);
     let startTimer: ReturnType<typeof setTimeout> | null = null;
-    if (!status) {
+    if (!status && !hasTourQueryParam) {
       autoStartHandled.current = true;
       startTimer = setTimeout(() => {
         startTour("auto");
@@ -392,6 +386,11 @@ export default function DashboardOnboardingTour() {
 
     if (hasTourQueryParam) {
       autoStartHandled.current = true;
+      if (!status) {
+        startTimer = setTimeout(() => {
+          startTour("manual");
+        }, 0);
+      }
       const nextParams = new URLSearchParams(searchParams.toString());
       nextParams.delete(TOUR_QUERY_PARAM);
       const nextPath = nextParams.size

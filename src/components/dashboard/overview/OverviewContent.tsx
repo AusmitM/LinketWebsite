@@ -18,6 +18,11 @@ import { useDashboardUser } from "@/components/dashboard/DashboardSessionContext
 import { useThemeOptional } from "@/components/theme/theme-provider";
 import PublicProfilePreviewLoader from "@/components/public/PublicProfilePreviewLoader";
 import { ANALYTICS_BROADCAST_KEY, ANALYTICS_EVENT_NAME } from "@/lib/analytics";
+import {
+  DASHBOARD_TOUR_STATUS_EVENT,
+  getDashboardTourStorageKey,
+  readDashboardTourStatus,
+} from "@/lib/dashboard-onboarding-tour";
 import type { UserAnalytics } from "@/lib/analytics-service";
 
 const numberFormatter = new Intl.NumberFormat("en-US");
@@ -51,6 +56,7 @@ export default function OverviewContent() {
   const [reloadToken, setReloadToken] = useState(0);
   const [isChecklistDismissed, setIsChecklistDismissed] = useState(false);
   const [isChecklistPoppingOut, setIsChecklistPoppingOut] = useState(false);
+  const [hasSeenWalkthrough, setHasSeenWalkthrough] = useState(false);
   const checklistCompletionRef = useRef<boolean | null>(null);
   const checklistDismissTimerRef = useRef<number | null>(null);
   const [{ loading, error, analytics }, setState] = useState<ViewState>({
@@ -120,6 +126,25 @@ export default function OverviewContent() {
       cancelled = true;
     };
   }, [userId, reloadToken]);
+
+  useEffect(() => {
+    if (!userId || typeof window === "undefined") {
+      setHasSeenWalkthrough(false);
+      return;
+    }
+
+    const storageKey = getDashboardTourStorageKey(userId);
+    const syncStatus = () => {
+      setHasSeenWalkthrough(Boolean(readDashboardTourStatus(storageKey)));
+    };
+
+    syncStatus();
+    window.addEventListener(DASHBOARD_TOUR_STATUS_EVENT, syncStatus);
+
+    return () => {
+      window.removeEventListener(DASHBOARD_TOUR_STATUS_EVENT, syncStatus);
+    };
+  }, [userId]);
 
   useEffect(() => {
     if (!userId || typeof window === "undefined") return;
@@ -315,18 +340,22 @@ export default function OverviewContent() {
                   <CardTitle className="text-lg font-semibold text-foreground">
                     First-run checklist
                   </CardTitle>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="w-full rounded-full sm:w-auto"
-                    onClick={() => {
-                      if (typeof window === "undefined") return;
-                      window.dispatchEvent(new CustomEvent("linket:onboarding-tour:start"));
-                    }}
-                  >
-                    Start walkthrough
-                  </Button>
+                  {!hasSeenWalkthrough ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="w-full rounded-full sm:w-auto"
+                      onClick={() => {
+                        if (typeof window === "undefined") return;
+                        window.dispatchEvent(
+                          new CustomEvent("linket:onboarding-tour:start")
+                        );
+                      }}
+                    >
+                      Start walkthrough
+                    </Button>
+                  ) : null}
                 </div>
                 <p className="text-sm text-muted-foreground">
                   Complete these steps to launch your profile and start capturing leads.
