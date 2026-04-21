@@ -475,14 +475,14 @@ export default function AnalyticsContent() {
 
       <section className="dashboard-analytics-summary-grid grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard
-          label="Scans in range"
+          label="Scans"
           value={analytics ? numberFormatter.format(rangeTotals.scans) : loading ? "--" : "0"}
           helper={`Last ${range} days`}
           delta={trendDeltas?.scans}
           darkDeltaText={useDarkDeltaText}
         />
         <StatCard
-          label="Leads in range"
+          label="Leads"
           value={analytics ? numberFormatter.format(rangeTotals.leads) : loading ? "--" : "0"}
           helper={`Last ${range} days`}
           delta={trendDeltas?.leads}
