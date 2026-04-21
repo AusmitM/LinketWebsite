@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import "@/styles/theme/public-profile.css";
 import { createClient } from "@/lib/supabase/client";
@@ -21,7 +21,7 @@ type PreviewState = {
   } | null;
 };
 
-export default function PublicProfilePreviewPage() {
+function PublicProfilePreviewPageContent() {
   const params = useParams();
   const searchParams = useSearchParams();
   const handle = String(params?.handle ?? "").trim().toLowerCase();
@@ -137,5 +137,21 @@ export default function PublicProfilePreviewPage() {
       handle={handle}
       themeOverride={requestedTheme}
     />
+  );
+}
+
+function PublicProfilePreviewPageFallback() {
+  return (
+    <div className="min-h-screen bg-background text-foreground">
+      <PublicProfilePreviewLoader fullscreen />
+    </div>
+  );
+}
+
+export default function PublicProfilePreviewPage() {
+  return (
+    <Suspense fallback={<PublicProfilePreviewPageFallback />}>
+      <PublicProfilePreviewPageContent />
+    </Suspense>
   );
 }

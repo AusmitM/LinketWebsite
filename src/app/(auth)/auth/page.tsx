@@ -1,7 +1,7 @@
 "use client";
 
 import type { FormEvent } from "react";
-import { useCallback, useMemo, useState } from "react";
+import { Suspense, useCallback, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Check, RefreshCw } from "lucide-react";
@@ -66,7 +66,7 @@ function getAuthErrorCode(error: unknown): string | undefined {
   return undefined;
 }
 
-export default function AuthPage() {
+function AuthPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const nextParam = searchParams.get("next");
@@ -639,5 +639,36 @@ export default function AuthPage() {
         </section>
       </div>
     </div>
+  );
+}
+
+function AuthPageFallback() {
+  return (
+    <div className="min-h-screen bg-[#fff7ed] text-slate-900">
+      <div className="relative overflow-hidden">
+        <section className="relative mx-auto w-full max-w-6xl px-6 pb-16 pt-28 lg:pb-20 lg:pt-32">
+          <div className="grid gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
+            <section className="w-full rounded-[32px] border border-white/70 bg-white/80 p-8 shadow-[0_28px_70px_-55px_rgba(15,23,42,0.45)] backdrop-blur">
+              <header className="space-y-2">
+                <h1 className="text-3xl font-display font-semibold tracking-tight sm:text-4xl">
+                  Loading
+                </h1>
+                <p className="text-sm text-slate-600">
+                  Preparing authentication...
+                </p>
+              </header>
+            </section>
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}
+
+export default function AuthPage() {
+  return (
+    <Suspense fallback={<AuthPageFallback />}>
+      <AuthPageContent />
+    </Suspense>
   );
 }

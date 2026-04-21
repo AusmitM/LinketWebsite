@@ -6,6 +6,14 @@ let passwordResetClient:
   | ReturnType<typeof createSupabaseClient>
   | null = null;
 
+const passwordResetClientOptions = {
+  auth: {
+    autoRefreshToken: false,
+    detectSessionInUrl: false,
+    persistSession: false,
+  },
+} as const;
+
 export function createPasswordResetClient() {
   if (passwordResetClient) {
     return passwordResetClient;
@@ -20,14 +28,11 @@ export function createPasswordResetClient() {
     );
   }
 
-  passwordResetClient = createSupabaseClient(supabaseUrl, supabaseAnonKey, {
-    db: { schema: "public" },
-    auth: {
-      autoRefreshToken: false,
-      detectSessionInUrl: false,
-      persistSession: false,
-    },
-  });
+  passwordResetClient = createSupabaseClient(
+    supabaseUrl,
+    supabaseAnonKey,
+    passwordResetClientOptions
+  );
 
   return passwordResetClient;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { Suspense, useEffect, useMemo, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { ArrowLeft, KeyRound, Loader2, Mail } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -47,7 +47,7 @@ function formatOtpError(error: unknown) {
   return friendlyAuthError(message);
 }
 
-export default function ForgotPasswordPage() {
+function ForgotPasswordPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const resetAuth = useMemo(() => createPasswordResetClient(), []);
@@ -365,5 +365,30 @@ export default function ForgotPasswordPage() {
         </CardContent>
       </Card>
     </section>
+  );
+}
+
+function ForgotPasswordPageFallback() {
+  return (
+    <section className="flex min-h-screen items-center justify-center bg-[#fff7ed] px-4 py-16">
+      <Card className="w-full max-w-md border border-foreground/10 bg-card/80 shadow-xl backdrop-blur">
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-2xl font-semibold text-foreground">
+            Reset your password
+          </CardTitle>
+          <CardDescription>
+            Loading password reset form...
+          </CardDescription>
+        </CardHeader>
+      </Card>
+    </section>
+  );
+}
+
+export default function ForgotPasswordPage() {
+  return (
+    <Suspense fallback={<ForgotPasswordPageFallback />}>
+      <ForgotPasswordPageContent />
+    </Suspense>
   );
 }
