@@ -53,34 +53,28 @@ type UserLite = {
 
 const LANDING_LINKS = [
   {
-    id: "how-it-works",
-    label: "How it works",
-    gradient: "linear-gradient(120deg,#ff9776 0%,#ffb166 100%)",
-    shadow: "0 10px 24px rgba(255,151,118,0.35)",
-  },
-  {
-    id: "customization",
-    label: "Customization",
-    gradient: "linear-gradient(120deg,#ffb166 0%,#ffd27f 100%)",
-    shadow: "0 10px 24px rgba(255,183,120,0.32)",
-  },
-  {
-    id: "demo",
-    label: "Demo",
-    gradient: "linear-gradient(120deg,#ffd27f 0%,#ffc3a0 100%)",
-    shadow: "0 10px 24px rgba(255,178,140,0.28)",
+    id: "what-is-linket",
+    label: "What Is Linket?",
+    gradient: "linear-gradient(120deg,#f8d058 0%,#f8b878 46%,#58c0e0 100%)",
+    shadow: "0 10px 24px rgba(248,184,120,0.24)",
   },
   {
     id: "pricing",
     label: "Pricing",
-    gradient: "linear-gradient(120deg,#ffc3a0 0%,#ff9fb7 100%)",
-    shadow: "0 10px 24px rgba(255,159,183,0.28)",
+    gradient: "linear-gradient(120deg,#68d8e0 0%,#58c0e0 52%,#f8b878 100%)",
+    shadow: "0 10px 24px rgba(88,192,224,0.28)",
+  },
+  {
+    id: "customization",
+    label: "Customization",
+    gradient: "linear-gradient(120deg,#f8d058 0%,#f8b878 58%,#58c0e0 100%)",
+    shadow: "0 10px 24px rgba(248,184,120,0.28)",
   },
   {
     id: "faq",
     label: "FAQ",
-    gradient: "linear-gradient(120deg,#ff9fb7 0%,#7fc8e8 100%)",
-    shadow: "0 10px 24px rgba(127,200,232,0.3)",
+    gradient: "linear-gradient(120deg,#f8b878 0%,#58c0e0 100%)",
+    shadow: "0 10px 24px rgba(88,192,224,0.26)",
   },
 ] as const;
 
@@ -735,7 +729,8 @@ export function Navbar() {
   };
 
   useEffect(() => {
-    if (!isDashboard || !user) {
+    const userId = user?.id;
+    if (!isDashboard || !userId) {
       setAvatarUrl(null);
       return;
     }
@@ -743,13 +738,13 @@ export function Navbar() {
       const { data } = await supabase
         .from("profiles")
         .select("avatar_url, updated_at")
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .maybeSingle();
-        const signed = await getSignedAvatarUrl(
-          (data?.avatar_url as string | null) ?? null,
-          (data?.updated_at as string | null) ?? null
-        );
-        setAvatarUrl(signed);
+      const signed = await getSignedAvatarUrl(
+        (data?.avatar_url as string | null) ?? null,
+        (data?.updated_at as string | null) ?? null
+      );
+      setAvatarUrl(signed);
     })();
   }, [user, isDashboard]);
 
@@ -975,7 +970,7 @@ export function Navbar() {
             ? "shadow-[0_12px_40px_rgba(16,200,120,0.15)] hover:shadow-[0_18px_45px_rgba(16,200,120,0.22)]"
             : overlayMode
               ? "bg-white text-slate-900 shadow-[0_22px_50px_rgba(15,23,42,0.35)] hover:bg-white/90"
-              : "bg-gradient-to-r from-[#7fc8e8] via-[#5fb7f5] to-[#a5f3fc] text-[#0b1220] shadow-[0_20px_45px_rgba(125,200,232,0.35)] hover:bg-gradient-to-r hover:from-[#ff9776] hover:via-[#ffb166] hover:to-[#ffd27f]"
+              : "bg-gradient-to-r from-[#58c0e0] via-[#68d8e0] to-[#8fe6ea] text-[#0b1220] shadow-[0_20px_45px_rgba(88,192,224,0.32)] hover:bg-gradient-to-r hover:from-[#f8d058] hover:via-[#f8b878] hover:to-[#58c0e0]"
       )}
     >
       <Link href="/#pricing" aria-label="Buy Linket">
@@ -1019,7 +1014,7 @@ export function Navbar() {
           className="h-full w-full rounded-full object-cover"
         />
       ) : (
-        getUserInitials(user.fullName ?? user.email ?? "PK")
+        getUserInitials(user?.fullName ?? user?.email ?? "PK")
       )}
     </button>
   ) : showDashboardSignedOutChrome ? (

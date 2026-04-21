@@ -38,7 +38,7 @@ export function AdaptiveNavPill({
       <nav
         role="tablist"
         aria-label="Site sections"
-        className="relative grid w-full grid-cols-1 gap-3 rounded-full border border-[#f7c7b3] bg-white/90 p-2 shadow-[0_25px_50px_rgba(255,151,118,0.2)] sm:grid-cols-2 lg:flex lg:items-center lg:gap-3"
+        className="relative grid w-full grid-cols-1 gap-3 rounded-full border border-[#f8ddba] bg-white/90 p-2 shadow-[0_25px_50px_rgba(248,184,120,0.2)] sm:grid-cols-2 lg:flex lg:items-center lg:gap-3"
         style={{
           backdropFilter: "blur(20px)",
           WebkitBackdropFilter: "blur(20px)",
@@ -47,9 +47,9 @@ export function AdaptiveNavPill({
         {items.map((item) => {
           const isActive = Boolean(activeId && item.id === activeId);
           const accentGradient =
-            item.gradient ?? "linear-gradient(120deg,#ff9776,#fdd09f)";
+            item.gradient ?? "linear-gradient(120deg,#f8d058,#f8b878)";
           const accentShadow =
-            item.shadow ?? "0 12px 30px rgba(255,151,118,0.25)";
+            item.shadow ?? "0 12px 30px rgba(248,184,120,0.25)";
 
           return (
             <button
@@ -59,7 +59,7 @@ export function AdaptiveNavPill({
               aria-selected={isActive}
               aria-current={isActive ? "page" : undefined}
               className={cn(
-                "relative flex h-12 items-center justify-center rounded-full px-5 text-sm font-semibold uppercase tracking-[0.08em] transition-[transform,color,background-color,box-shadow] duration-200 ease-out motion-reduce:transform-none motion-reduce:transition-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0f4c81] active:scale-[0.985]",
+                "relative flex h-12 items-center justify-center rounded-full px-5 text-sm font-semibold uppercase tracking-[0.08em] transition-[transform,color,background-color,box-shadow] duration-200 ease-out motion-reduce:transform-none motion-reduce:transition-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#58c0e0] active:scale-[0.985]",
                 isActive ? "text-[#0b1220]" : "text-[#606b85] hover:-translate-y-0.5"
               )}
               style={{

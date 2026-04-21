@@ -133,28 +133,6 @@ export function Footer() {
                   400 Bizzell St, College Station, TX
                 </p>
               </div>
-              <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
-                <p className="text-sm font-semibold text-white">
-                  Ready to keep intros warm?
-                </p>
-                <p className="mt-2 text-xs text-white/60">
-                  Tap once and keep every follow-up effortless.
-                </p>
-                <div className="mt-4 flex flex-wrap gap-3">
-                  <Link
-                    href="/auth?view=signin"
-                    className="rounded-full bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-900 transition hover:bg-white/90"
-                  >
-                    Get started
-                  </Link>
-                  <Link
-                    href="#demo"
-                    className="rounded-full border border-white/30 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white/80 transition hover:text-white"
-                  >
-                    View demo
-                  </Link>
-                </div>
-              </div>
             </div>
           </div>
           <div className="mt-12 flex flex-col gap-4 border-t border-white/10 pt-6 text-xs text-white/60 sm:flex-row sm:items-center sm:justify-between">

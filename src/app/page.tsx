@@ -2,9 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import Script from "next/script";
-import type { LucideIcon } from "lucide-react";
-import { stat } from "node:fs/promises";
-import { join } from "node:path";
 import "@/styles/theme/public-profile.css";
 
 import {
@@ -13,18 +10,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import {
-  Calendar,
-  Download,
-  Focus,
-  Instagram,
-  LineChart,
-  Search,
-  Sparkles,
-  Twitter,
-  Youtube,
-} from "lucide-react";
-import { FeatureSteps } from "@/components/landing/LandingLazySections";
+import { Calendar, Download, Instagram, Search, Twitter, Youtube } from "lucide-react";
 import ConsultForm from "@/components/landing/ConsultForm";
 import LinketPlansToggle from "@/components/landing/LinketPlansToggle";
 import PublicProfilePreview from "@/components/public/PublicProfilePreview";
@@ -91,23 +77,9 @@ type FaqItem = {
   answer: string;
 };
 
-type ExplorePageCard = {
-  title: string;
-  href: string;
-  description: string;
-};
-
 // -----------------------------------------------------------------------------
 // Marketing content data. These collections drive UI sections below.
 // -----------------------------------------------------------------------------
-const SOCIAL_PROOF = [
-  "AAcuisine",
-  "Houston Bee Rescue",
-  "East Bay Robotics",
-  "Sunset Creative",
-  "Brimstone Events",
-] as const;
-
 const DASHBOARD_TABS = ["Overview", "Linkets", "Profiles", "Leads"] as const;
 
 // Dashboard summary stats for the hero mock.
@@ -162,34 +134,6 @@ const RECENT_SALES = [
 
 // Use a stable site URL for mock assets in environments without a public URL.
 const PUBLIC_SITE_URL = getConfiguredSiteOrigin();
-const LANDING_DEMO_VIDEO_PATH = "/mockups/demo.mp4";
-const LANDING_DEMO_POSTER_PATH = "/mockups/video-poster.jpg";
-
-type LandingDemoMedia = {
-  videoSrc: string | null;
-  posterSrc: string | null;
-};
-
-async function hasUsablePublicAsset(path: string, minBytes = 1) {
-  const relativePath = path.replace(/^\/+/, "");
-  try {
-    const file = await stat(join(process.cwd(), "public", relativePath));
-    return file.isFile() && file.size >= minBytes;
-  } catch {
-    return false;
-  }
-}
-
-async function resolveLandingDemoMedia(): Promise<LandingDemoMedia> {
-  const [hasVideo, hasPoster] = await Promise.all([
-    hasUsablePublicAsset(LANDING_DEMO_VIDEO_PATH, 1024),
-    hasUsablePublicAsset(LANDING_DEMO_POSTER_PATH, 1024),
-  ]);
-  return {
-    videoSrc: hasVideo ? LANDING_DEMO_VIDEO_PATH : null,
-    posterSrc: hasPoster ? LANDING_DEMO_POSTER_PATH : null,
-  };
-}
 
 // Links rendered inside the public profile preview mock.
 const PUBLIC_PROFILE_PREVIEW_LINKS = [
@@ -308,7 +252,7 @@ async function loadPublicProfilePreview() {
   }
 }
 
-const EXPLORE_PAGES: readonly ExplorePageCard[] = DISCOVER_PAGES.map((page) => ({
+const EXPLORE_PAGES = DISCOVER_PAGES.map((page) => ({
   title: page.label,
   href: page.href,
   description: page.cardDescription,
@@ -342,108 +286,6 @@ const FOOTER_SOCIALS = [
   { label: "YouTube", href: "https://youtube.com/@linket", icon: Youtube },
 ] as const;
 
-type JourneyStep = {
-  title: string;
-  description: string;
-  detail: string;
-  icon: LucideIcon;
-  accent: string;
-};
-
-type DemoProofStep = {
-  title: string;
-  description: string;
-  detail: string;
-  metric: string;
-  icon: LucideIcon;
-  accent: string;
-};
-
-// Journey steps shown in the "How it works" section.
-const JOURNEY_STEPS: JourneyStep[] = [
-  {
-    title: "Invite with a tap",
-    description: "Tap Linket on their phone or let them scan the QR fallback.",
-    detail: "No app to receive -- everything opens in their browser instantly.",
-    icon: Sparkles,
-    accent: "from-sky-200/80 to-sky-100/40 text-sky-700",
-  },
-  {
-    title: "Show the essentials",
-    description:
-      "Your hero links, galleries, and saved contact card appear at once.",
-    detail:
-      "Decide which blocks lead and guide every viewer to the next action.",
-    icon: Focus,
-    accent: "from-rose-200/80 to-rose-100/40 text-rose-700",
-  },
-  {
-    title: "Stay remembered",
-    description: "Linket keeps analytics so you know which intros stick.",
-    detail: "Rescan-ready hardware means every follow-up uses the newest info.",
-    icon: LineChart,
-    accent: "from-emerald-200/80 to-emerald-100/40 text-emerald-700",
-  },
-];
-
-// Image-backed marketing cards tied to the journey steps.
-const JOURNEY_FEATURES = [
-  {
-    step: "Step 1",
-    title: JOURNEY_STEPS[0].title,
-    content: `${JOURNEY_STEPS[0].description} ${JOURNEY_STEPS[0].detail}`,
-    image:
-      "https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?auto=format&fit=crop&w=1600&q=80",
-  },
-  {
-    step: "Step 2",
-    title: JOURNEY_STEPS[1].title,
-    content: `${JOURNEY_STEPS[1].description} ${JOURNEY_STEPS[1].detail}`,
-    image:
-      "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=1600&q=80",
-  },
-  {
-    step: "Step 3",
-    title: JOURNEY_STEPS[2].title,
-    content: `${JOURNEY_STEPS[2].description} ${JOURNEY_STEPS[2].detail}`,
-    image:
-      "https://images.unsplash.com/photo-1485217988980-11786ced9454?auto=format&fit=crop&w=1600&q=80",
-  },
-] as const;
-
-const DEMO_PROOF_STEPS: readonly DemoProofStep[] = [
-  {
-    title: "Tap or scan",
-    description: "The profile opens in the browser instantly.",
-    detail: "NFC first, etched QR fallback, no app download needed.",
-    metric: "2-second handoff",
-    icon: Sparkles,
-    accent: "from-[#ff9776]/35 via-[#ffd27f]/22 to-transparent text-[#ffd27f]",
-  },
-  {
-    title: "Save the contact",
-    description: "Visitors get the essentials without asking what to do next.",
-    detail: "Your card, hero links, and book-now actions land in one clean view.",
-    metric: "Contact + links in one place",
-    icon: Download,
-    accent: "from-[#7dd3fc]/32 via-[#93c5fd]/16 to-transparent text-[#93c5fd]",
-  },
-  {
-    title: "See the follow-up",
-    description: "Scans and lead signals route back into the dashboard.",
-    detail: "You know who engaged, what they tapped, and where to pick up the thread.",
-    metric: "Realtime lead signal",
-    icon: LineChart,
-    accent: "from-[#86efac]/30 via-[#34d399]/16 to-transparent text-[#86efac]",
-  },
-] as const;
-
-const DEMO_SIGNAL_CARDS = [
-  { label: "Profile opened", value: "00:02" },
-  { label: "Contact saved", value: "00:08" },
-  { label: "Lead logged", value: "Live" },
-] as const;
-
 // FAQ content for the accordion + JSON-LD schema.
 function buildFaq(pricing: PublicPricingSnapshot): FaqItem[] {
   return [
@@ -461,11 +303,6 @@ function buildFaq(pricing: PublicPricingSnapshot): FaqItem[] {
       question: "Can I update my profile after printing?",
       answer:
         "Absolutely. Change your headline, links, colors, or media anytime. Every tap uses the latest version automatically.",
-    },
-    {
-      question: "How fast do orders ship?",
-      answer:
-        "Single Linkets ship within 48 hours. Team and event kits include a dedicated concierge for rush coordination.",
     },
     {
       question: "What is the best-value starter option?",
@@ -487,7 +324,6 @@ export default async function Home() {
   const siteUrl = getConfiguredSiteOrigin();
   const pricing = getPublicPricingSnapshot();
   const faq = buildFaq(pricing);
-  const demoMedia = await resolveLandingDemoMedia();
   // Load the public profile preview (live if possible, mock if not).
   const publicPreview = await loadPublicProfilePreview();
 
@@ -537,28 +373,51 @@ export default async function Home() {
         <div className="pointer-events-none absolute inset-0 z-0">
           <div className="absolute inset-0 bg-[#fff7ed]" />
         </div>
+        <div className="pointer-events-none absolute inset-0 z-[1] overflow-hidden landing-decoration-fade landing-delay-2" aria-hidden>
+          <div className="landing-ring-float-b absolute -left-24 top-8 h-52 w-52 rounded-full border-[5px] border-[#f8b878]/54 bg-transparent" />
+          <div className="landing-ring-float-c absolute left-[12%] top-[5rem] h-12 w-12 rounded-full border-[4px] border-[#f8d058]/60 bg-transparent" />
+          <div className="landing-ring-float-a absolute -left-12 top-14 h-32 w-32 rounded-full border-[5px] border-[#f8b878]/72 bg-transparent" />
+          <div className="landing-ring-float-a absolute left-[19%] top-[18rem] h-16 w-16 rounded-full border-[4px] border-[#58c0e0]/42 bg-transparent" />
+          <div className="landing-ring-float-c absolute -left-8 top-[26rem] h-20 w-20 rounded-full border-[4px] border-[#58c0e0]/38 bg-transparent" />
+          <div className="landing-ring-float-b absolute left-[14%] top-[32rem] h-28 w-28 rounded-full border-[4px] border-[#f8b878]/34 bg-transparent" />
+          <div className="landing-ring-float-b absolute left-[8%] top-[37rem] h-14 w-14 rounded-full border-[4px] border-[#f8d058]/58 bg-transparent" />
+          <div className="landing-ring-float-b absolute right-[-5rem] top-10 h-60 w-60 rounded-full border-[5px] border-[#68d8e0]/62 bg-transparent" />
+          <div className="landing-ring-float-c absolute right-[4%] top-[7rem] h-12 w-12 rounded-full border-[4px] border-[#68d8e0]/46 bg-transparent" />
+          <div className="landing-ring-float-a absolute right-[8%] top-[18rem] h-16 w-16 rounded-full border-[4px] border-[#f8b878]/52 bg-transparent" />
+          <div className="landing-ring-float-b absolute right-[-2rem] top-[23rem] h-24 w-24 rounded-full border-[4px] border-[#58c0e0]/34 bg-transparent" />
+          <div className="landing-ring-float-c absolute right-[2%] top-[30rem] h-28 w-28 rounded-full border-[4px] border-[#f8d058]/44 bg-transparent" />
+          <div className="landing-ring-float-a absolute right-[14%] top-[38rem] h-20 w-20 rounded-full border-[4px] border-[#68d8e0]/48 bg-transparent" />
+          <div className="landing-ring-float-c absolute right-[6%] bottom-[4rem] h-14 w-14 rounded-full border-[4px] border-[#f8d058]/42 bg-transparent" />
+        </div>
         <div className="relative z-10">
-          {/* Primary story arc: hero, trust, and workflow. */}
+          {/* Primary story arc: hero first. */}
           <HeroSection />
-          <TrustedBy />
-          <JourneySection />
-          <ExplorePagesSection />
         </div>
       </div>
-      {/* Dark feature spotlight section. */}
-      <ExperienceSection />
       <div className="relative overflow-hidden">
-        <div className="pointer-events-none absolute inset-0 -z-10">
+        <div className="pointer-events-none absolute inset-0 z-0">
           <div className="absolute inset-0 bg-[#fff7ed]" />
         </div>
-        {/* Live demo + profile preview + pricing + FAQ. */}
-        <LiveDemoSection media={demoMedia} />
-        <PublicProfilePreviewSection
-          profile={publicPreview.profile}
-          account={publicPreview.account}
-        />
-        <PricingSection pricing={pricing} />
-        <FAQSection items={faq} />
+        <div className="pointer-events-none absolute inset-0 z-[1] overflow-hidden landing-decoration-fade landing-delay-3" aria-hidden>
+          <div className="landing-ring-float-b absolute left-[-6rem] top-24 h-52 w-52 rounded-full border-[5px] border-[#f8b878]/34 bg-transparent" />
+          <div className="landing-ring-float-a absolute -left-6 top-[34rem] h-24 w-24 rounded-full border-[4px] border-[#58c0e0]/58 bg-transparent" />
+          <div className="landing-ring-float-c absolute left-[4%] bottom-10 h-16 w-16 rounded-full border-[4px] border-[#f8d058]/66 bg-transparent" />
+          <div className="landing-ring-float-a absolute right-[-2rem] top-[18rem] h-36 w-36 rounded-full border-[5px] border-[#68d8e0]/72 bg-transparent" />
+          <div className="landing-ring-float-b absolute right-[6%] top-[8rem] h-20 w-20 rounded-full border-[4px] border-[#f8b878]/60 bg-transparent" />
+          <div className="landing-ring-float-c absolute right-[8%] bottom-24 h-48 w-48 rounded-full border-[5px] border-[#58c0e0]/40 bg-transparent" />
+          <div className="landing-ring-float-a absolute right-[18%] bottom-10 h-24 w-24 rounded-full border-[4px] border-[#58c0e0]/46 bg-transparent" />
+        </div>
+        <div className="relative z-10">
+          {/* Product explainer + profile preview + pricing + customization + FAQ. */}
+          <WhatIsLinketSection />
+          <PublicProfilePreviewSection
+            profile={publicPreview.profile}
+            account={publicPreview.account}
+          />
+          <PricingSection pricing={pricing} />
+          <ExperienceSection />
+          <FAQSection items={faq} />
+        </div>
       </div>
       <LandingFooter />
       {/* Structured data for SEO. */}
@@ -593,7 +452,7 @@ function HeroSection() {
             <span className="landing-serif font-normal tracking-[-0.04em]">
               Don&apos;t just share it...
             </span>{" "}
-            <span className="block bg-[linear-gradient(100deg,_#ff9776_0%,_#ffd27f_40%,_#7dd3fc_70%,_#2f80ed_100%)] bg-clip-text text-6xl font-black italic leading-[0.92] tracking-tight text-transparent sm:text-8xl lg:text-[5.25rem]">
+            <span className="block bg-[linear-gradient(100deg,_#f8d058_0%,_#f8b878_34%,_#68d8e0_70%,_#58c0e0_100%)] bg-clip-text text-6xl font-black italic leading-[0.92] tracking-tight text-transparent sm:text-8xl lg:text-[5.25rem]">
               LINKET!
             </span>
           </h1>
@@ -657,11 +516,11 @@ function HeroDashboardPreview() {
   } 110 L ${trendPoints[0].x} 110 Z`;
 
   return (
-    <div className="landing-fade-up landing-delay-4 relative w-full max-w-6xl rounded-[24px] border border-[#f5d7b0]/80 bg-white/85 p-4 text-left text-slate-900 shadow-[0_45px_120px_rgba(254,215,170,0.45)] backdrop-blur transition-[transform,box-shadow] duration-300 ease-out motion-reduce:transform-none motion-reduce:transition-none hover:-translate-y-1 sm:rounded-[32px] sm:p-6">
+    <div className="landing-fade-up landing-delay-4 relative w-full max-w-6xl rounded-[24px] border border-[#f8ddba]/80 bg-white/85 p-4 text-left text-slate-900 shadow-[0_45px_120px_rgba(248,184,120,0.34)] backdrop-blur transition-[transform,box-shadow] duration-300 ease-out motion-reduce:transform-none motion-reduce:transition-none hover:-translate-y-1 sm:rounded-[32px] sm:p-6">
       {/* Top bar: user badge, tabs, search, date range, and download CTA. */}
-      <div className="flex flex-col gap-4 border-b border-orange-100 pb-3 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex max-w-full items-center gap-3 rounded-full border border-[#ffd4c2] bg-[#fff6ef] px-3 py-2 sm:px-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#ff9776] to-[#ffd27f] text-sm font-semibold text-slate-900">
+      <div className="flex flex-col gap-4 border-b border-[#f8edd7] pb-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex max-w-full items-center gap-3 rounded-full border border-[#f8ddba] bg-[#fff9f0] px-3 py-2 sm:px-4">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#cfeef2] text-sm font-semibold text-slate-900">
             PK
           </div>
           <div className="min-w-0">
@@ -676,7 +535,7 @@ function HeroDashboardPreview() {
                 className={cn(
                   "rounded-full border px-3 py-1.5 text-xs font-medium transition-transform duration-300 hover:-translate-y-0.5 sm:px-4 sm:text-sm",
                   index === 0
-                    ? "border-[#ff9776] bg-[#ff9776] text-[#0f172a]"
+                    ? "border-[#f8b878] bg-[#f8b878] text-[#0f172a]"
                     : "border-slate-200 text-slate-700"
                 )}
               >
@@ -691,7 +550,7 @@ function HeroDashboardPreview() {
                 aria-hidden
               />
               <input
-                className="w-full rounded-full border border-slate-200 bg-white py-2 pl-11 pr-4 text-sm text-slate-700 placeholder:text-slate-300 focus:border-[#ff9776] focus:outline-none focus:ring-2 focus:ring-[#ff9776]/30"
+                className="w-full rounded-full border border-slate-200 bg-white py-2 pl-11 pr-4 text-sm text-slate-700 placeholder:text-slate-300 focus:border-[#f8b878] focus:outline-none focus:ring-2 focus:ring-[#f8b878]/30"
                 placeholder="Search..."
               />
             </div>
@@ -725,7 +584,7 @@ function HeroDashboardPreview() {
               <p className="mt-3 text-2xl font-semibold text-slate-900">
                 {stat.value}
               </p>
-              <p className="text-xs text-emerald-700">{stat.delta}</p>
+              <p className="text-xs text-[#34afcf]">{stat.delta}</p>
             </div>
           ))}
         </div>
@@ -761,9 +620,9 @@ function HeroDashboardPreview() {
                         x2="1"
                         y2="1"
                       >
-                        <stop offset="0%" stopColor="#ffb27a" />
-                        <stop offset="55%" stopColor="#ffd6a3" />
-                        <stop offset="100%" stopColor="#7dd3fc" />
+                        <stop offset="0%" stopColor="#f8d058" />
+                        <stop offset="48%" stopColor="#f8b878" />
+                        <stop offset="100%" stopColor="#58c0e0" />
                       </linearGradient>
                     </defs>
                     <path
@@ -790,7 +649,7 @@ function HeroDashboardPreview() {
                       cx={trendPoints[trendPoints.length - 1].x}
                       cy={trendPoints[trendPoints.length - 1].y}
                       r="5"
-                      fill="#22c55e"
+                      fill="#58c0e0"
                     />
                   </svg>
                   <div className="mt-3 grid grid-cols-6 gap-2 text-[11px] uppercase tracking-[0.25em] text-slate-300 sm:grid-cols-12">
@@ -835,7 +694,7 @@ function HeroDashboardPreview() {
                         <p className="truncate text-xs text-slate-600">{sale.email}</p>
                       </div>
                     </div>
-                    <p className="shrink-0 text-xs font-semibold text-emerald-700 sm:text-sm">
+                    <p className="shrink-0 text-xs font-semibold text-[#e6aa5c] sm:text-sm">
                       {sale.amount}
                     </p>
                   </div>
@@ -849,86 +708,133 @@ function HeroDashboardPreview() {
   );
 }
 
-// Social proof chips to establish trust quickly.
-function TrustedBy() {
-  return (
-    <section className="landing-alt-font mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
-      <div className="landing-fade-up rounded-[28px] border border-foreground/10 bg-white/80 p-4 text-center shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur sm:p-6">
-        {/* Section heading + supporting copy. */}
-        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground sm:tracking-[0.35em]">
-          Trusted By
-        </p>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Sales pods, university teams, and creators keep Linket on their
-          keychains to turn every intro into a saved contact.
-        </p>
-        {/* Brand proof chips. */}
-        <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-[11px] font-semibold text-foreground/80 sm:gap-3 sm:text-sm">
-          {SOCIAL_PROOF.map((name) => (
-            <span
-              key={name}
-              className="inline-flex items-center gap-2 rounded-full border border-foreground/10 px-3 py-1.5 transition-transform duration-300 hover:-translate-y-0.5 hover:shadow-[0_10px_25px_rgba(15,23,42,0.12)]"
-            >
-              <Sparkles className="h-3.5 w-3.5 text-primary" aria-hidden />
-              {name}
-            </span>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
+function WhatIsLinketSection() {
+  const pillars = [
+    {
+      step: "01",
+      title: "Tap-to-share hardware",
+      description:
+        "You start by tapping your Linket so someone can open your info instantly on their phone without downloading an app.",
+      tone: "warm",
+    },
+    {
+      step: "02",
+      title: "A live public page",
+      description:
+        "That tap opens a branded page with your photo, headline, contact save, and key links, giving the other person one clear place to understand who you are.",
+      tone: "cool",
+    },
+    {
+      step: "03",
+      title: "Follow-up tools behind it",
+      description:
+        "You can update the page anytime, capture leads, and review engagement so every introduction stays current and is easier to follow up on.",
+      tone: "warm",
+    },
+  ] as const;
 
-// How-it-works section powered by the FeatureSteps component.
-function JourneySection() {
   return (
     <section
-      id="how-it-works"
-      className="landing-alt-font mx-auto max-w-6xl px-4 pt-6 pb-10 sm:px-6"
+      id="what-is-linket"
+      className="landing-alt-font relative pt-14 pb-6 sm:pt-18 sm:pb-8"
     >
-      {/* FeatureSteps handles the guided image + copy walkthrough. */}
-      <FeatureSteps
-        className="landing-fade-up mt-8 rounded-[28px] border border-foreground/5 bg-white/90 shadow-[0_35px_80px_rgba(15,23,42,0.08)] sm:rounded-[36px]"
-        features={JOURNEY_FEATURES}
-        title="How it works"
-        imageHeight="lg:h-[420px]"
-      />
-    </section>
-  );
-}
-
-function ExplorePagesSection() {
-  return (
-    <section className="landing-alt-font mx-auto max-w-6xl px-4 pb-10 sm:px-6 sm:pb-12">
-      <div className="landing-fade-up overflow-hidden rounded-[28px] border border-foreground/10 bg-white/90 p-6 shadow-[0_30px_70px_rgba(15,23,42,0.08)] sm:rounded-[36px] sm:p-8">
-        <div className="max-w-3xl">
-          <h2 className="landing-serif text-2xl font-normal tracking-[-0.03em] text-slate-900 sm:text-4xl">
-            Explore the questions people search before they buy
-          </h2>
-          <p className="mt-4 max-w-2xl text-sm text-slate-600 sm:text-base">
-            These pages break down the buying intents around digital business
-            cards, NFC sharing, and link-in-bio tools so visitors and search
-            assistants can find a direct answer instead of guessing.
-          </p>
-        </div>
-        <div className="mt-8 grid gap-4 md:grid-cols-3">
-          {EXPLORE_PAGES.map((page) => (
-            <Link
-              key={page.href}
-              href={page.href}
-              className="group rounded-3xl border border-slate-200 bg-[#fff7ed] p-5 shadow-[0_16px_36px_rgba(15,23,42,0.06)] transition-transform duration-300 hover:-translate-y-1 hover:border-[#ffb166]/70"
+      <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden landing-decoration-fade landing-delay-2" aria-hidden>
+        <div className="landing-ring-float-a absolute left-[8%] top-6 h-16 w-16 rounded-full border-[4px] border-[#f8d058]/40 bg-transparent" />
+        <div className="landing-ring-float-b absolute left-[22%] top-[9rem] h-12 w-12 rounded-full border-[4px] border-[#58c0e0]/34 bg-transparent" />
+        <div className="landing-ring-float-c absolute right-[12%] top-8 h-24 w-24 rounded-full border-[5px] border-[#68d8e0]/40 bg-transparent" />
+        <div className="landing-ring-float-a absolute right-[26%] top-[14rem] h-14 w-14 rounded-full border-[4px] border-[#f8b878]/34 bg-transparent" />
+        <div className="landing-ring-float-b absolute left-[14%] bottom-10 h-20 w-20 rounded-full border-[4px] border-[#f8b878]/30 bg-transparent" />
+        <div className="landing-ring-float-c absolute right-[18%] bottom-8 h-14 w-14 rounded-full border-[4px] border-[#58c0e0]/32 bg-transparent" />
+      </div>
+      <div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6">
+        <div className="landing-fade-up relative overflow-hidden rounded-[32px] border border-white/70 bg-white/90 p-6 shadow-[0_28px_70px_rgba(15,23,42,0.08)] sm:p-8 lg:p-10">
+          <div className="pointer-events-none absolute inset-0 z-0 hidden lg:block landing-decoration-fade landing-delay-3" aria-hidden>
+            <svg
+              className="absolute inset-0 h-full w-full"
+              viewBox="0 0 1200 640"
+              preserveAspectRatio="none"
+              fill="none"
             >
-              <p className="text-sm font-semibold text-slate-900 sm:text-base">
-                {page.title}
-              </p>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
-                {page.description}
-              </p>
-              <span className="mt-4 inline-flex text-sm font-semibold text-[#9a3412] transition-transform duration-300 group-hover:translate-x-1">
-                Read guide
+              <path
+                d="M-140 108C66 -18 282 -10 454 58C606 118 758 112 922 54C1082 0 1218 14 1360 100"
+                stroke="#f8b878"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeOpacity="0.28"
+                strokeWidth="3.5"
+              />
+              <path
+                d="M-160 142C42 28 248 28 426 86C592 140 758 136 934 88C1102 42 1246 56 1380 132"
+                stroke="#58c0e0"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeOpacity="0.22"
+                strokeWidth="3"
+              />
+              <path
+                d="M-120 536C114 444 314 426 476 476C626 522 772 524 932 482C1100 438 1240 452 1360 524"
+                stroke="#f8d058"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeOpacity="0.18"
+                strokeWidth="3"
+              />
+              <path
+                d="M-150 584C82 496 290 478 462 520C620 560 772 562 944 522C1118 482 1266 498 1380 572"
+                stroke="#68d8e0"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeOpacity="0.14"
+                strokeWidth="2.5"
+              />
+            </svg>
+          </div>
+
+          <div className="relative z-10">
+            <div className="mx-auto max-w-4xl text-center">
+              <span className="inline-flex items-center rounded-full border border-[#f8ddba] bg-[#fff8ee] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-[#e3a553]">
+                What Is Linket?
               </span>
-            </Link>
-          ))}
+              <h2 className="landing-serif mt-5 text-2xl font-normal tracking-[-0.03em] text-slate-900 sm:text-4xl">
+                Interactive networking made seamless
+              </h2>
+              <p className="mx-auto mt-4 max-w-3xl text-sm leading-7 text-slate-600 sm:text-base sm:leading-8">
+                Linket combines your physical tap-to-share hardware to your live page, keeping your leads organized.
+
+                Instead of handing over a static card, Linket gives you a physical
+                product that opens a living digital introduction. The person you
+                meet can save your contact, open your key links, and get a cleaner
+                sense of what you do in seconds, while you gain insight and keep control of what
+                they see after the conversation.
+              </p>
+            </div>
+
+            <div className="mt-8 grid gap-4 lg:grid-cols-3">
+              {pillars.map((pillar) => (
+                <div
+                  key={pillar.step}
+                  className="rounded-[28px] border border-slate-100 bg-[#fffdfa] p-5 shadow-[0_16px_40px_rgba(15,23,42,0.05)]"
+                >
+                  <span
+                    className={cn(
+                      "inline-flex h-10 w-10 items-center justify-center rounded-full border text-sm font-semibold",
+                      pillar.tone === "cool"
+                        ? "border-[#bfe7f2] bg-[#eefafd] text-[#34afcf]"
+                        : "border-[#f8ddba] bg-[#fff8ee] text-[#e3a553]"
+                    )}
+                  >
+                    {pillar.step}
+                  </span>
+                  <h3 className="mt-4 text-lg font-semibold text-slate-900">
+                    {pillar.title}
+                  </h3>
+                  <p className="mt-3 text-sm leading-7 text-slate-600">
+                    {pillar.description}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -944,7 +850,7 @@ function ExperienceSection() {
     >
       {/* Ambient gradients to add depth on the dark section. */}
       <div
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_12%,rgba(255,151,118,0.18),transparent_55%),radial-gradient(circle_at_82%_18%,rgba(93,188,255,0.22),transparent_60%)]"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_12%,rgba(248,184,120,0.18),transparent_55%),radial-gradient(circle_at_82%_18%,rgba(88,192,224,0.22),transparent_60%)]"
         aria-hidden
       />
       <div
@@ -962,7 +868,7 @@ function ExperienceSection() {
               <span className="text-white/80">
                 Generate, tweak, and deploy Linket hardware{" "}
               </span>
-              <span className="bg-gradient-to-r from-[#ff9776] via-[#ffd27f] to-[#7dd3fc] bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-[#f8d058] via-[#f8b878] to-[#58c0e0] bg-clip-text text-transparent">
                 10x faster
               </span>
             </p>
@@ -1013,216 +919,6 @@ function ExperienceSection() {
   );
 }
 
-function DemoExperienceFallback() {
-  return (
-    <div className="grid h-full w-full gap-4 p-4 sm:p-6 lg:grid-cols-[0.88fr_1.12fr] lg:p-8">
-      <div className="grid gap-3">
-        {DEMO_PROOF_STEPS.map((step) => {
-          const Icon = step.icon;
-
-          return (
-            <div
-              key={step.title}
-              className="rounded-[28px] border border-white/12 bg-white/[0.045] p-4 shadow-[0_18px_50px_rgba(2,6,23,0.28)] backdrop-blur"
-            >
-              <div className="flex items-start gap-3">
-                <div
-                  className={cn(
-                    "flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br",
-                    step.accent
-                  )}
-                >
-                  <Icon className="h-5 w-5" aria-hidden />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-white">{step.title}</p>
-                  <p className="mt-1 text-sm leading-6 text-slate-300">
-                    {step.description}
-                  </p>
-                </div>
-              </div>
-              <div className="mt-4 flex items-center justify-between gap-3 rounded-[22px] border border-white/10 bg-white/[0.035] px-3 py-2 text-xs">
-                <span className="text-slate-400">{step.detail}</span>
-                <span className="rounded-full bg-white/10 px-2.5 py-1 font-semibold text-white">
-                  {step.metric}
-                </span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-      <div className="relative overflow-hidden rounded-[32px] border border-white/12 bg-[#0b1220] shadow-[0_30px_90px_rgba(2,6,23,0.45)]">
-        <div
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(255,151,118,0.22),transparent_36%),radial-gradient(circle_at_82%_16%,rgba(125,211,252,0.18),transparent_34%),linear-gradient(180deg,rgba(15,23,42,0.15),rgba(2,6,23,0.78))]"
-          aria-hidden
-        />
-        <div className="relative flex h-full flex-col p-5 sm:p-6">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-white/45">
-                Interactive proof
-              </p>
-              <h3 className="mt-2 text-xl font-semibold text-white sm:text-2xl">
-                What the handoff actually feels like
-              </h3>
-            </div>
-            <span className="rounded-full border border-white/15 bg-white/6 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-white/70">
-              Browser first
-            </span>
-          </div>
-          <div className="mt-5 grid flex-1 gap-4 xl:grid-cols-[0.88fr_1.12fr]">
-            <div className="rounded-[28px] border border-white/12 bg-white/[0.045] p-4 backdrop-blur">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/45">
-                On their phone
-              </p>
-              <div className="mt-4 rounded-[26px] border border-white/10 bg-slate-950/55 p-4">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[#ff9776] via-[#ffd27f] to-[#7dd3fc] text-sm font-semibold text-slate-950">
-                    PK
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-white">
-                      Punit Kothakonda
-                    </p>
-                    <p className="text-xs text-white/55">
-                      Engineer | Founder | Digital Media
-                    </p>
-                  </div>
-                </div>
-                <div className="mt-4 space-y-2">
-                  {[
-                    "Save contact card",
-                    "Open portfolio and social links",
-                    "Share info back with a quick lead form",
-                  ].map((item) => (
-                    <div
-                      key={item}
-                      className="rounded-2xl border border-white/8 bg-white/[0.04] px-3 py-2 text-sm text-slate-200"
-                    >
-                      {item}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-            <div className="grid gap-4">
-              <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-3">
-                {DEMO_SIGNAL_CARDS.map((card) => (
-                  <div
-                    key={card.label}
-                    className="rounded-[24px] border border-white/12 bg-white/[0.045] px-4 py-3"
-                  >
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-white/40">
-                      {card.label}
-                    </p>
-                    <p className="mt-2 text-xl font-semibold text-white">
-                      {card.value}
-                    </p>
-                  </div>
-                ))}
-              </div>
-              <div className="rounded-[28px] border border-white/12 bg-white/[0.045] p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/45">
-                  Back in your dashboard
-                </p>
-                <div className="mt-4 space-y-3">
-                  {[
-                    {
-                      label: "New lead",
-                      detail: "Contact details captured and ready for follow-up.",
-                    },
-                    {
-                      label: "Top tap",
-                      detail: "Portfolio link pulled the most attention in this intro.",
-                    },
-                    {
-                      label: "Best next move",
-                      detail: "Send a follow-up while the conversation is still warm.",
-                    },
-                  ].map((item) => (
-                    <div
-                      key={item.label}
-                      className="flex items-start justify-between gap-3 rounded-2xl border border-white/8 bg-slate-950/45 px-3 py-3"
-                    >
-                      <div>
-                        <p className="text-sm font-semibold text-white">
-                          {item.label}
-                        </p>
-                        <p className="mt-1 text-sm text-slate-300">
-                          {item.detail}
-                        </p>
-                      </div>
-                      <span className="mt-0.5 rounded-full bg-emerald-500/15 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-200">
-                        Live
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Video demo section that shows the product flow.
-function LiveDemoSection({ media }: { media: LandingDemoMedia }) {
-  return (
-    <section id="demo" className="landing-alt-font relative py-20 sm:py-24">
-      <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
-        <div className="landing-fade-up mx-auto max-w-3xl text-center">
-          {/* Section heading + lead-in copy. */}
-          <h2 className="landing-serif text-2xl font-normal tracking-[-0.03em] text-slate-900 sm:text-4xl">
-            See Linket in action
-          </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-sm text-slate-600 sm:text-base">
-            Watch how a tap turns into a clean public profile, a saved contact,
-            and a new lead in under 30 seconds.
-          </p>
-        </div>
-
-        <div className="relative mx-auto mt-10 max-w-5xl sm:mt-12">
-          <div
-            className={cn(
-              "landing-fade-up landing-delay-2 relative overflow-hidden rounded-[32px] border border-slate-200 bg-[#111317] shadow-[0_45px_120px_rgba(15,23,42,0.25)] transition-[transform,box-shadow] duration-300 ease-out motion-reduce:transform-none motion-reduce:transition-none hover:-translate-y-1",
-              media.videoSrc ? "aspect-video" : "min-h-[620px] sm:min-h-[560px]"
-            )}
-          >
-            {media.videoSrc ? (
-              <video
-                className="aspect-video w-full"
-                controls
-                playsInline
-                preload="metadata"
-                poster={media.posterSrc ?? undefined}
-              >
-                <source src={media.videoSrc} type="video/mp4" />
-                Your browser does not support the video tag.
-              </video>
-            ) : (
-              <DemoExperienceFallback />
-            )}
-          </div>
-          {/* Quick feature chips. */}
-          <div className="mt-5 flex flex-wrap items-center justify-center gap-2 text-[11px] text-slate-500 sm:gap-3 sm:text-xs">
-            <span className="rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-center transition-transform duration-300 hover:-translate-y-0.5">
-              {media.videoSrc ? "0:30 walkthrough" : "Interactive handoff story"}
-            </span>
-            <span className="rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-center transition-transform duration-300 hover:-translate-y-0.5">
-              Public profile + lead capture
-            </span>
-            <span className="rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-center transition-transform duration-300 hover:-translate-y-0.5">
-              Real-time analytics
-            </span>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
 // Public profile preview: show the mobile layout customers will see.
 function PublicProfilePreviewSection({
   profile,
@@ -1232,88 +928,82 @@ function PublicProfilePreviewSection({
   account: PublicPreviewAccount;
 }) {
   return (
-    <section id="public-preview" className="landing-alt-font relative overflow-hidden py-20 sm:py-24">
-      <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute inset-0 bg-[#fff7ed]" />
+    <section
+      id="public-preview"
+      className="landing-alt-font relative pt-20 pb-2 sm:pt-24 sm:pb-4"
+    >
+      <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden landing-decoration-fade landing-delay-2" aria-hidden>
+        <div className="landing-ring-float-a absolute left-[10%] top-14 h-20 w-20 rounded-full border-[4px] border-[#f8d058]/46 bg-transparent" />
+        <div className="landing-ring-float-b absolute left-[24%] top-6 h-12 w-12 rounded-full border-[4px] border-[#58c0e0]/40 bg-transparent" />
+        <div className="landing-ring-float-c absolute left-[42%] top-12 h-16 w-16 rounded-full border-[4px] border-[#f8b878]/34 bg-transparent" />
+        <div className="landing-ring-float-a absolute left-[16%] top-[13rem] h-10 w-10 rounded-full border-[4px] border-[#58c0e0]/30 bg-transparent" />
+        <div className="landing-ring-float-b absolute left-[34%] bottom-[4rem] h-14 w-14 rounded-full border-[4px] border-[#f8d058]/28 bg-transparent" />
+        <div className="landing-ring-float-a absolute right-[16%] top-6 h-28 w-28 rounded-full border-[5px] border-[#68d8e0]/44 bg-transparent" />
+        <div className="landing-ring-float-b absolute right-[28%] top-[10rem] h-14 w-14 rounded-full border-[4px] border-[#f8b878]/40 bg-transparent" />
+        <div className="landing-ring-float-c absolute right-[10%] top-[22rem] h-20 w-20 rounded-full border-[4px] border-[#58c0e0]/36 bg-transparent" />
+        <div className="landing-ring-float-c absolute right-[34%] top-[7rem] h-16 w-16 rounded-full border-[4px] border-[#68d8e0]/28 bg-transparent" />
+        <div className="landing-ring-float-a absolute right-[22%] bottom-[7rem] h-12 w-12 rounded-full border-[4px] border-[#f8b878]/26 bg-transparent" />
       </div>
-      <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
-        <div className="grid items-center gap-8 sm:gap-12 lg:grid-cols-[1.05fr_0.95fr]">
-          <div className="landing-fade-up space-y-6 text-slate-900 sm:space-y-8">
-            {/* Section headline. */}
-            <div className="space-y-4">
-              <h2 className="landing-serif text-2xl font-normal tracking-[-0.03em] sm:text-4xl">
-                A premium page that looks ready for the spotlight
-              </h2>
-              <p className="text-sm text-slate-600 sm:text-base">
-                Your live profile shows the exact layout clients see - polished
-                visuals, clean links, and a frictionless contact save.
-              </p>
-            </div>
-            {/* Feature callouts. */}
-            <div className="grid gap-4 sm:grid-cols-2">
-              {[
-                {
-                  title: "Instant contact save",
-                  description: "vCard with photo and verified details.",
-                },
-                {
-                  title: "Branded link hub",
-                  description: "Your most important links, always current.",
-                },
-                {
-                  title: "Lead capture ready",
-                  description: "Prospects share their info in seconds.",
-                },
-                {
-                  title: "Theme customization",
-                  description: "Match your logo and brand mood.",
-                },
-              ].map((item) => (
-                <div
-                  key={item.title}
-                  className="rounded-3xl border border-white/70 bg-white/80 px-4 py-4 text-sm text-slate-600 shadow-[0_16px_40px_rgba(15,23,42,0.08)] backdrop-blur transition-transform duration-300 hover:-translate-y-1 sm:px-5"
-                >
-                  <p className="text-sm font-semibold text-slate-900">
-                    {item.title}
-                  </p>
-                  <p className="mt-1 text-xs text-slate-500">
-                    {item.description}
-                  </p>
+      <div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6">
+        <div className="grid items-start gap-6 sm:gap-8 lg:grid-cols-[1.18fr_0.82fr] lg:items-stretch">
+          <div className="landing-fade-up h-full text-slate-900">
+            <div className="flex h-full w-full max-w-none flex-col rounded-[32px] border border-white/70 bg-white p-6 shadow-[0_28px_70px_rgba(15,23,42,0.08)] sm:p-8 lg:min-h-[520px]">
+              <div className="relative flex h-full flex-col justify-between gap-6 pt-3 sm:pt-5">
+                <span className="inline-flex items-center rounded-full border border-[#f8ddba] bg-[#fff8ee] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-[#e3a553]">
+                  Public Page
+                </span>
+                <div className="space-y-6">
+                  <div className="space-y-4">
+                    <h2 className="landing-serif text-2xl font-normal tracking-[-0.03em] text-slate-900 sm:text-4xl">
+                      This is the founder&apos;s{" "}
+                      <span className="text-[#e6aa5c]">live page</span>
+                    </h2>
+                    <p className="max-w-xl text-sm leading-8 text-slate-600 sm:text-base">
+                      A public page is the live profile people see after they tap
+                      your Linket or scan your QR code. It gives them one clean
+                      place to save your contact, open your key links, and
+                      understand who you are in seconds.
+                    </p>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-[24px] border border-slate-100 bg-white p-4 shadow-[0_12px_32px_rgba(15,23,42,0.06)]">
+                      <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#e3a553]">
+                        What Lives Here
+                      </p>
+                      <p className="mt-3 text-sm leading-7 text-slate-600">
+                        Your photo, headline, email, contact save button, and
+                        important links all stay in one place so the other person
+                        knows exactly where to go next.
+                      </p>
+                    </div>
+                    <div className="rounded-[24px] border border-slate-100 bg-white p-4 shadow-[0_12px_32px_rgba(15,23,42,0.06)]">
+                      <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#34afcf]">
+                        Why It Matters
+                      </p>
+                      <p className="mt-3 text-sm leading-7 text-slate-600">
+                        Instead of sending people to scattered apps and stale
+                        links, every tap opens a current, branded page that feels
+                        credible and easy to act on.
+                      </p>
+                    </div>
+                  </div>
                 </div>
-              ))}
-            </div>
-            {/* Supporting capability chips. */}
-            <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500 sm:gap-3 sm:text-xs">
-              <span className="rounded-full border border-slate-200 bg-white/80 px-3 py-1">
-                Live theme sync
-              </span>
-              <span className="rounded-full border border-slate-200 bg-white/80 px-3 py-1">
-                Dynamic link updates
-              </span>
-              <span className="rounded-full border border-slate-200 bg-white/80 px-3 py-1">
-                Instant contact save
-              </span>
+              </div>
             </div>
           </div>
           {/* Mobile preview shell with live data. */}
-          <div className="landing-fade-up landing-delay-2 relative mx-auto w-full max-w-sm">
+          <div className="landing-fade-up landing-delay-2 relative mx-auto w-full max-w-[22rem] sm:max-w-[24rem]">
             <div className="relative overflow-hidden rounded-[28px] border border-white/60 bg-white/70 shadow-[0_45px_90px_rgba(15,23,42,0.25)] backdrop-blur transition-transform duration-500 hover:-translate-y-2 sm:rounded-[36px]">
-              <div className="h-[540px] w-full overflow-y-auto bg-[#0b1220] sm:h-[620px]">
+              <div className="landing-brand-preview h-[460px] w-full overflow-y-auto bg-[#0b1220] sm:h-[520px]">
                 <PublicProfilePreview
                   profile={profile}
                   account={account}
                   handle={account.handle}
                   layout="stacked"
                   forceMobile
+                  themeOverride="light"
                 />
               </div>
-            </div>
-            <div className="mt-5 flex flex-col items-start gap-2 rounded-2xl border border-white/60 bg-white/80 px-4 py-3 text-xs text-slate-600 shadow-[0_12px_30px_rgba(15,23,42,0.08)] transition-transform duration-300 hover:-translate-y-0.5 sm:flex-row sm:items-center sm:justify-between">
-              <span className="font-semibold text-slate-900">Live preview</span>
-              <span className="inline-flex items-center gap-2 text-slate-500">
-                <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                Synced to your profile
-              </span>
             </div>
           </div>
         </div>
@@ -1327,9 +1017,26 @@ function PricingSection({ pricing }: { pricing: PublicPricingSnapshot }) {
   return (
     <section
       id="pricing"
-      className="landing-alt-font landing-fade-up relative mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-24"
+      className="landing-alt-font landing-fade-up relative mx-auto max-w-6xl px-4 pt-2 pb-20 sm:px-6 sm:pt-4 sm:pb-24"
     >
-      <LinketPlansToggle pricing={pricing} />
+      <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden landing-decoration-fade landing-delay-3" aria-hidden>
+        <div className="landing-ring-float-a absolute left-[10%] top-12 h-20 w-20 rounded-full border-[4px] border-[#f8d058]/46 bg-transparent" />
+        <div className="landing-ring-float-b absolute left-[24%] top-24 h-12 w-12 rounded-full border-[4px] border-[#58c0e0]/38 bg-transparent" />
+        <div className="landing-ring-float-c absolute right-[14%] top-10 h-24 w-24 rounded-full border-[5px] border-[#68d8e0]/42 bg-transparent" />
+        <div className="landing-ring-float-a absolute right-[30%] top-[9rem] h-14 w-14 rounded-full border-[4px] border-[#f8b878]/34 bg-transparent" />
+        <div className="landing-ring-float-b absolute left-[34%] top-[11rem] h-10 w-10 rounded-full border-[4px] border-[#58c0e0]/28 bg-transparent" />
+        <div className="landing-ring-float-c absolute right-[38%] top-[14rem] h-12 w-12 rounded-full border-[4px] border-[#f8d058]/26 bg-transparent" />
+        <div className="landing-ring-float-b absolute left-[7%] top-[22rem] h-16 w-16 rounded-full border-[4px] border-[#58c0e0]/34 bg-transparent" />
+        <div className="landing-ring-float-c absolute right-[8%] top-[24rem] h-[4.5rem] w-[4.5rem] rounded-full border-[4px] border-[#f8d058]/36 bg-transparent" />
+        <div className="landing-ring-float-a absolute left-[18%] bottom-14 h-24 w-24 rounded-full border-[4px] border-[#f8b878]/38 bg-transparent" />
+        <div className="landing-ring-float-b absolute left-[42%] bottom-8 h-14 w-14 rounded-full border-[4px] border-[#58c0e0]/34 bg-transparent" />
+        <div className="landing-ring-float-c absolute right-[18%] bottom-12 h-20 w-20 rounded-full border-[4px] border-[#68d8e0]/38 bg-transparent" />
+        <div className="landing-ring-float-a absolute left-[28%] bottom-[6rem] h-12 w-12 rounded-full border-[4px] border-[#f8d058]/24 bg-transparent" />
+        <div className="landing-ring-float-b absolute right-[30%] bottom-[4rem] h-16 w-16 rounded-full border-[4px] border-[#58c0e0]/28 bg-transparent" />
+      </div>
+      <div className="relative z-10">
+        <LinketPlansToggle pricing={pricing} />
+      </div>
     </section>
   );
 }
@@ -1447,7 +1154,7 @@ function LandingFooter() {
               </div>
             ))}
           </div>
-          {/* Contact + CTA block. */}
+          {/* Contact block. */}
           <div className="space-y-6 text-sm text-white/70">
             <div className="space-y-2">
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/60 sm:tracking-[0.35em]">
@@ -1457,30 +1164,6 @@ function LandingFooter() {
               <p className="text-white/60">
                 400 Bizzell St, College Station, TX
               </p>
-            </div>
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
-              <p className="text-sm font-semibold text-white">
-                Ready to keep intros warm?
-              </p>
-              <p className="mt-2 text-xs text-white/60">
-                Tap once and keep every follow-up effortless.
-              </p>
-              <div className="mt-4 flex flex-wrap gap-3">
-                <Link
-                  href="/auth?view=signin"
-                  data-analytics-id="footer_cta_click"
-                  data-analytics-meta='{"location":"landing_footer","target":"/auth?view=signin"}'
-                  className="rounded-full bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-900 transition hover:bg-white/90"
-                >
-                  Get started
-                </Link>
-                <Link
-                  href="#demo"
-                  className="rounded-full border border-white/30 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white/80 transition hover:text-white"
-                >
-                  View demo
-                </Link>
-              </div>
             </div>
           </div>
         </div>

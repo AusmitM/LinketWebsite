@@ -259,60 +259,60 @@ html {
 }
 
 .button-landing-primary {
-  border-color: #ffe8d7;
-  background: linear-gradient(135deg, #ff9f7b 0%, #ffbc6c 52%, #ffd98a 100%);
+  border-color: #f8ddba;
+  background: linear-gradient(135deg, #f8b878 0%, #f8c560 52%, #f8d058 100%);
   color: #2b1609;
-  box-shadow: 0 20px 44px -26px rgba(236, 132, 78, 0.46);
+  box-shadow: 0 20px 44px -26px rgba(248, 184, 120, 0.46);
 }
 
 .button-landing-primary:hover {
-  background: linear-gradient(135deg, #ffab89 0%, #ffc57a 52%, #ffe299 100%);
+  background: linear-gradient(135deg, #f8c286 0%, #f8ce72 52%, #f8d96a 100%);
 }
 
 .button-landing-primary:active {
-  background: linear-gradient(135deg, #f28d61 0%, #efac57 52%, #f5cd75 100%);
+  background: linear-gradient(135deg, #f2aa6d 0%, #f1bc64 52%, #f4ca63 100%);
 }
 
 .button-landing-primary:focus-visible {
   box-shadow:
     0 0 0 2px rgba(255, 250, 245, 0.98),
-    0 0 0 5px rgba(244, 160, 111, 0.56),
-    0 24px 48px -28px rgba(236, 132, 78, 0.48);
+    0 0 0 5px rgba(248, 184, 120, 0.56),
+    0 24px 48px -28px rgba(248, 184, 120, 0.48);
 }
 
 .button-landing-secondary {
-  border-color: rgba(238, 184, 142, 0.72);
+  border-color: rgba(229, 231, 242, 0.96);
   background: linear-gradient(
     180deg,
-    rgba(255, 251, 247, 0.96) 0%,
-    rgba(255, 244, 233, 0.92) 100%
+    rgba(255, 252, 248, 0.96) 0%,
+    rgba(244, 252, 254, 0.92) 100%
   );
-  color: #73411d;
-  box-shadow: 0 16px 34px -28px rgba(188, 116, 74, 0.32);
+  color: #319fbe;
+  box-shadow: 0 16px 34px -28px rgba(88, 192, 224, 0.28);
 }
 
 .button-landing-secondary:hover {
   background: linear-gradient(
     180deg,
-    rgba(255, 253, 250, 0.98) 0%,
-    rgba(255, 247, 239, 0.96) 100%
+    rgba(255, 254, 252, 0.98) 0%,
+    rgba(247, 253, 255, 0.96) 100%
   );
-  color: #5e3216;
+  color: #2a93b1;
 }
 
 .button-landing-secondary:active {
   background: linear-gradient(
     180deg,
-    rgba(255, 245, 233, 0.98) 0%,
-    rgba(255, 234, 216, 0.94) 100%
+    rgba(246, 251, 253, 0.98) 0%,
+    rgba(238, 249, 252, 0.94) 100%
   );
 }
 
 .button-landing-secondary:focus-visible {
   box-shadow:
     0 0 0 2px rgba(255, 250, 245, 0.98),
-    0 0 0 5px rgba(244, 160, 111, 0.48),
-    0 18px 36px -30px rgba(188, 116, 74, 0.32);
+    0 0 0 5px rgba(88, 192, 224, 0.44),
+    0 18px 36px -30px rgba(88, 192, 224, 0.28);
 }
 
 .auth-button-secondary:disabled {

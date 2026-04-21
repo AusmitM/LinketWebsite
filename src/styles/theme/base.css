@@ -210,12 +210,58 @@
   }
 }
 
+@keyframes landing-ring-float-a {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -16px, 0);
+  }
+}
+
+@keyframes landing-ring-float-b {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(12px, 14px, 0);
+  }
+}
+
+@keyframes landing-ring-float-c {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(-14px, 10px, 0);
+  }
+}
+
 .landing-fade-up {
   animation: landing-fade-up 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .landing-fade-in {
   animation: landing-fade-in 0.85s ease both;
+}
+
+.landing-decoration-fade {
+  animation: landing-fade-in 1.1s cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+.landing-ring-float-a {
+  animation: landing-ring-float-a 15s ease-in-out infinite;
+}
+
+.landing-ring-float-b {
+  animation: landing-ring-float-b 17s ease-in-out infinite;
+}
+
+.landing-ring-float-c {
+  animation: landing-ring-float-c 19s ease-in-out infinite;
 }
 
 .landing-alt-font {
@@ -246,9 +292,32 @@
   animation-delay: 0.4s;
 }
 
+.landing-brand-preview .public-profile-shell.theme-light {
+  --primary: #58c0e0;
+  --primary-foreground: #0f172a;
+  --secondary: #f8d058;
+  --secondary-foreground: #5c380c;
+  --accent: #f8b878;
+  --accent-foreground: #3a2410;
+  --ring: #58c0e0;
+  --avatar-border: #58c0e0;
+  --sidebar-primary: #58c0e0;
+  --sidebar-primary-foreground: #0f172a;
+  --sidebar-accent: #fdf5e7;
+  --sidebar-accent-foreground: #3a2410;
+  --button-subtle-foreground: #2da9ca;
+  --button-subtle-foreground-hover: #269bb9;
+  --button-subtle-border: rgba(88, 192, 224, 0.34);
+  --button-solid-outline: rgba(104, 216, 224, 0.42);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .landing-fade-up,
-  .landing-fade-in {
+  .landing-fade-in,
+  .landing-decoration-fade,
+  .landing-ring-float-a,
+  .landing-ring-float-b,
+  .landing-ring-float-c {
     animation: none;
   }
 }

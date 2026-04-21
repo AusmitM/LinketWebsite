@@ -42,20 +42,15 @@ function CreativePricing({
 
   return (
     <div
-      className={cn(
-        "w-full rounded-[28px] p-5 sm:rounded-[40px] sm:p-8 md:p-12",
-        businessTheme
-          ? "bg-gradient-to-br from-[#edf6ff] via-[#f7fbff] to-[#e2efff] shadow-[0_40px_120px_rgba(59,130,246,0.22)]"
-          : "bg-gradient-to-br from-[#fff7ed] via-white to-[#e8f7ff] shadow-[0_40px_120px_rgba(255,151,118,0.25)]"
-      )}
+      className="w-full px-5 pt-0 pb-5 sm:px-8 sm:pt-0 sm:pb-8 md:px-12 md:pt-0 md:pb-12"
     >
       <div className="text-center">
         <span
           className={cn(
             "inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] sm:px-4 sm:text-xs sm:tracking-[0.35em]",
             businessTheme
-              ? "border border-[#c5dcff] text-[#1d4ed8]"
-              : "border border-[#ffd7c0] text-[#b45309]"
+              ? "border border-[#bfe7f2] text-[#34afcf]"
+              : "border border-[#f8ddba] text-[#e3a553]"
           )}
         >
           {tag}
@@ -80,11 +75,11 @@ function CreativePricing({
             key={tier.name}
             className={cn(
               "relative flex flex-col gap-5 rounded-[28px] border bg-white/90 p-5 shadow-[0_25px_90px_rgba(15,23,42,0.12)] backdrop-blur sm:gap-6 sm:rounded-[32px] sm:p-6",
-              businessTheme ? "border-[#d2e3ff]" : "border-[#ffe4d6]",
+              businessTheme ? "border-[#c8ebf3]" : "border-[#fde7cc]",
               tier.popular &&
                 (businessTheme
-                  ? "border-[#4f8ff7] bg-gradient-to-b from-white to-[#eef5ff]"
-                  : "border-[#ff9776] bg-gradient-to-b from-white to-[#fff2ea]")
+                  ? "border-[#58c0e0] bg-gradient-to-b from-white to-[#eefbfd]"
+                  : "border-[#f8b878] bg-gradient-to-b from-white to-[#fff6ec]")
             )}
           >
             {tier.popular && (
@@ -92,8 +87,8 @@ function CreativePricing({
                 className={cn(
                   "pointer-events-none absolute left-1/2 top-0 z-10 inline-flex -translate-x-1/2 -translate-y-1/2 items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-semibold shadow-lg sm:text-xs",
                   businessTheme
-                    ? "border-[#bfdbfe] bg-gradient-to-r from-[#1d4ed8] to-[#2563eb] text-white shadow-[0_10px_25px_rgba(37,99,235,0.35)]"
-                    : "border-[#ffd7c0] bg-gradient-to-r from-[#f97316] via-[#fb923c] to-[#fdba74] text-[#0f172a] shadow-[0_10px_25px_rgba(249,115,22,0.35)]"
+                    ? "border-[#bfe7f2] bg-gradient-to-r from-[#68d8e0] to-[#58c0e0] text-[#0f172a] shadow-[0_10px_25px_rgba(88,192,224,0.35)]"
+                    : "border-[#f8ddba] bg-gradient-to-r from-[#f8d058] via-[#f8b878] to-[#f8b080] text-[#0f172a] shadow-[0_10px_25px_rgba(248,184,120,0.35)]"
                 )}
               >
                 <Sparkles className="h-3.5 w-3.5" aria-hidden />
@@ -101,7 +96,7 @@ function CreativePricing({
               </div>
             )}
             <div className="flex items-start gap-3 pt-1 sm:items-center sm:gap-4 sm:pt-2">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#ff9776] via-[#ffd27f] to-[#7dd3fc] text-[#0f172a]">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#f8d058] via-[#f8b878] to-[#58c0e0] text-[#0f172a]">
                 {tier.icon}
               </div>
               <div className="min-w-0">
@@ -133,14 +128,14 @@ function CreativePricing({
                   className={cn(
                     "flex items-start gap-3 rounded-2xl border px-3 py-2 text-[#0f172a]",
                     businessTheme
-                      ? "border-[#d6e6ff] bg-[#f4f9ff]"
-                      : "border-[#ffe4d6] bg-[#fff8f3]"
+                      ? "border-[#d3edf3] bg-[#f2fbfd]"
+                      : "border-[#fde7cc] bg-[#fff8f0]"
                   )}
                 >
                   <Check
                     className={cn(
                       "mt-0.5 h-4 w-4 shrink-0",
-                      businessTheme ? "text-[#3b82f6]" : "text-[#ff9776]"
+                      businessTheme ? "text-[#58c0e0]" : "text-[#f8b878]"
                     )}
                     aria-hidden
                   />
@@ -162,12 +157,12 @@ function CreativePricing({
                   className={cn(
                     "w-full rounded-2xl text-base font-semibold transition hover:-translate-y-0.5",
                     businessTheme
-                      ? "border border-[#cfe0ff] bg-white text-[#0f172a]"
+                      ? "border border-[#c8ebf3] bg-white text-[#0f172a]"
                       : "",
                     tier.popular &&
                       (businessTheme
-                        ? "border-transparent bg-gradient-to-r from-[#1d4ed8] to-[#2563eb] text-white shadow-[0_18px_45px_rgba(37,99,235,0.35)]"
-                        : "shadow-[0_18px_45px_rgba(255,151,118,0.35)]")
+                        ? "border-transparent bg-gradient-to-r from-[#68d8e0] to-[#58c0e0] text-[#0f172a] shadow-[0_18px_45px_rgba(88,192,224,0.35)]"
+                        : "shadow-[0_18px_45px_rgba(248,184,120,0.35)]")
                   )}
                 >
                   <Link
@@ -191,7 +186,7 @@ function CreativePricing({
                     className={cn(
                       "w-full rounded-2xl text-base font-semibold transition hover:-translate-y-0.5",
                       businessTheme
-                        ? "border border-[#cfe0ff] bg-white text-[#1e3a8a]"
+                        ? "border border-[#c8ebf3] bg-white text-[#34afcf]"
                         : ""
                     )}
                   >
@@ -225,7 +220,7 @@ function CreativePricing({
                 })}
                 className={cn(
                   "w-full rounded-2xl text-base font-semibold",
-                  businessTheme ? "border border-[#cfe0ff] bg-white text-[#0f172a]" : ""
+                  businessTheme ? "border border-[#c8ebf3] bg-white text-[#0f172a]" : ""
                 )}
               >
                 {tier.ctaLabel ?? "Choose this option"}
