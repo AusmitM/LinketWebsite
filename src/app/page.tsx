@@ -10,7 +10,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Calendar, Download, Instagram, Search, Twitter, Youtube } from "lucide-react";
+import { Calendar, Download, Search } from "lucide-react";
 import ConsultForm from "@/components/landing/ConsultForm";
 import LinketPlansToggle from "@/components/landing/LinketPlansToggle";
 import PublicProfilePreview from "@/components/public/PublicProfilePreview";
@@ -279,13 +279,6 @@ const FOOTER_LINK_GROUPS = [
   },
 ];
 
-// Footer social icons + URLs.
-const FOOTER_SOCIALS = [
-  { label: "Twitter", href: "https://twitter.com/linket", icon: Twitter },
-  { label: "Instagram", href: "https://instagram.com/linket", icon: Instagram },
-  { label: "YouTube", href: "https://youtube.com/@linket", icon: Youtube },
-] as const;
-
 // FAQ content for the accordion + JSON-LD schema.
 function buildFaq(pricing: PublicPricingSnapshot): FaqItem[] {
   return [
@@ -373,7 +366,7 @@ export default async function Home() {
         <div className="pointer-events-none absolute inset-0 z-0">
           <div className="absolute inset-0 bg-[#fff7ed]" />
         </div>
-        <div className="pointer-events-none absolute inset-0 z-[1] overflow-hidden landing-decoration-fade landing-delay-2" aria-hidden>
+        <div className="pointer-events-none absolute inset-0 z-[1] hidden overflow-hidden lg:block landing-decoration-fade landing-delay-2" aria-hidden>
           <div className="landing-ring-float-b absolute -left-24 top-8 h-52 w-52 rounded-full border-[5px] border-[#f8b878]/54 bg-transparent" />
           <div className="landing-ring-float-c absolute left-[12%] top-[5rem] h-12 w-12 rounded-full border-[4px] border-[#f8d058]/60 bg-transparent" />
           <div className="landing-ring-float-a absolute -left-12 top-14 h-32 w-32 rounded-full border-[5px] border-[#f8b878]/72 bg-transparent" />
@@ -398,7 +391,7 @@ export default async function Home() {
         <div className="pointer-events-none absolute inset-0 z-0">
           <div className="absolute inset-0 bg-[#fff7ed]" />
         </div>
-        <div className="pointer-events-none absolute inset-0 z-[1] overflow-hidden landing-decoration-fade landing-delay-3" aria-hidden>
+        <div className="pointer-events-none absolute inset-0 z-[1] hidden overflow-hidden lg:block landing-decoration-fade landing-delay-3" aria-hidden>
           <div className="landing-ring-float-b absolute left-[-6rem] top-24 h-52 w-52 rounded-full border-[5px] border-[#f8b878]/34 bg-transparent" />
           <div className="landing-ring-float-a absolute -left-6 top-[34rem] h-24 w-24 rounded-full border-[4px] border-[#58c0e0]/58 bg-transparent" />
           <div className="landing-ring-float-c absolute left-[4%] bottom-10 h-16 w-16 rounded-full border-[4px] border-[#f8d058]/66 bg-transparent" />
@@ -445,19 +438,19 @@ function HeroSection() {
       id="hero"
       className="relative isolate text-slate-900"
     >
-      <div className="relative z-10 flex min-h-[calc(100svh-3.5rem)] flex-col items-center px-3 pb-2 pt-8 text-center sm:min-h-screen sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-4xl py-10 sm:py-12">
+      <div className="relative z-10 flex min-h-[calc(100svh-3.5rem)] flex-col items-center px-4 pb-6 pt-6 text-center sm:min-h-screen sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-4xl py-8 sm:py-12">
           {/* Primary headline + brand callout. */}
-          <h1 className="landing-fade-up landing-delay-1 mt-8 text-[2rem] font-semibold leading-tight tracking-tight text-slate-900 sm:mt-10 sm:text-5xl lg:text-[4.5rem] lg:leading-[1.1]">
+          <h1 className="landing-fade-up landing-delay-1 mt-6 text-[1.95rem] font-semibold leading-tight tracking-tight text-slate-900 sm:mt-10 sm:text-5xl lg:text-[4.5rem] lg:leading-[1.1]">
             <span className="landing-serif font-normal tracking-[-0.04em]">
               Don&apos;t just share it...
             </span>{" "}
-            <span className="block bg-[linear-gradient(100deg,_#f8d058_0%,_#f8b878_34%,_#68d8e0_70%,_#58c0e0_100%)] bg-clip-text text-6xl font-black italic leading-[0.92] tracking-tight text-transparent sm:text-8xl lg:text-[5.25rem]">
+            <span className="block bg-[linear-gradient(100deg,_#f8d058_0%,_#f8b878_34%,_#68d8e0_70%,_#58c0e0_100%)] bg-clip-text text-[3.35rem] font-black italic leading-[0.94] tracking-tight text-transparent sm:text-8xl lg:text-[5.25rem]">
               LINKET!
             </span>
           </h1>
           {/* Supporting value proposition. */}
-          <p className="landing-fade-up landing-delay-2 mx-auto mt-6 max-w-2xl text-sm text-slate-600 sm:text-lg">
+          <p className="landing-fade-up landing-delay-2 mx-auto mt-5 max-w-[21rem] text-[15px] leading-7 text-slate-600 sm:max-w-2xl sm:text-lg sm:leading-8">
             One NFC tap opens your live public profile, lets people save your contact,
             and drives qualified leads into your dashboard. Update once, and every
             future scan shares your latest info.
@@ -468,7 +461,7 @@ function HeroSection() {
               asChild
               variant="landingPrimary"
               size="lg"
-              className="rounded-full px-7 py-5 text-sm font-semibold transition-transform duration-300 hover:-translate-y-1 sm:px-10 sm:py-6 sm:text-base"
+              className="w-full max-w-[15rem] rounded-full px-7 py-5 text-sm font-semibold transition-transform duration-300 hover:-translate-y-1 sm:w-auto sm:max-w-none sm:px-10 sm:py-6 sm:text-base"
             >
               <Link
                 href="/auth"
@@ -516,10 +509,10 @@ function HeroDashboardPreview() {
   } 110 L ${trendPoints[0].x} 110 Z`;
 
   return (
-    <div className="landing-fade-up landing-delay-4 relative w-full max-w-6xl rounded-[24px] border border-[#f8ddba]/80 bg-white/85 p-4 text-left text-slate-900 shadow-[0_45px_120px_rgba(248,184,120,0.34)] backdrop-blur transition-[transform,box-shadow] duration-300 ease-out motion-reduce:transform-none motion-reduce:transition-none hover:-translate-y-1 sm:rounded-[32px] sm:p-6">
+    <div className="landing-fade-up landing-delay-4 relative w-full max-w-6xl rounded-[24px] border border-[#f8ddba]/80 bg-white/90 p-3 text-left text-slate-900 shadow-[0_24px_70px_rgba(248,184,120,0.2)] backdrop-blur transition-[transform,box-shadow] duration-300 ease-out motion-reduce:transform-none motion-reduce:transition-none hover:-translate-y-1 sm:rounded-[32px] sm:p-6 sm:shadow-[0_45px_120px_rgba(248,184,120,0.34)]">
       {/* Top bar: user badge, tabs, search, date range, and download CTA. */}
-      <div className="flex flex-col gap-4 border-b border-[#f8edd7] pb-3 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex max-w-full items-center gap-3 rounded-full border border-[#f8ddba] bg-[#fff9f0] px-3 py-2 sm:px-4">
+      <div className="flex flex-col gap-3 border-b border-[#f8edd7] pb-3 sm:gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex max-w-full items-center gap-3 rounded-[20px] border border-[#f8ddba] bg-[#fff9f0] px-3 py-2 sm:rounded-full sm:px-4">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#cfeef2] text-sm font-semibold text-slate-900">
             PK
           </div>
@@ -534,6 +527,7 @@ function HeroDashboardPreview() {
                 key={tab}
                 className={cn(
                   "rounded-full border px-3 py-1.5 text-xs font-medium transition-transform duration-300 hover:-translate-y-0.5 sm:px-4 sm:text-sm",
+                  index > 0 && "hidden sm:inline-flex",
                   index === 0
                     ? "border-[#f8b878] bg-[#f8b878] text-[#0f172a]"
                     : "border-slate-200 text-slate-700"
@@ -543,8 +537,8 @@ function HeroDashboardPreview() {
               </span>
             ))}
           </div>
-          <div className="flex min-w-0 flex-1 items-center justify-end gap-2 sm:gap-3">
-            <div className="relative w-full max-w-full flex-1 sm:max-w-xs">
+          <div className="flex min-w-0 flex-1 items-center justify-start gap-2 sm:justify-end sm:gap-3">
+            <div className="relative hidden w-full max-w-full flex-1 sm:block sm:max-w-xs">
               <Search
                 className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-300"
                 aria-hidden
@@ -565,23 +559,18 @@ function HeroDashboardPreview() {
           </div>
         </div>
       </div>
-      <div className="mt-3 space-y-6">
-        {/* Reserved space for future filters or status pills. */}
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-[0.2em]">
-          </div>
-        </div>
+      <div className="mt-3 space-y-5 sm:space-y-6">
         {/* KPI tiles. */}
         <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
           {DASHBOARD_STATS.map((stat) => (
             <div
               key={stat.label}
-              className="rounded-2xl border border-slate-200 bg-[#fff9f3] p-4 transition-transform duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(15,23,42,0.12)]"
+              className="rounded-2xl border border-slate-200 bg-[#fff9f3] p-3.5 transition-transform duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(15,23,42,0.12)] sm:p-4"
             >
               <p className="text-xs uppercase tracking-[0.2em] text-slate-600 sm:tracking-[0.35em]">
                 {stat.label}
               </p>
-              <p className="mt-3 text-2xl font-semibold text-slate-900">
+              <p className="mt-2 text-[1.75rem] font-semibold text-slate-900 sm:mt-3 sm:text-2xl">
                 {stat.value}
               </p>
               <p className="text-xs text-[#34afcf]">{stat.delta}</p>
@@ -670,7 +659,7 @@ function HeroDashboardPreview() {
             </p>
             <div className="mt-6 space-y-4">
               {/* Recent lead rows. */}
-              {RECENT_SALES.map((sale) => {
+              {RECENT_SALES.map((sale, index) => {
                 const initials = sale.name
                   .split(" ")
                   .map((segment) => segment[0])
@@ -681,7 +670,10 @@ function HeroDashboardPreview() {
                 return (
                   <div
                     key={sale.email}
-                    className="flex min-w-0 items-center justify-between gap-2 transition-transform duration-300 hover:-translate-y-0.5 sm:gap-3"
+                    className={cn(
+                      "flex min-w-0 items-center justify-between gap-2 transition-transform duration-300 hover:-translate-y-0.5 sm:gap-3",
+                      index >= 3 && "hidden sm:flex"
+                    )}
                   >
                     <div className="flex min-w-0 flex-1 items-center gap-3">
                       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#fff1db] text-base font-semibold text-slate-800">
@@ -736,9 +728,9 @@ function WhatIsLinketSection() {
   return (
     <section
       id="what-is-linket"
-      className="landing-alt-font relative pt-14 pb-6 sm:pt-18 sm:pb-8"
+      className="landing-alt-font relative pt-10 pb-4 sm:pt-18 sm:pb-8"
     >
-      <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden landing-decoration-fade landing-delay-2" aria-hidden>
+      <div className="pointer-events-none absolute inset-0 z-0 hidden overflow-hidden lg:block landing-decoration-fade landing-delay-2" aria-hidden>
         <div className="landing-ring-float-a absolute left-[8%] top-6 h-16 w-16 rounded-full border-[4px] border-[#f8d058]/40 bg-transparent" />
         <div className="landing-ring-float-b absolute left-[22%] top-[9rem] h-12 w-12 rounded-full border-[4px] border-[#58c0e0]/34 bg-transparent" />
         <div className="landing-ring-float-c absolute right-[12%] top-8 h-24 w-24 rounded-full border-[5px] border-[#68d8e0]/40 bg-transparent" />
@@ -747,7 +739,7 @@ function WhatIsLinketSection() {
         <div className="landing-ring-float-c absolute right-[18%] bottom-8 h-14 w-14 rounded-full border-[4px] border-[#58c0e0]/32 bg-transparent" />
       </div>
       <div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6">
-        <div className="landing-fade-up relative overflow-hidden rounded-[32px] border border-white/70 bg-white/90 p-6 shadow-[0_28px_70px_rgba(15,23,42,0.08)] sm:p-8 lg:p-10">
+        <div className="landing-fade-up relative overflow-hidden rounded-[28px] border border-white/70 bg-white/90 p-5 shadow-[0_20px_50px_rgba(15,23,42,0.08)] sm:rounded-[32px] sm:p-8 lg:p-10">
           <div className="pointer-events-none absolute inset-0 z-0 hidden lg:block landing-decoration-fade landing-delay-3" aria-hidden>
             <svg
               className="absolute inset-0 h-full w-full"
@@ -795,7 +787,7 @@ function WhatIsLinketSection() {
               <span className="inline-flex items-center rounded-full border border-[#f8ddba] bg-[#fff8ee] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-[#e3a553]">
                 What Is Linket?
               </span>
-              <h2 className="landing-serif mt-5 text-2xl font-normal tracking-[-0.03em] text-slate-900 sm:text-4xl">
+              <h2 className="landing-serif mt-4 text-[1.9rem] font-normal tracking-[-0.03em] text-slate-900 sm:mt-5 sm:text-4xl">
                 Interactive networking made seamless
               </h2>
               <p className="mx-auto mt-4 max-w-3xl text-sm leading-7 text-slate-600 sm:text-base sm:leading-8">
@@ -809,11 +801,11 @@ function WhatIsLinketSection() {
               </p>
             </div>
 
-            <div className="mt-8 grid gap-4 lg:grid-cols-3">
+            <div className="mt-6 grid gap-3 sm:mt-8 sm:gap-4 lg:grid-cols-3">
               {pillars.map((pillar) => (
                 <div
                   key={pillar.step}
-                  className="rounded-[28px] border border-slate-100 bg-[#fffdfa] p-5 shadow-[0_16px_40px_rgba(15,23,42,0.05)]"
+                  className="rounded-[24px] border border-slate-100 bg-[#fffdfa] p-4 shadow-[0_12px_30px_rgba(15,23,42,0.05)] sm:rounded-[28px] sm:p-5"
                 >
                   <span
                     className={cn(
@@ -825,10 +817,10 @@ function WhatIsLinketSection() {
                   >
                     {pillar.step}
                   </span>
-                  <h3 className="mt-4 text-lg font-semibold text-slate-900">
+                  <h3 className="mt-3 text-base font-semibold text-slate-900 sm:mt-4 sm:text-lg">
                     {pillar.title}
                   </h3>
-                  <p className="mt-3 text-sm leading-7 text-slate-600">
+                  <p className="mt-2 text-sm leading-6 text-slate-600 sm:mt-3 sm:leading-7">
                     {pillar.description}
                   </p>
                 </div>
@@ -846,7 +838,7 @@ function ExperienceSection() {
   return (
     <section
       id="customization"
-      className="landing-alt-font relative overflow-hidden bg-[#050816] py-20 text-white sm:py-24"
+      className="landing-alt-font relative overflow-hidden bg-[#050816] py-16 text-white sm:py-24"
     >
       {/* Ambient gradients to add depth on the dark section. */}
       <div
@@ -857,14 +849,14 @@ function ExperienceSection() {
         className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[#050816] via-[#0a0f1e]/40 to-transparent"
         aria-hidden
       />
-      <div className="relative mx-auto flex max-w-6xl flex-col gap-10 px-4 sm:px-6 lg:flex-row lg:items-center">
-        <div className="landing-fade-up space-y-6 lg:w-3/5">
+      <div className="relative mx-auto flex max-w-6xl flex-col gap-8 px-4 sm:gap-10 sm:px-6 lg:flex-row lg:items-center">
+        <div className="landing-fade-up space-y-5 sm:space-y-6 lg:w-3/5">
           <p className="text-sm font-semibold uppercase tracking-[0.28em] text-white/60 sm:tracking-[0.4em]">
             Custom orders
           </p>
           {/* Section headline + explanation. */}
           <div>
-            <p className="landing-serif text-2xl font-normal tracking-[-0.03em] sm:text-4xl">
+            <p className="landing-serif text-[1.9rem] font-normal tracking-[-0.03em] sm:text-4xl">
               <span className="text-white/80">
                 Generate, tweak, and deploy Linket hardware{" "}
               </span>
@@ -872,14 +864,14 @@ function ExperienceSection() {
                 10x faster
               </span>
             </p>
-            <p className="mt-4 text-base text-white/70">
+            <p className="mt-4 text-sm leading-7 text-white/70 sm:text-base sm:leading-8">
               Work directly with our hardware team to design custom models that
               match your brand. We handle prototyping, sourcing, and rollout so
               you can stay focused on demos.
             </p>
           </div>
           {/* Feature bullet cards. */}
-          <div className="grid gap-4 text-sm text-white/80 sm:grid-cols-2">
+          <div className="grid gap-3 text-sm text-white/80 sm:grid-cols-2 sm:gap-4">
             {[
               "UV-resistant plastic that holds up to daily wear",
               "Custom models shaped around your logo or brand mark",
@@ -888,7 +880,7 @@ function ExperienceSection() {
             ].map((item) => (
               <div
                 key={item}
-                className="rounded-2xl border border-white/10 bg-white/5 p-4 transition-transform duration-300 hover:-translate-y-1 hover:border-white/30"
+                className="rounded-2xl border border-white/10 bg-white/5 p-3.5 transition-transform duration-300 hover:-translate-y-1 hover:border-white/30 sm:p-4"
               >
                 {item}
               </div>
@@ -896,7 +888,7 @@ function ExperienceSection() {
           </div>
         </div>
         {/* Contact form card. */}
-        <div className="landing-fade-up landing-delay-2 w-full max-w-md rounded-3xl border border-white/10 bg-white/5 p-5 shadow-[0_30px_80px_rgba(5,5,20,0.45)] backdrop-blur transition-transform duration-500 hover:-translate-y-2 sm:p-8">
+        <div className="landing-fade-up landing-delay-2 w-full max-w-md rounded-3xl border border-white/10 bg-white/5 p-4 shadow-[0_24px_60px_rgba(5,5,20,0.4)] backdrop-blur transition-transform duration-500 hover:-translate-y-2 sm:p-8 sm:shadow-[0_30px_80px_rgba(5,5,20,0.45)]">
           <div className="flex items-center gap-3">
             <Image
               src={brand.logomark}
@@ -930,9 +922,9 @@ function PublicProfilePreviewSection({
   return (
     <section
       id="public-preview"
-      className="landing-alt-font relative pt-20 pb-2 sm:pt-24 sm:pb-4"
+      className="landing-alt-font relative pt-14 pb-2 sm:pt-24 sm:pb-4"
     >
-      <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden landing-decoration-fade landing-delay-2" aria-hidden>
+      <div className="pointer-events-none absolute inset-0 z-0 hidden overflow-hidden lg:block landing-decoration-fade landing-delay-2" aria-hidden>
         <div className="landing-ring-float-a absolute left-[10%] top-14 h-20 w-20 rounded-full border-[4px] border-[#f8d058]/46 bg-transparent" />
         <div className="landing-ring-float-b absolute left-[24%] top-6 h-12 w-12 rounded-full border-[4px] border-[#58c0e0]/40 bg-transparent" />
         <div className="landing-ring-float-c absolute left-[42%] top-12 h-16 w-16 rounded-full border-[4px] border-[#f8b878]/34 bg-transparent" />
@@ -945,20 +937,20 @@ function PublicProfilePreviewSection({
         <div className="landing-ring-float-a absolute right-[22%] bottom-[7rem] h-12 w-12 rounded-full border-[4px] border-[#f8b878]/26 bg-transparent" />
       </div>
       <div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6">
-        <div className="grid items-start gap-6 sm:gap-8 lg:grid-cols-[1.18fr_0.82fr] lg:items-stretch">
+        <div className="grid items-start gap-5 sm:gap-8 lg:grid-cols-[1.18fr_0.82fr] lg:items-stretch">
           <div className="landing-fade-up h-full text-slate-900">
-            <div className="flex h-full w-full max-w-none flex-col rounded-[32px] border border-white/70 bg-white p-6 shadow-[0_28px_70px_rgba(15,23,42,0.08)] sm:p-8 lg:min-h-[520px]">
-              <div className="relative flex h-full flex-col justify-between gap-6 pt-3 sm:pt-5">
+            <div className="flex h-full w-full max-w-none flex-col rounded-[28px] border border-white/70 bg-white p-5 shadow-[0_20px_50px_rgba(15,23,42,0.08)] sm:rounded-[32px] sm:p-8 lg:min-h-[520px]">
+              <div className="relative flex h-full flex-col justify-between gap-5 pt-0 sm:gap-6 sm:pt-5">
                 <span className="inline-flex items-center rounded-full border border-[#f8ddba] bg-[#fff8ee] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-[#e3a553]">
                   Public Page
                 </span>
-                <div className="space-y-6">
+                <div className="space-y-5 sm:space-y-6">
                   <div className="space-y-4">
-                    <h2 className="landing-serif text-2xl font-normal tracking-[-0.03em] text-slate-900 sm:text-4xl">
+                    <h2 className="landing-serif text-[1.9rem] font-normal tracking-[-0.03em] text-slate-900 sm:text-4xl">
                       This is the founder&apos;s{" "}
                       <span className="text-[#e6aa5c]">live page</span>
                     </h2>
-                    <p className="max-w-xl text-sm leading-8 text-slate-600 sm:text-base">
+                    <p className="max-w-xl text-sm leading-7 text-slate-600 sm:text-base sm:leading-8">
                       A public page is the live profile people see after they tap
                       your Linket or scan your QR code. It gives them one clean
                       place to save your contact, open your key links, and
@@ -966,7 +958,7 @@ function PublicProfilePreviewSection({
                     </p>
                   </div>
                   <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="rounded-[24px] border border-slate-100 bg-white p-4 shadow-[0_12px_32px_rgba(15,23,42,0.06)]">
+                    <div className="rounded-[24px] border border-slate-100 bg-white p-4 shadow-[0_10px_26px_rgba(15,23,42,0.06)]">
                       <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#e3a553]">
                         What Lives Here
                       </p>
@@ -976,7 +968,7 @@ function PublicProfilePreviewSection({
                         knows exactly where to go next.
                       </p>
                     </div>
-                    <div className="rounded-[24px] border border-slate-100 bg-white p-4 shadow-[0_12px_32px_rgba(15,23,42,0.06)]">
+                    <div className="rounded-[24px] border border-slate-100 bg-white p-4 shadow-[0_10px_26px_rgba(15,23,42,0.06)]">
                       <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#34afcf]">
                         Why It Matters
                       </p>
@@ -992,9 +984,9 @@ function PublicProfilePreviewSection({
             </div>
           </div>
           {/* Mobile preview shell with live data. */}
-          <div className="landing-fade-up landing-delay-2 relative mx-auto w-full max-w-[22rem] sm:max-w-[24rem]">
-            <div className="relative overflow-hidden rounded-[28px] border border-white/60 bg-white/70 shadow-[0_45px_90px_rgba(15,23,42,0.25)] backdrop-blur transition-transform duration-500 hover:-translate-y-2 sm:rounded-[36px]">
-              <div className="landing-brand-preview h-[460px] w-full overflow-y-auto bg-[#0b1220] sm:h-[520px]">
+          <div className="landing-fade-up landing-delay-2 relative mx-auto w-full max-w-[19.5rem] sm:max-w-[24rem]">
+            <div className="relative overflow-hidden rounded-[28px] border border-white/60 bg-white/70 shadow-[0_30px_70px_rgba(15,23,42,0.22)] backdrop-blur transition-transform duration-500 hover:-translate-y-2 sm:rounded-[36px] sm:shadow-[0_45px_90px_rgba(15,23,42,0.25)]">
+              <div className="landing-brand-preview h-[420px] w-full overflow-y-auto bg-[#0b1220] sm:h-[520px]">
                 <PublicProfilePreview
                   profile={profile}
                   account={account}
@@ -1017,9 +1009,9 @@ function PricingSection({ pricing }: { pricing: PublicPricingSnapshot }) {
   return (
     <section
       id="pricing"
-      className="landing-alt-font landing-fade-up relative mx-auto max-w-6xl px-4 pt-2 pb-20 sm:px-6 sm:pt-4 sm:pb-24"
+      className="landing-alt-font landing-fade-up relative mx-auto max-w-6xl px-4 pt-6 pb-16 sm:px-6 sm:pt-4 sm:pb-24"
     >
-      <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden landing-decoration-fade landing-delay-3" aria-hidden>
+      <div className="pointer-events-none absolute inset-0 z-0 hidden overflow-hidden lg:block landing-decoration-fade landing-delay-3" aria-hidden>
         <div className="landing-ring-float-a absolute left-[10%] top-12 h-20 w-20 rounded-full border-[4px] border-[#f8d058]/46 bg-transparent" />
         <div className="landing-ring-float-b absolute left-[24%] top-24 h-12 w-12 rounded-full border-[4px] border-[#58c0e0]/38 bg-transparent" />
         <div className="landing-ring-float-c absolute right-[14%] top-10 h-24 w-24 rounded-full border-[5px] border-[#68d8e0]/42 bg-transparent" />
@@ -1046,7 +1038,7 @@ function FAQSection({ items }: { items: FaqItem[] }) {
   return (
     <section
       id="faq"
-      className="landing-alt-font landing-fade-up mx-auto max-w-4xl px-4 py-20 sm:px-6 sm:py-24"
+      className="landing-alt-font landing-fade-up mx-auto max-w-4xl px-4 py-16 sm:px-6 sm:py-24"
     >
       <div className="text-center">
         <span className="inline-flex items-center gap-2 rounded-full border border-foreground/10 bg-foreground/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground sm:tracking-[0.35em]">
@@ -1060,7 +1052,7 @@ function FAQSection({ items }: { items: FaqItem[] }) {
         </p>
       </div>
       {/* FAQ accordion items. */}
-      <Accordion type="single" collapsible className="mt-10 space-y-4">
+      <Accordion type="single" collapsible className="mt-8 space-y-3 sm:mt-10 sm:space-y-4">
         {items.map((item, index) => (
           <AccordionItem
             key={item.question}
@@ -1090,11 +1082,11 @@ function LandingFooter() {
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.25),_rgba(5,8,22,0))]"
         aria-hidden
       />
-      <div className="relative mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
-        <div className="grid gap-8 sm:gap-12 lg:grid-cols-[1.3fr_1fr_1fr]">
+      <div className="relative mx-auto max-w-6xl px-3 py-10 sm:px-6 sm:py-16">
+        <div className="grid gap-7 sm:gap-12 lg:grid-cols-[1.3fr_1fr_1fr]">
           {/* Brand block + mission copy. */}
-          <div className="space-y-8">
-            <div className="flex flex-col items-start gap-3 text-lg font-semibold sm:flex-row sm:items-center">
+          <div className="space-y-6 sm:space-y-8">
+            <div className="flex items-center gap-3 text-lg font-semibold sm:flex-row sm:items-center">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10">
                 <Image
                   src={brand.logomark}
@@ -1118,61 +1110,50 @@ function LandingFooter() {
               follow-up customers actually remember. Built for students,
               creators, and field teams who want intros that stick.
             </p>
-            {/* Social icons. */}
-            <div className="flex flex-wrap items-center gap-4 pt-2">
-              {FOOTER_SOCIALS.map((social) => (
-                <Link
-                  key={social.label}
-                  href={social.href}
-                  aria-label={social.label}
-                  className="flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-white/5 text-white/70 transition hover:-translate-y-1 hover:text-white"
-                >
-                  <social.icon className="h-5 w-5" aria-hidden />
-                </Link>
+          </div>
+          <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)] gap-5 lg:contents">
+            {/* Legal link column. */}
+            <div className="space-y-6">
+              {FOOTER_LINK_GROUPS.map((group) => (
+                <div key={group.title} className="space-y-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/60 sm:tracking-[0.35em]">
+                    {group.title}
+                  </p>
+                  <ul className="space-y-2">
+                    {group.links.map((link) => (
+                      <li key={link.label}>
+                        <Link
+                          href={link.href}
+                          className="transition hover:text-white"
+                        >
+                          {link.label}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               ))}
             </div>
-          </div>
-          {/* Legal link column. */}
-          <div className="space-y-6">
-            {FOOTER_LINK_GROUPS.map((group) => (
-              <div key={group.title} className="space-y-4">
+            {/* Contact block. */}
+            <div className="space-y-6 text-sm text-white/70">
+              <div className="space-y-2">
                 <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/60 sm:tracking-[0.35em]">
-                  {group.title}
+                  Contact
                 </p>
-                <ul className="space-y-2">
-                  {group.links.map((link) => (
-                    <li key={link.label}>
-                      <Link
-                        href={link.href}
-                        className="transition hover:text-white"
-                      >
-                        {link.label}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
+                <p className="break-words text-white/80">hello@linketconnect.com</p>
+                <p className="text-white/60">
+                  400 Bizzell St, College Station, TX
+                </p>
               </div>
-            ))}
-          </div>
-          {/* Contact block. */}
-          <div className="space-y-6 text-sm text-white/70">
-            <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/60 sm:tracking-[0.35em]">
-                Contact
-              </p>
-              <p className="text-white/80">hello@linketconnect.com</p>
-              <p className="text-white/60">
-                400 Bizzell St, College Station, TX
-              </p>
             </div>
           </div>
         </div>
         {/* Footer bottom row with legal shortcuts. */}
-        <div className="mt-12 flex flex-col gap-4 border-t border-white/10 pt-6 text-xs text-white/60 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-10 flex flex-col gap-4 border-t border-white/10 pt-6 text-xs text-white/60 sm:mt-12 sm:flex-row sm:items-center sm:justify-between">
           <p>
             {"\u00a9"} {currentYear} {brand.name}. All rights reserved.
           </p>
-          <div className="flex flex-wrap items-center gap-4">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2 sm:flex sm:flex-wrap sm:items-center sm:gap-4">
             <Link href="/privacy" className="transition hover:text-white">
               Privacy
             </Link>

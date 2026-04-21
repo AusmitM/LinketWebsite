@@ -42,7 +42,7 @@ function CreativePricing({
 
   return (
     <div
-      className="w-full px-5 pt-0 pb-5 sm:px-8 sm:pt-0 sm:pb-8 md:px-12 md:pt-0 md:pb-12"
+      className="w-full px-0 pt-0 pb-4 sm:px-4 sm:pt-0 sm:pb-8 md:px-12 md:pt-0 md:pb-12"
     >
       <div className="text-center">
         <span
@@ -55,16 +55,18 @@ function CreativePricing({
         >
           {tag}
         </span>
-        <h2 className="landing-serif mt-5 text-2xl font-normal tracking-[-0.03em] text-[#0f172a] sm:text-4xl">
+        <h2 className="landing-serif mt-4 text-[1.9rem] font-normal tracking-[-0.03em] text-[#0f172a] sm:mt-5 sm:text-4xl">
           {title}
         </h2>
-        <p className="mt-3 text-sm text-slate-600 sm:text-base">{description}</p>
-        {controls && <div className="mt-5 flex justify-center">{controls}</div>}
+        <p className="mx-auto mt-3 max-w-[34rem] text-sm leading-7 text-slate-600 sm:text-base sm:leading-8">
+          {description}
+        </p>
+        {controls && <div className="mt-4 flex justify-center sm:mt-5">{controls}</div>}
       </div>
 
       <div
         className={cn(
-          "mt-8 grid gap-5 sm:mt-12 sm:gap-6",
+          "mt-6 grid gap-4 sm:mt-12 sm:gap-6",
           useTwoColumnLayout
             ? "md:mx-auto md:max-w-5xl md:grid-cols-2"
             : "md:grid-cols-3"
@@ -74,7 +76,7 @@ function CreativePricing({
           <div
             key={tier.name}
             className={cn(
-              "relative flex flex-col gap-5 rounded-[28px] border bg-white/90 p-5 shadow-[0_25px_90px_rgba(15,23,42,0.12)] backdrop-blur sm:gap-6 sm:rounded-[32px] sm:p-6",
+              "relative flex flex-col gap-4 rounded-[24px] border bg-white/90 p-4 shadow-[0_18px_48px_rgba(15,23,42,0.1)] backdrop-blur sm:gap-6 sm:rounded-[32px] sm:p-6 sm:shadow-[0_25px_90px_rgba(15,23,42,0.12)]",
               businessTheme ? "border-[#c8ebf3]" : "border-[#fde7cc]",
               tier.popular &&
                 (businessTheme
@@ -85,7 +87,7 @@ function CreativePricing({
             {tier.popular && (
               <div
                 className={cn(
-                  "pointer-events-none absolute left-1/2 top-0 z-10 inline-flex -translate-x-1/2 -translate-y-1/2 items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-semibold shadow-lg sm:text-xs",
+                  "pointer-events-none absolute left-1/2 top-0 z-10 inline-flex -translate-x-1/2 -translate-y-1/2 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold shadow-lg sm:px-3 sm:text-xs",
                   businessTheme
                     ? "border-[#bfe7f2] bg-gradient-to-r from-[#68d8e0] to-[#58c0e0] text-[#0f172a] shadow-[0_10px_25px_rgba(88,192,224,0.35)]"
                     : "border-[#f8ddba] bg-gradient-to-r from-[#f8d058] via-[#f8b878] to-[#f8b080] text-[#0f172a] shadow-[0_10px_25px_rgba(248,184,120,0.35)]"
@@ -103,7 +105,7 @@ function CreativePricing({
                 <p className="text-[11px] uppercase tracking-[0.22em] text-slate-700 sm:text-xs sm:tracking-[0.35em]">
                   {tier.description}
                 </p>
-                <h3 className="text-lg font-semibold text-[#0f172a] sm:text-xl">
+                <h3 className="text-base font-semibold text-[#0f172a] sm:text-xl">
                   {tier.name}
                 </h3>
               </div>
@@ -113,7 +115,7 @@ function CreativePricing({
               <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
                 You pay
               </p>
-              <p className="text-3xl font-semibold text-[#0f172a] sm:text-4xl">
+              <p className="text-[2rem] font-semibold text-[#0f172a] sm:text-4xl">
                 {typeof tier.price === "number" ? `$${tier.price}` : tier.price}
               </p>
               <p className="text-sm text-slate-600">
@@ -121,7 +123,7 @@ function CreativePricing({
               </p>
             </div>
 
-            <ul className="space-y-3 text-sm text-slate-600">
+            <ul className="space-y-2.5 text-sm text-slate-600">
               {tier.features.map((feature) => (
                 <li
                   key={feature}
@@ -155,7 +157,7 @@ function CreativePricing({
                   asChild
                   variant={businessTheme ? "custom" : "landingPrimary"}
                   className={cn(
-                    "w-full rounded-2xl text-base font-semibold transition hover:-translate-y-0.5",
+                    "w-full rounded-2xl text-sm font-semibold transition hover:-translate-y-0.5 sm:text-base",
                     businessTheme
                       ? "border border-[#c8ebf3] bg-white text-[#0f172a]"
                       : "",
@@ -184,7 +186,7 @@ function CreativePricing({
                     asChild
                     variant={businessTheme ? "custom" : "landingSecondary"}
                     className={cn(
-                      "w-full rounded-2xl text-base font-semibold transition hover:-translate-y-0.5",
+                      "w-full rounded-2xl text-sm font-semibold transition hover:-translate-y-0.5 sm:text-base",
                       businessTheme
                         ? "border border-[#c8ebf3] bg-white text-[#34afcf]"
                         : ""
@@ -219,7 +221,7 @@ function CreativePricing({
                   disabled: true,
                 })}
                 className={cn(
-                  "w-full rounded-2xl text-base font-semibold",
+                  "w-full rounded-2xl text-sm font-semibold sm:text-base",
                   businessTheme ? "border border-[#c8ebf3] bg-white text-[#0f172a]" : ""
                 )}
               >

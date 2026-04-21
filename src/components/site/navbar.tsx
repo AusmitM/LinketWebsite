@@ -876,21 +876,63 @@ export function Navbar() {
   };
 
   const mobilePanelClass = cn(
-    "fixed inset-x-3 top-[5.25rem] z-50 rounded-2xl border p-4 shadow-xl backdrop-blur-sm sm:inset-x-4 sm:top-24 sm:p-6",
+    "fixed inset-x-3 top-[5.25rem] z-50 rounded-[26px] border p-3.5 shadow-[0_28px_70px_rgba(15,23,42,0.18)] backdrop-blur-xl sm:inset-x-4 sm:top-24 sm:p-5",
     isDashboard
       ? "border-border/60 bg-background/95"
-      : overlayMode
-      ? "border-white/30 bg-slate-900/85 text-white"
-      : "border-foreground/10 bg-white"
+      : "border-[#e7dccb] bg-[linear-gradient(180deg,rgba(255,251,246,0.98),rgba(255,247,237,0.98))] text-[#0b1220]"
   );
 
   const mobileAvatarFrame = cn(
     "inline-flex h-7 w-7 items-center justify-center overflow-hidden rounded-full border bg-white",
     isDashboard
       ? "border-border/60 bg-card"
-      : overlayMode
-      ? "border-white/40 bg-white/10"
-      : ""
+      : "border-slate-200"
+  );
+
+  const mobilePrimaryCta = (
+    <Link
+      href="/#pricing"
+      aria-label="Buy Linket"
+      onClick={() => setMobileOpen(false)}
+      className="inline-flex min-h-11 w-full items-center justify-between rounded-full bg-[linear-gradient(135deg,#f8d058_0%,#f8b878_58%,#68d8e0_100%)] px-5 text-sm font-semibold uppercase tracking-[0.12em] text-[#0b1220] shadow-[0_18px_40px_rgba(88,192,224,0.2)] transition-transform duration-300 hover:-translate-y-0.5"
+    >
+      <span>Buy Linket</span>
+      <ArrowUpRight className="h-4 w-4" aria-hidden />
+    </Link>
+  );
+
+  const mobileSecondaryAction = user ? (
+    <Link
+      href="/dashboard/linkets"
+      onClick={() => setMobileOpen(false)}
+      className="inline-flex min-h-11 w-full items-center justify-between rounded-full border border-slate-200 bg-white px-4 text-sm font-semibold uppercase tracking-[0.12em] text-[#0b1220] shadow-[0_10px_30px_rgba(15,23,42,0.08)] transition-transform duration-300 hover:-translate-y-0.5 hover:bg-slate-50"
+      aria-label={`Go to ${brand.name} dashboard`}
+    >
+      <span className="inline-flex items-center gap-3">
+        {avatarUrl ? (
+          <span className={mobileAvatarFrame} aria-hidden="true">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={avatarUrl}
+              alt="avatar"
+              className="h-full w-full object-cover"
+            />
+          </span>
+        ) : null}
+        Dashboard
+      </span>
+      <ArrowUpRight className="h-4 w-4" aria-hidden />
+    </Link>
+  ) : (
+    <Link
+      href="/auth?view=signin"
+      onClick={() => setMobileOpen(false)}
+      className="inline-flex min-h-11 w-full items-center justify-between rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold uppercase tracking-[0.12em] text-[#0b1220] shadow-[0_10px_30px_rgba(15,23,42,0.08)] transition-transform duration-300 hover:-translate-y-0.5 hover:bg-slate-50"
+      aria-label="Sign in"
+    >
+      <span>Sign in</span>
+      <ArrowUpRight className="h-4 w-4" aria-hidden />
+    </Link>
   );
 
   const desktopLinks = (
@@ -1407,15 +1449,24 @@ export function Navbar() {
         <div className="lg:hidden">
           <button
             type="button"
-            className="fixed inset-0 z-40 bg-black/30"
+            className="fixed inset-0 z-40 bg-[rgba(15,23,42,0.16)] backdrop-blur-[3px]"
             aria-label="Close navigation overlay"
             onClick={() => setMobileOpen(false)}
           />
           <div className={mobilePanelClass}>
-            <nav aria-label="Mobile primary" className="grid gap-4">
+            <div
+              className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(248,184,120,0.1),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(104,216,224,0.1),transparent_36%)]"
+              aria-hidden
+            />
+            <nav aria-label="Mobile primary" className="relative z-10 grid gap-3">
+              <div className="px-1">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-500">
+                  Menu
+                </p>
+              </div>
               {isLandingPage ? (
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                  {LANDING_LINKS.map((link) => {
+                <div className="grid grid-cols-2 gap-2.5">
+                  {LANDING_LINKS.map((link, index) => {
                     const isActive = activeLandingId === link.id;
                     return (
                       <button
@@ -1423,16 +1474,24 @@ export function Navbar() {
                         type="button"
                         onClick={() => handleDropdownSelect(link.id)}
                         className={cn(
-                          "min-h-11 rounded-2xl border px-3 py-2 text-center text-xs font-semibold tracking-[0.04em] transition sm:text-sm",
+                          "group flex min-h-[4.75rem] flex-col justify-between rounded-[20px] border px-3.5 py-3 text-left transition-[transform,border-color,background-color,box-shadow] duration-300 hover:-translate-y-0.5",
                           isActive
-                            ? "border-[#ffb166]/70 bg-[#fff2e6] text-[#9a3412]"
-                            : overlayMode
-                            ? "border-white/25 bg-white/5 text-white hover:bg-white/12"
-                            : "border-foreground/10 bg-white text-[#0b1220] hover:bg-slate-50"
+                            ? "border-[#ffb166]/70 bg-[#fff2e6] text-[#9a3412] shadow-[0_18px_40px_rgba(248,184,120,0.18)]"
+                            : "border-slate-200 bg-white text-[#0b1220] shadow-[0_10px_30px_rgba(15,23,42,0.08)] hover:border-[#dbe6ee] hover:bg-slate-50"
                         )}
                         aria-label={`Go to ${link.label}`}
                       >
-                        {link.label}
+                        <span
+                          className={cn(
+                            "text-[11px] font-semibold uppercase tracking-[0.18em]",
+                            isActive ? "text-[#b45309]/70" : "text-slate-400"
+                          )}
+                        >
+                          {String(index + 1).padStart(2, "0")}
+                        </span>
+                        <span className="text-[15px] font-semibold leading-snug">
+                          {link.label}
+                        </span>
                       </button>
                     );
                   })}
@@ -1443,37 +1502,18 @@ export function Navbar() {
                     <Link
                       key={link.href}
                       href={link.href}
-                      className="rounded-2xl border border-foreground/10 bg-white px-4 py-3 text-sm font-semibold text-foreground shadow-[0_8px_20px_rgba(15,23,42,0.08)]"
+                      onClick={() => setMobileOpen(false)}
+                      className="flex items-center justify-between rounded-[22px] border border-slate-200 bg-white px-4 py-3.5 text-sm font-semibold text-foreground shadow-[0_10px_30px_rgba(15,23,42,0.08)] transition-[transform,border-color,background-color] duration-300 hover:-translate-y-0.5 hover:bg-slate-50"
                     >
-                      {link.label}
+                      <span>{link.label}</span>
+                      <ArrowUpRight className="h-4 w-4" aria-hidden />
                     </Link>
                   ))}
                 </div>
               ) : null}
-              <div className="grid gap-3">
-                <div className="w-full">{primaryCta}</div>
-                <div className="w-full">
-                  {user ? (
-                    <Link
-                      href="/dashboard/linkets"
-                      className="flex h-10 items-center justify-center gap-3 rounded-full bg-muted px-4 text-sm font-semibold text-foreground transition hover:bg-muted/80 md:h-12"
-                    >
-                      {avatarUrl ? (
-                        <span className={mobileAvatarFrame} aria-hidden="true">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={avatarUrl}
-                            alt="avatar"
-                            className="h-full w-full object-cover"
-                          />
-                        </span>
-                      ) : null}
-                      Dashboard
-                    </Link>
-                  ) : (
-                    loginButton
-                  )}
-                </div>
+              <div className="grid grid-cols-2 gap-2.5">
+                <div className="w-full">{mobilePrimaryCta}</div>
+                <div className="w-full">{mobileSecondaryAction}</div>
               </div>
             </nav>
           </div>
