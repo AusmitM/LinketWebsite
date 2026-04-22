@@ -7,7 +7,7 @@
     "conformance_levels": [
       "AA baseline"
     ],
-    "audit_timestamp": "2026-04-02T03:35:59.393Z",
+    "audit_timestamp": "2026-04-22T17:09:56.078Z",
     "tool_assumptions": [
       "Theme tokens were read from src/styles/theme/base.css and src/styles/theme/variants.css.",
       "Button checks treat normal text contrast as 4.5:1 and component boundary contrast as 3:1.",
@@ -23870,31 +23870,31 @@
       "surface": "background",
       "fg": {
         "token": "--color-button-primary-fg",
-        "raw": "#ffffff",
-        "hex": "#ffffff",
-        "rgba": "rgba(255, 255, 255, 1)",
+        "raw": "#fff4ea",
+        "hex": "#fff4ea",
+        "rgba": "rgba(255, 244, 234, 1)",
         "alpha": 1
       },
       "bg": {
         "token": "--color-button-primary-bg",
-        "raw": "#a45b3e",
-        "hex": "#a45b3e",
-        "rgba": "rgba(164, 91, 62, 1)",
+        "raw": "#8f5135",
+        "hex": "#8f5135",
+        "rgba": "rgba(143, 81, 53, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 5.07,
-        "luminance_fg": 1,
-        "luminance_bg": 0.1572,
+        "contrast_ratio": 5.71,
+        "luminance_fg": 0.919,
+        "luminance_bg": 0.1198,
         "method": "computed"
       },
       "threshold": 4.5,
@@ -23913,31 +23913,31 @@
       "surface": "background",
       "fg": {
         "token": "--color-button-primary-border",
-        "raw": "color-mix(in srgb, var(--primary) 42%, white 58%)",
-        "hex": "#d9baae",
-        "rgba": "rgba(217, 186, 174, 1)",
-        "alpha": 1
+        "raw": "rgba(255, 224, 204, 0.58)",
+        "hex": "#a09484",
+        "rgba": "rgba(160, 148, 132, 1)",
+        "alpha": 0.58
       },
       "bg": {
         "token": "--color-button-primary-bg",
-        "raw": "#a45b3e",
-        "hex": "#a45b3e",
-        "rgba": "rgba(164, 91, 62, 1)",
+        "raw": "#8f5135",
+        "hex": "#8f5135",
+        "rgba": "rgba(143, 81, 53, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "fill_contrast_ratio": 2.55,
-        "border_contrast_ratio": 7.12,
-        "contrast_ratio": 7.12,
+        "fill_contrast_ratio": 2.39,
+        "border_contrast_ratio": 4.98,
+        "contrast_ratio": 4.98,
         "contrast_source": "border",
         "method": "computed"
       },
@@ -23957,38 +23957,38 @@
       "surface": "card",
       "fg": {
         "token": "--color-button-primary-fg",
-        "raw": "#ffffff",
-        "hex": "#ffffff",
-        "rgba": "rgba(255, 255, 255, 1)",
+        "raw": "#fff4ea",
+        "hex": "#fff4ea",
+        "rgba": "rgba(255, 244, 234, 1)",
         "alpha": 1
       },
       "bg": {
         "token": "--color-button-primary-bg",
-        "raw": "#a45b3e",
-        "hex": "#a45b3e",
-        "rgba": "rgba(164, 91, 62, 1)",
+        "raw": "#8f5135",
+        "hex": "#8f5135",
+        "rgba": "rgba(143, 81, 53, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--card",
-            "raw": "rgba(70, 89, 74, 0.94)",
-            "hex": "#46594a",
-            "rgba": "rgba(70, 89, 74, 0.94)",
-            "alpha": 0.94
+            "raw": "rgba(54, 72, 60, 0.96)",
+            "hex": "#36483c",
+            "rgba": "rgba(54, 72, 60, 0.96)",
+            "alpha": 0.96
           },
           {
             "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 5.07,
-        "luminance_fg": 1,
-        "luminance_bg": 0.1572,
+        "contrast_ratio": 5.71,
+        "luminance_fg": 0.919,
+        "luminance_bg": 0.1198,
         "method": "computed"
       },
       "threshold": 4.5,
@@ -24007,38 +24007,38 @@
       "surface": "card",
       "fg": {
         "token": "--color-button-primary-border",
-        "raw": "color-mix(in srgb, var(--primary) 42%, white 58%)",
-        "hex": "#d9baae",
-        "rgba": "rgba(217, 186, 174, 1)",
-        "alpha": 1
+        "raw": "rgba(255, 224, 204, 0.58)",
+        "hex": "#aaa08f",
+        "rgba": "rgba(170, 160, 143, 1)",
+        "alpha": 0.58
       },
       "bg": {
         "token": "--color-button-primary-bg",
-        "raw": "#a45b3e",
-        "hex": "#a45b3e",
-        "rgba": "rgba(164, 91, 62, 1)",
+        "raw": "#8f5135",
+        "hex": "#8f5135",
+        "rgba": "rgba(143, 81, 53, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--card",
-            "raw": "rgba(70, 89, 74, 0.94)",
-            "hex": "#46594a",
-            "rgba": "rgba(70, 89, 74, 0.94)",
-            "alpha": 0.94
+            "raw": "rgba(54, 72, 60, 0.96)",
+            "hex": "#36483c",
+            "rgba": "rgba(54, 72, 60, 0.96)",
+            "alpha": 0.96
           },
           {
             "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "fill_contrast_ratio": 1.54,
-        "border_contrast_ratio": 4.29,
-        "contrast_ratio": 4.29,
+        "fill_contrast_ratio": 1.61,
+        "border_contrast_ratio": 3.84,
+        "contrast_ratio": 3.84,
         "contrast_source": "border",
         "method": "computed"
       },
@@ -24058,31 +24058,31 @@
       "surface": "background",
       "fg": {
         "token": "--color-button-primary-fg",
-        "raw": "#ffffff",
-        "hex": "#ffffff",
-        "rgba": "rgba(255, 255, 255, 1)",
+        "raw": "#fff4ea",
+        "hex": "#fff4ea",
+        "rgba": "rgba(255, 244, 234, 1)",
         "alpha": 1
       },
       "bg": {
         "token": "--color-button-primary-bg-hover",
-        "raw": "#a45b3e",
-        "hex": "#a45b3e",
-        "rgba": "rgba(164, 91, 62, 1)",
+        "raw": "#9a593b",
+        "hex": "#9a593b",
+        "rgba": "rgba(154, 89, 59, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 5.07,
-        "luminance_fg": 1,
-        "luminance_bg": 0.1572,
+        "contrast_ratio": 5.01,
+        "luminance_fg": 0.919,
+        "luminance_bg": 0.1433,
         "method": "computed"
       },
       "threshold": 4.5,
@@ -24101,31 +24101,31 @@
       "surface": "background",
       "fg": {
         "token": "--color-button-primary-border",
-        "raw": "color-mix(in srgb, var(--primary) 42%, white 58%)",
-        "hex": "#d9baae",
-        "rgba": "rgba(217, 186, 174, 1)",
-        "alpha": 1
+        "raw": "rgba(255, 224, 204, 0.58)",
+        "hex": "#a09484",
+        "rgba": "rgba(160, 148, 132, 1)",
+        "alpha": 0.58
       },
       "bg": {
         "token": "--color-button-primary-bg-hover",
-        "raw": "#a45b3e",
-        "hex": "#a45b3e",
-        "rgba": "rgba(164, 91, 62, 1)",
+        "raw": "#9a593b",
+        "hex": "#9a593b",
+        "rgba": "rgba(154, 89, 59, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "fill_contrast_ratio": 2.55,
-        "border_contrast_ratio": 7.12,
-        "contrast_ratio": 7.12,
+        "fill_contrast_ratio": 2.73,
+        "border_contrast_ratio": 4.98,
+        "contrast_ratio": 4.98,
         "contrast_source": "border",
         "method": "computed"
       },
@@ -24145,38 +24145,38 @@
       "surface": "card",
       "fg": {
         "token": "--color-button-primary-fg",
-        "raw": "#ffffff",
-        "hex": "#ffffff",
-        "rgba": "rgba(255, 255, 255, 1)",
+        "raw": "#fff4ea",
+        "hex": "#fff4ea",
+        "rgba": "rgba(255, 244, 234, 1)",
         "alpha": 1
       },
       "bg": {
         "token": "--color-button-primary-bg-hover",
-        "raw": "#a45b3e",
-        "hex": "#a45b3e",
-        "rgba": "rgba(164, 91, 62, 1)",
+        "raw": "#9a593b",
+        "hex": "#9a593b",
+        "rgba": "rgba(154, 89, 59, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--card",
-            "raw": "rgba(70, 89, 74, 0.94)",
-            "hex": "#46594a",
-            "rgba": "rgba(70, 89, 74, 0.94)",
-            "alpha": 0.94
+            "raw": "rgba(54, 72, 60, 0.96)",
+            "hex": "#36483c",
+            "rgba": "rgba(54, 72, 60, 0.96)",
+            "alpha": 0.96
           },
           {
             "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 5.07,
-        "luminance_fg": 1,
-        "luminance_bg": 0.1572,
+        "contrast_ratio": 5.01,
+        "luminance_fg": 0.919,
+        "luminance_bg": 0.1433,
         "method": "computed"
       },
       "threshold": 4.5,
@@ -24195,38 +24195,38 @@
       "surface": "card",
       "fg": {
         "token": "--color-button-primary-border",
-        "raw": "color-mix(in srgb, var(--primary) 42%, white 58%)",
-        "hex": "#d9baae",
-        "rgba": "rgba(217, 186, 174, 1)",
-        "alpha": 1
+        "raw": "rgba(255, 224, 204, 0.58)",
+        "hex": "#aaa08f",
+        "rgba": "rgba(170, 160, 143, 1)",
+        "alpha": 0.58
       },
       "bg": {
         "token": "--color-button-primary-bg-hover",
-        "raw": "#a45b3e",
-        "hex": "#a45b3e",
-        "rgba": "rgba(164, 91, 62, 1)",
+        "raw": "#9a593b",
+        "hex": "#9a593b",
+        "rgba": "rgba(154, 89, 59, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--card",
-            "raw": "rgba(70, 89, 74, 0.94)",
-            "hex": "#46594a",
-            "rgba": "rgba(70, 89, 74, 0.94)",
-            "alpha": 0.94
+            "raw": "rgba(54, 72, 60, 0.96)",
+            "hex": "#36483c",
+            "rgba": "rgba(54, 72, 60, 0.96)",
+            "alpha": 0.96
           },
           {
             "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "fill_contrast_ratio": 1.54,
-        "border_contrast_ratio": 4.29,
-        "contrast_ratio": 4.29,
+        "fill_contrast_ratio": 1.83,
+        "border_contrast_ratio": 3.84,
+        "contrast_ratio": 3.84,
         "contrast_source": "border",
         "method": "computed"
       },
@@ -24246,31 +24246,31 @@
       "surface": "background",
       "fg": {
         "token": "--color-button-primary-fg",
-        "raw": "#ffffff",
-        "hex": "#ffffff",
-        "rgba": "rgba(255, 255, 255, 1)",
+        "raw": "#fff4ea",
+        "hex": "#fff4ea",
+        "rgba": "rgba(255, 244, 234, 1)",
         "alpha": 1
       },
       "bg": {
         "token": "--color-button-primary-bg-active",
-        "raw": "color-mix(in srgb, var(--primary) 94%, #0f172a 6%)",
-        "hex": "#9b573d",
-        "rgba": "rgba(155, 87, 61, 1)",
+        "raw": "#74412b",
+        "hex": "#74412b",
+        "rgba": "rgba(116, 65, 43, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 5.49,
-        "luminance_fg": 1,
-        "luminance_bg": 0.1411,
+        "contrast_ratio": 7.65,
+        "luminance_fg": 0.919,
+        "luminance_bg": 0.0767,
         "method": "computed"
       },
       "threshold": 4.5,
@@ -24289,219 +24289,132 @@
       "surface": "background",
       "fg": {
         "token": "--color-button-primary-border",
-        "raw": "color-mix(in srgb, var(--primary) 42%, white 58%)",
-        "hex": "#d9baae",
-        "rgba": "rgba(217, 186, 174, 1)",
-        "alpha": 1
+        "raw": "rgba(255, 224, 204, 0.58)",
+        "hex": "#a09484",
+        "rgba": "rgba(160, 148, 132, 1)",
+        "alpha": 0.58
       },
       "bg": {
         "token": "--color-button-primary-bg-active",
-        "raw": "color-mix(in srgb, var(--primary) 94%, #0f172a 6%)",
-        "hex": "#9b573d",
-        "rgba": "rgba(155, 87, 61, 1)",
+        "raw": "#74412b",
+        "hex": "#74412b",
+        "rgba": "rgba(116, 65, 43, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
-            "alpha": 1
-          }
-        ]
-      },
-      "computed": {
-        "fill_contrast_ratio": 2.35,
-        "border_contrast_ratio": 7.12,
-        "contrast_ratio": 7.12,
-        "contrast_source": "border",
-        "method": "computed"
-      },
-      "threshold": 3,
-      "pass": true,
-      "note": "Button must remain visually distinct from the adjacent surface through its fill or its border.",
-      "recommendation": "No change required."
-    },
-    {
-      "theme": ".theme-forest",
-      "theme_selector": ".theme-forest",
-      "source_file": "src/styles/theme/variants.css",
-      "component": "primary",
-      "component_label": "Primary button",
-      "check_type": "text",
-      "state": "active",
-      "surface": "card",
-      "fg": {
-        "token": "--color-button-primary-fg",
-        "raw": "#ffffff",
-        "hex": "#ffffff",
-        "rgba": "rgba(255, 255, 255, 1)",
-        "alpha": 1
-      },
-      "bg": {
-        "token": "--color-button-primary-bg-active",
-        "raw": "color-mix(in srgb, var(--primary) 94%, #0f172a 6%)",
-        "hex": "#9b573d",
-        "rgba": "rgba(155, 87, 61, 1)",
-        "alpha": 1,
-        "layers": [
-          {
-            "token": "--card",
-            "raw": "rgba(70, 89, 74, 0.94)",
-            "hex": "#46594a",
-            "rgba": "rgba(70, 89, 74, 0.94)",
-            "alpha": 0.94
-          },
-          {
-            "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
-            "alpha": 1
-          }
-        ]
-      },
-      "computed": {
-        "contrast_ratio": 5.49,
-        "luminance_fg": 1,
-        "luminance_bg": 0.1411,
-        "method": "computed"
-      },
-      "threshold": 4.5,
-      "pass": true,
-      "note": "Button label/icon contrast against the effective button background.",
-      "recommendation": "No change required."
-    },
-    {
-      "theme": ".theme-forest",
-      "theme_selector": ".theme-forest",
-      "source_file": "src/styles/theme/variants.css",
-      "component": "primary",
-      "component_label": "Primary button",
-      "check_type": "boundary",
-      "state": "active",
-      "surface": "card",
-      "fg": {
-        "token": "--color-button-primary-border",
-        "raw": "color-mix(in srgb, var(--primary) 42%, white 58%)",
-        "hex": "#d9baae",
-        "rgba": "rgba(217, 186, 174, 1)",
-        "alpha": 1
-      },
-      "bg": {
-        "token": "--color-button-primary-bg-active",
-        "raw": "color-mix(in srgb, var(--primary) 94%, #0f172a 6%)",
-        "hex": "#9b573d",
-        "rgba": "rgba(155, 87, 61, 1)",
-        "alpha": 1,
-        "layers": [
-          {
-            "token": "--card",
-            "raw": "rgba(70, 89, 74, 0.94)",
-            "hex": "#46594a",
-            "rgba": "rgba(70, 89, 74, 0.94)",
-            "alpha": 0.94
-          },
-          {
-            "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
-            "alpha": 1
-          }
-        ]
-      },
-      "computed": {
-        "fill_contrast_ratio": 1.42,
-        "border_contrast_ratio": 4.29,
-        "contrast_ratio": 4.29,
-        "contrast_source": "border",
-        "method": "computed"
-      },
-      "threshold": 3,
-      "pass": true,
-      "note": "Button must remain visually distinct from the adjacent surface through its fill or its border.",
-      "recommendation": "No change required."
-    },
-    {
-      "theme": ".theme-forest",
-      "theme_selector": ".theme-forest",
-      "source_file": "src/styles/theme/variants.css",
-      "component": "secondary",
-      "component_label": "Secondary button",
-      "check_type": "text",
-      "state": "default",
-      "surface": "background",
-      "fg": {
-        "token": "--color-button-secondary-fg",
-        "raw": "#f7f0e2",
-        "hex": "#f7f0e2",
-        "rgba": "rgba(247, 240, 226, 1)",
-        "alpha": 1
-      },
-      "bg": {
-        "token": "--color-button-secondary-bg",
-        "raw": "color-mix(in srgb, var(--secondary) 78%, var(--card) 22%)",
-        "hex": "#495c4d",
-        "rgba": "rgba(73, 92, 77, 1)",
-        "alpha": 1,
-        "layers": [
-          {
-            "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
-            "alpha": 1
-          }
-        ]
-      },
-      "computed": {
-        "contrast_ratio": 6.37,
-        "luminance_fg": 0.8759,
-        "luminance_bg": 0.0953,
-        "method": "computed"
-      },
-      "threshold": 4.5,
-      "pass": true,
-      "note": "Button label/icon contrast against the effective button background.",
-      "recommendation": "No change required."
-    },
-    {
-      "theme": ".theme-forest",
-      "theme_selector": ".theme-forest",
-      "source_file": "src/styles/theme/variants.css",
-      "component": "secondary",
-      "component_label": "Secondary button",
-      "check_type": "boundary",
-      "state": "default",
-      "surface": "background",
-      "fg": {
-        "token": "--color-button-secondary-border",
-        "raw": "color-mix(in srgb, var(--button-subtle-foreground) 72%, var(--card) 28%)",
-        "hex": "#c3c3b5",
-        "rgba": "rgba(195, 195, 181, 1)",
-        "alpha": 0.9832
-      },
-      "bg": {
-        "token": "--color-button-secondary-bg",
-        "raw": "color-mix(in srgb, var(--secondary) 78%, var(--card) 22%)",
-        "hex": "#495c4d",
-        "rgba": "rgba(73, 92, 77, 1)",
-        "alpha": 1,
-        "layers": [
-          {
-            "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
         "fill_contrast_ratio": 1.79,
-        "border_contrast_ratio": 7.26,
-        "contrast_ratio": 7.26,
+        "border_contrast_ratio": 4.98,
+        "contrast_ratio": 4.98,
+        "contrast_source": "border",
+        "method": "computed"
+      },
+      "threshold": 3,
+      "pass": true,
+      "note": "Button must remain visually distinct from the adjacent surface through its fill or its border.",
+      "recommendation": "No change required."
+    },
+    {
+      "theme": ".theme-forest",
+      "theme_selector": ".theme-forest",
+      "source_file": "src/styles/theme/variants.css",
+      "component": "primary",
+      "component_label": "Primary button",
+      "check_type": "text",
+      "state": "active",
+      "surface": "card",
+      "fg": {
+        "token": "--color-button-primary-fg",
+        "raw": "#fff4ea",
+        "hex": "#fff4ea",
+        "rgba": "rgba(255, 244, 234, 1)",
+        "alpha": 1
+      },
+      "bg": {
+        "token": "--color-button-primary-bg-active",
+        "raw": "#74412b",
+        "hex": "#74412b",
+        "rgba": "rgba(116, 65, 43, 1)",
+        "alpha": 1,
+        "layers": [
+          {
+            "token": "--card",
+            "raw": "rgba(54, 72, 60, 0.96)",
+            "hex": "#36483c",
+            "rgba": "rgba(54, 72, 60, 0.96)",
+            "alpha": 0.96
+          },
+          {
+            "token": "--background",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
+            "alpha": 1
+          }
+        ]
+      },
+      "computed": {
+        "contrast_ratio": 7.65,
+        "luminance_fg": 0.919,
+        "luminance_bg": 0.0767,
+        "method": "computed"
+      },
+      "threshold": 4.5,
+      "pass": true,
+      "note": "Button label/icon contrast against the effective button background.",
+      "recommendation": "No change required."
+    },
+    {
+      "theme": ".theme-forest",
+      "theme_selector": ".theme-forest",
+      "source_file": "src/styles/theme/variants.css",
+      "component": "primary",
+      "component_label": "Primary button",
+      "check_type": "boundary",
+      "state": "active",
+      "surface": "card",
+      "fg": {
+        "token": "--color-button-primary-border",
+        "raw": "rgba(255, 224, 204, 0.58)",
+        "hex": "#aaa08f",
+        "rgba": "rgba(170, 160, 143, 1)",
+        "alpha": 0.58
+      },
+      "bg": {
+        "token": "--color-button-primary-bg-active",
+        "raw": "#74412b",
+        "hex": "#74412b",
+        "rgba": "rgba(116, 65, 43, 1)",
+        "alpha": 1,
+        "layers": [
+          {
+            "token": "--card",
+            "raw": "rgba(54, 72, 60, 0.96)",
+            "hex": "#36483c",
+            "rgba": "rgba(54, 72, 60, 0.96)",
+            "alpha": 0.96
+          },
+          {
+            "token": "--background",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
+            "alpha": 1
+          }
+        ]
+      },
+      "computed": {
+        "fill_contrast_ratio": 1.2,
+        "border_contrast_ratio": 3.84,
+        "contrast_ratio": 3.84,
         "contrast_source": "border",
         "method": "computed"
       },
@@ -24518,41 +24431,34 @@
       "component_label": "Secondary button",
       "check_type": "text",
       "state": "default",
-      "surface": "card",
+      "surface": "background",
       "fg": {
         "token": "--color-button-secondary-fg",
-        "raw": "#f7f0e2",
-        "hex": "#f7f0e2",
-        "rgba": "rgba(247, 240, 226, 1)",
+        "raw": "#fbf4e8",
+        "hex": "#fbf4e8",
+        "rgba": "rgba(251, 244, 232, 1)",
         "alpha": 1
       },
       "bg": {
         "token": "--color-button-secondary-bg",
         "raw": "color-mix(in srgb, var(--secondary) 78%, var(--card) 22%)",
-        "hex": "#495c4e",
-        "rgba": "rgba(73, 92, 78, 1)",
+        "hex": "#3c4f42",
+        "rgba": "rgba(60, 79, 66, 1)",
         "alpha": 1,
         "layers": [
           {
-            "token": "--card",
-            "raw": "rgba(70, 89, 74, 0.94)",
-            "hex": "#46594a",
-            "rgba": "rgba(70, 89, 74, 0.94)",
-            "alpha": 0.94
-          },
-          {
             "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 6.33,
-        "luminance_fg": 0.8759,
-        "luminance_bg": 0.0963,
+        "contrast_ratio": 7.99,
+        "luminance_fg": 0.9104,
+        "luminance_bg": 0.0701,
         "method": "computed"
       },
       "threshold": 4.5,
@@ -24568,41 +24474,135 @@
       "component_label": "Secondary button",
       "check_type": "boundary",
       "state": "default",
-      "surface": "card",
+      "surface": "background",
       "fg": {
         "token": "--color-button-secondary-border",
         "raw": "color-mix(in srgb, var(--button-subtle-foreground) 72%, var(--card) 28%)",
-        "hex": "#c3c4b6",
-        "rgba": "rgba(195, 196, 182, 1)",
-        "alpha": 0.9832
+        "hex": "#c2c2b6",
+        "rgba": "rgba(194, 194, 182, 1)",
+        "alpha": 0.9888
       },
       "bg": {
         "token": "--color-button-secondary-bg",
         "raw": "color-mix(in srgb, var(--secondary) 78%, var(--card) 22%)",
-        "hex": "#495c4e",
-        "rgba": "rgba(73, 92, 78, 1)",
+        "hex": "#3c4f42",
+        "rgba": "rgba(60, 79, 66, 1)",
         "alpha": 1,
         "layers": [
           {
-            "token": "--card",
-            "raw": "rgba(70, 89, 74, 0.94)",
-            "hex": "#46594a",
-            "rgba": "rgba(70, 89, 74, 0.94)",
-            "alpha": 0.94
-          },
-          {
             "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "fill_contrast_ratio": 1.08,
-        "border_contrast_ratio": 4.4,
-        "contrast_ratio": 4.4,
+        "fill_contrast_ratio": 1.69,
+        "border_contrast_ratio": 8.25,
+        "contrast_ratio": 8.25,
+        "contrast_source": "border",
+        "method": "computed"
+      },
+      "threshold": 3,
+      "pass": true,
+      "note": "Button must remain visually distinct from the adjacent surface through its fill or its border.",
+      "recommendation": "No change required."
+    },
+    {
+      "theme": ".theme-forest",
+      "theme_selector": ".theme-forest",
+      "source_file": "src/styles/theme/variants.css",
+      "component": "secondary",
+      "component_label": "Secondary button",
+      "check_type": "text",
+      "state": "default",
+      "surface": "card",
+      "fg": {
+        "token": "--color-button-secondary-fg",
+        "raw": "#fbf4e8",
+        "hex": "#fbf4e8",
+        "rgba": "rgba(251, 244, 232, 1)",
+        "alpha": 1
+      },
+      "bg": {
+        "token": "--color-button-secondary-bg",
+        "raw": "color-mix(in srgb, var(--secondary) 78%, var(--card) 22%)",
+        "hex": "#3c5042",
+        "rgba": "rgba(60, 80, 66, 1)",
+        "alpha": 1,
+        "layers": [
+          {
+            "token": "--card",
+            "raw": "rgba(54, 72, 60, 0.96)",
+            "hex": "#36483c",
+            "rgba": "rgba(54, 72, 60, 0.96)",
+            "alpha": 0.96
+          },
+          {
+            "token": "--background",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
+            "alpha": 1
+          }
+        ]
+      },
+      "computed": {
+        "contrast_ratio": 7.96,
+        "luminance_fg": 0.9104,
+        "luminance_bg": 0.0706,
+        "method": "computed"
+      },
+      "threshold": 4.5,
+      "pass": true,
+      "note": "Button label/icon contrast against the effective button background.",
+      "recommendation": "No change required."
+    },
+    {
+      "theme": ".theme-forest",
+      "theme_selector": ".theme-forest",
+      "source_file": "src/styles/theme/variants.css",
+      "component": "secondary",
+      "component_label": "Secondary button",
+      "check_type": "boundary",
+      "state": "default",
+      "surface": "card",
+      "fg": {
+        "token": "--color-button-secondary-border",
+        "raw": "color-mix(in srgb, var(--button-subtle-foreground) 72%, var(--card) 28%)",
+        "hex": "#c2c2b6",
+        "rgba": "rgba(194, 194, 182, 1)",
+        "alpha": 0.9888
+      },
+      "bg": {
+        "token": "--color-button-secondary-bg",
+        "raw": "color-mix(in srgb, var(--secondary) 78%, var(--card) 22%)",
+        "hex": "#3c5042",
+        "rgba": "rgba(60, 80, 66, 1)",
+        "alpha": 1,
+        "layers": [
+          {
+            "token": "--card",
+            "raw": "rgba(54, 72, 60, 0.96)",
+            "hex": "#36483c",
+            "rgba": "rgba(54, 72, 60, 0.96)",
+            "alpha": 0.96
+          },
+          {
+            "token": "--background",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
+            "alpha": 1
+          }
+        ]
+      },
+      "computed": {
+        "fill_contrast_ratio": 1.14,
+        "border_contrast_ratio": 5.56,
+        "contrast_ratio": 5.56,
         "contrast_source": "border",
         "method": "computed"
       },
@@ -24622,31 +24622,31 @@
       "surface": "background",
       "fg": {
         "token": "--color-button-secondary-fg",
-        "raw": "#f7f0e2",
-        "hex": "#f7f0e2",
-        "rgba": "rgba(247, 240, 226, 1)",
+        "raw": "#fbf4e8",
+        "hex": "#fbf4e8",
+        "rgba": "rgba(251, 244, 232, 1)",
         "alpha": 1
       },
       "bg": {
         "token": "--color-button-secondary-bg-hover",
         "raw": "color-mix(in srgb, var(--secondary) 86%, var(--card) 14%)",
-        "hex": "#495c4e",
-        "rgba": "rgba(73, 92, 78, 1)",
+        "hex": "#3d5043",
+        "rgba": "rgba(61, 80, 67, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 6.32,
-        "luminance_fg": 0.8759,
-        "luminance_bg": 0.0965,
+        "contrast_ratio": 7.89,
+        "luminance_fg": 0.9104,
+        "luminance_bg": 0.0718,
         "method": "computed"
       },
       "threshold": 4.5,
@@ -24666,30 +24666,30 @@
       "fg": {
         "token": "--color-button-secondary-border",
         "raw": "color-mix(in srgb, var(--button-subtle-foreground) 72%, var(--card) 28%)",
-        "hex": "#c3c3b5",
-        "rgba": "rgba(195, 195, 181, 1)",
-        "alpha": 0.9832
+        "hex": "#c2c2b6",
+        "rgba": "rgba(194, 194, 182, 1)",
+        "alpha": 0.9888
       },
       "bg": {
         "token": "--color-button-secondary-bg-hover",
         "raw": "color-mix(in srgb, var(--secondary) 86%, var(--card) 14%)",
-        "hex": "#495c4e",
-        "rgba": "rgba(73, 92, 78, 1)",
+        "hex": "#3d5043",
+        "rgba": "rgba(61, 80, 67, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "fill_contrast_ratio": 1.8,
-        "border_contrast_ratio": 7.26,
-        "contrast_ratio": 7.26,
+        "fill_contrast_ratio": 1.72,
+        "border_contrast_ratio": 8.25,
+        "contrast_ratio": 8.25,
         "contrast_source": "border",
         "method": "computed"
       },
@@ -24709,38 +24709,38 @@
       "surface": "card",
       "fg": {
         "token": "--color-button-secondary-fg",
-        "raw": "#f7f0e2",
-        "hex": "#f7f0e2",
-        "rgba": "rgba(247, 240, 226, 1)",
+        "raw": "#fbf4e8",
+        "hex": "#fbf4e8",
+        "rgba": "rgba(251, 244, 232, 1)",
         "alpha": 1
       },
       "bg": {
         "token": "--color-button-secondary-bg-hover",
         "raw": "color-mix(in srgb, var(--secondary) 86%, var(--card) 14%)",
-        "hex": "#495c4e",
-        "rgba": "rgba(73, 92, 78, 1)",
+        "hex": "#3d5143",
+        "rgba": "rgba(61, 81, 67, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--card",
-            "raw": "rgba(70, 89, 74, 0.94)",
-            "hex": "#46594a",
-            "rgba": "rgba(70, 89, 74, 0.94)",
-            "alpha": 0.94
+            "raw": "rgba(54, 72, 60, 0.96)",
+            "hex": "#36483c",
+            "rgba": "rgba(54, 72, 60, 0.96)",
+            "alpha": 0.96
           },
           {
             "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 6.29,
-        "luminance_fg": 0.8759,
-        "luminance_bg": 0.0971,
+        "contrast_ratio": 7.87,
+        "luminance_fg": 0.9104,
+        "luminance_bg": 0.0721,
         "method": "computed"
       },
       "threshold": 4.5,
@@ -24760,37 +24760,37 @@
       "fg": {
         "token": "--color-button-secondary-border",
         "raw": "color-mix(in srgb, var(--button-subtle-foreground) 72%, var(--card) 28%)",
-        "hex": "#c3c4b6",
-        "rgba": "rgba(195, 196, 182, 1)",
-        "alpha": 0.9832
+        "hex": "#c2c2b6",
+        "rgba": "rgba(194, 194, 182, 1)",
+        "alpha": 0.9888
       },
       "bg": {
         "token": "--color-button-secondary-bg-hover",
         "raw": "color-mix(in srgb, var(--secondary) 86%, var(--card) 14%)",
-        "hex": "#495c4e",
-        "rgba": "rgba(73, 92, 78, 1)",
+        "hex": "#3d5143",
+        "rgba": "rgba(61, 81, 67, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--card",
-            "raw": "rgba(70, 89, 74, 0.94)",
-            "hex": "#46594a",
-            "rgba": "rgba(70, 89, 74, 0.94)",
-            "alpha": 0.94
+            "raw": "rgba(54, 72, 60, 0.96)",
+            "hex": "#36483c",
+            "rgba": "rgba(54, 72, 60, 0.96)",
+            "alpha": 0.96
           },
           {
             "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "fill_contrast_ratio": 1.09,
-        "border_contrast_ratio": 4.4,
-        "contrast_ratio": 4.4,
+        "fill_contrast_ratio": 1.16,
+        "border_contrast_ratio": 5.56,
+        "contrast_ratio": 5.56,
         "contrast_source": "border",
         "method": "computed"
       },
@@ -24810,31 +24810,31 @@
       "surface": "background",
       "fg": {
         "token": "--color-button-secondary-fg",
-        "raw": "#f7f0e2",
-        "hex": "#f7f0e2",
-        "rgba": "rgba(247, 240, 226, 1)",
+        "raw": "#fbf4e8",
+        "hex": "#fbf4e8",
+        "rgba": "rgba(251, 244, 232, 1)",
         "alpha": 1
       },
       "bg": {
         "token": "--color-button-secondary-bg-active",
         "raw": "color-mix(in srgb, var(--secondary) 92%, var(--card) 8%)",
-        "hex": "#4a5c4e",
-        "rgba": "rgba(74, 92, 78, 1)",
+        "hex": "#3d5143",
+        "rgba": "rgba(61, 81, 67, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 6.28,
-        "luminance_fg": 0.8759,
-        "luminance_bg": 0.0973,
+        "contrast_ratio": 7.8,
+        "luminance_fg": 0.9104,
+        "luminance_bg": 0.073,
         "method": "computed"
       },
       "threshold": 4.5,
@@ -24854,594 +24854,594 @@
       "fg": {
         "token": "--color-button-secondary-border",
         "raw": "color-mix(in srgb, var(--button-subtle-foreground) 72%, var(--card) 28%)",
-        "hex": "#c3c3b5",
-        "rgba": "rgba(195, 195, 181, 1)",
-        "alpha": 0.9832
+        "hex": "#c2c2b6",
+        "rgba": "rgba(194, 194, 182, 1)",
+        "alpha": 0.9888
       },
       "bg": {
         "token": "--color-button-secondary-bg-active",
         "raw": "color-mix(in srgb, var(--secondary) 92%, var(--card) 8%)",
-        "hex": "#4a5c4e",
-        "rgba": "rgba(74, 92, 78, 1)",
+        "hex": "#3d5143",
+        "rgba": "rgba(61, 81, 67, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
-            "alpha": 1
-          }
-        ]
-      },
-      "computed": {
-        "fill_contrast_ratio": 1.81,
-        "border_contrast_ratio": 7.26,
-        "contrast_ratio": 7.26,
-        "contrast_source": "border",
-        "method": "computed"
-      },
-      "threshold": 3,
-      "pass": true,
-      "note": "Button must remain visually distinct from the adjacent surface through its fill or its border.",
-      "recommendation": "No change required."
-    },
-    {
-      "theme": ".theme-forest",
-      "theme_selector": ".theme-forest",
-      "source_file": "src/styles/theme/variants.css",
-      "component": "secondary",
-      "component_label": "Secondary button",
-      "check_type": "text",
-      "state": "active",
-      "surface": "card",
-      "fg": {
-        "token": "--color-button-secondary-fg",
-        "raw": "#f7f0e2",
-        "hex": "#f7f0e2",
-        "rgba": "rgba(247, 240, 226, 1)",
-        "alpha": 1
-      },
-      "bg": {
-        "token": "--color-button-secondary-bg-active",
-        "raw": "color-mix(in srgb, var(--secondary) 92%, var(--card) 8%)",
-        "hex": "#4a5d4f",
-        "rgba": "rgba(74, 93, 79, 1)",
-        "alpha": 1,
-        "layers": [
-          {
-            "token": "--card",
-            "raw": "rgba(70, 89, 74, 0.94)",
-            "hex": "#46594a",
-            "rgba": "rgba(70, 89, 74, 0.94)",
-            "alpha": 0.94
-          },
-          {
-            "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
-            "alpha": 1
-          }
-        ]
-      },
-      "computed": {
-        "contrast_ratio": 6.27,
-        "luminance_fg": 0.8759,
-        "luminance_bg": 0.0977,
-        "method": "computed"
-      },
-      "threshold": 4.5,
-      "pass": true,
-      "note": "Button label/icon contrast against the effective button background.",
-      "recommendation": "No change required."
-    },
-    {
-      "theme": ".theme-forest",
-      "theme_selector": ".theme-forest",
-      "source_file": "src/styles/theme/variants.css",
-      "component": "secondary",
-      "component_label": "Secondary button",
-      "check_type": "boundary",
-      "state": "active",
-      "surface": "card",
-      "fg": {
-        "token": "--color-button-secondary-border",
-        "raw": "color-mix(in srgb, var(--button-subtle-foreground) 72%, var(--card) 28%)",
-        "hex": "#c3c4b6",
-        "rgba": "rgba(195, 196, 182, 1)",
-        "alpha": 0.9832
-      },
-      "bg": {
-        "token": "--color-button-secondary-bg-active",
-        "raw": "color-mix(in srgb, var(--secondary) 92%, var(--card) 8%)",
-        "hex": "#4a5d4f",
-        "rgba": "rgba(74, 93, 79, 1)",
-        "alpha": 1,
-        "layers": [
-          {
-            "token": "--card",
-            "raw": "rgba(70, 89, 74, 0.94)",
-            "hex": "#46594a",
-            "rgba": "rgba(70, 89, 74, 0.94)",
-            "alpha": 0.94
-          },
-          {
-            "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
-            "alpha": 1
-          }
-        ]
-      },
-      "computed": {
-        "fill_contrast_ratio": 1.09,
-        "border_contrast_ratio": 4.4,
-        "contrast_ratio": 4.4,
-        "contrast_source": "border",
-        "method": "computed"
-      },
-      "threshold": 3,
-      "pass": true,
-      "note": "Button must remain visually distinct from the adjacent surface through its fill or its border.",
-      "recommendation": "No change required."
-    },
-    {
-      "theme": ".theme-forest",
-      "theme_selector": ".theme-forest",
-      "source_file": "src/styles/theme/variants.css",
-      "component": "outline",
-      "component_label": "Outline button",
-      "check_type": "text",
-      "state": "default",
-      "surface": "background",
-      "fg": {
-        "token": "--color-button-outline-fg",
-        "raw": "#f7f0e2",
-        "hex": "#f7f0e2",
-        "rgba": "rgba(247, 240, 226, 1)",
-        "alpha": 1
-      },
-      "bg": {
-        "token": "--color-button-outline-bg",
-        "raw": "color-mix(in srgb, var(--card) 92%, var(--secondary) 8%)",
-        "hex": "#455749",
-        "rgba": "rgba(69, 87, 73, 1)",
-        "alpha": 1,
-        "layers": [
-          {
-            "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
-            "alpha": 1
-          }
-        ]
-      },
-      "computed": {
-        "contrast_ratio": 6.81,
-        "luminance_fg": 0.8759,
-        "luminance_bg": 0.0859,
-        "method": "computed"
-      },
-      "threshold": 4.5,
-      "pass": true,
-      "note": "Button label/icon contrast against the effective button background.",
-      "recommendation": "No change required."
-    },
-    {
-      "theme": ".theme-forest",
-      "theme_selector": ".theme-forest",
-      "source_file": "src/styles/theme/variants.css",
-      "component": "outline",
-      "component_label": "Outline button",
-      "check_type": "boundary",
-      "state": "default",
-      "surface": "background",
-      "fg": {
-        "token": "--color-button-outline-border",
-        "raw": "color-mix(in srgb, var(--button-subtle-foreground) 76%, var(--card) 24%)",
-        "hex": "#cacabb",
-        "rgba": "rgba(202, 202, 187, 1)",
-        "alpha": 0.9856
-      },
-      "bg": {
-        "token": "--color-button-outline-bg",
-        "raw": "color-mix(in srgb, var(--card) 92%, var(--secondary) 8%)",
-        "hex": "#455749",
-        "rgba": "rgba(69, 87, 73, 1)",
-        "alpha": 1,
-        "layers": [
-          {
-            "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
-            "alpha": 1
-          }
-        ]
-      },
-      "computed": {
-        "fill_contrast_ratio": 1.67,
-        "border_contrast_ratio": 7.77,
-        "contrast_ratio": 7.77,
-        "contrast_source": "border",
-        "method": "computed"
-      },
-      "threshold": 3,
-      "pass": true,
-      "note": "Button must remain visually distinct from the adjacent surface through its fill or its border.",
-      "recommendation": "No change required."
-    },
-    {
-      "theme": ".theme-forest",
-      "theme_selector": ".theme-forest",
-      "source_file": "src/styles/theme/variants.css",
-      "component": "outline",
-      "component_label": "Outline button",
-      "check_type": "text",
-      "state": "default",
-      "surface": "card",
-      "fg": {
-        "token": "--color-button-outline-fg",
-        "raw": "#f7f0e2",
-        "hex": "#f7f0e2",
-        "rgba": "rgba(247, 240, 226, 1)",
-        "alpha": 1
-      },
-      "bg": {
-        "token": "--color-button-outline-bg",
-        "raw": "color-mix(in srgb, var(--card) 92%, var(--secondary) 8%)",
-        "hex": "#46594a",
-        "rgba": "rgba(70, 89, 74, 1)",
-        "alpha": 1,
-        "layers": [
-          {
-            "token": "--card",
-            "raw": "rgba(70, 89, 74, 0.94)",
-            "hex": "#46594a",
-            "rgba": "rgba(70, 89, 74, 0.94)",
-            "alpha": 0.94
-          },
-          {
-            "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
-            "alpha": 1
-          }
-        ]
-      },
-      "computed": {
-        "contrast_ratio": 6.62,
-        "luminance_fg": 0.8759,
-        "luminance_bg": 0.0898,
-        "method": "computed"
-      },
-      "threshold": 4.5,
-      "pass": true,
-      "note": "Button label/icon contrast against the effective button background.",
-      "recommendation": "No change required."
-    },
-    {
-      "theme": ".theme-forest",
-      "theme_selector": ".theme-forest",
-      "source_file": "src/styles/theme/variants.css",
-      "component": "outline",
-      "component_label": "Outline button",
-      "check_type": "boundary",
-      "state": "default",
-      "surface": "card",
-      "fg": {
-        "token": "--color-button-outline-border",
-        "raw": "color-mix(in srgb, var(--button-subtle-foreground) 76%, var(--card) 24%)",
-        "hex": "#cbcabc",
-        "rgba": "rgba(203, 202, 188, 1)",
-        "alpha": 0.9856
-      },
-      "bg": {
-        "token": "--color-button-outline-bg",
-        "raw": "color-mix(in srgb, var(--card) 92%, var(--secondary) 8%)",
-        "hex": "#46594a",
-        "rgba": "rgba(70, 89, 74, 1)",
-        "alpha": 1,
-        "layers": [
-          {
-            "token": "--card",
-            "raw": "rgba(70, 89, 74, 0.94)",
-            "hex": "#46594a",
-            "rgba": "rgba(70, 89, 74, 0.94)",
-            "alpha": 0.94
-          },
-          {
-            "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
-            "alpha": 1
-          }
-        ]
-      },
-      "computed": {
-        "fill_contrast_ratio": 1.04,
-        "border_contrast_ratio": 4.71,
-        "contrast_ratio": 4.71,
-        "contrast_source": "border",
-        "method": "computed"
-      },
-      "threshold": 3,
-      "pass": true,
-      "note": "Button must remain visually distinct from the adjacent surface through its fill or its border.",
-      "recommendation": "No change required."
-    },
-    {
-      "theme": ".theme-forest",
-      "theme_selector": ".theme-forest",
-      "source_file": "src/styles/theme/variants.css",
-      "component": "outline",
-      "component_label": "Outline button",
-      "check_type": "text",
-      "state": "hover",
-      "surface": "background",
-      "fg": {
-        "token": "--color-button-outline-fg",
-        "raw": "#f7f0e2",
-        "hex": "#f7f0e2",
-        "rgba": "rgba(247, 240, 226, 1)",
-        "alpha": 1
-      },
-      "bg": {
-        "token": "--color-button-outline-bg-hover",
-        "raw": "color-mix(in srgb, var(--card) 70%, var(--secondary) 30%)",
-        "hex": "#46594a",
-        "rgba": "rgba(70, 89, 74, 1)",
-        "alpha": 1,
-        "layers": [
-          {
-            "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
-            "alpha": 1
-          }
-        ]
-      },
-      "computed": {
-        "contrast_ratio": 6.67,
-        "luminance_fg": 0.8759,
-        "luminance_bg": 0.0888,
-        "method": "computed"
-      },
-      "threshold": 4.5,
-      "pass": true,
-      "note": "Button label/icon contrast against the effective button background.",
-      "recommendation": "No change required."
-    },
-    {
-      "theme": ".theme-forest",
-      "theme_selector": ".theme-forest",
-      "source_file": "src/styles/theme/variants.css",
-      "component": "outline",
-      "component_label": "Outline button",
-      "check_type": "boundary",
-      "state": "hover",
-      "surface": "background",
-      "fg": {
-        "token": "--color-button-outline-border",
-        "raw": "color-mix(in srgb, var(--button-subtle-foreground) 76%, var(--card) 24%)",
-        "hex": "#cacabb",
-        "rgba": "rgba(202, 202, 187, 1)",
-        "alpha": 0.9856
-      },
-      "bg": {
-        "token": "--color-button-outline-bg-hover",
-        "raw": "color-mix(in srgb, var(--card) 70%, var(--secondary) 30%)",
-        "hex": "#46594a",
-        "rgba": "rgba(70, 89, 74, 1)",
-        "alpha": 1,
-        "layers": [
-          {
-            "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
-            "alpha": 1
-          }
-        ]
-      },
-      "computed": {
-        "fill_contrast_ratio": 1.71,
-        "border_contrast_ratio": 7.77,
-        "contrast_ratio": 7.77,
-        "contrast_source": "border",
-        "method": "computed"
-      },
-      "threshold": 3,
-      "pass": true,
-      "note": "Button must remain visually distinct from the adjacent surface through its fill or its border.",
-      "recommendation": "No change required."
-    },
-    {
-      "theme": ".theme-forest",
-      "theme_selector": ".theme-forest",
-      "source_file": "src/styles/theme/variants.css",
-      "component": "outline",
-      "component_label": "Outline button",
-      "check_type": "text",
-      "state": "hover",
-      "surface": "card",
-      "fg": {
-        "token": "--color-button-outline-fg",
-        "raw": "#f7f0e2",
-        "hex": "#f7f0e2",
-        "rgba": "rgba(247, 240, 226, 1)",
-        "alpha": 1
-      },
-      "bg": {
-        "token": "--color-button-outline-bg-hover",
-        "raw": "color-mix(in srgb, var(--card) 70%, var(--secondary) 30%)",
-        "hex": "#475a4b",
-        "rgba": "rgba(71, 90, 75, 1)",
-        "alpha": 1,
-        "layers": [
-          {
-            "token": "--card",
-            "raw": "rgba(70, 89, 74, 0.94)",
-            "hex": "#46594a",
-            "rgba": "rgba(70, 89, 74, 0.94)",
-            "alpha": 0.94
-          },
-          {
-            "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
-            "alpha": 1
-          }
-        ]
-      },
-      "computed": {
-        "contrast_ratio": 6.53,
-        "luminance_fg": 0.8759,
-        "luminance_bg": 0.0918,
-        "method": "computed"
-      },
-      "threshold": 4.5,
-      "pass": true,
-      "note": "Button label/icon contrast against the effective button background.",
-      "recommendation": "No change required."
-    },
-    {
-      "theme": ".theme-forest",
-      "theme_selector": ".theme-forest",
-      "source_file": "src/styles/theme/variants.css",
-      "component": "outline",
-      "component_label": "Outline button",
-      "check_type": "boundary",
-      "state": "hover",
-      "surface": "card",
-      "fg": {
-        "token": "--color-button-outline-border",
-        "raw": "color-mix(in srgb, var(--button-subtle-foreground) 76%, var(--card) 24%)",
-        "hex": "#cbcabc",
-        "rgba": "rgba(203, 202, 188, 1)",
-        "alpha": 0.9856
-      },
-      "bg": {
-        "token": "--color-button-outline-bg-hover",
-        "raw": "color-mix(in srgb, var(--card) 70%, var(--secondary) 30%)",
-        "hex": "#475a4b",
-        "rgba": "rgba(71, 90, 75, 1)",
-        "alpha": 1,
-        "layers": [
-          {
-            "token": "--card",
-            "raw": "rgba(70, 89, 74, 0.94)",
-            "hex": "#46594a",
-            "rgba": "rgba(70, 89, 74, 0.94)",
-            "alpha": 0.94
-          },
-          {
-            "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
-            "alpha": 1
-          }
-        ]
-      },
-      "computed": {
-        "fill_contrast_ratio": 1.05,
-        "border_contrast_ratio": 4.71,
-        "contrast_ratio": 4.71,
-        "contrast_source": "border",
-        "method": "computed"
-      },
-      "threshold": 3,
-      "pass": true,
-      "note": "Button must remain visually distinct from the adjacent surface through its fill or its border.",
-      "recommendation": "No change required."
-    },
-    {
-      "theme": ".theme-forest",
-      "theme_selector": ".theme-forest",
-      "source_file": "src/styles/theme/variants.css",
-      "component": "outline",
-      "component_label": "Outline button",
-      "check_type": "text",
-      "state": "active",
-      "surface": "background",
-      "fg": {
-        "token": "--color-button-outline-fg",
-        "raw": "#f7f0e2",
-        "hex": "#f7f0e2",
-        "rgba": "rgba(247, 240, 226, 1)",
-        "alpha": 1
-      },
-      "bg": {
-        "token": "--color-button-outline-bg-active",
-        "raw": "color-mix(in srgb, var(--card) 56%, var(--secondary) 44%)",
-        "hex": "#47594b",
-        "rgba": "rgba(71, 89, 75, 1)",
-        "alpha": 1,
-        "layers": [
-          {
-            "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
-            "alpha": 1
-          }
-        ]
-      },
-      "computed": {
-        "contrast_ratio": 6.58,
-        "luminance_fg": 0.8759,
-        "luminance_bg": 0.0906,
-        "method": "computed"
-      },
-      "threshold": 4.5,
-      "pass": true,
-      "note": "Button label/icon contrast against the effective button background.",
-      "recommendation": "No change required."
-    },
-    {
-      "theme": ".theme-forest",
-      "theme_selector": ".theme-forest",
-      "source_file": "src/styles/theme/variants.css",
-      "component": "outline",
-      "component_label": "Outline button",
-      "check_type": "boundary",
-      "state": "active",
-      "surface": "background",
-      "fg": {
-        "token": "--color-button-outline-border",
-        "raw": "color-mix(in srgb, var(--button-subtle-foreground) 76%, var(--card) 24%)",
-        "hex": "#cacabb",
-        "rgba": "rgba(202, 202, 187, 1)",
-        "alpha": 0.9856
-      },
-      "bg": {
-        "token": "--color-button-outline-bg-active",
-        "raw": "color-mix(in srgb, var(--card) 56%, var(--secondary) 44%)",
-        "hex": "#47594b",
-        "rgba": "rgba(71, 89, 75, 1)",
-        "alpha": 1,
-        "layers": [
-          {
-            "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
         "fill_contrast_ratio": 1.73,
-        "border_contrast_ratio": 7.77,
-        "contrast_ratio": 7.77,
+        "border_contrast_ratio": 8.25,
+        "contrast_ratio": 8.25,
+        "contrast_source": "border",
+        "method": "computed"
+      },
+      "threshold": 3,
+      "pass": true,
+      "note": "Button must remain visually distinct from the adjacent surface through its fill or its border.",
+      "recommendation": "No change required."
+    },
+    {
+      "theme": ".theme-forest",
+      "theme_selector": ".theme-forest",
+      "source_file": "src/styles/theme/variants.css",
+      "component": "secondary",
+      "component_label": "Secondary button",
+      "check_type": "text",
+      "state": "active",
+      "surface": "card",
+      "fg": {
+        "token": "--color-button-secondary-fg",
+        "raw": "#fbf4e8",
+        "hex": "#fbf4e8",
+        "rgba": "rgba(251, 244, 232, 1)",
+        "alpha": 1
+      },
+      "bg": {
+        "token": "--color-button-secondary-bg-active",
+        "raw": "color-mix(in srgb, var(--secondary) 92%, var(--card) 8%)",
+        "hex": "#3d5143",
+        "rgba": "rgba(61, 81, 67, 1)",
+        "alpha": 1,
+        "layers": [
+          {
+            "token": "--card",
+            "raw": "rgba(54, 72, 60, 0.96)",
+            "hex": "#36483c",
+            "rgba": "rgba(54, 72, 60, 0.96)",
+            "alpha": 0.96
+          },
+          {
+            "token": "--background",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
+            "alpha": 1
+          }
+        ]
+      },
+      "computed": {
+        "contrast_ratio": 7.79,
+        "luminance_fg": 0.9104,
+        "luminance_bg": 0.0732,
+        "method": "computed"
+      },
+      "threshold": 4.5,
+      "pass": true,
+      "note": "Button label/icon contrast against the effective button background.",
+      "recommendation": "No change required."
+    },
+    {
+      "theme": ".theme-forest",
+      "theme_selector": ".theme-forest",
+      "source_file": "src/styles/theme/variants.css",
+      "component": "secondary",
+      "component_label": "Secondary button",
+      "check_type": "boundary",
+      "state": "active",
+      "surface": "card",
+      "fg": {
+        "token": "--color-button-secondary-border",
+        "raw": "color-mix(in srgb, var(--button-subtle-foreground) 72%, var(--card) 28%)",
+        "hex": "#c2c2b6",
+        "rgba": "rgba(194, 194, 182, 1)",
+        "alpha": 0.9888
+      },
+      "bg": {
+        "token": "--color-button-secondary-bg-active",
+        "raw": "color-mix(in srgb, var(--secondary) 92%, var(--card) 8%)",
+        "hex": "#3d5143",
+        "rgba": "rgba(61, 81, 67, 1)",
+        "alpha": 1,
+        "layers": [
+          {
+            "token": "--card",
+            "raw": "rgba(54, 72, 60, 0.96)",
+            "hex": "#36483c",
+            "rgba": "rgba(54, 72, 60, 0.96)",
+            "alpha": 0.96
+          },
+          {
+            "token": "--background",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
+            "alpha": 1
+          }
+        ]
+      },
+      "computed": {
+        "fill_contrast_ratio": 1.17,
+        "border_contrast_ratio": 5.56,
+        "contrast_ratio": 5.56,
+        "contrast_source": "border",
+        "method": "computed"
+      },
+      "threshold": 3,
+      "pass": true,
+      "note": "Button must remain visually distinct from the adjacent surface through its fill or its border.",
+      "recommendation": "No change required."
+    },
+    {
+      "theme": ".theme-forest",
+      "theme_selector": ".theme-forest",
+      "source_file": "src/styles/theme/variants.css",
+      "component": "outline",
+      "component_label": "Outline button",
+      "check_type": "text",
+      "state": "default",
+      "surface": "background",
+      "fg": {
+        "token": "--color-button-outline-fg",
+        "raw": "#fbf4e8",
+        "hex": "#fbf4e8",
+        "rgba": "rgba(251, 244, 232, 1)",
+        "alpha": 1
+      },
+      "bg": {
+        "token": "--color-button-outline-bg",
+        "raw": "color-mix(in srgb, var(--card) 92%, var(--secondary) 8%)",
+        "hex": "#36483c",
+        "rgba": "rgba(54, 72, 60, 1)",
+        "alpha": 1,
+        "layers": [
+          {
+            "token": "--background",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
+            "alpha": 1
+          }
+        ]
+      },
+      "computed": {
+        "contrast_ratio": 8.98,
+        "luminance_fg": 0.9104,
+        "luminance_bg": 0.0569,
+        "method": "computed"
+      },
+      "threshold": 4.5,
+      "pass": true,
+      "note": "Button label/icon contrast against the effective button background.",
+      "recommendation": "No change required."
+    },
+    {
+      "theme": ".theme-forest",
+      "theme_selector": ".theme-forest",
+      "source_file": "src/styles/theme/variants.css",
+      "component": "outline",
+      "component_label": "Outline button",
+      "check_type": "boundary",
+      "state": "default",
+      "surface": "background",
+      "fg": {
+        "token": "--color-button-outline-border",
+        "raw": "color-mix(in srgb, var(--button-subtle-foreground) 76%, var(--card) 24%)",
+        "hex": "#cac9bd",
+        "rgba": "rgba(202, 201, 189, 1)",
+        "alpha": 0.9904
+      },
+      "bg": {
+        "token": "--color-button-outline-bg",
+        "raw": "color-mix(in srgb, var(--card) 92%, var(--secondary) 8%)",
+        "hex": "#36483c",
+        "rgba": "rgba(54, 72, 60, 1)",
+        "alpha": 1,
+        "layers": [
+          {
+            "token": "--background",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
+            "alpha": 1
+          }
+        ]
+      },
+      "computed": {
+        "fill_contrast_ratio": 1.51,
+        "border_contrast_ratio": 8.9,
+        "contrast_ratio": 8.9,
+        "contrast_source": "border",
+        "method": "computed"
+      },
+      "threshold": 3,
+      "pass": true,
+      "note": "Button must remain visually distinct from the adjacent surface through its fill or its border.",
+      "recommendation": "No change required."
+    },
+    {
+      "theme": ".theme-forest",
+      "theme_selector": ".theme-forest",
+      "source_file": "src/styles/theme/variants.css",
+      "component": "outline",
+      "component_label": "Outline button",
+      "check_type": "text",
+      "state": "default",
+      "surface": "card",
+      "fg": {
+        "token": "--color-button-outline-fg",
+        "raw": "#fbf4e8",
+        "hex": "#fbf4e8",
+        "rgba": "rgba(251, 244, 232, 1)",
+        "alpha": 1
+      },
+      "bg": {
+        "token": "--color-button-outline-bg",
+        "raw": "color-mix(in srgb, var(--card) 92%, var(--secondary) 8%)",
+        "hex": "#37493d",
+        "rgba": "rgba(55, 73, 61, 1)",
+        "alpha": 1,
+        "layers": [
+          {
+            "token": "--card",
+            "raw": "rgba(54, 72, 60, 0.96)",
+            "hex": "#36483c",
+            "rgba": "rgba(54, 72, 60, 0.96)",
+            "alpha": 0.96
+          },
+          {
+            "token": "--background",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
+            "alpha": 1
+          }
+        ]
+      },
+      "computed": {
+        "contrast_ratio": 8.84,
+        "luminance_fg": 0.9104,
+        "luminance_bg": 0.0586,
+        "method": "computed"
+      },
+      "threshold": 4.5,
+      "pass": true,
+      "note": "Button label/icon contrast against the effective button background.",
+      "recommendation": "No change required."
+    },
+    {
+      "theme": ".theme-forest",
+      "theme_selector": ".theme-forest",
+      "source_file": "src/styles/theme/variants.css",
+      "component": "outline",
+      "component_label": "Outline button",
+      "check_type": "boundary",
+      "state": "default",
+      "surface": "card",
+      "fg": {
+        "token": "--color-button-outline-border",
+        "raw": "color-mix(in srgb, var(--button-subtle-foreground) 76%, var(--card) 24%)",
+        "hex": "#cac9bd",
+        "rgba": "rgba(202, 201, 189, 1)",
+        "alpha": 0.9904
+      },
+      "bg": {
+        "token": "--color-button-outline-bg",
+        "raw": "color-mix(in srgb, var(--card) 92%, var(--secondary) 8%)",
+        "hex": "#37493d",
+        "rgba": "rgba(55, 73, 61, 1)",
+        "alpha": 1,
+        "layers": [
+          {
+            "token": "--card",
+            "raw": "rgba(54, 72, 60, 0.96)",
+            "hex": "#36483c",
+            "rgba": "rgba(54, 72, 60, 0.96)",
+            "alpha": 0.96
+          },
+          {
+            "token": "--background",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
+            "alpha": 1
+          }
+        ]
+      },
+      "computed": {
+        "fill_contrast_ratio": 1.03,
+        "border_contrast_ratio": 5.99,
+        "contrast_ratio": 5.99,
+        "contrast_source": "border",
+        "method": "computed"
+      },
+      "threshold": 3,
+      "pass": true,
+      "note": "Button must remain visually distinct from the adjacent surface through its fill or its border.",
+      "recommendation": "No change required."
+    },
+    {
+      "theme": ".theme-forest",
+      "theme_selector": ".theme-forest",
+      "source_file": "src/styles/theme/variants.css",
+      "component": "outline",
+      "component_label": "Outline button",
+      "check_type": "text",
+      "state": "hover",
+      "surface": "background",
+      "fg": {
+        "token": "--color-button-outline-fg",
+        "raw": "#fbf4e8",
+        "hex": "#fbf4e8",
+        "rgba": "rgba(251, 244, 232, 1)",
+        "alpha": 1
+      },
+      "bg": {
+        "token": "--color-button-outline-bg-hover",
+        "raw": "color-mix(in srgb, var(--card) 70%, var(--secondary) 30%)",
+        "hex": "#384a3e",
+        "rgba": "rgba(56, 74, 62, 1)",
+        "alpha": 1,
+        "layers": [
+          {
+            "token": "--background",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
+            "alpha": 1
+          }
+        ]
+      },
+      "computed": {
+        "contrast_ratio": 8.66,
+        "luminance_fg": 0.9104,
+        "luminance_bg": 0.0608,
+        "method": "computed"
+      },
+      "threshold": 4.5,
+      "pass": true,
+      "note": "Button label/icon contrast against the effective button background.",
+      "recommendation": "No change required."
+    },
+    {
+      "theme": ".theme-forest",
+      "theme_selector": ".theme-forest",
+      "source_file": "src/styles/theme/variants.css",
+      "component": "outline",
+      "component_label": "Outline button",
+      "check_type": "boundary",
+      "state": "hover",
+      "surface": "background",
+      "fg": {
+        "token": "--color-button-outline-border",
+        "raw": "color-mix(in srgb, var(--button-subtle-foreground) 76%, var(--card) 24%)",
+        "hex": "#cac9bd",
+        "rgba": "rgba(202, 201, 189, 1)",
+        "alpha": 0.9904
+      },
+      "bg": {
+        "token": "--color-button-outline-bg-hover",
+        "raw": "color-mix(in srgb, var(--card) 70%, var(--secondary) 30%)",
+        "hex": "#384a3e",
+        "rgba": "rgba(56, 74, 62, 1)",
+        "alpha": 1,
+        "layers": [
+          {
+            "token": "--background",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
+            "alpha": 1
+          }
+        ]
+      },
+      "computed": {
+        "fill_contrast_ratio": 1.56,
+        "border_contrast_ratio": 8.9,
+        "contrast_ratio": 8.9,
+        "contrast_source": "border",
+        "method": "computed"
+      },
+      "threshold": 3,
+      "pass": true,
+      "note": "Button must remain visually distinct from the adjacent surface through its fill or its border.",
+      "recommendation": "No change required."
+    },
+    {
+      "theme": ".theme-forest",
+      "theme_selector": ".theme-forest",
+      "source_file": "src/styles/theme/variants.css",
+      "component": "outline",
+      "component_label": "Outline button",
+      "check_type": "text",
+      "state": "hover",
+      "surface": "card",
+      "fg": {
+        "token": "--color-button-outline-fg",
+        "raw": "#fbf4e8",
+        "hex": "#fbf4e8",
+        "rgba": "rgba(251, 244, 232, 1)",
+        "alpha": 1
+      },
+      "bg": {
+        "token": "--color-button-outline-bg-hover",
+        "raw": "color-mix(in srgb, var(--card) 70%, var(--secondary) 30%)",
+        "hex": "#384b3e",
+        "rgba": "rgba(56, 75, 62, 1)",
+        "alpha": 1,
+        "layers": [
+          {
+            "token": "--card",
+            "raw": "rgba(54, 72, 60, 0.96)",
+            "hex": "#36483c",
+            "rgba": "rgba(54, 72, 60, 0.96)",
+            "alpha": 0.96
+          },
+          {
+            "token": "--background",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
+            "alpha": 1
+          }
+        ]
+      },
+      "computed": {
+        "contrast_ratio": 8.56,
+        "luminance_fg": 0.9104,
+        "luminance_bg": 0.0622,
+        "method": "computed"
+      },
+      "threshold": 4.5,
+      "pass": true,
+      "note": "Button label/icon contrast against the effective button background.",
+      "recommendation": "No change required."
+    },
+    {
+      "theme": ".theme-forest",
+      "theme_selector": ".theme-forest",
+      "source_file": "src/styles/theme/variants.css",
+      "component": "outline",
+      "component_label": "Outline button",
+      "check_type": "boundary",
+      "state": "hover",
+      "surface": "card",
+      "fg": {
+        "token": "--color-button-outline-border",
+        "raw": "color-mix(in srgb, var(--button-subtle-foreground) 76%, var(--card) 24%)",
+        "hex": "#cac9bd",
+        "rgba": "rgba(202, 201, 189, 1)",
+        "alpha": 0.9904
+      },
+      "bg": {
+        "token": "--color-button-outline-bg-hover",
+        "raw": "color-mix(in srgb, var(--card) 70%, var(--secondary) 30%)",
+        "hex": "#384b3e",
+        "rgba": "rgba(56, 75, 62, 1)",
+        "alpha": 1,
+        "layers": [
+          {
+            "token": "--card",
+            "raw": "rgba(54, 72, 60, 0.96)",
+            "hex": "#36483c",
+            "rgba": "rgba(54, 72, 60, 0.96)",
+            "alpha": 0.96
+          },
+          {
+            "token": "--background",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
+            "alpha": 1
+          }
+        ]
+      },
+      "computed": {
+        "fill_contrast_ratio": 1.06,
+        "border_contrast_ratio": 5.99,
+        "contrast_ratio": 5.99,
+        "contrast_source": "border",
+        "method": "computed"
+      },
+      "threshold": 3,
+      "pass": true,
+      "note": "Button must remain visually distinct from the adjacent surface through its fill or its border.",
+      "recommendation": "No change required."
+    },
+    {
+      "theme": ".theme-forest",
+      "theme_selector": ".theme-forest",
+      "source_file": "src/styles/theme/variants.css",
+      "component": "outline",
+      "component_label": "Outline button",
+      "check_type": "text",
+      "state": "active",
+      "surface": "background",
+      "fg": {
+        "token": "--color-button-outline-fg",
+        "raw": "#fbf4e8",
+        "hex": "#fbf4e8",
+        "rgba": "rgba(251, 244, 232, 1)",
+        "alpha": 1
+      },
+      "bg": {
+        "token": "--color-button-outline-bg-active",
+        "raw": "color-mix(in srgb, var(--card) 56%, var(--secondary) 44%)",
+        "hex": "#394c3f",
+        "rgba": "rgba(57, 76, 63, 1)",
+        "alpha": 1,
+        "layers": [
+          {
+            "token": "--background",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
+            "alpha": 1
+          }
+        ]
+      },
+      "computed": {
+        "contrast_ratio": 8.47,
+        "luminance_fg": 0.9104,
+        "luminance_bg": 0.0634,
+        "method": "computed"
+      },
+      "threshold": 4.5,
+      "pass": true,
+      "note": "Button label/icon contrast against the effective button background.",
+      "recommendation": "No change required."
+    },
+    {
+      "theme": ".theme-forest",
+      "theme_selector": ".theme-forest",
+      "source_file": "src/styles/theme/variants.css",
+      "component": "outline",
+      "component_label": "Outline button",
+      "check_type": "boundary",
+      "state": "active",
+      "surface": "background",
+      "fg": {
+        "token": "--color-button-outline-border",
+        "raw": "color-mix(in srgb, var(--button-subtle-foreground) 76%, var(--card) 24%)",
+        "hex": "#cac9bd",
+        "rgba": "rgba(202, 201, 189, 1)",
+        "alpha": 0.9904
+      },
+      "bg": {
+        "token": "--color-button-outline-bg-active",
+        "raw": "color-mix(in srgb, var(--card) 56%, var(--secondary) 44%)",
+        "hex": "#394c3f",
+        "rgba": "rgba(57, 76, 63, 1)",
+        "alpha": 1,
+        "layers": [
+          {
+            "token": "--background",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
+            "alpha": 1
+          }
+        ]
+      },
+      "computed": {
+        "fill_contrast_ratio": 1.6,
+        "border_contrast_ratio": 8.9,
+        "contrast_ratio": 8.9,
         "contrast_source": "border",
         "method": "computed"
       },
@@ -25461,38 +25461,38 @@
       "surface": "card",
       "fg": {
         "token": "--color-button-outline-fg",
-        "raw": "#f7f0e2",
-        "hex": "#f7f0e2",
-        "rgba": "rgba(247, 240, 226, 1)",
+        "raw": "#fbf4e8",
+        "hex": "#fbf4e8",
+        "rgba": "rgba(251, 244, 232, 1)",
         "alpha": 1
       },
       "bg": {
         "token": "--color-button-outline-bg-active",
         "raw": "color-mix(in srgb, var(--card) 56%, var(--secondary) 44%)",
-        "hex": "#485b4c",
-        "rgba": "rgba(72, 91, 76, 1)",
+        "hex": "#394c3f",
+        "rgba": "rgba(57, 76, 63, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--card",
-            "raw": "rgba(70, 89, 74, 0.94)",
-            "hex": "#46594a",
-            "rgba": "rgba(70, 89, 74, 0.94)",
-            "alpha": 0.94
+            "raw": "rgba(54, 72, 60, 0.96)",
+            "hex": "#36483c",
+            "rgba": "rgba(54, 72, 60, 0.96)",
+            "alpha": 0.96
           },
           {
             "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 6.47,
-        "luminance_fg": 0.8759,
-        "luminance_bg": 0.0931,
+        "contrast_ratio": 8.39,
+        "luminance_fg": 0.9104,
+        "luminance_bg": 0.0645,
         "method": "computed"
       },
       "threshold": 4.5,
@@ -25512,413 +25512,413 @@
       "fg": {
         "token": "--color-button-outline-border",
         "raw": "color-mix(in srgb, var(--button-subtle-foreground) 76%, var(--card) 24%)",
-        "hex": "#cbcabc",
-        "rgba": "rgba(203, 202, 188, 1)",
-        "alpha": 0.9856
+        "hex": "#cac9bd",
+        "rgba": "rgba(202, 201, 189, 1)",
+        "alpha": 0.9904
       },
       "bg": {
         "token": "--color-button-outline-bg-active",
         "raw": "color-mix(in srgb, var(--card) 56%, var(--secondary) 44%)",
-        "hex": "#485b4c",
-        "rgba": "rgba(72, 91, 76, 1)",
+        "hex": "#394c3f",
+        "rgba": "rgba(57, 76, 63, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--card",
-            "raw": "rgba(70, 89, 74, 0.94)",
-            "hex": "#46594a",
-            "rgba": "rgba(70, 89, 74, 0.94)",
-            "alpha": 0.94
+            "raw": "rgba(54, 72, 60, 0.96)",
+            "hex": "#36483c",
+            "rgba": "rgba(54, 72, 60, 0.96)",
+            "alpha": 0.96
           },
           {
             "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
-            "alpha": 1
-          }
-        ]
-      },
-      "computed": {
-        "fill_contrast_ratio": 1.06,
-        "border_contrast_ratio": 4.71,
-        "contrast_ratio": 4.71,
-        "contrast_source": "border",
-        "method": "computed"
-      },
-      "threshold": 3,
-      "pass": true,
-      "note": "Button must remain visually distinct from the adjacent surface through its fill or its border.",
-      "recommendation": "No change required."
-    },
-    {
-      "theme": ".theme-forest",
-      "theme_selector": ".theme-forest",
-      "source_file": "src/styles/theme/variants.css",
-      "component": "ghost",
-      "component_label": "Ghost button",
-      "check_type": "text",
-      "state": "default",
-      "surface": "background",
-      "fg": {
-        "token": "--color-button-ghost-fg",
-        "raw": "#f7f0e2",
-        "hex": "#f7f0e2",
-        "rgba": "rgba(247, 240, 226, 1)",
-        "alpha": 1
-      },
-      "bg": {
-        "token": "--color-button-ghost-bg",
-        "raw": "color-mix(in srgb, var(--secondary) 56%, var(--card) 44%)",
-        "hex": "#475a4c",
-        "rgba": "rgba(71, 90, 76, 1)",
-        "alpha": 1,
-        "layers": [
-          {
-            "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
-            "alpha": 1
-          }
-        ]
-      },
-      "computed": {
-        "contrast_ratio": 6.51,
-        "luminance_fg": 0.8759,
-        "luminance_bg": 0.0922,
-        "method": "computed"
-      },
-      "threshold": 4.5,
-      "pass": true,
-      "note": "Button label/icon contrast against the effective button background.",
-      "recommendation": "No change required."
-    },
-    {
-      "theme": ".theme-forest",
-      "theme_selector": ".theme-forest",
-      "source_file": "src/styles/theme/variants.css",
-      "component": "ghost",
-      "component_label": "Ghost button",
-      "check_type": "boundary",
-      "state": "default",
-      "surface": "background",
-      "fg": {
-        "token": "--color-button-ghost-border",
-        "raw": "color-mix(in srgb, var(--button-subtle-foreground) 76%, var(--card) 24%)",
-        "hex": "#cacabb",
-        "rgba": "rgba(202, 202, 187, 1)",
-        "alpha": 0.9856
-      },
-      "bg": {
-        "token": "--color-button-ghost-bg",
-        "raw": "color-mix(in srgb, var(--secondary) 56%, var(--card) 44%)",
-        "hex": "#475a4c",
-        "rgba": "rgba(71, 90, 76, 1)",
-        "alpha": 1,
-        "layers": [
-          {
-            "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
-            "alpha": 1
-          }
-        ]
-      },
-      "computed": {
-        "fill_contrast_ratio": 1.75,
-        "border_contrast_ratio": 7.77,
-        "contrast_ratio": 7.77,
-        "contrast_source": "border",
-        "method": "computed"
-      },
-      "threshold": 3,
-      "pass": true,
-      "note": "Button must remain visually distinct from the adjacent surface through its fill or its border.",
-      "recommendation": "No change required."
-    },
-    {
-      "theme": ".theme-forest",
-      "theme_selector": ".theme-forest",
-      "source_file": "src/styles/theme/variants.css",
-      "component": "ghost",
-      "component_label": "Ghost button",
-      "check_type": "text",
-      "state": "default",
-      "surface": "card",
-      "fg": {
-        "token": "--color-button-ghost-fg",
-        "raw": "#f7f0e2",
-        "hex": "#f7f0e2",
-        "rgba": "rgba(247, 240, 226, 1)",
-        "alpha": 1
-      },
-      "bg": {
-        "token": "--color-button-ghost-bg",
-        "raw": "color-mix(in srgb, var(--secondary) 56%, var(--card) 44%)",
-        "hex": "#485b4d",
-        "rgba": "rgba(72, 91, 77, 1)",
-        "alpha": 1,
-        "layers": [
-          {
-            "token": "--card",
-            "raw": "rgba(70, 89, 74, 0.94)",
-            "hex": "#46594a",
-            "rgba": "rgba(70, 89, 74, 0.94)",
-            "alpha": 0.94
-          },
-          {
-            "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
-            "alpha": 1
-          }
-        ]
-      },
-      "computed": {
-        "contrast_ratio": 6.42,
-        "luminance_fg": 0.8759,
-        "luminance_bg": 0.0942,
-        "method": "computed"
-      },
-      "threshold": 4.5,
-      "pass": true,
-      "note": "Button label/icon contrast against the effective button background.",
-      "recommendation": "No change required."
-    },
-    {
-      "theme": ".theme-forest",
-      "theme_selector": ".theme-forest",
-      "source_file": "src/styles/theme/variants.css",
-      "component": "ghost",
-      "component_label": "Ghost button",
-      "check_type": "boundary",
-      "state": "default",
-      "surface": "card",
-      "fg": {
-        "token": "--color-button-ghost-border",
-        "raw": "color-mix(in srgb, var(--button-subtle-foreground) 76%, var(--card) 24%)",
-        "hex": "#cbcabc",
-        "rgba": "rgba(203, 202, 188, 1)",
-        "alpha": 0.9856
-      },
-      "bg": {
-        "token": "--color-button-ghost-bg",
-        "raw": "color-mix(in srgb, var(--secondary) 56%, var(--card) 44%)",
-        "hex": "#485b4d",
-        "rgba": "rgba(72, 91, 77, 1)",
-        "alpha": 1,
-        "layers": [
-          {
-            "token": "--card",
-            "raw": "rgba(70, 89, 74, 0.94)",
-            "hex": "#46594a",
-            "rgba": "rgba(70, 89, 74, 0.94)",
-            "alpha": 0.94
-          },
-          {
-            "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
-            "alpha": 1
-          }
-        ]
-      },
-      "computed": {
-        "fill_contrast_ratio": 1.07,
-        "border_contrast_ratio": 4.71,
-        "contrast_ratio": 4.71,
-        "contrast_source": "border",
-        "method": "computed"
-      },
-      "threshold": 3,
-      "pass": true,
-      "note": "Button must remain visually distinct from the adjacent surface through its fill or its border.",
-      "recommendation": "No change required."
-    },
-    {
-      "theme": ".theme-forest",
-      "theme_selector": ".theme-forest",
-      "source_file": "src/styles/theme/variants.css",
-      "component": "ghost",
-      "component_label": "Ghost button",
-      "check_type": "text",
-      "state": "hover",
-      "surface": "background",
-      "fg": {
-        "token": "--color-button-ghost-fg",
-        "raw": "#f7f0e2",
-        "hex": "#f7f0e2",
-        "rgba": "rgba(247, 240, 226, 1)",
-        "alpha": 1
-      },
-      "bg": {
-        "token": "--color-button-ghost-bg-hover",
-        "raw": "color-mix(in srgb, var(--secondary) 70%, var(--card) 30%)",
-        "hex": "#485b4d",
-        "rgba": "rgba(72, 91, 77, 1)",
-        "alpha": 1,
-        "layers": [
-          {
-            "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
-            "alpha": 1
-          }
-        ]
-      },
-      "computed": {
-        "contrast_ratio": 6.42,
-        "luminance_fg": 0.8759,
-        "luminance_bg": 0.0942,
-        "method": "computed"
-      },
-      "threshold": 4.5,
-      "pass": true,
-      "note": "Button label/icon contrast against the effective button background.",
-      "recommendation": "No change required."
-    },
-    {
-      "theme": ".theme-forest",
-      "theme_selector": ".theme-forest",
-      "source_file": "src/styles/theme/variants.css",
-      "component": "ghost",
-      "component_label": "Ghost button",
-      "check_type": "boundary",
-      "state": "hover",
-      "surface": "background",
-      "fg": {
-        "token": "--color-button-ghost-border",
-        "raw": "color-mix(in srgb, var(--button-subtle-foreground) 76%, var(--card) 24%)",
-        "hex": "#cacabb",
-        "rgba": "rgba(202, 202, 187, 1)",
-        "alpha": 0.9856
-      },
-      "bg": {
-        "token": "--color-button-ghost-bg-hover",
-        "raw": "color-mix(in srgb, var(--secondary) 70%, var(--card) 30%)",
-        "hex": "#485b4d",
-        "rgba": "rgba(72, 91, 77, 1)",
-        "alpha": 1,
-        "layers": [
-          {
-            "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
-            "alpha": 1
-          }
-        ]
-      },
-      "computed": {
-        "fill_contrast_ratio": 1.77,
-        "border_contrast_ratio": 7.77,
-        "contrast_ratio": 7.77,
-        "contrast_source": "border",
-        "method": "computed"
-      },
-      "threshold": 3,
-      "pass": true,
-      "note": "Button must remain visually distinct from the adjacent surface through its fill or its border.",
-      "recommendation": "No change required."
-    },
-    {
-      "theme": ".theme-forest",
-      "theme_selector": ".theme-forest",
-      "source_file": "src/styles/theme/variants.css",
-      "component": "ghost",
-      "component_label": "Ghost button",
-      "check_type": "text",
-      "state": "hover",
-      "surface": "card",
-      "fg": {
-        "token": "--color-button-ghost-fg",
-        "raw": "#f7f0e2",
-        "hex": "#f7f0e2",
-        "rgba": "rgba(247, 240, 226, 1)",
-        "alpha": 1
-      },
-      "bg": {
-        "token": "--color-button-ghost-bg-hover",
-        "raw": "color-mix(in srgb, var(--secondary) 70%, var(--card) 30%)",
-        "hex": "#495c4d",
-        "rgba": "rgba(73, 92, 77, 1)",
-        "alpha": 1,
-        "layers": [
-          {
-            "token": "--card",
-            "raw": "rgba(70, 89, 74, 0.94)",
-            "hex": "#46594a",
-            "rgba": "rgba(70, 89, 74, 0.94)",
-            "alpha": 0.94
-          },
-          {
-            "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
-            "alpha": 1
-          }
-        ]
-      },
-      "computed": {
-        "contrast_ratio": 6.36,
-        "luminance_fg": 0.8759,
-        "luminance_bg": 0.0955,
-        "method": "computed"
-      },
-      "threshold": 4.5,
-      "pass": true,
-      "note": "Button label/icon contrast against the effective button background.",
-      "recommendation": "No change required."
-    },
-    {
-      "theme": ".theme-forest",
-      "theme_selector": ".theme-forest",
-      "source_file": "src/styles/theme/variants.css",
-      "component": "ghost",
-      "component_label": "Ghost button",
-      "check_type": "boundary",
-      "state": "hover",
-      "surface": "card",
-      "fg": {
-        "token": "--color-button-ghost-border",
-        "raw": "color-mix(in srgb, var(--button-subtle-foreground) 76%, var(--card) 24%)",
-        "hex": "#cbcabc",
-        "rgba": "rgba(203, 202, 188, 1)",
-        "alpha": 0.9856
-      },
-      "bg": {
-        "token": "--color-button-ghost-bg-hover",
-        "raw": "color-mix(in srgb, var(--secondary) 70%, var(--card) 30%)",
-        "hex": "#495c4d",
-        "rgba": "rgba(73, 92, 77, 1)",
-        "alpha": 1,
-        "layers": [
-          {
-            "token": "--card",
-            "raw": "rgba(70, 89, 74, 0.94)",
-            "hex": "#46594a",
-            "rgba": "rgba(70, 89, 74, 0.94)",
-            "alpha": 0.94
-          },
-          {
-            "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
         "fill_contrast_ratio": 1.08,
-        "border_contrast_ratio": 4.71,
-        "contrast_ratio": 4.71,
+        "border_contrast_ratio": 5.99,
+        "contrast_ratio": 5.99,
+        "contrast_source": "border",
+        "method": "computed"
+      },
+      "threshold": 3,
+      "pass": true,
+      "note": "Button must remain visually distinct from the adjacent surface through its fill or its border.",
+      "recommendation": "No change required."
+    },
+    {
+      "theme": ".theme-forest",
+      "theme_selector": ".theme-forest",
+      "source_file": "src/styles/theme/variants.css",
+      "component": "ghost",
+      "component_label": "Ghost button",
+      "check_type": "text",
+      "state": "default",
+      "surface": "background",
+      "fg": {
+        "token": "--color-button-ghost-fg",
+        "raw": "#fbf4e8",
+        "hex": "#fbf4e8",
+        "rgba": "rgba(251, 244, 232, 1)",
+        "alpha": 1
+      },
+      "bg": {
+        "token": "--color-button-ghost-bg",
+        "raw": "color-mix(in srgb, var(--secondary) 56%, var(--card) 44%)",
+        "hex": "#3a4d40",
+        "rgba": "rgba(58, 77, 64, 1)",
+        "alpha": 1,
+        "layers": [
+          {
+            "token": "--background",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
+            "alpha": 1
+          }
+        ]
+      },
+      "computed": {
+        "contrast_ratio": 8.3,
+        "luminance_fg": 0.9104,
+        "luminance_bg": 0.0657,
+        "method": "computed"
+      },
+      "threshold": 4.5,
+      "pass": true,
+      "note": "Button label/icon contrast against the effective button background.",
+      "recommendation": "No change required."
+    },
+    {
+      "theme": ".theme-forest",
+      "theme_selector": ".theme-forest",
+      "source_file": "src/styles/theme/variants.css",
+      "component": "ghost",
+      "component_label": "Ghost button",
+      "check_type": "boundary",
+      "state": "default",
+      "surface": "background",
+      "fg": {
+        "token": "--color-button-ghost-border",
+        "raw": "color-mix(in srgb, var(--button-subtle-foreground) 76%, var(--card) 24%)",
+        "hex": "#cac9bd",
+        "rgba": "rgba(202, 201, 189, 1)",
+        "alpha": 0.9904
+      },
+      "bg": {
+        "token": "--color-button-ghost-bg",
+        "raw": "color-mix(in srgb, var(--secondary) 56%, var(--card) 44%)",
+        "hex": "#3a4d40",
+        "rgba": "rgba(58, 77, 64, 1)",
+        "alpha": 1,
+        "layers": [
+          {
+            "token": "--background",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
+            "alpha": 1
+          }
+        ]
+      },
+      "computed": {
+        "fill_contrast_ratio": 1.63,
+        "border_contrast_ratio": 8.9,
+        "contrast_ratio": 8.9,
+        "contrast_source": "border",
+        "method": "computed"
+      },
+      "threshold": 3,
+      "pass": true,
+      "note": "Button must remain visually distinct from the adjacent surface through its fill or its border.",
+      "recommendation": "No change required."
+    },
+    {
+      "theme": ".theme-forest",
+      "theme_selector": ".theme-forest",
+      "source_file": "src/styles/theme/variants.css",
+      "component": "ghost",
+      "component_label": "Ghost button",
+      "check_type": "text",
+      "state": "default",
+      "surface": "card",
+      "fg": {
+        "token": "--color-button-ghost-fg",
+        "raw": "#fbf4e8",
+        "hex": "#fbf4e8",
+        "rgba": "rgba(251, 244, 232, 1)",
+        "alpha": 1
+      },
+      "bg": {
+        "token": "--color-button-ghost-bg",
+        "raw": "color-mix(in srgb, var(--secondary) 56%, var(--card) 44%)",
+        "hex": "#3a4d40",
+        "rgba": "rgba(58, 77, 64, 1)",
+        "alpha": 1,
+        "layers": [
+          {
+            "token": "--card",
+            "raw": "rgba(54, 72, 60, 0.96)",
+            "hex": "#36483c",
+            "rgba": "rgba(54, 72, 60, 0.96)",
+            "alpha": 0.96
+          },
+          {
+            "token": "--background",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
+            "alpha": 1
+          }
+        ]
+      },
+      "computed": {
+        "contrast_ratio": 8.24,
+        "luminance_fg": 0.9104,
+        "luminance_bg": 0.0666,
+        "method": "computed"
+      },
+      "threshold": 4.5,
+      "pass": true,
+      "note": "Button label/icon contrast against the effective button background.",
+      "recommendation": "No change required."
+    },
+    {
+      "theme": ".theme-forest",
+      "theme_selector": ".theme-forest",
+      "source_file": "src/styles/theme/variants.css",
+      "component": "ghost",
+      "component_label": "Ghost button",
+      "check_type": "boundary",
+      "state": "default",
+      "surface": "card",
+      "fg": {
+        "token": "--color-button-ghost-border",
+        "raw": "color-mix(in srgb, var(--button-subtle-foreground) 76%, var(--card) 24%)",
+        "hex": "#cac9bd",
+        "rgba": "rgba(202, 201, 189, 1)",
+        "alpha": 0.9904
+      },
+      "bg": {
+        "token": "--color-button-ghost-bg",
+        "raw": "color-mix(in srgb, var(--secondary) 56%, var(--card) 44%)",
+        "hex": "#3a4d40",
+        "rgba": "rgba(58, 77, 64, 1)",
+        "alpha": 1,
+        "layers": [
+          {
+            "token": "--card",
+            "raw": "rgba(54, 72, 60, 0.96)",
+            "hex": "#36483c",
+            "rgba": "rgba(54, 72, 60, 0.96)",
+            "alpha": 0.96
+          },
+          {
+            "token": "--background",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
+            "alpha": 1
+          }
+        ]
+      },
+      "computed": {
+        "fill_contrast_ratio": 1.1,
+        "border_contrast_ratio": 5.99,
+        "contrast_ratio": 5.99,
+        "contrast_source": "border",
+        "method": "computed"
+      },
+      "threshold": 3,
+      "pass": true,
+      "note": "Button must remain visually distinct from the adjacent surface through its fill or its border.",
+      "recommendation": "No change required."
+    },
+    {
+      "theme": ".theme-forest",
+      "theme_selector": ".theme-forest",
+      "source_file": "src/styles/theme/variants.css",
+      "component": "ghost",
+      "component_label": "Ghost button",
+      "check_type": "text",
+      "state": "hover",
+      "surface": "background",
+      "fg": {
+        "token": "--color-button-ghost-fg",
+        "raw": "#fbf4e8",
+        "hex": "#fbf4e8",
+        "rgba": "rgba(251, 244, 232, 1)",
+        "alpha": 1
+      },
+      "bg": {
+        "token": "--color-button-ghost-bg-hover",
+        "raw": "color-mix(in srgb, var(--secondary) 70%, var(--card) 30%)",
+        "hex": "#3b4f41",
+        "rgba": "rgba(59, 79, 65, 1)",
+        "alpha": 1,
+        "layers": [
+          {
+            "token": "--background",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
+            "alpha": 1
+          }
+        ]
+      },
+      "computed": {
+        "contrast_ratio": 8.1,
+        "luminance_fg": 0.9104,
+        "luminance_bg": 0.0685,
+        "method": "computed"
+      },
+      "threshold": 4.5,
+      "pass": true,
+      "note": "Button label/icon contrast against the effective button background.",
+      "recommendation": "No change required."
+    },
+    {
+      "theme": ".theme-forest",
+      "theme_selector": ".theme-forest",
+      "source_file": "src/styles/theme/variants.css",
+      "component": "ghost",
+      "component_label": "Ghost button",
+      "check_type": "boundary",
+      "state": "hover",
+      "surface": "background",
+      "fg": {
+        "token": "--color-button-ghost-border",
+        "raw": "color-mix(in srgb, var(--button-subtle-foreground) 76%, var(--card) 24%)",
+        "hex": "#cac9bd",
+        "rgba": "rgba(202, 201, 189, 1)",
+        "alpha": 0.9904
+      },
+      "bg": {
+        "token": "--color-button-ghost-bg-hover",
+        "raw": "color-mix(in srgb, var(--secondary) 70%, var(--card) 30%)",
+        "hex": "#3b4f41",
+        "rgba": "rgba(59, 79, 65, 1)",
+        "alpha": 1,
+        "layers": [
+          {
+            "token": "--background",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
+            "alpha": 1
+          }
+        ]
+      },
+      "computed": {
+        "fill_contrast_ratio": 1.67,
+        "border_contrast_ratio": 8.9,
+        "contrast_ratio": 8.9,
+        "contrast_source": "border",
+        "method": "computed"
+      },
+      "threshold": 3,
+      "pass": true,
+      "note": "Button must remain visually distinct from the adjacent surface through its fill or its border.",
+      "recommendation": "No change required."
+    },
+    {
+      "theme": ".theme-forest",
+      "theme_selector": ".theme-forest",
+      "source_file": "src/styles/theme/variants.css",
+      "component": "ghost",
+      "component_label": "Ghost button",
+      "check_type": "text",
+      "state": "hover",
+      "surface": "card",
+      "fg": {
+        "token": "--color-button-ghost-fg",
+        "raw": "#fbf4e8",
+        "hex": "#fbf4e8",
+        "rgba": "rgba(251, 244, 232, 1)",
+        "alpha": 1
+      },
+      "bg": {
+        "token": "--color-button-ghost-bg-hover",
+        "raw": "color-mix(in srgb, var(--secondary) 70%, var(--card) 30%)",
+        "hex": "#3c4f42",
+        "rgba": "rgba(60, 79, 66, 1)",
+        "alpha": 1,
+        "layers": [
+          {
+            "token": "--card",
+            "raw": "rgba(54, 72, 60, 0.96)",
+            "hex": "#36483c",
+            "rgba": "rgba(54, 72, 60, 0.96)",
+            "alpha": 0.96
+          },
+          {
+            "token": "--background",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
+            "alpha": 1
+          }
+        ]
+      },
+      "computed": {
+        "contrast_ratio": 8.06,
+        "luminance_fg": 0.9104,
+        "luminance_bg": 0.0691,
+        "method": "computed"
+      },
+      "threshold": 4.5,
+      "pass": true,
+      "note": "Button label/icon contrast against the effective button background.",
+      "recommendation": "No change required."
+    },
+    {
+      "theme": ".theme-forest",
+      "theme_selector": ".theme-forest",
+      "source_file": "src/styles/theme/variants.css",
+      "component": "ghost",
+      "component_label": "Ghost button",
+      "check_type": "boundary",
+      "state": "hover",
+      "surface": "card",
+      "fg": {
+        "token": "--color-button-ghost-border",
+        "raw": "color-mix(in srgb, var(--button-subtle-foreground) 76%, var(--card) 24%)",
+        "hex": "#cac9bd",
+        "rgba": "rgba(202, 201, 189, 1)",
+        "alpha": 0.9904
+      },
+      "bg": {
+        "token": "--color-button-ghost-bg-hover",
+        "raw": "color-mix(in srgb, var(--secondary) 70%, var(--card) 30%)",
+        "hex": "#3c4f42",
+        "rgba": "rgba(60, 79, 66, 1)",
+        "alpha": 1,
+        "layers": [
+          {
+            "token": "--card",
+            "raw": "rgba(54, 72, 60, 0.96)",
+            "hex": "#36483c",
+            "rgba": "rgba(54, 72, 60, 0.96)",
+            "alpha": 0.96
+          },
+          {
+            "token": "--background",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
+            "alpha": 1
+          }
+        ]
+      },
+      "computed": {
+        "fill_contrast_ratio": 1.13,
+        "border_contrast_ratio": 5.99,
+        "contrast_ratio": 5.99,
         "contrast_source": "border",
         "method": "computed"
       },
@@ -25938,31 +25938,31 @@
       "surface": "background",
       "fg": {
         "token": "--color-button-ghost-fg",
-        "raw": "#f7f0e2",
-        "hex": "#f7f0e2",
-        "rgba": "rgba(247, 240, 226, 1)",
+        "raw": "#fbf4e8",
+        "hex": "#fbf4e8",
+        "rgba": "rgba(251, 244, 232, 1)",
         "alpha": 1
       },
       "bg": {
         "token": "--color-button-ghost-bg-active",
         "raw": "color-mix(in srgb, var(--secondary) 82%, var(--card) 18%)",
-        "hex": "#495c4e",
-        "rgba": "rgba(73, 92, 78, 1)",
+        "hex": "#3c5042",
+        "rgba": "rgba(60, 80, 66, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 6.35,
-        "luminance_fg": 0.8759,
-        "luminance_bg": 0.0959,
+        "contrast_ratio": 7.94,
+        "luminance_fg": 0.9104,
+        "luminance_bg": 0.071,
         "method": "computed"
       },
       "threshold": 4.5,
@@ -25982,30 +25982,507 @@
       "fg": {
         "token": "--color-button-ghost-border",
         "raw": "color-mix(in srgb, var(--button-subtle-foreground) 76%, var(--card) 24%)",
-        "hex": "#cacabb",
-        "rgba": "rgba(202, 202, 187, 1)",
-        "alpha": 0.9856
+        "hex": "#cac9bd",
+        "rgba": "rgba(202, 201, 189, 1)",
+        "alpha": 0.9904
       },
       "bg": {
         "token": "--color-button-ghost-bg-active",
         "raw": "color-mix(in srgb, var(--secondary) 82%, var(--card) 18%)",
-        "hex": "#495c4e",
-        "rgba": "rgba(73, 92, 78, 1)",
+        "hex": "#3c5042",
+        "rgba": "rgba(60, 80, 66, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
+            "alpha": 1
+          }
+        ]
+      },
+      "computed": {
+        "fill_contrast_ratio": 1.71,
+        "border_contrast_ratio": 8.9,
+        "contrast_ratio": 8.9,
+        "contrast_source": "border",
+        "method": "computed"
+      },
+      "threshold": 3,
+      "pass": true,
+      "note": "Button must remain visually distinct from the adjacent surface through its fill or its border.",
+      "recommendation": "No change required."
+    },
+    {
+      "theme": ".theme-forest",
+      "theme_selector": ".theme-forest",
+      "source_file": "src/styles/theme/variants.css",
+      "component": "ghost",
+      "component_label": "Ghost button",
+      "check_type": "text",
+      "state": "active",
+      "surface": "card",
+      "fg": {
+        "token": "--color-button-ghost-fg",
+        "raw": "#fbf4e8",
+        "hex": "#fbf4e8",
+        "rgba": "rgba(251, 244, 232, 1)",
+        "alpha": 1
+      },
+      "bg": {
+        "token": "--color-button-ghost-bg-active",
+        "raw": "color-mix(in srgb, var(--secondary) 82%, var(--card) 18%)",
+        "hex": "#3d5043",
+        "rgba": "rgba(61, 80, 67, 1)",
+        "alpha": 1,
+        "layers": [
+          {
+            "token": "--card",
+            "raw": "rgba(54, 72, 60, 0.96)",
+            "hex": "#36483c",
+            "rgba": "rgba(54, 72, 60, 0.96)",
+            "alpha": 0.96
+          },
+          {
+            "token": "--background",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
+            "alpha": 1
+          }
+        ]
+      },
+      "computed": {
+        "contrast_ratio": 7.92,
+        "luminance_fg": 0.9104,
+        "luminance_bg": 0.0713,
+        "method": "computed"
+      },
+      "threshold": 4.5,
+      "pass": true,
+      "note": "Button label/icon contrast against the effective button background.",
+      "recommendation": "No change required."
+    },
+    {
+      "theme": ".theme-forest",
+      "theme_selector": ".theme-forest",
+      "source_file": "src/styles/theme/variants.css",
+      "component": "ghost",
+      "component_label": "Ghost button",
+      "check_type": "boundary",
+      "state": "active",
+      "surface": "card",
+      "fg": {
+        "token": "--color-button-ghost-border",
+        "raw": "color-mix(in srgb, var(--button-subtle-foreground) 76%, var(--card) 24%)",
+        "hex": "#cac9bd",
+        "rgba": "rgba(202, 201, 189, 1)",
+        "alpha": 0.9904
+      },
+      "bg": {
+        "token": "--color-button-ghost-bg-active",
+        "raw": "color-mix(in srgb, var(--secondary) 82%, var(--card) 18%)",
+        "hex": "#3d5043",
+        "rgba": "rgba(61, 80, 67, 1)",
+        "alpha": 1,
+        "layers": [
+          {
+            "token": "--card",
+            "raw": "rgba(54, 72, 60, 0.96)",
+            "hex": "#36483c",
+            "rgba": "rgba(54, 72, 60, 0.96)",
+            "alpha": 0.96
+          },
+          {
+            "token": "--background",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
+            "alpha": 1
+          }
+        ]
+      },
+      "computed": {
+        "fill_contrast_ratio": 1.15,
+        "border_contrast_ratio": 5.99,
+        "contrast_ratio": 5.99,
+        "contrast_source": "border",
+        "method": "computed"
+      },
+      "threshold": 3,
+      "pass": true,
+      "note": "Button must remain visually distinct from the adjacent surface through its fill or its border.",
+      "recommendation": "No change required."
+    },
+    {
+      "theme": ".theme-forest",
+      "theme_selector": ".theme-forest",
+      "source_file": "src/styles/theme/variants.css",
+      "component": "destructive",
+      "component_label": "Destructive button",
+      "check_type": "text",
+      "state": "default",
+      "surface": "background",
+      "fg": {
+        "token": "--color-button-destructive-fg",
+        "raw": "#fff8f7",
+        "hex": "#fff8f7",
+        "rgba": "rgba(255, 248, 247, 1)",
+        "alpha": 1
+      },
+      "bg": {
+        "token": "--color-button-destructive-bg",
+        "raw": "#b95151",
+        "hex": "#b95151",
+        "rgba": "rgba(185, 81, 81, 1)",
+        "alpha": 1,
+        "layers": [
+          {
+            "token": "--background",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
+            "alpha": 1
+          }
+        ]
+      },
+      "computed": {
+        "contrast_ratio": 4.59,
+        "luminance_fg": 0.9511,
+        "luminance_bg": 0.1679,
+        "method": "computed"
+      },
+      "threshold": 4.5,
+      "pass": true,
+      "note": "Button label/icon contrast against the effective button background.",
+      "recommendation": "No change required."
+    },
+    {
+      "theme": ".theme-forest",
+      "theme_selector": ".theme-forest",
+      "source_file": "src/styles/theme/variants.css",
+      "component": "destructive",
+      "component_label": "Destructive button",
+      "check_type": "boundary",
+      "state": "default",
+      "surface": "background",
+      "fg": {
+        "token": "--color-button-destructive-border",
+        "raw": "rgba(255, 218, 218, 0.7)",
+        "hex": "#bba5a2",
+        "rgba": "rgba(187, 165, 162, 1)",
+        "alpha": 0.7
+      },
+      "bg": {
+        "token": "--color-button-destructive-bg",
+        "raw": "#b95151",
+        "hex": "#b95151",
+        "rgba": "rgba(185, 81, 81, 1)",
+        "alpha": 1,
+        "layers": [
+          {
+            "token": "--background",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
+            "alpha": 1
+          }
+        ]
+      },
+      "computed": {
+        "fill_contrast_ratio": 3.07,
+        "border_contrast_ratio": 6.39,
+        "contrast_ratio": 6.39,
+        "contrast_source": "border",
+        "method": "computed"
+      },
+      "threshold": 3,
+      "pass": true,
+      "note": "Button must remain visually distinct from the adjacent surface through its fill or its border.",
+      "recommendation": "No change required."
+    },
+    {
+      "theme": ".theme-forest",
+      "theme_selector": ".theme-forest",
+      "source_file": "src/styles/theme/variants.css",
+      "component": "destructive",
+      "component_label": "Destructive button",
+      "check_type": "text",
+      "state": "default",
+      "surface": "card",
+      "fg": {
+        "token": "--color-button-destructive-fg",
+        "raw": "#fff8f7",
+        "hex": "#fff8f7",
+        "rgba": "rgba(255, 248, 247, 1)",
+        "alpha": 1
+      },
+      "bg": {
+        "token": "--color-button-destructive-bg",
+        "raw": "#b95151",
+        "hex": "#b95151",
+        "rgba": "rgba(185, 81, 81, 1)",
+        "alpha": 1,
+        "layers": [
+          {
+            "token": "--card",
+            "raw": "rgba(54, 72, 60, 0.96)",
+            "hex": "#36483c",
+            "rgba": "rgba(54, 72, 60, 0.96)",
+            "alpha": 0.96
+          },
+          {
+            "token": "--background",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
+            "alpha": 1
+          }
+        ]
+      },
+      "computed": {
+        "contrast_ratio": 4.59,
+        "luminance_fg": 0.9511,
+        "luminance_bg": 0.1679,
+        "method": "computed"
+      },
+      "threshold": 4.5,
+      "pass": true,
+      "note": "Button label/icon contrast against the effective button background.",
+      "recommendation": "No change required."
+    },
+    {
+      "theme": ".theme-forest",
+      "theme_selector": ".theme-forest",
+      "source_file": "src/styles/theme/variants.css",
+      "component": "destructive",
+      "component_label": "Destructive button",
+      "check_type": "boundary",
+      "state": "default",
+      "surface": "card",
+      "fg": {
+        "token": "--color-button-destructive-border",
+        "raw": "rgba(255, 218, 218, 0.7)",
+        "hex": "#c2aeaa",
+        "rgba": "rgba(194, 174, 170, 1)",
+        "alpha": 0.7
+      },
+      "bg": {
+        "token": "--color-button-destructive-bg",
+        "raw": "#b95151",
+        "hex": "#b95151",
+        "rgba": "rgba(185, 81, 81, 1)",
+        "alpha": 1,
+        "layers": [
+          {
+            "token": "--card",
+            "raw": "rgba(54, 72, 60, 0.96)",
+            "hex": "#36483c",
+            "rgba": "rgba(54, 72, 60, 0.96)",
+            "alpha": 0.96
+          },
+          {
+            "token": "--background",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
+            "alpha": 1
+          }
+        ]
+      },
+      "computed": {
+        "fill_contrast_ratio": 2.06,
+        "border_contrast_ratio": 4.7,
+        "contrast_ratio": 4.7,
+        "contrast_source": "border",
+        "method": "computed"
+      },
+      "threshold": 3,
+      "pass": true,
+      "note": "Button must remain visually distinct from the adjacent surface through its fill or its border.",
+      "recommendation": "No change required."
+    },
+    {
+      "theme": ".theme-forest",
+      "theme_selector": ".theme-forest",
+      "source_file": "src/styles/theme/variants.css",
+      "component": "destructive",
+      "component_label": "Destructive button",
+      "check_type": "text",
+      "state": "hover",
+      "surface": "background",
+      "fg": {
+        "token": "--color-button-destructive-fg",
+        "raw": "#fff8f7",
+        "hex": "#fff8f7",
+        "rgba": "rgba(255, 248, 247, 1)",
+        "alpha": 1
+      },
+      "bg": {
+        "token": "--color-button-destructive-bg-hover",
+        "raw": "color-mix(in srgb, var(--danger) 90%, #0f172a 10%)",
+        "hex": "#a84b4d",
+        "rgba": "rgba(168, 75, 77, 1)",
+        "alpha": 1,
+        "layers": [
+          {
+            "token": "--background",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
+            "alpha": 1
+          }
+        ]
+      },
+      "computed": {
+        "contrast_ratio": 5.29,
+        "luminance_fg": 0.9511,
+        "luminance_bg": 0.1392,
+        "method": "computed"
+      },
+      "threshold": 4.5,
+      "pass": true,
+      "note": "Button label/icon contrast against the effective button background.",
+      "recommendation": "No change required."
+    },
+    {
+      "theme": ".theme-forest",
+      "theme_selector": ".theme-forest",
+      "source_file": "src/styles/theme/variants.css",
+      "component": "destructive",
+      "component_label": "Destructive button",
+      "check_type": "boundary",
+      "state": "hover",
+      "surface": "background",
+      "fg": {
+        "token": "--color-button-destructive-border",
+        "raw": "rgba(255, 218, 218, 0.7)",
+        "hex": "#bba5a2",
+        "rgba": "rgba(187, 165, 162, 1)",
+        "alpha": 0.7
+      },
+      "bg": {
+        "token": "--color-button-destructive-bg-hover",
+        "raw": "color-mix(in srgb, var(--danger) 90%, #0f172a 10%)",
+        "hex": "#a84b4d",
+        "rgba": "rgba(168, 75, 77, 1)",
+        "alpha": 1,
+        "layers": [
+          {
+            "token": "--background",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
+            "alpha": 1
+          }
+        ]
+      },
+      "computed": {
+        "fill_contrast_ratio": 2.67,
+        "border_contrast_ratio": 6.39,
+        "contrast_ratio": 6.39,
+        "contrast_source": "border",
+        "method": "computed"
+      },
+      "threshold": 3,
+      "pass": true,
+      "note": "Button must remain visually distinct from the adjacent surface through its fill or its border.",
+      "recommendation": "No change required."
+    },
+    {
+      "theme": ".theme-forest",
+      "theme_selector": ".theme-forest",
+      "source_file": "src/styles/theme/variants.css",
+      "component": "destructive",
+      "component_label": "Destructive button",
+      "check_type": "text",
+      "state": "hover",
+      "surface": "card",
+      "fg": {
+        "token": "--color-button-destructive-fg",
+        "raw": "#fff8f7",
+        "hex": "#fff8f7",
+        "rgba": "rgba(255, 248, 247, 1)",
+        "alpha": 1
+      },
+      "bg": {
+        "token": "--color-button-destructive-bg-hover",
+        "raw": "color-mix(in srgb, var(--danger) 90%, #0f172a 10%)",
+        "hex": "#a84b4d",
+        "rgba": "rgba(168, 75, 77, 1)",
+        "alpha": 1,
+        "layers": [
+          {
+            "token": "--card",
+            "raw": "rgba(54, 72, 60, 0.96)",
+            "hex": "#36483c",
+            "rgba": "rgba(54, 72, 60, 0.96)",
+            "alpha": 0.96
+          },
+          {
+            "token": "--background",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
+            "alpha": 1
+          }
+        ]
+      },
+      "computed": {
+        "contrast_ratio": 5.29,
+        "luminance_fg": 0.9511,
+        "luminance_bg": 0.1392,
+        "method": "computed"
+      },
+      "threshold": 4.5,
+      "pass": true,
+      "note": "Button label/icon contrast against the effective button background.",
+      "recommendation": "No change required."
+    },
+    {
+      "theme": ".theme-forest",
+      "theme_selector": ".theme-forest",
+      "source_file": "src/styles/theme/variants.css",
+      "component": "destructive",
+      "component_label": "Destructive button",
+      "check_type": "boundary",
+      "state": "hover",
+      "surface": "card",
+      "fg": {
+        "token": "--color-button-destructive-border",
+        "raw": "rgba(255, 218, 218, 0.7)",
+        "hex": "#c2aeaa",
+        "rgba": "rgba(194, 174, 170, 1)",
+        "alpha": 0.7
+      },
+      "bg": {
+        "token": "--color-button-destructive-bg-hover",
+        "raw": "color-mix(in srgb, var(--danger) 90%, #0f172a 10%)",
+        "hex": "#a84b4d",
+        "rgba": "rgba(168, 75, 77, 1)",
+        "alpha": 1,
+        "layers": [
+          {
+            "token": "--card",
+            "raw": "rgba(54, 72, 60, 0.96)",
+            "hex": "#36483c",
+            "rgba": "rgba(54, 72, 60, 0.96)",
+            "alpha": 0.96
+          },
+          {
+            "token": "--background",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
         "fill_contrast_ratio": 1.79,
-        "border_contrast_ratio": 7.77,
-        "contrast_ratio": 7.77,
+        "border_contrast_ratio": 4.7,
+        "contrast_ratio": 4.7,
         "contrast_source": "border",
         "method": "computed"
       },
@@ -26018,45 +26495,132 @@
       "theme": ".theme-forest",
       "theme_selector": ".theme-forest",
       "source_file": "src/styles/theme/variants.css",
-      "component": "ghost",
-      "component_label": "Ghost button",
+      "component": "destructive",
+      "component_label": "Destructive button",
+      "check_type": "text",
+      "state": "active",
+      "surface": "background",
+      "fg": {
+        "token": "--color-button-destructive-fg",
+        "raw": "#fff8f7",
+        "hex": "#fff8f7",
+        "rgba": "rgba(255, 248, 247, 1)",
+        "alpha": 1
+      },
+      "bg": {
+        "token": "--color-button-destructive-bg-active",
+        "raw": "color-mix(in srgb, var(--danger) 82%, #0f172a 18%)",
+        "hex": "#9a474a",
+        "rgba": "rgba(154, 71, 74, 1)",
+        "alpha": 1,
+        "layers": [
+          {
+            "token": "--background",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
+            "alpha": 1
+          }
+        ]
+      },
+      "computed": {
+        "contrast_ratio": 5.94,
+        "luminance_fg": 0.9511,
+        "luminance_bg": 0.1185,
+        "method": "computed"
+      },
+      "threshold": 4.5,
+      "pass": true,
+      "note": "Button label/icon contrast against the effective button background.",
+      "recommendation": "No change required."
+    },
+    {
+      "theme": ".theme-forest",
+      "theme_selector": ".theme-forest",
+      "source_file": "src/styles/theme/variants.css",
+      "component": "destructive",
+      "component_label": "Destructive button",
+      "check_type": "boundary",
+      "state": "active",
+      "surface": "background",
+      "fg": {
+        "token": "--color-button-destructive-border",
+        "raw": "rgba(255, 218, 218, 0.7)",
+        "hex": "#bba5a2",
+        "rgba": "rgba(187, 165, 162, 1)",
+        "alpha": 0.7
+      },
+      "bg": {
+        "token": "--color-button-destructive-bg-active",
+        "raw": "color-mix(in srgb, var(--danger) 82%, #0f172a 18%)",
+        "hex": "#9a474a",
+        "rgba": "rgba(154, 71, 74, 1)",
+        "alpha": 1,
+        "layers": [
+          {
+            "token": "--background",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
+            "alpha": 1
+          }
+        ]
+      },
+      "computed": {
+        "fill_contrast_ratio": 2.38,
+        "border_contrast_ratio": 6.39,
+        "contrast_ratio": 6.39,
+        "contrast_source": "border",
+        "method": "computed"
+      },
+      "threshold": 3,
+      "pass": true,
+      "note": "Button must remain visually distinct from the adjacent surface through its fill or its border.",
+      "recommendation": "No change required."
+    },
+    {
+      "theme": ".theme-forest",
+      "theme_selector": ".theme-forest",
+      "source_file": "src/styles/theme/variants.css",
+      "component": "destructive",
+      "component_label": "Destructive button",
       "check_type": "text",
       "state": "active",
       "surface": "card",
       "fg": {
-        "token": "--color-button-ghost-fg",
-        "raw": "#f7f0e2",
-        "hex": "#f7f0e2",
-        "rgba": "rgba(247, 240, 226, 1)",
+        "token": "--color-button-destructive-fg",
+        "raw": "#fff8f7",
+        "hex": "#fff8f7",
+        "rgba": "rgba(255, 248, 247, 1)",
         "alpha": 1
       },
       "bg": {
-        "token": "--color-button-ghost-bg-active",
-        "raw": "color-mix(in srgb, var(--secondary) 82%, var(--card) 18%)",
-        "hex": "#495c4e",
-        "rgba": "rgba(73, 92, 78, 1)",
+        "token": "--color-button-destructive-bg-active",
+        "raw": "color-mix(in srgb, var(--danger) 82%, #0f172a 18%)",
+        "hex": "#9a474a",
+        "rgba": "rgba(154, 71, 74, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--card",
-            "raw": "rgba(70, 89, 74, 0.94)",
-            "hex": "#46594a",
-            "rgba": "rgba(70, 89, 74, 0.94)",
-            "alpha": 0.94
+            "raw": "rgba(54, 72, 60, 0.96)",
+            "hex": "#36483c",
+            "rgba": "rgba(54, 72, 60, 0.96)",
+            "alpha": 0.96
           },
           {
             "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 6.31,
-        "luminance_fg": 0.8759,
-        "luminance_bg": 0.0967,
+        "contrast_ratio": 5.94,
+        "luminance_fg": 0.9511,
+        "luminance_bg": 0.1185,
         "method": "computed"
       },
       "threshold": 4.5,
@@ -26068,45 +26632,45 @@
       "theme": ".theme-forest",
       "theme_selector": ".theme-forest",
       "source_file": "src/styles/theme/variants.css",
-      "component": "ghost",
-      "component_label": "Ghost button",
+      "component": "destructive",
+      "component_label": "Destructive button",
       "check_type": "boundary",
       "state": "active",
       "surface": "card",
       "fg": {
-        "token": "--color-button-ghost-border",
-        "raw": "color-mix(in srgb, var(--button-subtle-foreground) 76%, var(--card) 24%)",
-        "hex": "#cbcabc",
-        "rgba": "rgba(203, 202, 188, 1)",
-        "alpha": 0.9856
+        "token": "--color-button-destructive-border",
+        "raw": "rgba(255, 218, 218, 0.7)",
+        "hex": "#c2aeaa",
+        "rgba": "rgba(194, 174, 170, 1)",
+        "alpha": 0.7
       },
       "bg": {
-        "token": "--color-button-ghost-bg-active",
-        "raw": "color-mix(in srgb, var(--secondary) 82%, var(--card) 18%)",
-        "hex": "#495c4e",
-        "rgba": "rgba(73, 92, 78, 1)",
+        "token": "--color-button-destructive-bg-active",
+        "raw": "color-mix(in srgb, var(--danger) 82%, #0f172a 18%)",
+        "hex": "#9a474a",
+        "rgba": "rgba(154, 71, 74, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--card",
-            "raw": "rgba(70, 89, 74, 0.94)",
-            "hex": "#46594a",
-            "rgba": "rgba(70, 89, 74, 0.94)",
-            "alpha": 0.94
+            "raw": "rgba(54, 72, 60, 0.96)",
+            "hex": "#36483c",
+            "rgba": "rgba(54, 72, 60, 0.96)",
+            "alpha": 0.96
           },
           {
             "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "fill_contrast_ratio": 1.09,
-        "border_contrast_ratio": 4.71,
-        "contrast_ratio": 4.71,
+        "fill_contrast_ratio": 1.6,
+        "border_contrast_ratio": 4.7,
+        "contrast_ratio": 4.7,
         "contrast_source": "border",
         "method": "computed"
       },
@@ -26119,38 +26683,38 @@
       "theme": ".theme-forest",
       "theme_selector": ".theme-forest",
       "source_file": "src/styles/theme/variants.css",
-      "component": "destructive",
-      "component_label": "Destructive button",
+      "component": "success",
+      "component_label": "Success button",
       "check_type": "text",
       "state": "default",
       "surface": "background",
       "fg": {
-        "token": "--color-button-destructive-fg",
-        "raw": "#fff7fb",
-        "hex": "#fff7fb",
-        "rgba": "rgba(255, 247, 251, 1)",
+        "token": "--color-button-success-fg",
+        "raw": "#f5fff8",
+        "hex": "#f5fff8",
+        "rgba": "rgba(245, 255, 248, 1)",
         "alpha": 1
       },
       "bg": {
-        "token": "--color-button-destructive-bg",
-        "raw": "color-mix(in srgb, #9f1239 84%, var(--primary) 16%)",
-        "hex": "#a01e3a",
-        "rgba": "rgba(160, 30, 58, 1)",
+        "token": "--color-button-success-bg",
+        "raw": "#2f7a4a",
+        "hex": "#2f7a4a",
+        "rgba": "rgba(47, 122, 74, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 7.3,
-        "luminance_fg": 0.9475,
-        "luminance_bg": 0.0867,
+        "contrast_ratio": 5.13,
+        "luminance_fg": 0.9771,
+        "luminance_bg": 0.1502,
         "method": "computed"
       },
       "threshold": 4.5,
@@ -26162,38 +26726,38 @@
       "theme": ".theme-forest",
       "theme_selector": ".theme-forest",
       "source_file": "src/styles/theme/variants.css",
-      "component": "destructive",
-      "component_label": "Destructive button",
+      "component": "success",
+      "component_label": "Success button",
       "check_type": "boundary",
       "state": "default",
       "surface": "background",
       "fg": {
-        "token": "--color-button-destructive-border",
-        "raw": "color-mix(in srgb, var(--foreground) 58%, var(--danger) 42%)",
-        "hex": "#d2989b",
-        "rgba": "rgba(210, 152, 155, 1)",
-        "alpha": 1
+        "token": "--color-button-success-border",
+        "raw": "rgba(208, 247, 219, 0.68)",
+        "hex": "#97b69f",
+        "rgba": "rgba(151, 182, 159, 1)",
+        "alpha": 0.68
       },
       "bg": {
-        "token": "--color-button-destructive-bg",
-        "raw": "color-mix(in srgb, #9f1239 84%, var(--primary) 16%)",
-        "hex": "#a01e3a",
-        "rgba": "rgba(160, 30, 58, 1)",
+        "token": "--color-button-success-bg",
+        "raw": "#2f7a4a",
+        "hex": "#2f7a4a",
+        "rgba": "rgba(47, 122, 74, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "fill_contrast_ratio": 1.68,
-        "border_contrast_ratio": 5.34,
-        "contrast_ratio": 5.34,
+        "fill_contrast_ratio": 2.82,
+        "border_contrast_ratio": 6.68,
+        "contrast_ratio": 6.68,
         "contrast_source": "border",
         "method": "computed"
       },
@@ -26206,45 +26770,45 @@
       "theme": ".theme-forest",
       "theme_selector": ".theme-forest",
       "source_file": "src/styles/theme/variants.css",
-      "component": "destructive",
-      "component_label": "Destructive button",
+      "component": "success",
+      "component_label": "Success button",
       "check_type": "text",
       "state": "default",
       "surface": "card",
       "fg": {
-        "token": "--color-button-destructive-fg",
-        "raw": "#fff7fb",
-        "hex": "#fff7fb",
-        "rgba": "rgba(255, 247, 251, 1)",
+        "token": "--color-button-success-fg",
+        "raw": "#f5fff8",
+        "hex": "#f5fff8",
+        "rgba": "rgba(245, 255, 248, 1)",
         "alpha": 1
       },
       "bg": {
-        "token": "--color-button-destructive-bg",
-        "raw": "color-mix(in srgb, #9f1239 84%, var(--primary) 16%)",
-        "hex": "#a01e3a",
-        "rgba": "rgba(160, 30, 58, 1)",
+        "token": "--color-button-success-bg",
+        "raw": "#2f7a4a",
+        "hex": "#2f7a4a",
+        "rgba": "rgba(47, 122, 74, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--card",
-            "raw": "rgba(70, 89, 74, 0.94)",
-            "hex": "#46594a",
-            "rgba": "rgba(70, 89, 74, 0.94)",
-            "alpha": 0.94
+            "raw": "rgba(54, 72, 60, 0.96)",
+            "hex": "#36483c",
+            "rgba": "rgba(54, 72, 60, 0.96)",
+            "alpha": 0.96
           },
           {
             "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 7.3,
-        "luminance_fg": 0.9475,
-        "luminance_bg": 0.0867,
+        "contrast_ratio": 5.13,
+        "luminance_fg": 0.9771,
+        "luminance_bg": 0.1502,
         "method": "computed"
       },
       "threshold": 4.5,
@@ -26256,45 +26820,45 @@
       "theme": ".theme-forest",
       "theme_selector": ".theme-forest",
       "source_file": "src/styles/theme/variants.css",
-      "component": "destructive",
-      "component_label": "Destructive button",
+      "component": "success",
+      "component_label": "Success button",
       "check_type": "boundary",
       "state": "default",
       "surface": "card",
       "fg": {
-        "token": "--color-button-destructive-border",
-        "raw": "color-mix(in srgb, var(--foreground) 58%, var(--danger) 42%)",
-        "hex": "#d2989b",
-        "rgba": "rgba(210, 152, 155, 1)",
-        "alpha": 1
+        "token": "--color-button-success-border",
+        "raw": "rgba(208, 247, 219, 0.68)",
+        "hex": "#9ebfa8",
+        "rgba": "rgba(158, 191, 168, 1)",
+        "alpha": 0.68
       },
       "bg": {
-        "token": "--color-button-destructive-bg",
-        "raw": "color-mix(in srgb, #9f1239 84%, var(--primary) 16%)",
-        "hex": "#a01e3a",
-        "rgba": "rgba(160, 30, 58, 1)",
+        "token": "--color-button-success-bg",
+        "raw": "#2f7a4a",
+        "hex": "#2f7a4a",
+        "rgba": "rgba(47, 122, 74, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--card",
-            "raw": "rgba(70, 89, 74, 0.94)",
-            "hex": "#46594a",
-            "rgba": "rgba(70, 89, 74, 0.94)",
-            "alpha": 0.94
+            "raw": "rgba(54, 72, 60, 0.96)",
+            "hex": "#36483c",
+            "rgba": "rgba(54, 72, 60, 0.96)",
+            "alpha": 0.96
           },
           {
             "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "fill_contrast_ratio": 1.01,
-        "border_contrast_ratio": 3.22,
-        "contrast_ratio": 3.22,
+        "fill_contrast_ratio": 1.9,
+        "border_contrast_ratio": 4.95,
+        "contrast_ratio": 4.95,
         "contrast_source": "border",
         "method": "computed"
       },
@@ -26307,38 +26871,38 @@
       "theme": ".theme-forest",
       "theme_selector": ".theme-forest",
       "source_file": "src/styles/theme/variants.css",
-      "component": "destructive",
-      "component_label": "Destructive button",
+      "component": "success",
+      "component_label": "Success button",
       "check_type": "text",
       "state": "hover",
       "surface": "background",
       "fg": {
-        "token": "--color-button-destructive-fg",
-        "raw": "#fff7fb",
-        "hex": "#fff7fb",
-        "rgba": "rgba(255, 247, 251, 1)",
+        "token": "--color-button-success-fg",
+        "raw": "#f5fff8",
+        "hex": "#f5fff8",
+        "rgba": "rgba(245, 255, 248, 1)",
         "alpha": 1
       },
       "bg": {
-        "token": "--color-button-destructive-bg-hover",
-        "raw": "color-mix(in srgb, var(--danger) 90%, #0f172a 10%)",
-        "hex": "#911d38",
-        "rgba": "rgba(145, 29, 56, 1)",
+        "token": "--color-button-success-bg-hover",
+        "raw": "color-mix(in srgb, var(--success) 90%, #0f172a 10%)",
+        "hex": "#2c7047",
+        "rgba": "rgba(44, 112, 71, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 8.17,
-        "luminance_fg": 0.9475,
-        "luminance_bg": 0.0722,
+        "contrast_ratio": 5.84,
+        "luminance_fg": 0.9771,
+        "luminance_bg": 0.1259,
         "method": "computed"
       },
       "threshold": 4.5,
@@ -26350,891 +26914,327 @@
       "theme": ".theme-forest",
       "theme_selector": ".theme-forest",
       "source_file": "src/styles/theme/variants.css",
-      "component": "destructive",
-      "component_label": "Destructive button",
+      "component": "success",
+      "component_label": "Success button",
       "check_type": "boundary",
       "state": "hover",
       "surface": "background",
       "fg": {
-        "token": "--color-button-destructive-border",
-        "raw": "color-mix(in srgb, var(--foreground) 58%, var(--danger) 42%)",
-        "hex": "#d2989b",
-        "rgba": "rgba(210, 152, 155, 1)",
-        "alpha": 1
+        "token": "--color-button-success-border",
+        "raw": "rgba(208, 247, 219, 0.68)",
+        "hex": "#97b69f",
+        "rgba": "rgba(151, 182, 159, 1)",
+        "alpha": 0.68
       },
       "bg": {
-        "token": "--color-button-destructive-bg-hover",
-        "raw": "color-mix(in srgb, var(--danger) 90%, #0f172a 10%)",
-        "hex": "#911d38",
-        "rgba": "rgba(145, 29, 56, 1)",
+        "token": "--color-button-success-bg-hover",
+        "raw": "color-mix(in srgb, var(--success) 90%, #0f172a 10%)",
+        "hex": "#2c7047",
+        "rgba": "rgba(44, 112, 71, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
+            "alpha": 1
+          }
+        ]
+      },
+      "computed": {
+        "fill_contrast_ratio": 2.48,
+        "border_contrast_ratio": 6.68,
+        "contrast_ratio": 6.68,
+        "contrast_source": "border",
+        "method": "computed"
+      },
+      "threshold": 3,
+      "pass": true,
+      "note": "Button must remain visually distinct from the adjacent surface through its fill or its border.",
+      "recommendation": "No change required."
+    },
+    {
+      "theme": ".theme-forest",
+      "theme_selector": ".theme-forest",
+      "source_file": "src/styles/theme/variants.css",
+      "component": "success",
+      "component_label": "Success button",
+      "check_type": "text",
+      "state": "hover",
+      "surface": "card",
+      "fg": {
+        "token": "--color-button-success-fg",
+        "raw": "#f5fff8",
+        "hex": "#f5fff8",
+        "rgba": "rgba(245, 255, 248, 1)",
+        "alpha": 1
+      },
+      "bg": {
+        "token": "--color-button-success-bg-hover",
+        "raw": "color-mix(in srgb, var(--success) 90%, #0f172a 10%)",
+        "hex": "#2c7047",
+        "rgba": "rgba(44, 112, 71, 1)",
+        "alpha": 1,
+        "layers": [
+          {
+            "token": "--card",
+            "raw": "rgba(54, 72, 60, 0.96)",
+            "hex": "#36483c",
+            "rgba": "rgba(54, 72, 60, 0.96)",
+            "alpha": 0.96
+          },
+          {
+            "token": "--background",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
+            "alpha": 1
+          }
+        ]
+      },
+      "computed": {
+        "contrast_ratio": 5.84,
+        "luminance_fg": 0.9771,
+        "luminance_bg": 0.1259,
+        "method": "computed"
+      },
+      "threshold": 4.5,
+      "pass": true,
+      "note": "Button label/icon contrast against the effective button background.",
+      "recommendation": "No change required."
+    },
+    {
+      "theme": ".theme-forest",
+      "theme_selector": ".theme-forest",
+      "source_file": "src/styles/theme/variants.css",
+      "component": "success",
+      "component_label": "Success button",
+      "check_type": "boundary",
+      "state": "hover",
+      "surface": "card",
+      "fg": {
+        "token": "--color-button-success-border",
+        "raw": "rgba(208, 247, 219, 0.68)",
+        "hex": "#9ebfa8",
+        "rgba": "rgba(158, 191, 168, 1)",
+        "alpha": 0.68
+      },
+      "bg": {
+        "token": "--color-button-success-bg-hover",
+        "raw": "color-mix(in srgb, var(--success) 90%, #0f172a 10%)",
+        "hex": "#2c7047",
+        "rgba": "rgba(44, 112, 71, 1)",
+        "alpha": 1,
+        "layers": [
+          {
+            "token": "--card",
+            "raw": "rgba(54, 72, 60, 0.96)",
+            "hex": "#36483c",
+            "rgba": "rgba(54, 72, 60, 0.96)",
+            "alpha": 0.96
+          },
+          {
+            "token": "--background",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
+            "alpha": 1
+          }
+        ]
+      },
+      "computed": {
+        "fill_contrast_ratio": 1.67,
+        "border_contrast_ratio": 4.95,
+        "contrast_ratio": 4.95,
+        "contrast_source": "border",
+        "method": "computed"
+      },
+      "threshold": 3,
+      "pass": true,
+      "note": "Button must remain visually distinct from the adjacent surface through its fill or its border.",
+      "recommendation": "No change required."
+    },
+    {
+      "theme": ".theme-forest",
+      "theme_selector": ".theme-forest",
+      "source_file": "src/styles/theme/variants.css",
+      "component": "success",
+      "component_label": "Success button",
+      "check_type": "text",
+      "state": "active",
+      "surface": "background",
+      "fg": {
+        "token": "--color-button-success-fg",
+        "raw": "#f5fff8",
+        "hex": "#f5fff8",
+        "rgba": "rgba(245, 255, 248, 1)",
+        "alpha": 1
+      },
+      "bg": {
+        "token": "--color-button-success-bg-active",
+        "raw": "color-mix(in srgb, var(--success) 82%, #0f172a 18%)",
+        "hex": "#296844",
+        "rgba": "rgba(41, 104, 68, 1)",
+        "alpha": 1,
+        "layers": [
+          {
+            "token": "--background",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
+            "alpha": 1
+          }
+        ]
+      },
+      "computed": {
+        "contrast_ratio": 6.49,
+        "luminance_fg": 0.9771,
+        "luminance_bg": 0.1083,
+        "method": "computed"
+      },
+      "threshold": 4.5,
+      "pass": true,
+      "note": "Button label/icon contrast against the effective button background.",
+      "recommendation": "No change required."
+    },
+    {
+      "theme": ".theme-forest",
+      "theme_selector": ".theme-forest",
+      "source_file": "src/styles/theme/variants.css",
+      "component": "success",
+      "component_label": "Success button",
+      "check_type": "boundary",
+      "state": "active",
+      "surface": "background",
+      "fg": {
+        "token": "--color-button-success-border",
+        "raw": "rgba(208, 247, 219, 0.68)",
+        "hex": "#97b69f",
+        "rgba": "rgba(151, 182, 159, 1)",
+        "alpha": 0.68
+      },
+      "bg": {
+        "token": "--color-button-success-bg-active",
+        "raw": "color-mix(in srgb, var(--success) 82%, #0f172a 18%)",
+        "hex": "#296844",
+        "rgba": "rgba(41, 104, 68, 1)",
+        "alpha": 1,
+        "layers": [
+          {
+            "token": "--background",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
+            "alpha": 1
+          }
+        ]
+      },
+      "computed": {
+        "fill_contrast_ratio": 2.23,
+        "border_contrast_ratio": 6.68,
+        "contrast_ratio": 6.68,
+        "contrast_source": "border",
+        "method": "computed"
+      },
+      "threshold": 3,
+      "pass": true,
+      "note": "Button must remain visually distinct from the adjacent surface through its fill or its border.",
+      "recommendation": "No change required."
+    },
+    {
+      "theme": ".theme-forest",
+      "theme_selector": ".theme-forest",
+      "source_file": "src/styles/theme/variants.css",
+      "component": "success",
+      "component_label": "Success button",
+      "check_type": "text",
+      "state": "active",
+      "surface": "card",
+      "fg": {
+        "token": "--color-button-success-fg",
+        "raw": "#f5fff8",
+        "hex": "#f5fff8",
+        "rgba": "rgba(245, 255, 248, 1)",
+        "alpha": 1
+      },
+      "bg": {
+        "token": "--color-button-success-bg-active",
+        "raw": "color-mix(in srgb, var(--success) 82%, #0f172a 18%)",
+        "hex": "#296844",
+        "rgba": "rgba(41, 104, 68, 1)",
+        "alpha": 1,
+        "layers": [
+          {
+            "token": "--card",
+            "raw": "rgba(54, 72, 60, 0.96)",
+            "hex": "#36483c",
+            "rgba": "rgba(54, 72, 60, 0.96)",
+            "alpha": 0.96
+          },
+          {
+            "token": "--background",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
+            "alpha": 1
+          }
+        ]
+      },
+      "computed": {
+        "contrast_ratio": 6.49,
+        "luminance_fg": 0.9771,
+        "luminance_bg": 0.1083,
+        "method": "computed"
+      },
+      "threshold": 4.5,
+      "pass": true,
+      "note": "Button label/icon contrast against the effective button background.",
+      "recommendation": "No change required."
+    },
+    {
+      "theme": ".theme-forest",
+      "theme_selector": ".theme-forest",
+      "source_file": "src/styles/theme/variants.css",
+      "component": "success",
+      "component_label": "Success button",
+      "check_type": "boundary",
+      "state": "active",
+      "surface": "card",
+      "fg": {
+        "token": "--color-button-success-border",
+        "raw": "rgba(208, 247, 219, 0.68)",
+        "hex": "#9ebfa8",
+        "rgba": "rgba(158, 191, 168, 1)",
+        "alpha": 0.68
+      },
+      "bg": {
+        "token": "--color-button-success-bg-active",
+        "raw": "color-mix(in srgb, var(--success) 82%, #0f172a 18%)",
+        "hex": "#296844",
+        "rgba": "rgba(41, 104, 68, 1)",
+        "alpha": 1,
+        "layers": [
+          {
+            "token": "--card",
+            "raw": "rgba(54, 72, 60, 0.96)",
+            "hex": "#36483c",
+            "rgba": "rgba(54, 72, 60, 0.96)",
+            "alpha": 0.96
+          },
+          {
+            "token": "--background",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
         "fill_contrast_ratio": 1.5,
-        "border_contrast_ratio": 5.34,
-        "contrast_ratio": 5.34,
-        "contrast_source": "border",
-        "method": "computed"
-      },
-      "threshold": 3,
-      "pass": true,
-      "note": "Button must remain visually distinct from the adjacent surface through its fill or its border.",
-      "recommendation": "No change required."
-    },
-    {
-      "theme": ".theme-forest",
-      "theme_selector": ".theme-forest",
-      "source_file": "src/styles/theme/variants.css",
-      "component": "destructive",
-      "component_label": "Destructive button",
-      "check_type": "text",
-      "state": "hover",
-      "surface": "card",
-      "fg": {
-        "token": "--color-button-destructive-fg",
-        "raw": "#fff7fb",
-        "hex": "#fff7fb",
-        "rgba": "rgba(255, 247, 251, 1)",
-        "alpha": 1
-      },
-      "bg": {
-        "token": "--color-button-destructive-bg-hover",
-        "raw": "color-mix(in srgb, var(--danger) 90%, #0f172a 10%)",
-        "hex": "#911d38",
-        "rgba": "rgba(145, 29, 56, 1)",
-        "alpha": 1,
-        "layers": [
-          {
-            "token": "--card",
-            "raw": "rgba(70, 89, 74, 0.94)",
-            "hex": "#46594a",
-            "rgba": "rgba(70, 89, 74, 0.94)",
-            "alpha": 0.94
-          },
-          {
-            "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
-            "alpha": 1
-          }
-        ]
-      },
-      "computed": {
-        "contrast_ratio": 8.17,
-        "luminance_fg": 0.9475,
-        "luminance_bg": 0.0722,
-        "method": "computed"
-      },
-      "threshold": 4.5,
-      "pass": true,
-      "note": "Button label/icon contrast against the effective button background.",
-      "recommendation": "No change required."
-    },
-    {
-      "theme": ".theme-forest",
-      "theme_selector": ".theme-forest",
-      "source_file": "src/styles/theme/variants.css",
-      "component": "destructive",
-      "component_label": "Destructive button",
-      "check_type": "boundary",
-      "state": "hover",
-      "surface": "card",
-      "fg": {
-        "token": "--color-button-destructive-border",
-        "raw": "color-mix(in srgb, var(--foreground) 58%, var(--danger) 42%)",
-        "hex": "#d2989b",
-        "rgba": "rgba(210, 152, 155, 1)",
-        "alpha": 1
-      },
-      "bg": {
-        "token": "--color-button-destructive-bg-hover",
-        "raw": "color-mix(in srgb, var(--danger) 90%, #0f172a 10%)",
-        "hex": "#911d38",
-        "rgba": "rgba(145, 29, 56, 1)",
-        "alpha": 1,
-        "layers": [
-          {
-            "token": "--card",
-            "raw": "rgba(70, 89, 74, 0.94)",
-            "hex": "#46594a",
-            "rgba": "rgba(70, 89, 74, 0.94)",
-            "alpha": 0.94
-          },
-          {
-            "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
-            "alpha": 1
-          }
-        ]
-      },
-      "computed": {
-        "fill_contrast_ratio": 1.1,
-        "border_contrast_ratio": 3.22,
-        "contrast_ratio": 3.22,
-        "contrast_source": "border",
-        "method": "computed"
-      },
-      "threshold": 3,
-      "pass": true,
-      "note": "Button must remain visually distinct from the adjacent surface through its fill or its border.",
-      "recommendation": "No change required."
-    },
-    {
-      "theme": ".theme-forest",
-      "theme_selector": ".theme-forest",
-      "source_file": "src/styles/theme/variants.css",
-      "component": "destructive",
-      "component_label": "Destructive button",
-      "check_type": "text",
-      "state": "active",
-      "surface": "background",
-      "fg": {
-        "token": "--color-button-destructive-fg",
-        "raw": "#fff7fb",
-        "hex": "#fff7fb",
-        "rgba": "rgba(255, 247, 251, 1)",
-        "alpha": 1
-      },
-      "bg": {
-        "token": "--color-button-destructive-bg-active",
-        "raw": "color-mix(in srgb, var(--danger) 82%, #0f172a 18%)",
-        "hex": "#861c37",
-        "rgba": "rgba(134, 28, 55, 1)",
-        "alpha": 1,
-        "layers": [
-          {
-            "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
-            "alpha": 1
-          }
-        ]
-      },
-      "computed": {
-        "contrast_ratio": 8.93,
-        "luminance_fg": 0.9475,
-        "luminance_bg": 0.0618,
-        "method": "computed"
-      },
-      "threshold": 4.5,
-      "pass": true,
-      "note": "Button label/icon contrast against the effective button background.",
-      "recommendation": "No change required."
-    },
-    {
-      "theme": ".theme-forest",
-      "theme_selector": ".theme-forest",
-      "source_file": "src/styles/theme/variants.css",
-      "component": "destructive",
-      "component_label": "Destructive button",
-      "check_type": "boundary",
-      "state": "active",
-      "surface": "background",
-      "fg": {
-        "token": "--color-button-destructive-border",
-        "raw": "color-mix(in srgb, var(--foreground) 58%, var(--danger) 42%)",
-        "hex": "#d2989b",
-        "rgba": "rgba(210, 152, 155, 1)",
-        "alpha": 1
-      },
-      "bg": {
-        "token": "--color-button-destructive-bg-active",
-        "raw": "color-mix(in srgb, var(--danger) 82%, #0f172a 18%)",
-        "hex": "#861c37",
-        "rgba": "rgba(134, 28, 55, 1)",
-        "alpha": 1,
-        "layers": [
-          {
-            "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
-            "alpha": 1
-          }
-        ]
-      },
-      "computed": {
-        "fill_contrast_ratio": 1.37,
-        "border_contrast_ratio": 5.34,
-        "contrast_ratio": 5.34,
-        "contrast_source": "border",
-        "method": "computed"
-      },
-      "threshold": 3,
-      "pass": true,
-      "note": "Button must remain visually distinct from the adjacent surface through its fill or its border.",
-      "recommendation": "No change required."
-    },
-    {
-      "theme": ".theme-forest",
-      "theme_selector": ".theme-forest",
-      "source_file": "src/styles/theme/variants.css",
-      "component": "destructive",
-      "component_label": "Destructive button",
-      "check_type": "text",
-      "state": "active",
-      "surface": "card",
-      "fg": {
-        "token": "--color-button-destructive-fg",
-        "raw": "#fff7fb",
-        "hex": "#fff7fb",
-        "rgba": "rgba(255, 247, 251, 1)",
-        "alpha": 1
-      },
-      "bg": {
-        "token": "--color-button-destructive-bg-active",
-        "raw": "color-mix(in srgb, var(--danger) 82%, #0f172a 18%)",
-        "hex": "#861c37",
-        "rgba": "rgba(134, 28, 55, 1)",
-        "alpha": 1,
-        "layers": [
-          {
-            "token": "--card",
-            "raw": "rgba(70, 89, 74, 0.94)",
-            "hex": "#46594a",
-            "rgba": "rgba(70, 89, 74, 0.94)",
-            "alpha": 0.94
-          },
-          {
-            "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
-            "alpha": 1
-          }
-        ]
-      },
-      "computed": {
-        "contrast_ratio": 8.93,
-        "luminance_fg": 0.9475,
-        "luminance_bg": 0.0618,
-        "method": "computed"
-      },
-      "threshold": 4.5,
-      "pass": true,
-      "note": "Button label/icon contrast against the effective button background.",
-      "recommendation": "No change required."
-    },
-    {
-      "theme": ".theme-forest",
-      "theme_selector": ".theme-forest",
-      "source_file": "src/styles/theme/variants.css",
-      "component": "destructive",
-      "component_label": "Destructive button",
-      "check_type": "boundary",
-      "state": "active",
-      "surface": "card",
-      "fg": {
-        "token": "--color-button-destructive-border",
-        "raw": "color-mix(in srgb, var(--foreground) 58%, var(--danger) 42%)",
-        "hex": "#d2989b",
-        "rgba": "rgba(210, 152, 155, 1)",
-        "alpha": 1
-      },
-      "bg": {
-        "token": "--color-button-destructive-bg-active",
-        "raw": "color-mix(in srgb, var(--danger) 82%, #0f172a 18%)",
-        "hex": "#861c37",
-        "rgba": "rgba(134, 28, 55, 1)",
-        "alpha": 1,
-        "layers": [
-          {
-            "token": "--card",
-            "raw": "rgba(70, 89, 74, 0.94)",
-            "hex": "#46594a",
-            "rgba": "rgba(70, 89, 74, 0.94)",
-            "alpha": 0.94
-          },
-          {
-            "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
-            "alpha": 1
-          }
-        ]
-      },
-      "computed": {
-        "fill_contrast_ratio": 1.21,
-        "border_contrast_ratio": 3.22,
-        "contrast_ratio": 3.22,
-        "contrast_source": "border",
-        "method": "computed"
-      },
-      "threshold": 3,
-      "pass": true,
-      "note": "Button must remain visually distinct from the adjacent surface through its fill or its border.",
-      "recommendation": "No change required."
-    },
-    {
-      "theme": ".theme-forest",
-      "theme_selector": ".theme-forest",
-      "source_file": "src/styles/theme/variants.css",
-      "component": "success",
-      "component_label": "Success button",
-      "check_type": "text",
-      "state": "default",
-      "surface": "background",
-      "fg": {
-        "token": "--color-button-success-fg",
-        "raw": "#f4fffb",
-        "hex": "#f4fffb",
-        "rgba": "rgba(244, 255, 251, 1)",
-        "alpha": 1
-      },
-      "bg": {
-        "token": "--color-button-success-bg",
-        "raw": "color-mix(in srgb, #166534 84%, var(--primary) 16%)",
-        "hex": "#2d6336",
-        "rgba": "rgba(45, 99, 54, 1)",
-        "alpha": 1,
-        "layers": [
-          {
-            "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
-            "alpha": 1
-          }
-        ]
-      },
-      "computed": {
-        "contrast_ratio": 6.93,
-        "luminance_fg": 0.9772,
-        "luminance_bg": 0.0981,
-        "method": "computed"
-      },
-      "threshold": 4.5,
-      "pass": true,
-      "note": "Button label/icon contrast against the effective button background.",
-      "recommendation": "No change required."
-    },
-    {
-      "theme": ".theme-forest",
-      "theme_selector": ".theme-forest",
-      "source_file": "src/styles/theme/variants.css",
-      "component": "success",
-      "component_label": "Success button",
-      "check_type": "boundary",
-      "state": "default",
-      "surface": "background",
-      "fg": {
-        "token": "--color-button-success-border",
-        "raw": "color-mix(in srgb, var(--foreground) 58%, var(--success) 42%)",
-        "hex": "#a2b59a",
-        "rgba": "rgba(162, 181, 154, 1)",
-        "alpha": 1
-      },
-      "bg": {
-        "token": "--color-button-success-bg",
-        "raw": "color-mix(in srgb, #166534 84%, var(--primary) 16%)",
-        "hex": "#2d6336",
-        "rgba": "rgba(45, 99, 54, 1)",
-        "alpha": 1,
-        "layers": [
-          {
-            "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
-            "alpha": 1
-          }
-        ]
-      },
-      "computed": {
-        "fill_contrast_ratio": 1.82,
-        "border_contrast_ratio": 5.9,
-        "contrast_ratio": 5.9,
-        "contrast_source": "border",
-        "method": "computed"
-      },
-      "threshold": 3,
-      "pass": true,
-      "note": "Button must remain visually distinct from the adjacent surface through its fill or its border.",
-      "recommendation": "No change required."
-    },
-    {
-      "theme": ".theme-forest",
-      "theme_selector": ".theme-forest",
-      "source_file": "src/styles/theme/variants.css",
-      "component": "success",
-      "component_label": "Success button",
-      "check_type": "text",
-      "state": "default",
-      "surface": "card",
-      "fg": {
-        "token": "--color-button-success-fg",
-        "raw": "#f4fffb",
-        "hex": "#f4fffb",
-        "rgba": "rgba(244, 255, 251, 1)",
-        "alpha": 1
-      },
-      "bg": {
-        "token": "--color-button-success-bg",
-        "raw": "color-mix(in srgb, #166534 84%, var(--primary) 16%)",
-        "hex": "#2d6336",
-        "rgba": "rgba(45, 99, 54, 1)",
-        "alpha": 1,
-        "layers": [
-          {
-            "token": "--card",
-            "raw": "rgba(70, 89, 74, 0.94)",
-            "hex": "#46594a",
-            "rgba": "rgba(70, 89, 74, 0.94)",
-            "alpha": 0.94
-          },
-          {
-            "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
-            "alpha": 1
-          }
-        ]
-      },
-      "computed": {
-        "contrast_ratio": 6.93,
-        "luminance_fg": 0.9772,
-        "luminance_bg": 0.0981,
-        "method": "computed"
-      },
-      "threshold": 4.5,
-      "pass": true,
-      "note": "Button label/icon contrast against the effective button background.",
-      "recommendation": "No change required."
-    },
-    {
-      "theme": ".theme-forest",
-      "theme_selector": ".theme-forest",
-      "source_file": "src/styles/theme/variants.css",
-      "component": "success",
-      "component_label": "Success button",
-      "check_type": "boundary",
-      "state": "default",
-      "surface": "card",
-      "fg": {
-        "token": "--color-button-success-border",
-        "raw": "color-mix(in srgb, var(--foreground) 58%, var(--success) 42%)",
-        "hex": "#a2b59a",
-        "rgba": "rgba(162, 181, 154, 1)",
-        "alpha": 1
-      },
-      "bg": {
-        "token": "--color-button-success-bg",
-        "raw": "color-mix(in srgb, #166534 84%, var(--primary) 16%)",
-        "hex": "#2d6336",
-        "rgba": "rgba(45, 99, 54, 1)",
-        "alpha": 1,
-        "layers": [
-          {
-            "token": "--card",
-            "raw": "rgba(70, 89, 74, 0.94)",
-            "hex": "#46594a",
-            "rgba": "rgba(70, 89, 74, 0.94)",
-            "alpha": 0.94
-          },
-          {
-            "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
-            "alpha": 1
-          }
-        ]
-      },
-      "computed": {
-        "fill_contrast_ratio": 1.1,
-        "border_contrast_ratio": 3.56,
-        "contrast_ratio": 3.56,
-        "contrast_source": "border",
-        "method": "computed"
-      },
-      "threshold": 3,
-      "pass": true,
-      "note": "Button must remain visually distinct from the adjacent surface through its fill or its border.",
-      "recommendation": "No change required."
-    },
-    {
-      "theme": ".theme-forest",
-      "theme_selector": ".theme-forest",
-      "source_file": "src/styles/theme/variants.css",
-      "component": "success",
-      "component_label": "Success button",
-      "check_type": "text",
-      "state": "hover",
-      "surface": "background",
-      "fg": {
-        "token": "--color-button-success-fg",
-        "raw": "#f4fffb",
-        "hex": "#f4fffb",
-        "rgba": "rgba(244, 255, 251, 1)",
-        "alpha": 1
-      },
-      "bg": {
-        "token": "--color-button-success-bg-hover",
-        "raw": "color-mix(in srgb, var(--success) 90%, #0f172a 10%)",
-        "hex": "#2a5c34",
-        "rgba": "rgba(42, 92, 52, 1)",
-        "alpha": 1,
-        "layers": [
-          {
-            "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
-            "alpha": 1
-          }
-        ]
-      },
-      "computed": {
-        "contrast_ratio": 7.69,
-        "luminance_fg": 0.9772,
-        "luminance_bg": 0.0835,
-        "method": "computed"
-      },
-      "threshold": 4.5,
-      "pass": true,
-      "note": "Button label/icon contrast against the effective button background.",
-      "recommendation": "No change required."
-    },
-    {
-      "theme": ".theme-forest",
-      "theme_selector": ".theme-forest",
-      "source_file": "src/styles/theme/variants.css",
-      "component": "success",
-      "component_label": "Success button",
-      "check_type": "boundary",
-      "state": "hover",
-      "surface": "background",
-      "fg": {
-        "token": "--color-button-success-border",
-        "raw": "color-mix(in srgb, var(--foreground) 58%, var(--success) 42%)",
-        "hex": "#a2b59a",
-        "rgba": "rgba(162, 181, 154, 1)",
-        "alpha": 1
-      },
-      "bg": {
-        "token": "--color-button-success-bg-hover",
-        "raw": "color-mix(in srgb, var(--success) 90%, #0f172a 10%)",
-        "hex": "#2a5c34",
-        "rgba": "rgba(42, 92, 52, 1)",
-        "alpha": 1,
-        "layers": [
-          {
-            "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
-            "alpha": 1
-          }
-        ]
-      },
-      "computed": {
-        "fill_contrast_ratio": 1.64,
-        "border_contrast_ratio": 5.9,
-        "contrast_ratio": 5.9,
-        "contrast_source": "border",
-        "method": "computed"
-      },
-      "threshold": 3,
-      "pass": true,
-      "note": "Button must remain visually distinct from the adjacent surface through its fill or its border.",
-      "recommendation": "No change required."
-    },
-    {
-      "theme": ".theme-forest",
-      "theme_selector": ".theme-forest",
-      "source_file": "src/styles/theme/variants.css",
-      "component": "success",
-      "component_label": "Success button",
-      "check_type": "text",
-      "state": "hover",
-      "surface": "card",
-      "fg": {
-        "token": "--color-button-success-fg",
-        "raw": "#f4fffb",
-        "hex": "#f4fffb",
-        "rgba": "rgba(244, 255, 251, 1)",
-        "alpha": 1
-      },
-      "bg": {
-        "token": "--color-button-success-bg-hover",
-        "raw": "color-mix(in srgb, var(--success) 90%, #0f172a 10%)",
-        "hex": "#2a5c34",
-        "rgba": "rgba(42, 92, 52, 1)",
-        "alpha": 1,
-        "layers": [
-          {
-            "token": "--card",
-            "raw": "rgba(70, 89, 74, 0.94)",
-            "hex": "#46594a",
-            "rgba": "rgba(70, 89, 74, 0.94)",
-            "alpha": 0.94
-          },
-          {
-            "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
-            "alpha": 1
-          }
-        ]
-      },
-      "computed": {
-        "contrast_ratio": 7.69,
-        "luminance_fg": 0.9772,
-        "luminance_bg": 0.0835,
-        "method": "computed"
-      },
-      "threshold": 4.5,
-      "pass": true,
-      "note": "Button label/icon contrast against the effective button background.",
-      "recommendation": "No change required."
-    },
-    {
-      "theme": ".theme-forest",
-      "theme_selector": ".theme-forest",
-      "source_file": "src/styles/theme/variants.css",
-      "component": "success",
-      "component_label": "Success button",
-      "check_type": "boundary",
-      "state": "hover",
-      "surface": "card",
-      "fg": {
-        "token": "--color-button-success-border",
-        "raw": "color-mix(in srgb, var(--foreground) 58%, var(--success) 42%)",
-        "hex": "#a2b59a",
-        "rgba": "rgba(162, 181, 154, 1)",
-        "alpha": 1
-      },
-      "bg": {
-        "token": "--color-button-success-bg-hover",
-        "raw": "color-mix(in srgb, var(--success) 90%, #0f172a 10%)",
-        "hex": "#2a5c34",
-        "rgba": "rgba(42, 92, 52, 1)",
-        "alpha": 1,
-        "layers": [
-          {
-            "token": "--card",
-            "raw": "rgba(70, 89, 74, 0.94)",
-            "hex": "#46594a",
-            "rgba": "rgba(70, 89, 74, 0.94)",
-            "alpha": 0.94
-          },
-          {
-            "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
-            "alpha": 1
-          }
-        ]
-      },
-      "computed": {
-        "fill_contrast_ratio": 1.01,
-        "border_contrast_ratio": 3.56,
-        "contrast_ratio": 3.56,
-        "contrast_source": "border",
-        "method": "computed"
-      },
-      "threshold": 3,
-      "pass": true,
-      "note": "Button must remain visually distinct from the adjacent surface through its fill or its border.",
-      "recommendation": "No change required."
-    },
-    {
-      "theme": ".theme-forest",
-      "theme_selector": ".theme-forest",
-      "source_file": "src/styles/theme/variants.css",
-      "component": "success",
-      "component_label": "Success button",
-      "check_type": "text",
-      "state": "active",
-      "surface": "background",
-      "fg": {
-        "token": "--color-button-success-fg",
-        "raw": "#f4fffb",
-        "hex": "#f4fffb",
-        "rgba": "rgba(244, 255, 251, 1)",
-        "alpha": 1
-      },
-      "bg": {
-        "token": "--color-button-success-bg-active",
-        "raw": "color-mix(in srgb, var(--success) 82%, #0f172a 18%)",
-        "hex": "#275634",
-        "rgba": "rgba(39, 86, 52, 1)",
-        "alpha": 1,
-        "layers": [
-          {
-            "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
-            "alpha": 1
-          }
-        ]
-      },
-      "computed": {
-        "contrast_ratio": 8.36,
-        "luminance_fg": 0.9772,
-        "luminance_bg": 0.0728,
-        "method": "computed"
-      },
-      "threshold": 4.5,
-      "pass": true,
-      "note": "Button label/icon contrast against the effective button background.",
-      "recommendation": "No change required."
-    },
-    {
-      "theme": ".theme-forest",
-      "theme_selector": ".theme-forest",
-      "source_file": "src/styles/theme/variants.css",
-      "component": "success",
-      "component_label": "Success button",
-      "check_type": "boundary",
-      "state": "active",
-      "surface": "background",
-      "fg": {
-        "token": "--color-button-success-border",
-        "raw": "color-mix(in srgb, var(--foreground) 58%, var(--success) 42%)",
-        "hex": "#a2b59a",
-        "rgba": "rgba(162, 181, 154, 1)",
-        "alpha": 1
-      },
-      "bg": {
-        "token": "--color-button-success-bg-active",
-        "raw": "color-mix(in srgb, var(--success) 82%, #0f172a 18%)",
-        "hex": "#275634",
-        "rgba": "rgba(39, 86, 52, 1)",
-        "alpha": 1,
-        "layers": [
-          {
-            "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
-            "alpha": 1
-          }
-        ]
-      },
-      "computed": {
-        "fill_contrast_ratio": 1.51,
-        "border_contrast_ratio": 5.9,
-        "contrast_ratio": 5.9,
-        "contrast_source": "border",
-        "method": "computed"
-      },
-      "threshold": 3,
-      "pass": true,
-      "note": "Button must remain visually distinct from the adjacent surface through its fill or its border.",
-      "recommendation": "No change required."
-    },
-    {
-      "theme": ".theme-forest",
-      "theme_selector": ".theme-forest",
-      "source_file": "src/styles/theme/variants.css",
-      "component": "success",
-      "component_label": "Success button",
-      "check_type": "text",
-      "state": "active",
-      "surface": "card",
-      "fg": {
-        "token": "--color-button-success-fg",
-        "raw": "#f4fffb",
-        "hex": "#f4fffb",
-        "rgba": "rgba(244, 255, 251, 1)",
-        "alpha": 1
-      },
-      "bg": {
-        "token": "--color-button-success-bg-active",
-        "raw": "color-mix(in srgb, var(--success) 82%, #0f172a 18%)",
-        "hex": "#275634",
-        "rgba": "rgba(39, 86, 52, 1)",
-        "alpha": 1,
-        "layers": [
-          {
-            "token": "--card",
-            "raw": "rgba(70, 89, 74, 0.94)",
-            "hex": "#46594a",
-            "rgba": "rgba(70, 89, 74, 0.94)",
-            "alpha": 0.94
-          },
-          {
-            "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
-            "alpha": 1
-          }
-        ]
-      },
-      "computed": {
-        "contrast_ratio": 8.36,
-        "luminance_fg": 0.9772,
-        "luminance_bg": 0.0728,
-        "method": "computed"
-      },
-      "threshold": 4.5,
-      "pass": true,
-      "note": "Button label/icon contrast against the effective button background.",
-      "recommendation": "No change required."
-    },
-    {
-      "theme": ".theme-forest",
-      "theme_selector": ".theme-forest",
-      "source_file": "src/styles/theme/variants.css",
-      "component": "success",
-      "component_label": "Success button",
-      "check_type": "boundary",
-      "state": "active",
-      "surface": "card",
-      "fg": {
-        "token": "--color-button-success-border",
-        "raw": "color-mix(in srgb, var(--foreground) 58%, var(--success) 42%)",
-        "hex": "#a2b59a",
-        "rgba": "rgba(162, 181, 154, 1)",
-        "alpha": 1
-      },
-      "bg": {
-        "token": "--color-button-success-bg-active",
-        "raw": "color-mix(in srgb, var(--success) 82%, #0f172a 18%)",
-        "hex": "#275634",
-        "rgba": "rgba(39, 86, 52, 1)",
-        "alpha": 1,
-        "layers": [
-          {
-            "token": "--card",
-            "raw": "rgba(70, 89, 74, 0.94)",
-            "hex": "#46594a",
-            "rgba": "rgba(70, 89, 74, 0.94)",
-            "alpha": 0.94
-          },
-          {
-            "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
-            "alpha": 1
-          }
-        ]
-      },
-      "computed": {
-        "fill_contrast_ratio": 1.1,
-        "border_contrast_ratio": 3.56,
-        "contrast_ratio": 3.56,
+        "border_contrast_ratio": 4.95,
+        "contrast_ratio": 4.95,
         "contrast_source": "border",
         "method": "computed"
       },
@@ -27254,31 +27254,31 @@
       "surface": "background",
       "fg": {
         "token": "--color-button-disabled-fg",
-        "raw": "#f7f0e2",
-        "hex": "#f7f0e2",
-        "rgba": "rgba(247, 240, 226, 1)",
+        "raw": "#f4ecdd",
+        "hex": "#f4ecdd",
+        "rgba": "rgba(244, 236, 221, 1)",
         "alpha": 1
       },
       "bg": {
         "token": "--color-button-disabled-bg",
         "raw": "color-mix(in srgb, var(--muted) 78%, var(--card) 22%)",
-        "hex": "#495c4d",
-        "rgba": "rgba(73, 92, 77, 1)",
+        "hex": "#36493b",
+        "rgba": "rgba(54, 73, 59, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 6.37,
-        "luminance_fg": 0.8759,
-        "luminance_bg": 0.0953,
+        "contrast_ratio": 8.29,
+        "luminance_fg": 0.8444,
+        "luminance_bg": 0.058,
         "method": "computed"
       },
       "threshold": 4.5,
@@ -27298,30 +27298,30 @@
       "fg": {
         "token": "--color-button-disabled-border",
         "raw": "color-mix(in srgb, var(--muted-foreground) 76%, var(--card) 24%)",
-        "hex": "#cacabb",
-        "rgba": "rgba(202, 202, 187, 1)",
-        "alpha": 0.9856
+        "hex": "#c3bfb0",
+        "rgba": "rgba(195, 191, 176, 1)",
+        "alpha": 0.9904
       },
       "bg": {
         "token": "--color-button-disabled-bg",
         "raw": "color-mix(in srgb, var(--muted) 78%, var(--card) 22%)",
-        "hex": "#495c4d",
-        "rgba": "rgba(73, 92, 77, 1)",
+        "hex": "#36493b",
+        "rgba": "rgba(54, 73, 59, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "fill_contrast_ratio": 1.79,
-        "border_contrast_ratio": 7.77,
-        "contrast_ratio": 7.77,
+        "fill_contrast_ratio": 1.52,
+        "border_contrast_ratio": 8,
+        "contrast_ratio": 8,
         "contrast_source": "border",
         "method": "computed"
       },
@@ -27341,38 +27341,38 @@
       "surface": "card",
       "fg": {
         "token": "--color-button-disabled-fg",
-        "raw": "#f7f0e2",
-        "hex": "#f7f0e2",
-        "rgba": "rgba(247, 240, 226, 1)",
+        "raw": "#f4ecdd",
+        "hex": "#f4ecdd",
+        "rgba": "rgba(244, 236, 221, 1)",
         "alpha": 1
       },
       "bg": {
         "token": "--color-button-disabled-bg",
         "raw": "color-mix(in srgb, var(--muted) 78%, var(--card) 22%)",
-        "hex": "#495c4e",
-        "rgba": "rgba(73, 92, 78, 1)",
+        "hex": "#36493b",
+        "rgba": "rgba(54, 73, 59, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--card",
-            "raw": "rgba(70, 89, 74, 0.94)",
-            "hex": "#46594a",
-            "rgba": "rgba(70, 89, 74, 0.94)",
-            "alpha": 0.94
+            "raw": "rgba(54, 72, 60, 0.96)",
+            "hex": "#36483c",
+            "rgba": "rgba(54, 72, 60, 0.96)",
+            "alpha": 0.96
           },
           {
             "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 6.33,
-        "luminance_fg": 0.8759,
-        "luminance_bg": 0.0963,
+        "contrast_ratio": 8.25,
+        "luminance_fg": 0.8444,
+        "luminance_bg": 0.0584,
         "method": "computed"
       },
       "threshold": 4.5,
@@ -27392,37 +27392,37 @@
       "fg": {
         "token": "--color-button-disabled-border",
         "raw": "color-mix(in srgb, var(--muted-foreground) 76%, var(--card) 24%)",
-        "hex": "#cbcabc",
-        "rgba": "rgba(203, 202, 188, 1)",
-        "alpha": 0.9856
+        "hex": "#c3bfb0",
+        "rgba": "rgba(195, 191, 176, 1)",
+        "alpha": 0.9904
       },
       "bg": {
         "token": "--color-button-disabled-bg",
         "raw": "color-mix(in srgb, var(--muted) 78%, var(--card) 22%)",
-        "hex": "#495c4e",
-        "rgba": "rgba(73, 92, 78, 1)",
+        "hex": "#36493b",
+        "rgba": "rgba(54, 73, 59, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--card",
-            "raw": "rgba(70, 89, 74, 0.94)",
-            "hex": "#46594a",
-            "rgba": "rgba(70, 89, 74, 0.94)",
-            "alpha": 0.94
+            "raw": "rgba(54, 72, 60, 0.96)",
+            "hex": "#36483c",
+            "rgba": "rgba(54, 72, 60, 0.96)",
+            "alpha": 0.96
           },
           {
             "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "fill_contrast_ratio": 1.08,
-        "border_contrast_ratio": 4.71,
-        "contrast_ratio": 4.71,
+        "fill_contrast_ratio": 1.03,
+        "border_contrast_ratio": 5.39,
+        "contrast_ratio": 5.39,
         "contrast_source": "border",
         "method": "computed"
       },
@@ -27442,31 +27442,31 @@
       "surface": "background",
       "fg": {
         "token": "--color-button-selected-fg",
-        "raw": "#ffffff",
-        "hex": "#ffffff",
-        "rgba": "rgba(255, 255, 255, 1)",
+        "raw": "#fff4ea",
+        "hex": "#fff4ea",
+        "rgba": "rgba(255, 244, 234, 1)",
         "alpha": 1
       },
       "bg": {
         "token": "--color-button-selected-bg",
-        "raw": "#a45b3e",
-        "hex": "#a45b3e",
-        "rgba": "rgba(164, 91, 62, 1)",
+        "raw": "#8f5135",
+        "hex": "#8f5135",
+        "rgba": "rgba(143, 81, 53, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 5.07,
-        "luminance_fg": 1,
-        "luminance_bg": 0.1572,
+        "contrast_ratio": 5.71,
+        "luminance_fg": 0.919,
+        "luminance_bg": 0.1198,
         "method": "computed"
       },
       "threshold": 4.5,
@@ -27485,31 +27485,31 @@
       "surface": "background",
       "fg": {
         "token": "--color-button-selected-border",
-        "raw": "color-mix(in srgb, var(--primary) 42%, white 58%)",
-        "hex": "#d9baae",
-        "rgba": "rgba(217, 186, 174, 1)",
-        "alpha": 1
+        "raw": "rgba(255, 224, 204, 0.58)",
+        "hex": "#a09484",
+        "rgba": "rgba(160, 148, 132, 1)",
+        "alpha": 0.58
       },
       "bg": {
         "token": "--color-button-selected-bg",
-        "raw": "#a45b3e",
-        "hex": "#a45b3e",
-        "rgba": "rgba(164, 91, 62, 1)",
+        "raw": "#8f5135",
+        "hex": "#8f5135",
+        "rgba": "rgba(143, 81, 53, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "fill_contrast_ratio": 2.55,
-        "border_contrast_ratio": 7.12,
-        "contrast_ratio": 7.12,
+        "fill_contrast_ratio": 2.39,
+        "border_contrast_ratio": 4.98,
+        "contrast_ratio": 4.98,
         "contrast_source": "border",
         "method": "computed"
       },
@@ -27529,38 +27529,38 @@
       "surface": "card",
       "fg": {
         "token": "--color-button-selected-fg",
-        "raw": "#ffffff",
-        "hex": "#ffffff",
-        "rgba": "rgba(255, 255, 255, 1)",
+        "raw": "#fff4ea",
+        "hex": "#fff4ea",
+        "rgba": "rgba(255, 244, 234, 1)",
         "alpha": 1
       },
       "bg": {
         "token": "--color-button-selected-bg",
-        "raw": "#a45b3e",
-        "hex": "#a45b3e",
-        "rgba": "rgba(164, 91, 62, 1)",
+        "raw": "#8f5135",
+        "hex": "#8f5135",
+        "rgba": "rgba(143, 81, 53, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--card",
-            "raw": "rgba(70, 89, 74, 0.94)",
-            "hex": "#46594a",
-            "rgba": "rgba(70, 89, 74, 0.94)",
-            "alpha": 0.94
+            "raw": "rgba(54, 72, 60, 0.96)",
+            "hex": "#36483c",
+            "rgba": "rgba(54, 72, 60, 0.96)",
+            "alpha": 0.96
           },
           {
             "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 5.07,
-        "luminance_fg": 1,
-        "luminance_bg": 0.1572,
+        "contrast_ratio": 5.71,
+        "luminance_fg": 0.919,
+        "luminance_bg": 0.1198,
         "method": "computed"
       },
       "threshold": 4.5,
@@ -27579,38 +27579,38 @@
       "surface": "card",
       "fg": {
         "token": "--color-button-selected-border",
-        "raw": "color-mix(in srgb, var(--primary) 42%, white 58%)",
-        "hex": "#d9baae",
-        "rgba": "rgba(217, 186, 174, 1)",
-        "alpha": 1
+        "raw": "rgba(255, 224, 204, 0.58)",
+        "hex": "#aaa08f",
+        "rgba": "rgba(170, 160, 143, 1)",
+        "alpha": 0.58
       },
       "bg": {
         "token": "--color-button-selected-bg",
-        "raw": "#a45b3e",
-        "hex": "#a45b3e",
-        "rgba": "rgba(164, 91, 62, 1)",
+        "raw": "#8f5135",
+        "hex": "#8f5135",
+        "rgba": "rgba(143, 81, 53, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--card",
-            "raw": "rgba(70, 89, 74, 0.94)",
-            "hex": "#46594a",
-            "rgba": "rgba(70, 89, 74, 0.94)",
-            "alpha": 0.94
+            "raw": "rgba(54, 72, 60, 0.96)",
+            "hex": "#36483c",
+            "rgba": "rgba(54, 72, 60, 0.96)",
+            "alpha": 0.96
           },
           {
             "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "fill_contrast_ratio": 1.54,
-        "border_contrast_ratio": 4.29,
-        "contrast_ratio": 4.29,
+        "fill_contrast_ratio": 1.61,
+        "border_contrast_ratio": 3.84,
+        "contrast_ratio": 3.84,
         "contrast_source": "border",
         "method": "computed"
       },
@@ -27630,38 +27630,38 @@
       "surface": "card",
       "fg": {
         "token": "--color-button-link-fg",
-        "raw": "#f7f0e2",
-        "hex": "#f7f0e2",
-        "rgba": "rgba(247, 240, 226, 1)",
+        "raw": "#fbf4e8",
+        "hex": "#fbf4e8",
+        "rgba": "rgba(251, 244, 232, 1)",
         "alpha": 1
       },
       "bg": {
         "token": "--card",
         "raw": "--card",
-        "hex": "#445748",
-        "rgba": "rgba(68, 87, 72, 1)",
+        "hex": "#35473b",
+        "rgba": "rgba(53, 71, 59, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--card",
-            "raw": "rgba(70, 89, 74, 0.94)",
-            "hex": "#46594a",
-            "rgba": "rgba(70, 89, 74, 0.94)",
-            "alpha": 0.94
+            "raw": "rgba(54, 72, 60, 0.96)",
+            "hex": "#36483c",
+            "rgba": "rgba(54, 72, 60, 0.96)",
+            "alpha": 0.96
           },
           {
             "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 6.86,
-        "luminance_fg": 0.8759,
-        "luminance_bg": 0.0849,
+        "contrast_ratio": 9.1,
+        "luminance_fg": 0.9104,
+        "luminance_bg": 0.0556,
         "method": "computed"
       },
       "threshold": 4.5,
@@ -27680,38 +27680,38 @@
       "surface": "card",
       "fg": {
         "token": "--color-button-link-fg-hover",
-        "raw": "#fff7ec",
-        "hex": "#fff7ec",
-        "rgba": "rgba(255, 247, 236, 1)",
+        "raw": "#fff9ef",
+        "hex": "#fff9ef",
+        "rgba": "rgba(255, 249, 239, 1)",
         "alpha": 1
       },
       "bg": {
         "token": "--card",
         "raw": "--card",
-        "hex": "#445748",
-        "rgba": "rgba(68, 87, 72, 1)",
+        "hex": "#35473b",
+        "rgba": "rgba(53, 71, 59, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--card",
-            "raw": "rgba(70, 89, 74, 0.94)",
-            "hex": "#46594a",
-            "rgba": "rgba(70, 89, 74, 0.94)",
-            "alpha": 0.94
+            "raw": "rgba(54, 72, 60, 0.96)",
+            "hex": "#36483c",
+            "rgba": "rgba(54, 72, 60, 0.96)",
+            "alpha": 0.96
           },
           {
             "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 7.33,
-        "luminance_fg": 0.9384,
-        "luminance_bg": 0.0849,
+        "contrast_ratio": 9.49,
+        "luminance_fg": 0.9524,
+        "luminance_bg": 0.0556,
         "method": "computed"
       },
       "threshold": 4.5,
@@ -27731,30 +27731,30 @@
       "fg": {
         "token": "--color-button-focus-ring",
         "raw": "color-mix(in srgb, var(--button-subtle-foreground) 78%, var(--ring) 22%)",
-        "hex": "#ecdecc",
-        "rgba": "rgba(236, 222, 204, 1)",
+        "hex": "#f4e5d5",
+        "rgba": "rgba(244, 229, 213, 1)",
         "alpha": 1
       },
       "bg": {
         "token": "--color-button-focus-offset",
         "raw": "color-mix(in srgb, var(--card) 88%, var(--background) 12%)",
-        "hex": "#415345",
-        "rgba": "rgba(65, 83, 69, 1)",
+        "hex": "#324438",
+        "rgba": "rgba(50, 68, 56, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "ring_to_surface_ratio": 9.74,
-        "offset_to_surface_ratio": 1.56,
-        "contrast_ratio": 9.74,
+        "ring_to_surface_ratio": 12.02,
+        "offset_to_surface_ratio": 1.42,
+        "contrast_ratio": 12.02,
         "method": "computed"
       },
       "threshold": 3,
@@ -27774,37 +27774,37 @@
       "fg": {
         "token": "--color-button-focus-ring",
         "raw": "color-mix(in srgb, var(--button-subtle-foreground) 78%, var(--ring) 22%)",
-        "hex": "#ecdecc",
-        "rgba": "rgba(236, 222, 204, 1)",
+        "hex": "#f4e5d5",
+        "rgba": "rgba(244, 229, 213, 1)",
         "alpha": 1
       },
       "bg": {
         "token": "--color-button-focus-offset",
         "raw": "color-mix(in srgb, var(--card) 88%, var(--background) 12%)",
-        "hex": "#425546",
-        "rgba": "rgba(66, 85, 70, 1)",
+        "hex": "#334539",
+        "rgba": "rgba(51, 69, 57, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--card",
-            "raw": "rgba(70, 89, 74, 0.94)",
-            "hex": "#46594a",
-            "rgba": "rgba(70, 89, 74, 0.94)",
-            "alpha": 0.94
+            "raw": "rgba(54, 72, 60, 0.96)",
+            "hex": "#36483c",
+            "rgba": "rgba(54, 72, 60, 0.96)",
+            "alpha": 0.96
           },
           {
             "token": "--background",
-            "raw": "#273529",
-            "hex": "#273529",
-            "rgba": "rgba(39, 53, 41, 1)",
+            "raw": "#1d2b20",
+            "hex": "#1d2b20",
+            "rgba": "rgba(29, 43, 32, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "ring_to_surface_ratio": 5.87,
+        "ring_to_surface_ratio": 8.08,
         "offset_to_surface_ratio": 1.03,
-        "contrast_ratio": 5.87,
+        "contrast_ratio": 8.08,
         "method": "computed"
       },
       "threshold": 3,

@@ -16,7 +16,9 @@ import {
   closestCenter,
   useSensor,
   useSensors,
+  type DragCancelEvent,
   type DragEndEvent,
+  type DragStartEvent,
 } from "@dnd-kit/core";
 import {
   restrictToParentElement,
@@ -270,7 +272,6 @@ export default function PublicProfileEditorPage() {
   const lastLogoBackgroundRef = useRef<ProfileDraft["logoBackgroundWhite"] | null>(null);
   const linkModalSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastLinkModalSnapshotRef = useRef<string | null>(null);
-  const dragScrollFrame = useRef<number | null>(null);
   const leadFormReorderRef = useRef<
     ((sourceId: string, targetId: string) => void) | null
   >(null);
@@ -308,34 +309,15 @@ export default function PublicProfileEditorPage() {
   }, [userId, vcardLoaded]);
 
   useEffect(() => {
-    if (!draggingLinkId) return;
+    const root = document.documentElement;
+    if (!draggingLinkId) {
+      root.classList.remove("dashboard-link-dragging");
+      return;
+    }
 
-    const handleDragOver = (event: DragEvent) => {
-      const viewportHeight = window.innerHeight || 0;
-      if (!viewportHeight) return;
-      const edge = 120;
-      const y = event.clientY;
-      let delta = 0;
-      if (y < edge) {
-        delta = -Math.min(24, Math.max(4, (edge - y) / 6));
-      } else if (y > viewportHeight - edge) {
-        delta = Math.min(24, Math.max(4, (y - (viewportHeight - edge)) / 6));
-      }
-      if (!delta) return;
-      if (dragScrollFrame.current) return;
-      dragScrollFrame.current = window.requestAnimationFrame(() => {
-        window.scrollBy({ top: delta, left: 0, behavior: "auto" });
-        dragScrollFrame.current = null;
-      });
-    };
-
-    window.addEventListener("dragover", handleDragOver);
+    root.classList.add("dashboard-link-dragging");
     return () => {
-      window.removeEventListener("dragover", handleDragOver);
-      if (dragScrollFrame.current) {
-        window.cancelAnimationFrame(dragScrollFrame.current);
-        dragScrollFrame.current = null;
-      }
+      root.classList.remove("dashboard-link-dragging");
     };
   }, [draggingLinkId]);
 
@@ -1590,6 +1572,39 @@ function EditorPanel({
     () => draft?.links.find((link) => link.isOverride) ?? null,
     [draft?.links]
   );
+  const editorLinkIds = useMemo(
+    () => sortedFilteredLinks.map((link) => link.id),
+    [sortedFilteredLinks]
+  );
+  const editorLinkSensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+  const handleEditorLinkDragStart = useCallback(
+    (event: DragStartEvent) => {
+      if (!canReorderLinks) return;
+      setDraggingLinkId(String(event.active.id));
+    },
+    [canReorderLinks, setDraggingLinkId]
+  );
+  const handleEditorLinkDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      setDraggingLinkId(null);
+      if (!canReorderLinks) return;
+      const { active, over } = event;
+      if (!over || active.id === over.id) return;
+      onReorderLink(String(active.id), String(over.id));
+    },
+    [canReorderLinks, onReorderLink, setDraggingLinkId]
+  );
+  const handleEditorLinkDragCancel = useCallback(
+    (_event: DragCancelEvent) => {
+      setDraggingLinkId(null);
+    },
+    [setDraggingLinkId]
+  );
 
   if (loading && activeSection !== "preview") {
     return (
@@ -1847,112 +1862,35 @@ function EditorPanel({
               Reordering is available in manual mode with an empty search.
             </p>
           ) : null}
-          {sortedFilteredLinks.map((link) => (
-            <div
-              key={link.id}
-              className={cn(
-                "dashboard-drag-item group rounded-xl border border-border/60 bg-background/70 p-3 focus-within:ring-2 focus-within:ring-ring/35",
-                canReorderLinks ? "cursor-grab active:cursor-grabbing" : "cursor-default",
-                draggingLinkId === link.id && "is-dragging opacity-70"
-              )}
-              draggable={canReorderLinks}
-              onDragStart={() => {
-                if (!canReorderLinks) return;
-                setDraggingLinkId(link.id);
-              }}
-              onDragOver={(event) => {
-                if (!canReorderLinks) return;
-                event.preventDefault();
-              }}
-              onDrop={() => {
-                if (!canReorderLinks) return;
-                if (draggingLinkId) {
-                  onReorderLink(draggingLinkId, link.id);
-                }
-              }}
-              onDragEnd={() => {
-                if (!canReorderLinks) return;
-                setDraggingLinkId(null);
-              }}
+          <DndContext
+            sensors={editorLinkSensors}
+            collisionDetection={closestCenter}
+            onDragStart={handleEditorLinkDragStart}
+            onDragEnd={handleEditorLinkDragEnd}
+            onDragCancel={handleEditorLinkDragCancel}
+            modifiers={[restrictToVerticalAxis, restrictToParentElement]}
+          >
+            <SortableContext
+              items={editorLinkIds}
+              strategy={verticalListSortingStrategy}
             >
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex-1 space-y-2">
-                    <Input
-                      id={`link-label-${link.id}`}
-                      value={link.label}
-                      placeholder="Label"
-                      onChange={(event) =>
-                        onUpdateLink(link.id, { label: event.target.value })
-                      }
-                      onDragStart={(event) => {
-                        event.preventDefault();
-                        event.stopPropagation();
-                      }}
-                      className="h-9 text-left text-sm"
-                    />
-                    <LinkUrlInput
-                      value={link.url}
-                      placeholder="www.website.com"
-                      className="h-9 text-sm"
-                      onValueChange={(url) => onUpdateLink(link.id, { url })}
-                      onDragStart={(event) => {
-                        event.preventDefault();
-                        event.stopPropagation();
-                      }}
-                    />
-                    <div className="mt-1 flex items-start gap-2 rounded-md border border-border/50 bg-muted/20 px-2 py-2">
-                      <DirectLinkStarToggle
-                        checked={link.isOverride}
-                        onPressedChange={(value) => onSetOverrideLink(link.id, value)}
-                        aria-label={`Use ${link.label || "this link"} for Direct-to-link mode`}
-                        className="mt-0.5"
-                      />
-                      <span className="space-y-0.5 text-left">
-                        <span className="block text-xs font-medium text-foreground">
-                          Use Direct-to-link mode
-                        </span>
-                        <span className="block text-[11px] text-muted-foreground">
-                          Linket scans skip your public page and open this link directly.
-                        </span>
-                      </span>
-                    </div>
-                </div>
-                <div className="flex flex-col gap-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => onEditLink(link.id)}
-                    aria-label="Edit link"
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => onToggleLink(link.id)}
-                    aria-label={link.visible ? "Hide link" : "Show link"}
-                  >
-                    {link.visible ? (
-                      <Eye className="h-4 w-4" />
-                    ) : (
-                      <EyeOff className="h-4 w-4" />
-                    )}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-destructive"
-                    onClick={() => onRemoveLink(link.id)}
-                    aria-label="Delete link"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
+              <div className="space-y-3">
+                {sortedFilteredLinks.map((link) => (
+                  <EditorLinkItem
+                    key={link.id}
+                    link={link}
+                    canReorderLinks={canReorderLinks}
+                    draggingLinkId={draggingLinkId}
+                    onUpdateLink={onUpdateLink}
+                    onSetOverrideLink={onSetOverrideLink}
+                    onEditLink={onEditLink}
+                    onToggleLink={onToggleLink}
+                    onRemoveLink={onRemoveLink}
+                  />
+                ))}
               </div>
-            </div>
-          ))}
+            </SortableContext>
+          </DndContext>
           {!draft?.links.length ? (
             <div className="rounded-xl border border-dashed border-border/60 px-3 py-5 text-center text-xs text-muted-foreground">
               <p>No links yet. Add one to make your profile actionable.</p>
@@ -2022,6 +1960,143 @@ function EditorPanel({
         The public profile uses your dashboard theme automatically.
       </CardContent>
     </Card>
+  );
+}
+
+function EditorLinkItem({
+  link,
+  canReorderLinks,
+  draggingLinkId,
+  onUpdateLink,
+  onSetOverrideLink,
+  onEditLink,
+  onToggleLink,
+  onRemoveLink,
+}: {
+  link: LinkItem;
+  canReorderLinks: boolean;
+  draggingLinkId: string | null;
+  onUpdateLink: (linkId: string, patch: Partial<LinkItem>) => void;
+  onSetOverrideLink: (linkId: string, enabled: boolean) => void;
+  onEditLink: (linkId: string) => void;
+  onToggleLink: (linkId: string) => void;
+  onRemoveLink: (linkId: string) => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: link.id, disabled: !canReorderLinks });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 40 : undefined,
+  };
+  const handleCursor = isDragging ? "grabbing" : "grab";
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "dashboard-drag-item group rounded-xl border border-border/60 bg-background/70 p-3 focus-within:ring-2 focus-within:ring-ring/35",
+        "cursor-default",
+        (isDragging || draggingLinkId === link.id) && "is-dragging opacity-70"
+      )}
+    >
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex-1 space-y-2">
+          <Input
+            id={`link-label-${link.id}`}
+            value={link.label}
+            placeholder="Label"
+            onChange={(event) =>
+              onUpdateLink(link.id, { label: event.target.value })
+            }
+            className="h-9 text-left text-sm"
+          />
+          <LinkUrlInput
+            value={link.url}
+            placeholder="www.website.com"
+            className="h-9 text-sm"
+            onValueChange={(url) => onUpdateLink(link.id, { url })}
+          />
+          <div className="mt-1 flex items-start gap-2 rounded-md border border-border/50 bg-muted/20 px-2 py-2">
+            <DirectLinkStarToggle
+              checked={link.isOverride}
+              onPressedChange={(value) => onSetOverrideLink(link.id, value)}
+              aria-label={`Use ${link.label || "this link"} for Direct-to-link mode`}
+              className="mt-0.5"
+            />
+            <span className="space-y-0.5 text-left">
+              <span className="block text-xs font-medium text-foreground">
+                Use Direct-to-link mode
+              </span>
+              <span className="block text-[11px] text-muted-foreground">
+                Linket scans skip your public page and open this link directly.
+              </span>
+            </span>
+          </div>
+        </div>
+        <div className="flex flex-col gap-2">
+          {canReorderLinks ? (
+            <button
+              type="button"
+              {...attributes}
+              {...listeners}
+              className={cn(
+                "inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition hover:bg-muted/60",
+                isDragging
+                  ? "cursor-grabbing"
+                  : "cursor-grab hover:cursor-grab active:cursor-grabbing"
+              )}
+              style={{ cursor: handleCursor }}
+              aria-label={`Reorder ${link.label || "link"}`}
+              title="Drag to reorder"
+            >
+              <GripVertical
+                className="pointer-events-none h-4 w-4"
+                style={{ cursor: handleCursor }}
+              />
+            </button>
+          ) : null}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => onEditLink(link.id)}
+            aria-label="Edit link"
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => onToggleLink(link.id)}
+            aria-label={link.visible ? "Hide link" : "Show link"}
+          >
+            {link.visible ? (
+              <Eye className="h-4 w-4" />
+            ) : (
+              <EyeOff className="h-4 w-4" />
+            )}
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-destructive"
+            onClick={() => onRemoveLink(link.id)}
+            aria-label="Delete link"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }
 

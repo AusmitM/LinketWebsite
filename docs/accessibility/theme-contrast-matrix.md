@@ -4,7 +4,7 @@
 
 This matrix audits every declared theme scope in `src/styles/theme/base.css` and `src/styles/theme/variants.css` against the standard text-to-surface pairings used by the design tokens. The sweep covers 13 theme scopes and 13 pairings per scope, with WCAG source-over alpha compositing applied before relative luminance and contrast calculations.
 
-AA status: all audited themes pass. Open AA failures remain in . A contextual AA risk also remains where `--foreground` is reused on `--card` in `.theme-forest`.
+AA status: all audited themes pass. No audited theme scopes currently fail AA. No contextual AA risks were detected in the audited token pairs.
 
 ## Coverage
 
@@ -23,8 +23,8 @@ AA status: all audited themes pass. Open AA failures remain in . A contextual AA
 | .theme-dark | src/styles/theme/variants.css | 13 | 0 | 0 | None | None |
 | .theme-midnight | src/styles/theme/variants.css | 13 | 0 | 2 | None | primary-foreground/primary, sidebar-primary-foreground/sidebar-primary |
 | .theme-dream | src/styles/theme/variants.css | 13 | 0 | 3 | None | muted-foreground/muted, muted-foreground/background, muted-foreground/card |
-| .theme-forest | src/styles/theme/variants.css | 13 | 0 | 10 | None | card-foreground/card, popover-foreground/popover, primary-foreground/primary, secondary-foreground/secondary, muted-foreground/muted, sidebar-foreground/sidebar, sidebar-primary-foreground/sidebar-primary, sidebar-accent-foreground/sidebar-accent, muted-foreground/card, foreground/card |
-| .theme-gilded | src/styles/theme/variants.css | 13 | 0 | 3 | None | primary-foreground/primary, muted-foreground/muted, sidebar-primary-foreground/sidebar-primary |
+| .theme-forest | src/styles/theme/variants.css | 13 | 0 | 3 | None | primary-foreground/primary, sidebar-primary-foreground/sidebar-primary, sidebar-accent-foreground/sidebar-accent |
+| .theme-gilded | src/styles/theme/variants.css | 13 | 0 | 0 | None | None |
 | .theme-rose | src/styles/theme/variants.css | 13 | 0 | 3 | None | primary-foreground/primary, muted-foreground/muted, sidebar-primary-foreground/sidebar-primary |
 | .theme-autumn | src/styles/theme/variants.css | 13 | 0 | 4 | None | primary-foreground/primary, accent-foreground/accent, muted-foreground/muted, sidebar-primary-foreground/sidebar-primary |
 | .theme-honey | src/styles/theme/variants.css | 13 | 0 | 4 | None | primary-foreground/primary, muted-foreground/muted, sidebar-primary-foreground/sidebar-primary, muted-foreground/background |
@@ -43,8 +43,6 @@ AA status: all audited themes pass. Open AA failures remain in . A contextual AA
 | --- | --- | ---: | --- |
 | .theme-autumn | primary-foreground/primary | 4.53:1 | Pass AA, fail AAA |
 | .theme-autumn | sidebar-primary-foreground/sidebar-primary | 4.53:1 | Pass AA, fail AAA |
-| .theme-gilded | primary-foreground/primary | 4.76:1 | Pass AA, fail AAA |
-| .theme-gilded | sidebar-primary-foreground/sidebar-primary | 4.76:1 | Pass AA, fail AAA |
 | .theme-burnt-orange | primary-foreground/primary | 4.78:1 | Pass AA, fail AAA |
 | .theme-burnt-orange | sidebar-primary-foreground/sidebar-primary | 4.78:1 | Pass AA, fail AAA |
 | .theme-dream | muted-foreground/muted | 4.81:1 | Pass AA, fail AAA |
@@ -58,13 +56,15 @@ AA status: all audited themes pass. Open AA failures remain in . A contextual AA
 | .theme-midnight | sidebar-primary-foreground/sidebar-primary | 4.95:1 | Pass AA, fail AAA |
 | .theme-rose | primary-foreground/primary | 5.00:1 | Pass AA, fail AAA |
 | .theme-rose | sidebar-primary-foreground/sidebar-primary | 5.00:1 | Pass AA, fail AAA |
-| .theme-forest | primary-foreground/primary | 5.07:1 | Pass AA, fail AAA |
-| .theme-forest | sidebar-primary-foreground/sidebar-primary | 5.07:1 | Pass AA, fail AAA |
 | .theme-dream | muted-foreground/background | 5.20:1 | Pass AA, fail AAA |
 | .theme-burnt-orange | accent-foreground/accent | 5.31:1 | Pass AA, fail AAA |
 | .theme-honey | muted-foreground/muted | 5.53:1 | Pass AA, fail AAA |
-| .theme-gilded | muted-foreground/muted | 5.82:1 | Pass AA, fail AAA |
+| .theme-forest | primary-foreground/primary | 5.71:1 | Pass AA, fail AAA |
+| .theme-forest | sidebar-primary-foreground/sidebar-primary | 5.71:1 | Pass AA, fail AAA |
 | .theme-burnt-orange | muted-foreground/muted | 5.84:1 | Pass AA, fail AAA |
+| .theme-autumn | accent-foreground/accent | 5.93:1 | Pass AA, fail AAA |
+| .theme-dream | muted-foreground/card | 6.05:1 | Pass AA, fail AAA |
+| .theme-forest | sidebar-accent-foreground/sidebar-accent | 6.15:1 | Pass AA, fail AAA |
 
 ## Method
 

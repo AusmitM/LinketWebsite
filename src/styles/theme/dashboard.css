@@ -852,6 +852,11 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
   will-change: transform, box-shadow;
 }
 
+html.dashboard-link-dragging #dashboard-theme-scope,
+html.dashboard-link-dragging #dashboard-theme-scope * {
+  cursor: grabbing !important;
+}
+
 #dashboard-theme-scope .dashboard-drag-item.is-dragging {
   transform: translateY(-2px) scale(1.01);
   box-shadow: 0 18px 30px -20px rgba(15, 23, 42, 0.35);
@@ -1211,9 +1216,9 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
 
 /* Forest atmosphere overlay */
 #dashboard-theme-scope.theme-forest::before {
-  opacity: 0.42;
+  opacity: 0.26;
   background-image:
-    radial-gradient(122% 88% at 50% -8%, rgba(199, 156, 126, 0.2) 0%, transparent 70%),
+    radial-gradient(122% 88% at 50% -8%, rgba(221, 177, 146, 0.15) 0%, transparent 70%),
     var(--forest-tree-pattern);
   background-size:
     125% 100%,
@@ -1227,13 +1232,14 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
 }
 
 #dashboard-theme-scope.theme-forest::after {
-  opacity: 0.32;
+  opacity: 0.16;
   transform: translateY(0);
   background:
-    radial-gradient(90% 70% at 18% 6%, rgba(164, 91, 62, 0.2) 0%, transparent 72%),
-    linear-gradient(180deg, rgba(39, 53, 41, 0.22) 0%, transparent 56%);
+    radial-gradient(90% 70% at 18% 6%, rgba(180, 106, 72, 0.14) 0%, transparent 72%),
+    linear-gradient(180deg, rgba(34, 49, 37, 0.14) 0%, transparent 56%);
 }
 /* Forest pin micro-motion */
+#dashboard-theme-scope.theme-forest .dashboard-forest-pin,
 body.theme-forest .dashboard-forest-pin {
   opacity: 1;
   transform: translateY(-2px) rotate(-4deg);
@@ -1300,6 +1306,22 @@ body.theme-forest .dashboard-forest-pin {
   box-shadow: 0 14px 30px rgba(199, 156, 126, 0.35), 0 0 0 2px color-mix(in srgb, var(--color-button-selected-border) 42%, transparent);
 }
 
+#dashboard-theme-scope.theme-forest .dashboard-analytics-range-button[data-selected="false"],
+#dashboard-theme-scope.theme-forest .dashboard-analytics-page [data-slot="select-trigger"] {
+  background: linear-gradient(180deg, rgba(47, 62, 51, 0.95) 0%, rgba(31, 42, 34, 0.92) 100%);
+  border-color: rgba(221, 177, 146, 0.38);
+  color: var(--foreground);
+  box-shadow:
+    inset 0 1px 0 rgba(251, 244, 232, 0.06),
+    0 10px 24px -18px rgba(15, 4, 7, 0.62);
+}
+
+#dashboard-theme-scope.theme-forest .dashboard-analytics-range-button[data-selected="false"]:hover,
+#dashboard-theme-scope.theme-forest .dashboard-analytics-page [data-slot="select-trigger"]:hover {
+  border-color: rgba(221, 177, 146, 0.52);
+  color: #fff9ef;
+}
+
 /* All themes: ensure selected analytics range button glows */
 #dashboard-theme-scope .dashboard-analytics-range-button[data-selected="true"] {
   box-shadow: 0 16px 36px rgba(0, 0, 0, 0.28), 0 0 0 2px color-mix(in srgb, var(--accent) 45%, transparent);
@@ -1353,6 +1375,13 @@ body.theme-forest .dashboard-forest-pin {
   box-shadow: 0 18px 34px rgba(10, 4, 6, 0.6),
     0 0 22px color-mix(in srgb, var(--color-button-selected-border) 70%, transparent),
     0 0 0 2px color-mix(in srgb, var(--color-button-selected-border) 70%, transparent);
+}
+
+#dashboard-theme-scope.theme-forest .dashboard-analytics-range-button[data-selected="true"] {
+  box-shadow:
+    0 18px 34px rgba(12, 6, 5, 0.52),
+    0 10px 22px rgba(92, 57, 39, 0.22),
+    0 0 0 2px color-mix(in srgb, var(--color-button-selected-border) 38%, transparent);
 }
 
 /* Tablet layout alignment */

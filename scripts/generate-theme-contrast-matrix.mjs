@@ -506,6 +506,15 @@ function run() {
   const aaFailThemes = themesSummary
     .filter((theme) => theme.aa_fail_count > 0)
     .map((theme) => theme.label);
+  const contextualRisks = results
+    .filter(
+      (result) => !result.aaPass && result.pairing.id === "foreground/card"
+    )
+    .map((result) => ({
+      theme: result.theme.label,
+      pair: result.pairing.id,
+      contrast_ratio: Number(result.contrastRatio.toFixed(2)),
+    }));
   const nearThresholdPairs = results
     .filter((result) => result.aaPass && result.contrastRatio < 4.8)
     .map((result) => ({
@@ -567,16 +576,7 @@ function run() {
         .filter((theme) => theme.aa_fail_count === 0)
         .map((theme) => theme.label),
       aa_fail_themes: aaFailThemes,
-      contextual_risks: results
-        .filter(
-          (result) =>
-            !result.aaPass && result.pairing.id === "foreground/card"
-        )
-        .map((result) => ({
-          theme: result.theme.label,
-          pair: result.pairing.id,
-          contrast_ratio: Number(result.contrastRatio.toFixed(2)),
-        })),
+      contextual_risks: contextualRisks,
       near_threshold_pairs: nearThresholdPairs,
     },
   };
@@ -607,13 +607,30 @@ function run() {
         `| ${result.theme.label} | ${result.pairing.id} | ${result.contrastRatio.toFixed(2)}:1 | Pass AA, fail AAA |`
     );
 
+  const aaStatusSummary =
+    aaFailThemes.length === 0
+      ? "all audited themes pass"
+      : `${auditedThemes.length - aaFailThemes.length} themes pass and ${aaFailThemes.length} theme scopes still have AA failures`;
+  const aaFailureSummary =
+    aaFailThemes.length === 0
+      ? "No audited theme scopes currently fail AA."
+      : `Open AA failures remain in ${aaFailThemes.join(", ")}.`;
+  const contextualRiskSummary =
+    contextualRisks.length === 0
+      ? "No contextual AA risks were detected in the audited token pairs."
+      : contextualRisks.length === 1
+        ? `1 contextual AA risk remains in ${contextualRisks[0].theme} for ${contextualRisks[0].pair}.`
+        : `${contextualRisks.length} contextual AA risks remain in ${contextualRisks
+            .map((risk) => `${risk.theme} (${risk.pair})`)
+            .join(", ")}.`;
+
   const markdown = `# Theme Contrast Matrix
 
 ## Executive Summary
 
 This matrix audits every declared theme scope in \`src/styles/theme/base.css\` and \`src/styles/theme/variants.css\` against the standard text-to-surface pairings used by the design tokens. The sweep covers ${auditedThemes.length} theme scopes and ${pairings.length} pairings per scope, with WCAG source-over alpha compositing applied before relative luminance and contrast calculations.
 
-AA status: ${aaFailThemes.length === 0 ? "all audited themes pass" : `${auditedThemes.length - aaFailThemes.length} themes pass and ${aaFailThemes.length} theme scopes still have AA failures`}. Open AA failures remain in ${aaFailThemes.join(", ")}. A contextual AA risk also remains where \`--foreground\` is reused on \`--card\` in \`.theme-forest\`.
+AA status: ${aaStatusSummary}. ${aaFailureSummary} ${contextualRiskSummary}
 
 ## Coverage
 

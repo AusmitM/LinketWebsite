@@ -4,6 +4,19 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 import { useThemeOptional } from "@/components/theme/theme-provider";
@@ -11,12 +24,36 @@ import { readLocalStorage, writeLocalStorage } from "@/lib/browser-storage";
 import { ANALYTICS_BROADCAST_KEY, ANALYTICS_EVENT_NAME } from "@/lib/analytics";
 import { getSiteHost, getSiteOrigin } from "@/lib/site-url";
 import type { UserAnalytics } from "@/lib/analytics-service";
-import { ResponsiveContainer, LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, Legend } from "recharts";
-import { Download } from "lucide-react";
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
+} from "recharts";
+import { CheckCircle2, Circle, Download } from "lucide-react";
 
 const numberFormatter = new Intl.NumberFormat("en-US");
-const shortDate = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" });
-const mobileDate = new Intl.DateTimeFormat("en-US", { month: "numeric", day: "numeric" });
+const shortDate = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+});
+const mobileDate = new Intl.DateTimeFormat("en-US", {
+  month: "numeric",
+  day: "numeric",
+});
+const timestampFormatter = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+});
+const relativeTimeFormatter = new Intl.RelativeTimeFormat("en-US", {
+  numeric: "auto",
+});
 
 const RANGES = [
   { label: "7 days", value: 7 },
@@ -65,6 +102,62 @@ type DeltaBadge = {
   tone: "up" | "down" | "neutral";
 };
 
+type ActionInsight = {
+  kicker: string;
+  title: string;
+  detail: string;
+  tone: "primary" | "accent" | "neutral";
+};
+
+type CustomerNeedCardData = {
+  eyebrow: string;
+  value: string;
+  detail: string;
+  tone: "primary" | "accent" | "neutral";
+};
+
+const SECTION_OPTIONS = [
+  {
+    value: "start-here",
+    label: "Start here",
+    description: "Overview and newest follow-up",
+    accordionValue: null,
+  },
+  {
+    value: "guide",
+    label: "Learn the signals",
+    description: "What each headline number means",
+    accordionValue: "guide",
+  },
+  {
+    value: "setup",
+    label: "Setup and reporting",
+    description: "Checklist and export",
+    accordionValue: "setup",
+  },
+  {
+    value: "trends",
+    label: "Traffic and conversion",
+    description: "Volume and capture trendlines",
+    accordionValue: "trends",
+  },
+  {
+    value: "breakdowns",
+    label: "Linkets and links",
+    description: "What is driving results",
+    accordionValue: "breakdowns",
+  },
+] as const;
+
+type SectionOptionValue = (typeof SECTION_OPTIONS)[number]["value"];
+
+type QuickGuideStep = {
+  step: string;
+  title: string;
+  detail: string;
+  target: SectionOptionValue;
+};
+
 export default function AnalyticsContent() {
   const { theme } = useThemeOptional();
   const useDarkDeltaText = DARK_DELTA_TEXT_THEMES.has(theme);
@@ -73,9 +166,16 @@ export default function AnalyticsContent() {
   const [reloadToken, setReloadToken] = useState(0);
   const [isPhone, setIsPhone] = useState(false);
   const [range, setRange] = useState<number>(DEFAULT_RANGE);
+  const [sectionJump, setSectionJump] =
+    useState<SectionOptionValue>("start-here");
+  const [openSections, setOpenSections] = useState<string[]>(["guide"]);
   const [hasLoadedPersistedRange, setHasLoadedPersistedRange] = useState(false);
-  const analyticsCacheRef = useRef<Map<string, CachedAnalyticsEntry>>(new Map());
-  const analyticsInFlightRef = useRef<Map<string, Promise<UserAnalytics>>>(new Map());
+  const analyticsCacheRef = useRef<Map<string, CachedAnalyticsEntry>>(
+    new Map(),
+  );
+  const analyticsInFlightRef = useRef<Map<string, Promise<UserAnalytics>>>(
+    new Map(),
+  );
   const lastReloadTokenRef = useRef(0);
 
   useEffect(() => {
@@ -88,7 +188,11 @@ export default function AnalyticsContent() {
     }
     setHasLoadedPersistedRange(true);
   }, []);
-  const [{ loading, error, analytics }, setState] = useState<ViewState>({ loading: true, error: null, analytics: null });
+  const [{ loading, error, analytics }, setState] = useState<ViewState>({
+    loading: true,
+    error: null,
+    analytics: null,
+  });
 
   useEffect(() => {
     if (!hasLoadedPersistedRange) return;
@@ -117,11 +221,20 @@ export default function AnalyticsContent() {
         const user = data.user;
         setUserId(user?.id ?? null);
         if (!user) {
-          setState({ loading: false, error: "You're not signed in.", analytics: null });
+          setState({
+            loading: false,
+            error: "You're not signed in.",
+            analytics: null,
+          });
         }
       })
       .catch(() => {
-        if (active) setState({ loading: false, error: "Unable to verify session.", analytics: null });
+        if (active)
+          setState({
+            loading: false,
+            error: "Unable to verify session.",
+            analytics: null,
+          });
       });
     return () => {
       active = false;
@@ -129,7 +242,11 @@ export default function AnalyticsContent() {
   }, []);
 
   const fetchAnalyticsForRange = useCallback(
-    async (activeUserId: string, days: number, timezoneOffsetMinutes: number) => {
+    async (
+      activeUserId: string,
+      days: number,
+      timezoneOffsetMinutes: number,
+    ) => {
       const cacheKey = `${activeUserId}:${days}:${timezoneOffsetMinutes}`;
       const inFlight = analyticsInFlightRef.current.get(cacheKey);
       if (inFlight) return inFlight;
@@ -139,10 +256,15 @@ export default function AnalyticsContent() {
         const response = await fetch(analyticsUrl, { cache: "no-store" });
         if (!response.ok) {
           const info = await response.json().catch(() => ({}));
-          throw new Error(info?.error || `Analytics request failed (${response.status})`);
+          throw new Error(
+            info?.error || `Analytics request failed (${response.status})`,
+          );
         }
         const payload = (await response.json()) as UserAnalytics;
-        analyticsCacheRef.current.set(cacheKey, { fetchedAt: Date.now(), payload });
+        analyticsCacheRef.current.set(cacheKey, {
+          fetchedAt: Date.now(),
+          payload,
+        });
         return payload;
       })();
 
@@ -153,21 +275,31 @@ export default function AnalyticsContent() {
         analyticsInFlightRef.current.delete(cacheKey);
       }
     },
-    []
+    [],
   );
 
   const prefetchOtherRanges = useCallback(
-    (activeUserId: string, activeRange: number, timezoneOffsetMinutes: number) => {
+    (
+      activeUserId: string,
+      activeRange: number,
+      timezoneOffsetMinutes: number,
+    ) => {
       for (const option of RANGES) {
         if (option.value === activeRange) continue;
         const cacheKey = `${activeUserId}:${option.value}:${timezoneOffsetMinutes}`;
         const cached = analyticsCacheRef.current.get(cacheKey);
-        const isFresh = cached ? Date.now() - cached.fetchedAt < ANALYTICS_CACHE_TTL_MS : false;
+        const isFresh = cached
+          ? Date.now() - cached.fetchedAt < ANALYTICS_CACHE_TTL_MS
+          : false;
         if (isFresh) continue;
-        void fetchAnalyticsForRange(activeUserId, option.value, timezoneOffsetMinutes).catch(() => undefined);
+        void fetchAnalyticsForRange(
+          activeUserId,
+          option.value,
+          timezoneOffsetMinutes,
+        ).catch(() => undefined);
       }
     },
-    [fetchAnalyticsForRange]
+    [fetchAnalyticsForRange],
   );
 
   useEffect(() => {
@@ -176,14 +308,18 @@ export default function AnalyticsContent() {
     const timezoneOffsetMinutes = new Date().getTimezoneOffset();
     const cacheKey = `${userId}:${range}:${timezoneOffsetMinutes}`;
     const cached = analyticsCacheRef.current.get(cacheKey);
-    const isCacheFresh = cached ? Date.now() - cached.fetchedAt < ANALYTICS_CACHE_TTL_MS : false;
+    const isCacheFresh = cached
+      ? Date.now() - cached.fetchedAt < ANALYTICS_CACHE_TTL_MS
+      : false;
     const hasForcedRefresh = reloadToken !== lastReloadTokenRef.current;
     lastReloadTokenRef.current = reloadToken;
 
     if (cached) {
       setState({
         loading: false,
-        error: cached.payload.meta.available ? null : "Analytics requires a configured Supabase service role key.",
+        error: cached.payload.meta.available
+          ? null
+          : "Analytics requires a configured Supabase service role key.",
         analytics: cached.payload,
       });
       if (isCacheFresh && !hasForcedRefresh) {
@@ -199,17 +335,24 @@ export default function AnalyticsContent() {
     async function load() {
       try {
         if (!userId) throw new Error("User ID is missing");
-        const payload = await fetchAnalyticsForRange(userId, range, timezoneOffsetMinutes);
+        const payload = await fetchAnalyticsForRange(
+          userId,
+          range,
+          timezoneOffsetMinutes,
+        );
         if (!cancelled) {
           setState({
             loading: false,
-            error: payload.meta.available ? null : "Analytics requires a configured Supabase service role key.",
+            error: payload.meta.available
+              ? null
+              : "Analytics requires a configured Supabase service role key.",
             analytics: payload,
           });
           prefetchOtherRanges(userId, range, timezoneOffsetMinutes);
         }
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Unable to load analytics";
+        const message =
+          err instanceof Error ? err.message : "Unable to load analytics";
         if (!cancelled) {
           if (cached) {
             setState((prev) => ({ ...prev, loading: false, error: message }));
@@ -287,27 +430,46 @@ export default function AnalyticsContent() {
         .channel(`analytics-live-${userId}`)
         .on(
           "postgres_changes",
-          { event: "INSERT", schema: "public", table: "leads", filter: `user_id=eq.${userId}` },
-          requestRefresh
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "leads",
+            filter: `user_id=eq.${userId}`,
+          },
+          requestRefresh,
         )
         .on(
           "postgres_changes",
-          { event: "*", schema: "public", table: "profile_links", filter: `user_id=eq.${userId}` },
-          requestRefresh
+          {
+            event: "*",
+            schema: "public",
+            table: "profile_links",
+            filter: `user_id=eq.${userId}`,
+          },
+          requestRefresh,
         )
         .on(
           "postgres_changes",
-          { event: "UPDATE", schema: "public", table: "tag_assignments", filter: `user_id=eq.${userId}` },
-          requestRefresh
+          {
+            event: "UPDATE",
+            schema: "public",
+            table: "tag_assignments",
+            filter: `user_id=eq.${userId}`,
+          },
+          requestRefresh,
         )
         .subscribe((status) => {
           if (status === "CHANNEL_ERROR") {
-            console.warn("Realtime unavailable for analytics auto-refresh; continuing without live updates.");
+            console.warn(
+              "Realtime unavailable for analytics auto-refresh; continuing without live updates.",
+            );
           }
         });
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : String(error ?? "Unknown realtime error");
+        error instanceof Error
+          ? error.message
+          : String(error ?? "Unknown realtime error");
       console.warn(`Realtime disabled for analytics: ${message}`);
       channel = null;
     }
@@ -337,8 +499,14 @@ export default function AnalyticsContent() {
 
   const rangeTotals = useMemo(() => {
     if (!analytics) return { scans: 0, leads: 0, conversion: 0 };
-    const scans = analytics.timeline.reduce((acc, point) => acc + point.scans, 0);
-    const leads = analytics.timeline.reduce((acc, point) => acc + point.leads, 0);
+    const scans = analytics.timeline.reduce(
+      (acc, point) => acc + point.scans,
+      0,
+    );
+    const leads = analytics.timeline.reduce(
+      (acc, point) => acc + point.leads,
+      0,
+    );
     const conversion = scans > 0 ? leads / scans : 0;
     return { scans, leads, conversion };
   }, [analytics]);
@@ -374,21 +542,275 @@ export default function AnalyticsContent() {
     if (!analytics?.topLinks?.length) return 0;
     return analytics.topLinks.reduce((total, item) => total + item.clicks, 0);
   }, [analytics]);
+  const recentLeads = useMemo(
+    () => analytics?.recentLeads.slice(0, 5) ?? [],
+    [analytics],
+  );
+  const latestLead = recentLeads[0] ?? null;
+  const followUpLeads = latestLead
+    ? recentLeads.slice(1, 4)
+    : recentLeads.slice(0, 3);
+  const topProfile = analytics?.topProfiles?.[0] ?? null;
+  const topLink = analytics?.topLinks?.[0] ?? null;
+  const onboarding = analytics?.onboarding ?? null;
+  const incompleteOnboardingItems = useMemo(
+    () => onboarding?.items.filter((item) => !item.completed) ?? [],
+    [onboarding],
+  );
+  const nextSteps = useMemo<ActionInsight[]>(() => {
+    const items: ActionInsight[] = [];
+
+    if (latestLead) {
+      const leadName =
+        latestLead.name?.trim() || latestLead.email || "New contact";
+      items.push({
+        kicker: "Follow up first",
+        title: leadName,
+        detail: `Shared contact details ${formatRelativeTime(latestLead.created_at)}. Reach out while the conversation is still fresh.`,
+        tone: "primary",
+      });
+    } else if (rangeTotals.scans > 0 && rangeTotals.leads === 0) {
+      items.push({
+        kicker: "Capture gap",
+        title: "Scans are not becoming contacts yet",
+        detail:
+          "Publish your lead form and test the share flow so taps turn into follow-up-ready people instead of anonymous traffic.",
+        tone: "accent",
+      });
+    } else if (rangeTotals.scans === 0) {
+      items.push({
+        kicker: "Start the funnel",
+        title: "No scan activity in this window",
+        detail:
+          "Share your Linket at the next networking moment so this page can show who engaged and what converted.",
+        tone: "neutral",
+      });
+    }
+
+    if (topProfile) {
+      const profileLabel = topProfile.handle
+        ? `${siteHost}/${topProfile.handle}`
+        : topProfile.nickname || "Assigned Linket";
+      const captureRate =
+        topProfile.scans > 0 ? (topProfile.leads / topProfile.scans) * 100 : 0;
+
+      items.push({
+        kicker: "Best Linket",
+        title: topProfile.displayName || "Linket driving activity",
+        detail: `${profileLabel} generated ${numberFormatter.format(
+          topProfile.scans,
+        )} scans and ${numberFormatter.format(
+          topProfile.leads,
+        )} leads in the last ${range} days${
+          topProfile.scans > 0 ? ` (${captureRate.toFixed(1)}% capture)` : ""
+        }.`,
+        tone: "neutral",
+      });
+    }
+
+    if (topLink) {
+      const sharePercent =
+        topLinksTotalClicks > 0
+          ? (topLink.clicks / topLinksTotalClicks) * 100
+          : 0;
+      items.push({
+        kicker: "Top CTA",
+        title: topLink.title,
+        detail: `${formatLinkUrl(topLink.url)} drove ${numberFormatter.format(
+          topLink.clicks,
+        )} clicks${
+          topLinksTotalClicks > 0
+            ? ` and ${sharePercent.toFixed(1)}% of all link engagement`
+            : ""
+        }. Keep high-intent links near the top of your page.`,
+        tone: "primary",
+      });
+    }
+
+    const firstGap = incompleteOnboardingItems[0];
+    if (firstGap) {
+      items.push({
+        kicker: "Reduce friction",
+        title: firstGap.label,
+        detail: firstGap.detail,
+        tone: "accent",
+      });
+    }
+
+    return items.slice(0, 4);
+  }, [
+    incompleteOnboardingItems,
+    latestLead,
+    range,
+    rangeTotals.leads,
+    rangeTotals.scans,
+    siteHost,
+    topLink,
+    topLinksTotalClicks,
+    topProfile,
+  ]);
+  const primaryInsight = nextSteps[0] ?? null;
+  const supportingInsights = nextSteps.slice(1, 4);
+  const recentLeadContextCount = useMemo(
+    () =>
+      recentLeads.filter(
+        (lead) =>
+          Boolean(lead.company?.trim()) ||
+          Boolean(lead.phone?.trim()) ||
+          Boolean(lead.message?.trim()),
+      ).length,
+    [recentLeads],
+  );
+  const topLinkSharePercent =
+    topLink && topLinksTotalClicks > 0
+      ? (topLink.clicks / topLinksTotalClicks) * 100
+      : 0;
+  const onboardingProgressPercent = onboarding
+    ? Math.round(onboarding.progress * 100)
+    : 0;
+  const customerNeeds = useMemo<CustomerNeedCardData[]>(() => {
+    const reachValue = analytics
+      ? numberFormatter.format(rangeTotals.scans)
+      : loading
+        ? "--"
+        : "0";
+    const followUpValue = analytics
+      ? numberFormatter.format(rangeTotals.leads)
+      : loading
+        ? "--"
+        : "0";
+    const contextValue =
+      recentLeads.length > 0
+        ? `${recentLeadContextCount}/${recentLeads.length}`
+        : loading
+          ? "--"
+          : "0/0";
+    const optimizationValue = topLink
+      ? `${topLinkSharePercent.toFixed(1)}%`
+      : loading
+        ? "--"
+        : "0%";
+
+    return [
+      {
+        eyebrow: "Reach signal",
+        value: reachValue,
+        detail:
+          rangeTotals.scans > 0
+            ? `${trendDeltas?.scans?.text ?? "Volume is moving."} ${totals?.lastScanAt ? `Latest scan ${formatRelativeTime(totals.lastScanAt)}.` : "Keep the share flow active to maintain signal."}`
+            : `No scans in the last ${range} days yet. Share your Linket to start building a real signal.`,
+        tone: "neutral",
+      },
+      {
+        eyebrow: "Follow-up ready",
+        value: followUpValue,
+        detail:
+          rangeTotals.leads > 0
+            ? `${(rangeTotals.conversion * 100).toFixed(1)}% of scans became follow-up-ready contacts.`
+            : rangeTotals.scans > 0
+              ? "People are engaging, but they are not sharing their details yet."
+              : "Contact capture appears here once the share flow is live.",
+        tone: rangeTotals.leads > 0 ? "primary" : "accent",
+      },
+      {
+        eyebrow: "Context captured",
+        value: contextValue,
+        detail:
+          recentLeads.length > 0
+            ? `${recentLeadContextCount} of the last ${recentLeads.length} contacts included company, phone, or notes.`
+            : "Teams pay for context, not just names. Company, phone, and notes appear here once leads are captured.",
+        tone: recentLeadContextCount > 0 ? "primary" : "neutral",
+      },
+      {
+        eyebrow: "Best CTA share",
+        value: optimizationValue,
+        detail: topLink
+          ? `${truncateText(topLink.title, 38)} currently owns ${topLinkSharePercent.toFixed(1)}% of clicks across active links.`
+          : "Link-click concentration appears once visitors start choosing CTAs on your page.",
+        tone: topLink ? "primary" : "neutral",
+      },
+    ];
+  }, [
+    analytics,
+    loading,
+    range,
+    rangeTotals.conversion,
+    rangeTotals.leads,
+    rangeTotals.scans,
+    recentLeadContextCount,
+    recentLeads.length,
+    topLink,
+    topLinkSharePercent,
+    totals?.lastScanAt,
+    trendDeltas?.scans?.text,
+  ]);
+  const quickGuideSteps = useMemo<QuickGuideStep[]>(() => {
+    const firstGap = incompleteOnboardingItems[0];
+
+    return [
+      {
+        step: "1",
+        title: "Start with follow-up",
+        detail: latestLead
+          ? `${latestLead.name?.trim() || latestLead.email || "Your newest contact"} came in ${formatRelativeTime(latestLead.created_at)}.`
+          : "Open the first section to see who needs attention before you read charts.",
+        target: "start-here",
+      },
+      {
+        step: "2",
+        title: "Check setup if capture is low",
+        detail: firstGap
+          ? `${firstGap.label}: ${firstGap.detail}`
+          : "Your setup checklist is in good shape. Use export when you need a report.",
+        target: "setup",
+      },
+      {
+        step: "3",
+        title: "Use trends to optimize",
+        detail: topLink
+          ? `${truncateText(topLink.title, 32)} is your current leading CTA. Open trends and breakdowns to understand why.`
+          : "Open the trend and breakdown sections once visits and clicks start coming in.",
+        target: "trends",
+      },
+    ];
+  }, [incompleteOnboardingItems, latestLead, topLink]);
   const isFreeAnalytics =
     analytics?.meta.analyticsScope === "public_profile_visits";
   const publicProfileLabel = analytics?.meta.publicProfileHandle
     ? `${siteHost}/${analytics.meta.publicProfileHandle}`
     : "your public profile";
 
+  const handleSectionJump = useCallback((value: SectionOptionValue) => {
+    setSectionJump(value);
+
+    const targetOption = SECTION_OPTIONS.find((option) => option.value === value);
+    if (targetOption?.accordionValue) {
+      setOpenSections((current) =>
+        current.includes(targetOption.accordionValue as string)
+          ? current
+          : [...current, targetOption.accordionValue as string],
+      );
+    }
+
+    if (typeof window === "undefined") return;
+    window.setTimeout(() => {
+      document
+        .getElementById(`analytics-${value}`)
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 120);
+  }, []);
+
   const handleExport = useCallback(() => {
     if (!analytics) return;
     const rows =
       analytics.meta.analyticsScope === "public_profile_visits"
         ? ["date,visits"].concat(
-            analytics.timeline.map((point) => `${point.date},${point.scans}`)
+            analytics.timeline.map((point) => `${point.date},${point.scans}`),
           )
         : ["date,scans,leads"].concat(
-            analytics.timeline.map((point) => `${point.date},${point.scans},${point.leads}`)
+            analytics.timeline.map(
+              (point) => `${point.date},${point.scans},${point.leads}`,
+            ),
           );
     const csv = rows.join("\r\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
@@ -420,13 +842,39 @@ export default function AnalyticsContent() {
   }
 
   return (
-    <div className="dashboard-analytics-page w-full space-y-6" data-tour="analytics-overview">
+    <div
+      className="dashboard-analytics-page w-full space-y-6"
+      data-tour="analytics-overview"
+    >
       <header className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-xl font-semibold text-foreground">Analytics</h1>
-          <p className="text-sm text-muted-foreground">Track scans, captured leads, and conversion trends.</p>
+        <div className="space-y-2">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-primary/80">
+            Analytics workspace
+          </p>
+          <div className="space-y-1">
+            <h1 className="text-2xl font-semibold text-foreground sm:text-3xl">
+              Understand your Linket performance
+            </h1>
+            <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
+              Start at the top if you are new: first see who needs follow-up,
+              then open the dropdown sections for setup, trends, and what is
+              driving results.
+            </p>
+          </div>
         </div>
         <div className="dashboard-analytics-range flex w-full flex-nowrap items-center gap-2 overflow-x-auto pb-1 sm:w-auto sm:flex-wrap sm:overflow-visible sm:pb-0">
+          <Select value={sectionJump} onValueChange={handleSectionJump}>
+            <SelectTrigger className="h-9 w-[220px] rounded-full border-border/60 bg-card/80 text-sm shadow-sm">
+              <SelectValue placeholder="Jump to section" />
+            </SelectTrigger>
+            <SelectContent>
+              {SECTION_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           {RANGES.map((option) => (
             <Button
               key={option.value}
@@ -436,7 +884,7 @@ export default function AnalyticsContent() {
                 "rounded-full dashboard-analytics-range-button transition",
                 range === option.value
                   ? "border-accent bg-accent text-accent-foreground shadow-[0_16px_40px_rgba(0,0,0,0.25)] ring-2 ring-accent/40 ring-offset-2 ring-offset-background hover:bg-accent/90"
-                  : "border-border/60 text-muted-foreground hover:border-accent/50 hover:text-foreground"
+                  : "border-border/60 text-muted-foreground hover:border-accent/50 hover:text-foreground",
               )}
               onClick={() => setRange(option.value)}
               data-selected={range === option.value ? "true" : "false"}
@@ -473,295 +921,808 @@ export default function AnalyticsContent() {
         </Card>
       )}
 
-      <section className="dashboard-analytics-summary-grid grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard
-          label="Scans"
-          value={analytics ? numberFormatter.format(rangeTotals.scans) : loading ? "--" : "0"}
-          helper={`Last ${range} days`}
-          delta={trendDeltas?.scans}
-          darkDeltaText={useDarkDeltaText}
-        />
-        <StatCard
-          label="Leads"
-          value={analytics ? numberFormatter.format(rangeTotals.leads) : loading ? "--" : "0"}
-          helper={`Last ${range} days`}
-          delta={trendDeltas?.leads}
-          darkDeltaText={useDarkDeltaText}
-        />
-        <StatCard
-          label="Conversion"
-          value={analytics ? `${(rangeTotals.conversion * 100).toFixed(1)}%` : loading ? "--" : "0%"}
-          helper="Leads / scans"
-          delta={trendDeltas?.conversion}
-          darkDeltaText={useDarkDeltaText}
-        />
-        <StatCard
-          label="Active Linkets"
-          value={totals ? numberFormatter.format(totals.activeTags) : loading ? "--" : "0"}
-          helper="Tags with at least one scan"
-        />
+      <section className="grid gap-3 lg:grid-cols-3">
+        {quickGuideSteps.map((step) => (
+          <QuickGuideCard
+            key={step.step}
+            step={step.step}
+            title={step.title}
+            detail={step.detail}
+            onSelect={() => handleSectionJump(step.target)}
+          />
+        ))}
       </section>
 
-      <Card className="dashboard-analytics-card rounded-3xl border bg-card/80 shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold">Scans and leads</CardTitle>
-          <p className="text-sm text-muted-foreground">Daily totals for the selected window through today.</p>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="dashboard-skeleton h-64 w-full animate-pulse rounded-2xl bg-muted sm:h-72" data-skeleton />
-          ) : chartData.length === 0 ? (
-            <EmptyState
-              message="No scans recorded in this range."
-              actionLabel="Refresh"
-              onAction={() => setReloadToken((value) => value + 1)}
-            />
-          ) : isPhone ? (
-            <PhoneScansLeadsChart data={chartData} />
-          ) : (
-            <div className="dashboard-analytics-chart h-64 w-full sm:h-72">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart
-                  data={chartData}
-                  margin={isPhone ? { left: -10, right: 14, top: 8, bottom: 0 } : { left: 0, right: 14, top: 12, bottom: 0 }}
-                >
-                  <CartesianGrid vertical={false} strokeDasharray="4 4" className="stroke-muted" />
-                  <XAxis
-                    dataKey="label"
-                    tickLine={false}
-                    axisLine={false}
-                    minTickGap={isPhone ? 30 : 22}
-                    interval="preserveStartEnd"
-                    tickMargin={isPhone ? 6 : 8}
-                    tick={{ fontSize: isPhone ? 10 : 12 }}
-                    className="text-xs text-muted-foreground"
-                  />
-                  <YAxis
-                    tickFormatter={(val) => numberFormatter.format(val as number)}
-                    tickLine={false}
-                    axisLine={false}
-                    width={isPhone ? 36 : 48}
-                    tickCount={isPhone ? 4 : 6}
-                    allowDecimals={false}
-                    tick={{ fontSize: isPhone ? 10 : 12 }}
-                    className="text-xs text-muted-foreground"
-                  />
-                  <Tooltip content={<SeriesTooltip />} wrapperStyle={{ outline: "none" }} />
-                  <Legend
-                    iconSize={isPhone ? 8 : 10}
-                    wrapperStyle={{ fontSize: isPhone ? "0.68rem" : "0.75rem" }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="scans"
-                    name="Scans"
-                    stroke="var(--primary)"
-                    strokeWidth={2}
-                    dot={
-                      <CurrentTimelineDot
-                        targetDate={currentTimelineDate}
-                        color="var(--primary)"
-                      />
-                    }
-                    connectNulls={false}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="leads"
-                    name="Leads"
-                    stroke="var(--accent)"
-                    strokeWidth={2}
-                    dot={
-                      <CurrentTimelineDot
-                        targetDate={currentTimelineDate}
-                        color="var(--accent)"
-                      />
-                    }
-                    connectNulls={false}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card className="dashboard-analytics-card rounded-3xl border bg-card/80 shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold">Conversion trend</CardTitle>
-          <p className="text-sm text-muted-foreground">Lead capture rate per day.</p>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="dashboard-skeleton h-52 w-full animate-pulse rounded-2xl bg-muted sm:h-56" data-skeleton />
-          ) : conversionSeries.length === 0 ? (
-            <EmptyState
-              message="No data available yet."
-              actionLabel="Try 90 days"
-              onAction={() => setRange(90)}
-            />
-          ) : isPhone ? (
-            <PhoneConversionTrend data={conversionSeries} />
-          ) : (
-            <div className="dashboard-analytics-chart h-52 w-full sm:h-56">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart
-                  data={conversionSeries}
-                  margin={isPhone ? { left: -8, right: 14, top: 8, bottom: 0 } : { left: 0, right: 14, top: 12, bottom: 0 }}
-                >
-                  <CartesianGrid vertical={false} strokeDasharray="4 4" className="stroke-muted" />
-                  <XAxis
-                    dataKey="label"
-                    tickLine={false}
-                    axisLine={false}
-                    minTickGap={isPhone ? 30 : 22}
-                    interval="preserveStartEnd"
-                    tickMargin={isPhone ? 6 : 8}
-                    tick={{ fontSize: isPhone ? 10 : 12 }}
-                    className="text-xs text-muted-foreground"
-                  />
-                  <YAxis
-                    tickFormatter={(val) => `${(Number(val) * 100).toFixed(0)}%`}
-                    tickLine={false}
-                    axisLine={false}
-                    width={isPhone ? 40 : 50}
-                    tickCount={isPhone ? 4 : 6}
-                    tick={{ fontSize: isPhone ? 10 : 12 }}
-                    className="text-xs text-muted-foreground"
-                    domain={[0, 1]}
-                  />
-                  <Tooltip content={<ConversionTooltip />} wrapperStyle={{ outline: "none" }} />
-                  <Line type="monotone" dataKey="rate" name="Conversion" stroke="var(--primary)" strokeWidth={2} dot={false} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      <section className="grid gap-6 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]">
-        <Card className="dashboard-analytics-card rounded-3xl border bg-card/80 shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold">Top Linkets</CardTitle>
-            <p className="text-sm text-muted-foreground">Scans and leads by assigned profile or tag.</p>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
+      <section id="analytics-start-here">
+        <Card className="dashboard-analytics-card rounded-[32px] border bg-card/85 shadow-[0_22px_55px_rgba(15,23,42,0.08)]">
+          <CardHeader className="space-y-5">
+            <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
               <div className="space-y-2">
-                <div className="dashboard-skeleton h-12 animate-pulse rounded-2xl bg-muted" data-skeleton />
-                <div className="dashboard-skeleton h-12 animate-pulse rounded-2xl bg-muted" data-skeleton />
-                <div className="dashboard-skeleton h-12 animate-pulse rounded-2xl bg-muted" data-skeleton />
+                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-primary/80">
+                  Step 1
+                </p>
+                <CardTitle className="text-2xl font-semibold text-foreground sm:text-3xl">
+                  Start with the follow-up signal.
+                </CardTitle>
+                <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
+                  New users should begin here. This section answers the simplest
+                  question first: did anyone share their details, and who should
+                  you reach out to next?
+                </p>
               </div>
-            ) : analytics?.topProfiles?.length ? (
-              <div className="space-y-2">
-                {analytics.topProfiles.map((profile) => {
-                  const subtitle = profile.handle ? `${siteHost}/${profile.handle}` : profile.nickname || "Unassigned";
-                  const conversion = profile.scans > 0 ? profile.leads / profile.scans : 0;
-                  return (
-                    <div key={`${profile.profileId ?? "np"}-${profile.handle ?? "nh"}`} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border px-3 py-2">
-                      <div>
-                        <div className="text-sm font-medium text-foreground">{profile.displayName || "Linket"}</div>
-                        <p className="text-xs text-muted-foreground">{subtitle}</p>
+              <div className="flex flex-wrap gap-3">
+                <Button asChild size="sm" className="rounded-full">
+                  <Link href="/dashboard/leads">Open leads inbox</Link>
+                </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  size="sm"
+                  className="rounded-full"
+                >
+                  <Link href="/dashboard/profiles">Improve capture flow</Link>
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid gap-4 xl:grid-cols-[minmax(0,1.08fr)_minmax(320px,0.92fr)]">
+              <div className="space-y-4">
+                <div className="rounded-[28px] border border-primary/20 bg-primary/5 p-5 sm:p-6">
+                  {loading ? (
+                    <div className="space-y-3">
+                      <div
+                        className="dashboard-skeleton h-5 w-32 animate-pulse rounded-full bg-muted"
+                        data-skeleton
+                      />
+                      <div
+                        className="dashboard-skeleton h-10 w-3/4 animate-pulse rounded-2xl bg-muted"
+                        data-skeleton
+                      />
+                      <div
+                        className="dashboard-skeleton h-20 w-full animate-pulse rounded-3xl bg-muted"
+                        data-skeleton
+                      />
+                    </div>
+                  ) : latestLead ? (
+                    <div className="space-y-5">
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div className="space-y-2">
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-primary/80">
+                            Newest Captured Contact
+                          </p>
+                          <h2 className="text-xl font-semibold text-foreground sm:text-2xl">
+                            {latestLead.name?.trim() ||
+                              latestLead.email ||
+                              "Unknown contact"}
+                          </h2>
+                          <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
+                            {latestLead.message?.trim()
+                              ? truncateText(latestLead.message.trim(), 180)
+                              : (primaryInsight?.detail ??
+                                "Reach out while the in-person conversation is still fresh.")}
+                          </p>
+                        </div>
+                        <div className="rounded-full border border-primary/15 bg-background/70 px-3 py-1.5 text-xs font-medium text-muted-foreground">
+                          {formatRelativeTime(latestLead.created_at)}
+                        </div>
                       </div>
-                      <div className="text-right text-xs text-muted-foreground">
-                        <div className="font-semibold text-foreground">{numberFormatter.format(profile.scans)} scans</div>
-                        <div>{profile.leads ? `${numberFormatter.format(profile.leads)} leads` : "0 leads"}</div>
-                        <div>{(conversion * 100).toFixed(1)}% conversion</div>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <PriorityInfoChip
+                          label="Email"
+                          value={latestLead.email || "No email shared"}
+                        />
+                        <PriorityInfoChip
+                          label="Company"
+                          value={latestLead.company || "No company captured"}
+                        />
+                        <PriorityInfoChip
+                          label="Source"
+                          value={
+                            latestLead.handle
+                              ? latestLead.handle
+                              : latestLead.source_url
+                                ? formatLinkUrl(latestLead.source_url)
+                                : "Direct capture"
+                          }
+                        />
+                        <PriorityInfoChip
+                          label="Captured"
+                          value={timestampFormatter.format(
+                            new Date(latestLead.created_at),
+                          )}
+                        />
                       </div>
                     </div>
-                  );
-                })}
+                  ) : primaryInsight ? (
+                    <div className="space-y-3">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-primary/80">
+                        {primaryInsight.kicker}
+                      </p>
+                      <h2 className="text-xl font-semibold text-foreground sm:text-2xl">
+                        {primaryInsight.title}
+                      </h2>
+                      <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
+                        {primaryInsight.detail}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-primary/80">
+                        Ready for activity
+                      </p>
+                      <h2 className="text-xl font-semibold text-foreground sm:text-2xl">
+                        Share your Linket to start building signal.
+                      </h2>
+                      <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
+                        Once scans and contacts start coming in, this space will
+                        pull the most urgent follow-up to the top.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {supportingInsights.length > 0 ? (
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {supportingInsights.map((item) => (
+                      <CompactInsightCard
+                        key={`${item.kicker}-${item.title}`}
+                        insight={item}
+                      />
+                    ))}
+                  </div>
+                ) : null}
               </div>
-            ) : (
-              <EmptyState
-                message="No scans in this range."
-                actionLabel="Refresh"
-                onAction={() => setReloadToken((value) => value + 1)}
+
+              <div className="rounded-[28px] border border-border/70 bg-background/45 p-5 sm:p-6">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-base font-semibold text-foreground">
+                      Recent contacts
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      The people most likely to still remember the interaction.
+                    </p>
+                  </div>
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="sm"
+                    className="rounded-full"
+                  >
+                    <Link href="/dashboard/leads">View all</Link>
+                  </Button>
+                </div>
+
+                <div className="mt-5 space-y-3">
+                  {loading ? (
+                    Array.from({ length: 3 }).map((_, index) => (
+                      <div
+                        key={`recent-contact-skeleton-${index}`}
+                        className="dashboard-skeleton h-20 animate-pulse rounded-2xl bg-muted"
+                        data-skeleton
+                      />
+                    ))
+                  ) : followUpLeads.length > 0 ? (
+                    followUpLeads.map((lead) => (
+                      <RecentLeadListItem key={lead.id} lead={lead} />
+                    ))
+                  ) : latestLead ? (
+                    <EmptyState message="The highlighted contact on the left is the newest one. Additional captures will appear here as they come in." />
+                  ) : (
+                    <EmptyState
+                      message="No contacts captured yet. Publish your lead form and keep the share flow simple so taps become people."
+                      actionLabel="Open profile setup"
+                      onAction={() => {
+                        window.location.href = "/dashboard/profiles";
+                      }}
+                    />
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <PriorityMetricCard
+                label="Scans"
+                value={
+                  analytics
+                    ? numberFormatter.format(rangeTotals.scans)
+                    : loading
+                      ? "--"
+                      : "0"
+                }
+                helper={`Taps and opens in the last ${range} days`}
+                delta={trendDeltas?.scans}
+                darkDeltaText={useDarkDeltaText}
               />
-            )}
+              <PriorityMetricCard
+                label="Contacts captured"
+                value={
+                  analytics
+                    ? numberFormatter.format(rangeTotals.leads)
+                    : loading
+                      ? "--"
+                      : "0"
+                }
+                helper="People you can follow up with"
+                delta={trendDeltas?.leads}
+                darkDeltaText={useDarkDeltaText}
+              />
+              <PriorityMetricCard
+                label="Capture rate"
+                value={
+                  analytics
+                    ? `${(rangeTotals.conversion * 100).toFixed(1)}%`
+                    : loading
+                      ? "--"
+                      : "0%"
+                }
+                helper="Contacts captured / scans"
+                delta={trendDeltas?.conversion}
+                darkDeltaText={useDarkDeltaText}
+              />
+              <PriorityMetricCard
+                label="CTA clicks"
+                value={
+                  analytics?.topLinks?.length
+                    ? numberFormatter.format(topLinksTotalClicks)
+                    : loading
+                      ? "--"
+                      : "0"
+                }
+                helper={
+                  topLink
+                    ? `${truncateText(topLink.title, 30)} is leading current click share`
+                    : "Across active profile links"
+                }
+              />
+            </div>
           </CardContent>
         </Card>
+      </section>
 
-        <Card className="dashboard-analytics-card rounded-3xl border bg-card/80 shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold">Link performance</CardTitle>
-            <p className="text-sm text-muted-foreground">Clicks by active profile link.</p>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="space-y-2">
-                <div className="dashboard-skeleton h-12 animate-pulse rounded-2xl bg-muted" data-skeleton />
-                <div className="dashboard-skeleton h-12 animate-pulse rounded-2xl bg-muted" data-skeleton />
-                <div className="dashboard-skeleton h-12 animate-pulse rounded-2xl bg-muted" data-skeleton />
+      <section>
+        <Accordion
+          type="multiple"
+          value={openSections}
+          onValueChange={setOpenSections}
+          className="space-y-4"
+        >
+          <AccordionItem
+            value="guide"
+            id="analytics-guide"
+            className="overflow-hidden rounded-[32px] border border-border/70 bg-card/80 px-5 py-5 shadow-sm sm:px-6"
+          >
+            <AccordionTrigger className="py-0 hover:no-underline">
+              <SectionDropdownHeader
+                step="Step 2"
+                title="Learn the four signals"
+                description="Open this first if you are new. These are the headline numbers that matter most."
+              />
+            </AccordionTrigger>
+            <AccordionContent className="pt-5 pb-0">
+              <div className="grid gap-3 sm:grid-cols-2">
+                {customerNeeds.map((item) => (
+                  <CustomerNeedCard
+                    key={item.eyebrow}
+                    eyebrow={item.eyebrow}
+                    value={item.value}
+                    detail={item.detail}
+                    tone={item.tone}
+                  />
+                ))}
               </div>
-            ) : analytics?.topLinks?.length ? (
-              <div className="space-y-3">
-                {analytics.topLinks.map((link) => {
-                  const clickShare =
-                    topLinksTotalClicks > 0 ? link.clicks / topLinksTotalClicks : 0;
-                  const sharePercent = clickShare * 100;
-                  const barPercent =
-                    link.clicks > 0 ? Math.max(4, Math.round(sharePercent)) : 0;
-                  const displayUrl = formatLinkUrl(link.url);
-                  return (
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem
+            value="setup"
+            id="analytics-setup"
+            className="overflow-hidden rounded-[32px] border border-border/70 bg-card/80 px-5 py-5 shadow-sm sm:px-6"
+          >
+            <AccordionTrigger className="py-0 hover:no-underline">
+              <SectionDropdownHeader
+                step="Step 3"
+                title="Setup and reporting"
+                description="Use this when traffic is coming in but people are not becoming follow-up-ready contacts."
+              />
+            </AccordionTrigger>
+            <AccordionContent className="pt-5 pb-0">
+              <div className="space-y-5">
+                <div className="rounded-[26px] border border-border/70 bg-background/45 p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                        Setup progress
+                      </p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {onboarding
+                          ? `${onboarding.completedCount} of ${onboarding.totalCount} foundations live`
+                          : loading
+                            ? "Checking your workspace..."
+                            : "No setup data yet."}
+                      </p>
+                    </div>
+                    <div className="text-2xl font-semibold text-foreground">
+                      {loading && !analytics
+                        ? "--"
+                        : `${onboardingProgressPercent}%`}
+                    </div>
+                  </div>
+                  <div className="mt-4 h-2 overflow-hidden rounded-full bg-muted/80">
                     <div
-                      key={link.id}
-                      className="space-y-3 rounded-2xl border border-border/70 bg-background/20 px-4 py-3"
-                    >
-                      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                        <div className="min-w-0 space-y-1">
-                          <div className="truncate text-base font-semibold text-foreground">
-                            {link.title}
-                          </div>
-                          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
-                            {link.handle ? (
-                              <span
-                                className={cn(
-                                  "rounded-full bg-muted px-2 py-0.5 font-medium",
-                                  theme === "dark" || theme === "gilded" || theme === "midnight"
-                                    ? "text-slate-100"
-                                    : "text-slate-900"
-                                )}
-                              >
-                                {link.handle}
-                              </span>
-                            ) : null}
-                            <span className="min-w-0 truncate">{displayUrl}</span>
-                          </div>
-                        </div>
-                        <div className="flex items-baseline justify-between gap-3 text-xs text-muted-foreground sm:flex-col sm:items-end sm:justify-start sm:gap-0.5">
-                          <div className="text-base font-semibold text-foreground">
-                            {numberFormatter.format(link.clicks)} clicks
-                          </div>
-                          <div>{sharePercent.toFixed(1)}% share</div>
-                        </div>
-                      </div>
-                      <div className="space-y-1.5">
-                        <div className="flex items-center justify-between text-[11px] uppercase tracking-wide text-muted-foreground">
-                          <span>Share</span>
-                          <span>{sharePercent.toFixed(1)}%</span>
-                        </div>
-                        <div className="h-2 overflow-hidden rounded-full bg-muted/80">
-                          <div
-                            className="h-full rounded-full bg-primary transition-all duration-500"
-                            style={{ width: `${barPercent}%` }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <EmptyState
-                message="No link clicks yet."
-                actionLabel="Refresh"
-                onAction={() => setReloadToken((value) => value + 1)}
-              />
-            )}
-          </CardContent>
-        </Card>
+                      className="h-full rounded-full bg-primary transition-all duration-500"
+                      style={{ width: `${onboardingProgressPercent}%` }}
+                    />
+                  </div>
+                </div>
 
+                <div className="space-y-2">
+                  {loading && !analytics
+                    ? Array.from({ length: 4 }).map((_, index) => (
+                        <div
+                          key={`readiness-skeleton-${index}`}
+                          className="dashboard-skeleton h-14 animate-pulse rounded-2xl bg-muted"
+                          data-skeleton
+                        />
+                      ))
+                    : onboarding?.items.map((item) => (
+                        <ReadinessChecklistItem
+                          key={item.id}
+                          label={item.label}
+                          detail={item.detail}
+                          completed={item.completed}
+                        />
+                      ))}
+                </div>
+
+                <div className="rounded-[26px] border border-primary/20 bg-primary/5 p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-primary/80">
+                        Reporting
+                      </p>
+                      <p className="mt-1 text-sm text-foreground">
+                        CSV export is ready for manager wrap-ups and RevOps handoff.
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="rounded-full"
+                      onClick={handleExport}
+                      disabled={!analytics || analytics.timeline.length === 0}
+                    >
+                      <Download className="mr-2 h-4 w-4" />
+                      Export latest
+                    </Button>
+                  </div>
+                  <p className="mt-3 text-xs text-muted-foreground">
+                    {analytics
+                      ? `Latest snapshot generated ${timestampFormatter.format(new Date(analytics.meta.generatedAt))}.`
+                      : loading
+                        ? "Refreshing analytics snapshot..."
+                        : "No reportable activity yet."}
+                  </p>
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem
+            value="trends"
+            id="analytics-trends"
+            className="overflow-hidden rounded-[32px] border border-border/70 bg-card/80 px-5 py-5 shadow-sm sm:px-6"
+          >
+            <AccordionTrigger className="py-0 hover:no-underline">
+              <SectionDropdownHeader
+                step="Step 4"
+                title="Traffic and conversion"
+                description="Open this to see whether visits are growing and whether those visits are turning into captured contacts."
+              />
+            </AccordionTrigger>
+            <AccordionContent className="pt-5 pb-0">
+              <div className="grid gap-6 xl:grid-cols-[minmax(0,1.32fr)_minmax(320px,0.88fr)]">
+            <div className="min-w-0">
+              {loading ? (
+                <div
+                  className="dashboard-skeleton h-64 w-full animate-pulse rounded-2xl bg-muted sm:h-72"
+                  data-skeleton
+                />
+              ) : chartData.length === 0 ? (
+                <EmptyState
+                  message="No scans recorded in this range."
+                  actionLabel="Refresh"
+                  onAction={() => setReloadToken((value) => value + 1)}
+                />
+              ) : isPhone ? (
+                <PhoneScansLeadsChart data={chartData} />
+              ) : (
+                <div className="dashboard-analytics-chart h-64 w-full sm:h-72">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart
+                      data={chartData}
+                      margin={
+                        isPhone
+                          ? { left: -10, right: 14, top: 8, bottom: 0 }
+                          : { left: 0, right: 14, top: 12, bottom: 0 }
+                      }
+                    >
+                      <CartesianGrid
+                        vertical={false}
+                        strokeDasharray="4 4"
+                        className="stroke-muted"
+                      />
+                      <XAxis
+                        dataKey="label"
+                        tickLine={false}
+                        axisLine={false}
+                        minTickGap={isPhone ? 30 : 22}
+                        interval="preserveStartEnd"
+                        tickMargin={isPhone ? 6 : 8}
+                        tick={{ fontSize: isPhone ? 10 : 12 }}
+                        className="text-xs text-muted-foreground"
+                      />
+                      <YAxis
+                        tickFormatter={(val) =>
+                          numberFormatter.format(val as number)
+                        }
+                        tickLine={false}
+                        axisLine={false}
+                        width={isPhone ? 36 : 48}
+                        tickCount={isPhone ? 4 : 6}
+                        allowDecimals={false}
+                        tick={{ fontSize: isPhone ? 10 : 12 }}
+                        className="text-xs text-muted-foreground"
+                      />
+                      <Tooltip
+                        content={<SeriesTooltip />}
+                        wrapperStyle={{ outline: "none" }}
+                      />
+                      <Legend
+                        iconSize={isPhone ? 8 : 10}
+                        wrapperStyle={{
+                          fontSize: isPhone ? "0.68rem" : "0.75rem",
+                        }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="scans"
+                        name="Scans"
+                        stroke="var(--primary)"
+                        strokeWidth={2}
+                        dot={
+                          <CurrentTimelineDot
+                            targetDate={currentTimelineDate}
+                            color="var(--primary)"
+                          />
+                        }
+                        connectNulls={false}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="leads"
+                        name="Leads"
+                        stroke="var(--accent)"
+                        strokeWidth={2}
+                        dot={
+                          <CurrentTimelineDot
+                            targetDate={currentTimelineDate}
+                            color="var(--accent)"
+                          />
+                        }
+                        connectNulls={false}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </div>
+
+            <div className="rounded-[28px] border border-border/70 bg-background/45 p-5 sm:p-6">
+              <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
+                <PriorityInfoChip
+                  label="7-day scans"
+                  value={
+                    totals
+                      ? numberFormatter.format(totals.scans7d)
+                      : loading
+                        ? "--"
+                        : "0"
+                  }
+                />
+                <PriorityInfoChip
+                  label="7-day contacts"
+                  value={
+                    totals
+                      ? numberFormatter.format(totals.leads7d)
+                      : loading
+                        ? "--"
+                        : "0"
+                  }
+                />
+                <PriorityInfoChip
+                  label="7-day capture"
+                  value={
+                    totals
+                      ? `${(totals.conversionRate7d * 100).toFixed(1)}%`
+                      : loading
+                        ? "--"
+                        : "0%"
+                  }
+                />
+              </div>
+
+              <div className="mt-6">
+                <div className="mb-3">
+                  <h3 className="text-base font-semibold text-foreground">
+                    Capture rate over time
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Use this to spot when the share flow is healthy versus when
+                    taps are turning into anonymous traffic.
+                  </p>
+                </div>
+                {loading ? (
+                  <div
+                    className="dashboard-skeleton h-52 w-full animate-pulse rounded-2xl bg-muted sm:h-56"
+                    data-skeleton
+                  />
+                ) : conversionSeries.length === 0 ? (
+                  <EmptyState
+                    message="No capture-rate data available yet."
+                    actionLabel="Try 90 days"
+                    onAction={() => setRange(90)}
+                  />
+                ) : isPhone ? (
+                  <PhoneConversionTrend data={conversionSeries} />
+                ) : (
+                  <div className="dashboard-analytics-chart h-52 w-full sm:h-56">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart
+                        data={conversionSeries}
+                        margin={
+                          isPhone
+                            ? { left: -8, right: 14, top: 8, bottom: 0 }
+                            : { left: 0, right: 14, top: 12, bottom: 0 }
+                        }
+                      >
+                        <CartesianGrid
+                          vertical={false}
+                          strokeDasharray="4 4"
+                          className="stroke-muted"
+                        />
+                        <XAxis
+                          dataKey="label"
+                          tickLine={false}
+                          axisLine={false}
+                          minTickGap={isPhone ? 30 : 22}
+                          interval="preserveStartEnd"
+                          tickMargin={isPhone ? 6 : 8}
+                          tick={{ fontSize: isPhone ? 10 : 12 }}
+                          className="text-xs text-muted-foreground"
+                        />
+                        <YAxis
+                          tickFormatter={(val) =>
+                            `${(Number(val) * 100).toFixed(0)}%`
+                          }
+                          tickLine={false}
+                          axisLine={false}
+                          width={isPhone ? 40 : 50}
+                          tickCount={isPhone ? 4 : 6}
+                          tick={{ fontSize: isPhone ? 10 : 12 }}
+                          className="text-xs text-muted-foreground"
+                          domain={[0, 1]}
+                        />
+                        <Tooltip
+                          content={<ConversionTooltip />}
+                          wrapperStyle={{ outline: "none" }}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="rate"
+                          name="Conversion"
+                          stroke="var(--primary)"
+                          strokeWidth={2}
+                          dot={false}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+              </div>
+            </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem
+            value="breakdowns"
+            id="analytics-breakdowns"
+            className="overflow-hidden rounded-[32px] border border-border/70 bg-card/80 px-5 py-5 shadow-sm sm:px-6"
+          >
+            <AccordionTrigger className="py-0 hover:no-underline">
+              <SectionDropdownHeader
+                step="Step 5"
+                title="What is driving results"
+                description="Open this after trends when you want to see which Linkets and links are actually pulling people forward."
+              />
+            </AccordionTrigger>
+            <AccordionContent className="pt-5 pb-0">
+              <div className="grid gap-8 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <h3 className="text-base font-semibold text-foreground">
+                  Linkets driving conversations
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Which profile or tag is producing the strongest mix of scans
+                  and captured contacts.
+                </p>
+              </div>
+              {loading ? (
+                <div className="space-y-2">
+                  <div
+                    className="dashboard-skeleton h-12 animate-pulse rounded-2xl bg-muted"
+                    data-skeleton
+                  />
+                  <div
+                    className="dashboard-skeleton h-12 animate-pulse rounded-2xl bg-muted"
+                    data-skeleton
+                  />
+                  <div
+                    className="dashboard-skeleton h-12 animate-pulse rounded-2xl bg-muted"
+                    data-skeleton
+                  />
+                </div>
+              ) : analytics?.topProfiles?.length ? (
+                <div className="space-y-2">
+                  {analytics.topProfiles.map((profile) => {
+                    const subtitle = profile.handle
+                      ? `${siteHost}/${profile.handle}`
+                      : profile.nickname || "Unassigned";
+                    const conversion =
+                      profile.scans > 0 ? profile.leads / profile.scans : 0;
+                    return (
+                      <div
+                        key={`${profile.profileId ?? "np"}-${profile.handle ?? "nh"}`}
+                        className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border px-3 py-2"
+                      >
+                        <div>
+                          <div className="text-sm font-medium text-foreground">
+                            {profile.displayName || "Linket"}
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            {subtitle}
+                          </p>
+                        </div>
+                        <div className="text-right text-xs text-muted-foreground">
+                          <div className="font-semibold text-foreground">
+                            {numberFormatter.format(profile.scans)} scans
+                          </div>
+                          <div>
+                            {profile.leads
+                              ? `${numberFormatter.format(profile.leads)} leads`
+                              : "0 leads"}
+                          </div>
+                          <div>{(conversion * 100).toFixed(1)}% capture</div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <EmptyState
+                  message="No Linkets generated activity in this range."
+                  actionLabel="Refresh"
+                  onAction={() => setReloadToken((value) => value + 1)}
+                />
+              )}
+            </div>
+
+            <div className="space-y-4 xl:border-l xl:border-border/60 xl:pl-8">
+              <div className="space-y-1">
+                <h3 className="text-base font-semibold text-foreground">
+                  Links people actually choose
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Click distribution across the links on your public page.
+                </p>
+              </div>
+              {loading ? (
+                <div className="space-y-2">
+                  <div
+                    className="dashboard-skeleton h-12 animate-pulse rounded-2xl bg-muted"
+                    data-skeleton
+                  />
+                  <div
+                    className="dashboard-skeleton h-12 animate-pulse rounded-2xl bg-muted"
+                    data-skeleton
+                  />
+                  <div
+                    className="dashboard-skeleton h-12 animate-pulse rounded-2xl bg-muted"
+                    data-skeleton
+                  />
+                </div>
+              ) : analytics?.topLinks?.length ? (
+                <div className="space-y-3">
+                  {analytics.topLinks.map((link) => {
+                    const clickShare =
+                      topLinksTotalClicks > 0
+                        ? link.clicks / topLinksTotalClicks
+                        : 0;
+                    const sharePercent = clickShare * 100;
+                    const barPercent =
+                      link.clicks > 0
+                        ? Math.max(4, Math.round(sharePercent))
+                        : 0;
+                    const displayUrl = formatLinkUrl(link.url);
+                    return (
+                      <div
+                        key={link.id}
+                        className="space-y-3 rounded-2xl border border-border/70 bg-background/20 px-4 py-3"
+                      >
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                          <div className="min-w-0 space-y-1">
+                            <div className="truncate text-base font-semibold text-foreground">
+                              {link.title}
+                            </div>
+                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+                              {link.handle ? (
+                                <span
+                                  className={cn(
+                                    "rounded-full bg-muted px-2 py-0.5 font-medium",
+                                    theme === "dark" ||
+                                      theme === "gilded" ||
+                                      theme === "midnight"
+                                      ? "text-slate-100"
+                                      : "text-slate-900",
+                                  )}
+                                >
+                                  {link.handle}
+                                </span>
+                              ) : null}
+                              <span className="min-w-0 truncate">
+                                {displayUrl}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex items-baseline justify-between gap-3 text-xs text-muted-foreground sm:flex-col sm:items-end sm:justify-start sm:gap-0.5">
+                            <div className="text-base font-semibold text-foreground">
+                              {numberFormatter.format(link.clicks)} clicks
+                            </div>
+                            <div>{sharePercent.toFixed(1)}% share</div>
+                          </div>
+                        </div>
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between text-[11px] uppercase tracking-wide text-muted-foreground">
+                            <span>Share</span>
+                            <span>{sharePercent.toFixed(1)}%</span>
+                          </div>
+                          <div className="h-2 overflow-hidden rounded-full bg-muted/80">
+                            <div
+                              className="h-full rounded-full bg-primary transition-all duration-500"
+                              style={{ width: `${barPercent}%` }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <EmptyState
+                  message="No link clicks yet. Put your highest-value CTA near the top of the page and test again."
+                  actionLabel="Refresh"
+                  onAction={() => setReloadToken((value) => value + 1)}
+                />
+              )}
+            </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </section>
     </div>
   );
@@ -792,16 +1753,22 @@ function FreeAnalyticsView({
 }) {
   const visitsInRange = analytics.timeline.reduce(
     (total, point) => total + point.scans,
-    0
+    0,
   );
 
   return (
-    <div className="dashboard-analytics-page w-full space-y-6" data-tour="analytics-overview">
+    <div
+      className="dashboard-analytics-page w-full space-y-6"
+      data-tour="analytics-overview"
+    >
       <header className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
         <div className="space-y-1">
-          <h1 className="text-xl font-semibold text-foreground">Analytics</h1>
+          <h1 className="text-xl font-semibold text-foreground">
+            Profile visits overview
+          </h1>
           <p className="text-sm text-muted-foreground">
-            Free tracks visits to {publicProfileLabel}. Paid unlocks lead, conversion, and link performance analytics.
+            Start simple: free shows visits to {publicProfileLabel}. Paid adds
+            contact capture, conversion, and link-performance analytics.
           </p>
         </div>
         <div className="flex w-full flex-nowrap items-center gap-2 overflow-x-auto pb-1 sm:w-auto sm:flex-wrap sm:overflow-visible sm:pb-0">
@@ -814,7 +1781,7 @@ function FreeAnalyticsView({
                 "rounded-full transition",
                 range === option.value
                   ? "border-accent bg-accent text-accent-foreground"
-                  : "border-border/60 text-muted-foreground"
+                  : "border-border/60 text-muted-foreground",
               )}
               onClick={() => onRangeChange(option.value)}
             >
@@ -838,7 +1805,12 @@ function FreeAnalyticsView({
         <Card className="rounded-3xl border bg-card/80 shadow-sm">
           <CardContent className="space-y-4 py-6">
             <p className="text-sm text-destructive">{error}</p>
-            <Button type="button" variant="outline" size="sm" onClick={onRefresh}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={onRefresh}
+            >
               Retry analytics
             </Button>
           </CardContent>
@@ -863,7 +1835,10 @@ function FreeAnalyticsView({
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 text-sm text-muted-foreground">
-            <p>Unlock lead capture trends, conversion rate, top links, and link-by-link performance.</p>
+            <p>
+              Unlock lead capture trends, conversion rate, top links, and
+              link-by-link performance.
+            </p>
             <Button asChild size="sm" className="w-full sm:w-auto">
               <Link href="/dashboard/billing">Unlock paid analytics</Link>
             </Button>
@@ -873,7 +1848,9 @@ function FreeAnalyticsView({
 
       <Card className="dashboard-analytics-card rounded-3xl border bg-card/80 shadow-sm">
         <CardHeader>
-          <CardTitle className="text-lg font-semibold">Public profile visits</CardTitle>
+          <CardTitle className="text-lg font-semibold">
+            Public profile visits
+          </CardTitle>
           <p className="text-sm text-muted-foreground">
             Daily visits to {publicProfileLabel}.
           </p>
@@ -897,9 +1874,17 @@ function FreeAnalyticsView({
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart
                   data={chartData}
-                  margin={isPhone ? { left: -10, right: 14, top: 8, bottom: 0 } : { left: 0, right: 14, top: 12, bottom: 0 }}
+                  margin={
+                    isPhone
+                      ? { left: -10, right: 14, top: 8, bottom: 0 }
+                      : { left: 0, right: 14, top: 12, bottom: 0 }
+                  }
                 >
-                  <CartesianGrid vertical={false} strokeDasharray="4 4" className="stroke-muted" />
+                  <CartesianGrid
+                    vertical={false}
+                    strokeDasharray="4 4"
+                    className="stroke-muted"
+                  />
                   <XAxis
                     dataKey="label"
                     tickLine={false}
@@ -911,7 +1896,9 @@ function FreeAnalyticsView({
                     className="text-xs text-muted-foreground"
                   />
                   <YAxis
-                    tickFormatter={(val) => numberFormatter.format(val as number)}
+                    tickFormatter={(val) =>
+                      numberFormatter.format(val as number)
+                    }
                     tickLine={false}
                     axisLine={false}
                     width={isPhone ? 36 : 48}
@@ -920,7 +1907,10 @@ function FreeAnalyticsView({
                     tick={{ fontSize: isPhone ? 10 : 12 }}
                     className="text-xs text-muted-foreground"
                   />
-                  <Tooltip content={<SeriesTooltip />} wrapperStyle={{ outline: "none" }} />
+                  <Tooltip
+                    content={<SeriesTooltip />}
+                    wrapperStyle={{ outline: "none" }}
+                  />
                   <Line
                     type="monotone"
                     dataKey="scans"
@@ -944,9 +1934,12 @@ function FreeAnalyticsView({
 
       <Card className="dashboard-analytics-card rounded-3xl border border-dashed border-border/60 bg-card/80 shadow-sm">
         <CardHeader>
-          <CardTitle className="text-lg font-semibold">Upgrade for more insight</CardTitle>
+          <CardTitle className="text-lg font-semibold">
+            Upgrade for more insight
+          </CardTitle>
           <p className="text-sm text-muted-foreground">
-            Paid adds lead analytics, conversion trendlines, and top-performing links so you can see what turns profile traffic into conversations.
+            Paid adds lead analytics, conversion trendlines, and top-performing
+            links so you can see what turns profile traffic into conversations.
           </p>
         </CardHeader>
         <CardContent>
@@ -967,7 +1960,13 @@ type StatCardProps = {
   darkDeltaText?: boolean;
 };
 
-function StatCard({ label, value, helper, delta, darkDeltaText = false }: StatCardProps) {
+function StatCard({
+  label,
+  value,
+  helper,
+  delta,
+  darkDeltaText = false,
+}: StatCardProps) {
   return (
     <Card className="dashboard-analytics-card min-w-0 rounded-3xl border bg-card/80 shadow-sm">
       <CardHeader className="flex-col items-center justify-center gap-2 space-y-0 text-center sm:flex-row sm:flex-wrap sm:items-start sm:justify-between sm:text-left sm:gap-3">
@@ -977,11 +1976,20 @@ function StatCard({ label, value, helper, delta, darkDeltaText = false }: StatCa
             className={cn(
               "rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wide",
               delta.tone === "up" &&
-                cn("bg-emerald-500/10", darkDeltaText ? "text-slate-900" : "text-emerald-300"),
+                cn(
+                  "bg-emerald-500/10",
+                  darkDeltaText ? "text-slate-900" : "text-emerald-300",
+                ),
               delta.tone === "down" &&
-                cn("bg-amber-500/10", darkDeltaText ? "text-slate-900" : "text-amber-300"),
+                cn(
+                  "bg-amber-500/10",
+                  darkDeltaText ? "text-slate-900" : "text-amber-300",
+                ),
               delta.tone === "neutral" &&
-                cn("bg-muted", darkDeltaText ? "text-slate-900" : "text-muted-foreground")
+                cn(
+                  "bg-muted",
+                  darkDeltaText ? "text-slate-900" : "text-muted-foreground",
+                ),
             )}
           >
             {delta.text}
@@ -989,10 +1997,267 @@ function StatCard({ label, value, helper, delta, darkDeltaText = false }: StatCa
         ) : null}
       </CardHeader>
       <CardContent className="space-y-1 text-center sm:text-left">
-        <div className="text-2xl font-semibold text-foreground sm:text-3xl">{value}</div>
-        {helper && <div className="text-xs text-muted-foreground">{helper}</div>}
+        <div className="text-2xl font-semibold text-foreground sm:text-3xl">
+          {value}
+        </div>
+        {helper && (
+          <div className="text-xs text-muted-foreground">{helper}</div>
+        )}
       </CardContent>
     </Card>
+  );
+}
+
+function PriorityMetricCard({
+  label,
+  value,
+  helper,
+  delta,
+  darkDeltaText = false,
+}: StatCardProps) {
+  return (
+    <div
+      className={cn(
+        "rounded-[24px] border border-border/70 bg-background/45 px-4 py-4 shadow-sm",
+      )}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="space-y-1">
+          <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+            {label}
+          </p>
+          <div className="text-2xl font-semibold text-foreground">{value}</div>
+        </div>
+        {delta ? (
+          <span
+            className={cn(
+              "rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wide",
+              delta.tone === "up" &&
+                cn(
+                  "bg-emerald-500/10",
+                  darkDeltaText ? "text-slate-900" : "text-emerald-300",
+                ),
+              delta.tone === "down" &&
+                cn(
+                  "bg-amber-500/10",
+                  darkDeltaText ? "text-slate-900" : "text-amber-300",
+                ),
+              delta.tone === "neutral" &&
+                cn(
+                  "bg-muted",
+                  darkDeltaText ? "text-slate-900" : "text-muted-foreground",
+                ),
+            )}
+          >
+            {delta.text}
+          </span>
+        ) : null}
+      </div>
+      {helper ? (
+        <p className="mt-2 text-xs leading-5 text-muted-foreground">{helper}</p>
+      ) : null}
+    </div>
+  );
+}
+
+function QuickGuideCard({
+  step,
+  title,
+  detail,
+  onSelect,
+}: Omit<QuickGuideStep, "target"> & {
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className="rounded-[28px] border border-border/70 bg-card/80 px-5 py-4 text-left shadow-sm transition-transform duration-150 ease-out hover:-translate-y-0.5 active:scale-[0.98]"
+    >
+      <div className="space-y-2">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-primary/80">
+          Step {step}
+        </p>
+        <div className="text-base font-semibold text-foreground">{title}</div>
+        <p className="text-sm leading-6 text-muted-foreground">{detail}</p>
+      </div>
+    </button>
+  );
+}
+
+function SectionDropdownHeader({
+  step,
+  title,
+  description,
+}: {
+  step: string;
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="space-y-2 pr-4">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-primary/80">
+        {step}
+      </p>
+      <div className="space-y-1">
+        <div className="text-left text-lg font-semibold text-foreground">
+          {title}
+        </div>
+        <p className="text-left text-sm leading-6 text-muted-foreground">
+          {description}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function PriorityInfoChip({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-border/60 bg-background/65 px-4 py-3">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+        {label}
+      </p>
+      <p className="mt-1 text-sm font-medium text-foreground">{value}</p>
+    </div>
+  );
+}
+
+function CompactInsightCard({ insight }: { insight: ActionInsight }) {
+  const accentClasses =
+    insight.tone === "primary"
+      ? "border-primary/15 bg-primary/5"
+      : insight.tone === "accent"
+        ? "border-accent/20 bg-accent/10"
+        : "border-border/70 bg-background/45";
+
+  return (
+    <div
+      className={cn("rounded-2xl border px-4 py-4 shadow-sm", accentClasses)}
+    >
+      <div className="space-y-2">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+          {insight.kicker}
+        </p>
+        <h3 className="text-sm font-semibold text-foreground">
+          {insight.title}
+        </h3>
+        <p className="text-sm leading-6 text-muted-foreground">
+          {insight.detail}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function CustomerNeedCard({
+  eyebrow,
+  value,
+  detail,
+  tone,
+}: CustomerNeedCardData) {
+  const accentClasses =
+    tone === "primary"
+      ? "border-primary/20 bg-primary/5"
+      : tone === "accent"
+        ? "border-accent/20 bg-accent/10"
+        : "border-border/70 bg-background/45";
+
+  return (
+    <div
+      className={cn("rounded-[26px] border px-4 py-4 shadow-sm", accentClasses)}
+    >
+      <div className="space-y-2">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+          {eyebrow}
+        </p>
+        <div className="text-2xl font-semibold text-foreground">{value}</div>
+        <p className="text-sm leading-6 text-muted-foreground">{detail}</p>
+      </div>
+    </div>
+  );
+}
+
+function ReadinessChecklistItem({
+  label,
+  detail,
+  completed,
+}: {
+  label: string;
+  detail: string;
+  completed: boolean;
+}) {
+  return (
+    <div className="flex items-start gap-3 rounded-2xl border border-border/70 bg-background/35 px-4 py-3">
+      <span
+        className={cn(
+          "mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-full",
+          completed
+            ? "bg-emerald-500/10 text-emerald-300"
+            : "bg-amber-500/10 text-amber-300",
+        )}
+        aria-hidden
+      >
+        {completed ? (
+          <CheckCircle2 className="h-4 w-4" />
+        ) : (
+          <Circle className="h-4 w-4" />
+        )}
+      </span>
+      <div className="space-y-1">
+        <div className="flex items-center gap-2">
+          <div className="text-sm font-semibold text-foreground">{label}</div>
+          <span
+            className={cn(
+              "rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em]",
+              completed
+                ? "bg-emerald-500/10 text-emerald-300"
+                : "bg-amber-500/10 text-amber-300",
+            )}
+          >
+            {completed ? "Live" : "Next"}
+          </span>
+        </div>
+        <p className="text-sm leading-6 text-muted-foreground">{detail}</p>
+      </div>
+    </div>
+  );
+}
+
+function RecentLeadListItem({
+  lead,
+}: {
+  lead: UserAnalytics["recentLeads"][number];
+}) {
+  const sourceLabel = lead.handle
+    ? `From ${lead.handle}`
+    : lead.source_url
+      ? formatLinkUrl(lead.source_url)
+      : null;
+
+  return (
+    <div className="rounded-2xl border border-border/60 bg-background/55 px-4 py-3 shadow-sm">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0 space-y-1">
+          <div className="truncate text-sm font-semibold text-foreground">
+            {lead.name?.trim() || lead.email || "Unknown contact"}
+          </div>
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+            <span>{lead.email || "No email shared"}</span>
+            {lead.company ? <span>{lead.company}</span> : null}
+            {sourceLabel ? <span>{sourceLabel}</span> : null}
+          </div>
+        </div>
+        <div className="text-right text-[11px] text-muted-foreground">
+          <div>{formatRelativeTime(lead.created_at)}</div>
+          <div>{timestampFormatter.format(new Date(lead.created_at))}</div>
+        </div>
+      </div>
+      {lead.message ? (
+        <p className="mt-3 text-sm leading-6 text-muted-foreground">
+          {truncateText(lead.message, 110)}
+        </p>
+      ) : null}
+    </div>
   );
 }
 
@@ -1002,8 +2267,8 @@ function PhoneScansLeadsChart({ data }: { data: TimelineDatum[] }) {
   const maxValue = Math.max(
     1,
     ...points.map((point) =>
-      Math.max(point.scans ?? 0, showLeads ? point.leads ?? 0 : 0)
-    )
+      Math.max(point.scans ?? 0, showLeads ? (point.leads ?? 0) : 0),
+    ),
   );
 
   return (
@@ -1022,13 +2287,17 @@ function PhoneScansLeadsChart({ data }: { data: TimelineDatum[] }) {
       </div>
       <div
         className="grid gap-2"
-        style={{ gridTemplateColumns: `repeat(${points.length}, minmax(0, 1fr))` }}
+        style={{
+          gridTemplateColumns: `repeat(${points.length}, minmax(0, 1fr))`,
+        }}
       >
         {points.map((point) => {
           const scans = point.scans ?? 0;
           const leads = point.leads ?? 0;
-          const scansHeight = scans > 0 ? Math.max(6, Math.round((scans / maxValue) * 100)) : 0;
-          const leadsHeight = leads > 0 ? Math.max(6, Math.round((leads / maxValue) * 100)) : 0;
+          const scansHeight =
+            scans > 0 ? Math.max(6, Math.round((scans / maxValue) * 100)) : 0;
+          const leadsHeight =
+            leads > 0 ? Math.max(6, Math.round((leads / maxValue) * 100)) : 0;
           return (
             <div key={point.date} className="space-y-1">
               <div className="flex h-28 items-end justify-center gap-1 rounded-xl border bg-muted/25 px-1.5 py-2">
@@ -1050,7 +2319,8 @@ function PhoneScansLeadsChart({ data }: { data: TimelineDatum[] }) {
               </div>
               <div className="text-center text-[9px] leading-tight">
                 <span className="block font-medium text-primary">
-                  {numberFormatter.format(scans)} {showLeads ? "scans" : "visits"}
+                  {numberFormatter.format(scans)}{" "}
+                  {showLeads ? "scans" : "visits"}
                 </span>
                 {showLeads ? (
                   <span className="block font-medium text-accent">
@@ -1077,8 +2347,12 @@ function PhoneConversionTrend({ data }: { data: ConversionDatum[] }) {
         return (
           <div key={point.date} className="space-y-1">
             <div className="flex items-center justify-between text-xs">
-              <span className="font-medium text-muted-foreground">{formatMobileDate(point.date)}</span>
-              <span className="font-semibold text-foreground">{percent.toFixed(1)}%</span>
+              <span className="font-medium text-muted-foreground">
+                {formatMobileDate(point.date)}
+              </span>
+              <span className="font-semibold text-foreground">
+                {percent.toFixed(1)}%
+              </span>
             </div>
             <div className="h-2 overflow-hidden rounded-full bg-muted/70">
               <div
@@ -1118,12 +2392,16 @@ function SeriesTooltip({ active, payload, label }: SeriesTooltipProps) {
             <span className="text-muted-foreground">
               {primarySeries?.name ?? "Scans"}
             </span>
-            <span className="font-medium text-foreground">{numberFormatter.format(scans ?? 0)}</span>
+            <span className="font-medium text-foreground">
+              {numberFormatter.format(scans ?? 0)}
+            </span>
           </div>
           {typeof leads === "number" ? (
             <div className="flex items-center justify-between gap-6">
               <span className="text-muted-foreground">Leads</span>
-              <span className="font-medium text-foreground">{numberFormatter.format(leads ?? 0)}</span>
+              <span className="font-medium text-foreground">
+                {numberFormatter.format(leads ?? 0)}
+              </span>
             </div>
           ) : null}
         </div>
@@ -1146,7 +2424,9 @@ function ConversionTooltip({ active, payload, label }: ConversionTooltipProps) {
   return (
     <div className="dashboard-analytics-tooltip rounded-md border border-border/70 bg-background/95 px-3 py-2 text-xs shadow">
       <div className="font-medium text-foreground">{label}</div>
-      <div className="mt-1 text-muted-foreground">{(Number(rate) * 100).toFixed(1)}% conversion</div>
+      <div className="mt-1 text-muted-foreground">
+        {(Number(rate) * 100).toFixed(1)}% conversion
+      </div>
     </div>
   );
 }
@@ -1199,6 +2479,41 @@ function formatMobileDate(date: string) {
     return mobileDate.format(new Date(date));
   }
   return mobileDate.format(new Date(year, month - 1, day));
+}
+
+function formatRelativeTime(date: string) {
+  const target = new Date(date).getTime();
+  if (Number.isNaN(target)) return "Recently";
+
+  const diffMs = target - Date.now();
+  const diffMinutes = Math.round(diffMs / 60_000);
+
+  if (Math.abs(diffMinutes) < 60) {
+    return relativeTimeFormatter.format(diffMinutes, "minute");
+  }
+
+  const diffHours = Math.round(diffMinutes / 60);
+  if (Math.abs(diffHours) < 24) {
+    return relativeTimeFormatter.format(diffHours, "hour");
+  }
+
+  const diffDays = Math.round(diffHours / 24);
+  if (Math.abs(diffDays) < 30) {
+    return relativeTimeFormatter.format(diffDays, "day");
+  }
+
+  const diffMonths = Math.round(diffDays / 30);
+  if (Math.abs(diffMonths) < 12) {
+    return relativeTimeFormatter.format(diffMonths, "month");
+  }
+
+  const diffYears = Math.round(diffDays / 365);
+  return relativeTimeFormatter.format(diffYears, "year");
+}
+
+function truncateText(value: string, maxLength: number) {
+  if (value.length <= maxLength) return value;
+  return `${value.slice(0, Math.max(0, maxLength - 3)).trimEnd()}...`;
 }
 
 function formatLinkUrl(url: string) {

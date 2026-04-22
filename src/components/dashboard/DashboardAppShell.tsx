@@ -6,7 +6,9 @@ import { usePathname, useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import Sidebar from "@/components/dashboard/Sidebar";
 import DashboardOnboardingTour from "@/components/dashboard/DashboardOnboardingTour";
+import { useThemeOptional } from "@/components/theme/theme-provider";
 import type { DashboardOnboardingState } from "@/lib/dashboard-onboarding-types";
+import { isDarkTheme } from "@/lib/themes";
 import { cn } from "@/lib/utils";
 
 const ONBOARDING_COMPLETION_SESSION_KEY_PREFIX =
@@ -26,6 +28,7 @@ export default function DashboardAppShell({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname() ?? "";
   const router = useRouter();
+  const { theme } = useThemeOptional();
   const isSetupRoute = pathname.startsWith("/dashboard/get-started");
   const onboardingCompletionSessionKey =
     getOnboardingCompletionSessionKey(onboardingState.userId);
@@ -92,7 +95,11 @@ export default function DashboardAppShell({
     return (
       <div
         id="dashboard-theme-scope"
-        className="font-dashboard flex min-h-[100svh] items-center justify-center bg-[var(--background)] px-6"
+        className={cn(
+          "font-dashboard flex min-h-[100svh] items-center justify-center bg-[var(--background)] px-6",
+          `theme-${theme}`,
+          isDarkTheme(theme) && "dark"
+        )}
       >
         <div className="w-full max-w-md rounded-3xl border border-border/60 bg-card/90 px-6 py-8 text-center shadow-[0_28px_70px_-45px_rgba(15,23,42,0.35)]">
           <p className="text-sm font-semibold text-foreground">
@@ -109,7 +116,11 @@ export default function DashboardAppShell({
   return (
     <div
       id="dashboard-theme-scope"
-      className="font-dashboard flex min-h-[100svh] bg-[var(--background)]"
+      className={cn(
+        "font-dashboard flex min-h-[100svh] bg-[var(--background)]",
+        `theme-${theme}`,
+        isDarkTheme(theme) && "dark"
+      )}
       style={{ "--dashboard-nav-height": "64px" } as CSSProperties}
     >
       {!shouldHideChrome ? (

@@ -2,11 +2,11 @@
 
 ## Executive Summary
 
-AA baseline status: partially met after remediation. I audited the public landing flow, auth flow, high-traffic marketing components, and theme token variants using WCAG 2.1/2.2 contrast math with alpha compositing. Seventeen findings are already patched in the current working tree. The original sampled audit still has three open AA risks: \`theme-burnt-orange\`, \`theme-maroon\`, and the low-contrast global \`--border\` / \`--input\` token family.
+AA baseline status: live theme-token coverage currently passes the audited text-pair matrix. I audited the public landing flow, auth flow, high-traffic marketing components, and theme token variants using WCAG 2.1/2.2 contrast math with alpha compositing. Seventeen sampled findings are already patched in the current working tree. The remaining open systemic risk is the low-contrast global \`--border\` / \`--input\` token family for non-text boundaries.
 
-Full theme coverage is now documented in \`docs/accessibility/theme-contrast-matrix.md\` and \`docs/accessibility/theme-contrast-matrix.json\`. That full token sweep covers every declared theme scope in \`base.css\` and \`variants.css\`, and it adds one contextual AA risk outside the original 20-finding sample: \`.theme-forest\` falls to 3.62:1 when \`--foreground\` is reused on \`--card\` instead of \`--card-foreground\`.
+Full theme coverage is now documented in \`docs/accessibility/theme-contrast-matrix.md\` and \`docs/accessibility/theme-contrast-matrix.json\`. The current token sweep covers every declared theme scope in \`base.css\` and \`variants.css\`, reports zero AA-failing theme scopes in the audited text pairs, and shows the tightest live margins in \`theme-autumn\`, \`theme-gilded\`, \`theme-burnt-orange\`, \`theme-honey\`, \`theme-midnight\`, \`theme-dream\`, and the default/light themes.
 
-Top technical risks were light marketing gradients using white text, custom focus indicators that were too faint for WCAG 2.2 section 2.4.13, and alternate themes whose primary/ring tokens drifted below AA thresholds. ADA Title III relevance: these are technical accessibility findings about perceivable and operable UI barriers on customer-facing UI, not legal advice.
+Top technical risks are low-contrast light-surface boundaries, documentation drift between generated reports and live CSS, and warm-theme palettes whose chroma/lightness ranges are too similar. ADA Title III relevance: these are technical accessibility findings about perceivable and operable UI barriers on customer-facing UI, not legal advice.
 
 ## Scope
 
@@ -38,8 +38,8 @@ Top technical risks were light marketing gradients using white text, custom focu
 | theme-forest - Card/secondary text tokens (patched) | `.theme-forest` | default | normal | `#c0ae9a` | `#4a5d4f` | 3.29:1 | Fail AA 1.4.3; Fail AAA 1.4.6 | `#c0ae9a -> #f7f0e2` (est. 6.24:1) | M | `--card-foreground: #f7f0e2; --secondary-foreground: #f7f0e2; --muted-foreground: #f7f0e2;` |
 | theme-forest - Focus ring token (patched) | `.theme-forest` | focus-visible | n/a | `#a45b3e` | `#273529` | 2.55:1 | Fail AA 1.4.11; Fail AAA 2.4.13 | `#a45b3e -> #c79c7e` (est. 5.21:1) | S | `--ring: #c79c7e; --sidebar-ring: #c79c7e;` |
 | theme-rose/theme-autumn/theme-honey - Warm-theme ring sweep (patched) | `.theme-rose, .theme-autumn, .theme-honey` | focus-visible | n/a | `#ec6a43` | `#ffe0d2` | 2.51:1 | Fail AA 1.4.11; Fail AAA 2.4.13 | `#ec6a43/#cb6539/#df6206 -> #9a3412` (est. min 5.35:1) | S | `--ring: #9a3412; --sidebar-ring: #9a3412;` |
-| theme-burnt-orange - Global foreground/focus tokens (open) | `.theme-burnt-orange` | default / focus-visible | normal | `#7a3a00` | `#c05600` | 1.88:1 | Fail AA 1.4.3; ring-on-card also fails AA 1.4.11 at 1.07:1 | Introduce page/card/focus surface tokens instead of one shared foreground/ring value | L | `--page-foreground`, `--card-foreground`, `--focus-ring-inner`, `--focus-ring-outer` |
-| theme-maroon - Global foreground/focus tokens (open) | `.theme-maroon` | default / focus-visible | normal | `#500000` | `#500000` | 1.00:1 | Fail AA 1.4.3; ring also fails AA 1.4.11 at 1.00:1 | Introduce page/card/focus surface tokens instead of one shared foreground/ring value | L | `--page-foreground`, `--card-foreground`, `--focus-ring-inner`, `--focus-ring-outer` |
+| theme-burnt-orange - Near-threshold primary pair (monitor) | `.theme-burnt-orange` | default | normal | `#fff8f2` | `#b55200` | 4.78:1 | Pass AA 1.4.3; Fail AAA 1.4.6 | Keep current AA coverage; if you want more resilience, darken `--primary` slightly or reserve the light foreground for solid fills only. | M | `--primary`, `--primary-foreground`, `--sidebar-primary-foreground` |
+| theme-maroon - Muted copy pair (monitor) | `.theme-maroon` | default | normal | `#7a4251` | `#fff0f2` | 6.97:1 | Pass AA 1.4.3; Fail AAA 1.4.6 on muted/background only | No urgent AA fix. Preserve current contrast while using hue/chroma changes for stronger theme differentiation. | S | `--muted-foreground`, aesthetic-only palette retune |
 | design-system sweep - Border/input boundary tokens (open) | `:root, .theme-light, .theme-dark, .theme-dream, .theme-honey` | default | n/a | `#d7deed` | `#ffffff` | 1.35:1 | Fail AA 1.4.11 | Darken `--border` / `--input` or add component-level boundary tokens; verify cards/tabs/pills visually | L | `--border`, `--input`, or component-scoped `--boundary-contrast` tokens |
 
 ## Remediation Mapping
@@ -50,7 +50,7 @@ Top technical risks were light marketing gradients using white text, custom focu
 | Custom inputs used low-alpha placeholders, borders, and focus styles. | Raise placeholder opacity, strengthen field borders, and replace pastel focus rings with solid outline colors. | `src/app/(auth)/auth/page.tsx`, `src/components/landing/ConsultForm.tsx`, `src/components/ui/3d-adaptive-navigation-bar.tsx` | Improves 1.4.3, 1.4.11, and 2.4.13 coverage on the most-used interactive forms. |
 | Several alternate themes paired light primaries with white foreground text. | Retune `--primary-foreground` and `--sidebar-primary-foreground` to dark neutrals where needed. | `src/styles/theme/base.css`, `src/styles/theme/variants.css` | Prevents alternate-theme button text regressions in dark, midnight, gilded, and rose themes. |
 | Focus ring tokens blended into their themed canvases. | Use lighter forest focus rings and darker warm-theme focus rings. | `src/styles/theme/variants.css` | Returns themed focus indicators to >= 3:1 non-text contrast. |
-| Burnt-orange and maroon reuse a single foreground/ring value across incompatible surfaces. | Introduce page-surface, card-surface, and dual-tone focus tokens instead of more one-off overrides. | `src/styles/theme/variants.css` | Removes the last high-impact AA failures on those two alternate themes. |
+| Burnt-orange and maroon sit too close to the broader warm-theme family in perceived character. | Separate them by lightness and hue character first: keep burnt-orange as collegiate copper and push maroon cooler/deeper instead of sharing the same cream-to-warm-neutral envelope. | `src/styles/theme/variants.css`, `src/styles/theme/public-profile.css` | Improves theme distinction without reopening current AA token coverage. |
 | Core border/input tokens are too light to define component boundaries consistently. | Run a dedicated border-token sweep or add component-level boundary tokens where shadows currently do the work. | `src/styles/theme/base.css`, `src/styles/theme/variants.css`, core input/tab/card primitives | Reduces broad 1.4.11 exposure across inputs, pills, cards, and segmented controls. |
 
 ## Component Dependency Graph
@@ -83,7 +83,7 @@ flowchart LR
   A --> A2[Ring token sweep]
   B --> B1[Hero and pricing gradients]
   B --> B2[Auth, consult, and nav focus]
-  C --> C1[Burnt-orange and maroon re-architecture]
+  C --> C1[Warm-family separation]
   C --> C2[Global border/input token sweep]
 ```
 

@@ -1,6 +1,11 @@
 {
   "version": 1,
   "skills": {
+    "color-expert": {
+      "source": "meodai/skill.color-expert",
+      "sourceType": "github",
+      "computedHash": "dcd6c55fc5244d9008618ca6690be1e4bccb8a04765a65a4646649c5fdacd65a"
+    },
     "emil-design-eng": {
       "source": "emilkowalski/skill",
       "sourceType": "github",
