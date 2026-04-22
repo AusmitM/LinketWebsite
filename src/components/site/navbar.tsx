@@ -101,6 +101,8 @@ const NOTIFICATIONS_LAST_READ_STORAGE_KEY_PREFIX =
   "linket:dashboard-notifications:last-read-at";
 const NOTIFICATIONS_OPENED_AT_STORAGE_KEY_PREFIX =
   "linket:dashboard-notifications:opened-at";
+const NOTIFICATIONS_DISMISSED_STORAGE_KEY_PREFIX =
+  "linket:dashboard-notifications:dismissed";
 const NOTIFICATIONS_INBOX_RETENTION_MS = 3 * 24 * 60 * 60 * 1000;
 
 function toUserLite(
@@ -168,6 +170,9 @@ export function Navbar() {
   const [notificationsOpenedAtById, setNotificationsOpenedAtById] = useState<
     Record<string, number>
   >({});
+  const [notificationsDismissedById, setNotificationsDismissedById] = useState<
+    Record<string, string>
+  >({});
   const notificationsButtonRef = useRef<HTMLButtonElement | null>(null);
   const siteOrigin = getSiteOrigin();
 
@@ -204,6 +209,9 @@ export function Navbar() {
     : null;
   const notificationsOpenedStorageKey = user?.id
     ? `${NOTIFICATIONS_OPENED_AT_STORAGE_KEY_PREFIX}:${user.id}`
+    : null;
+  const notificationsDismissedStorageKey = user?.id
+    ? `${NOTIFICATIONS_DISMISSED_STORAGE_KEY_PREFIX}:${user.id}`
     : null;
 
   useEffect(() => {
@@ -372,6 +380,23 @@ export function Navbar() {
   }, [notificationsOpenedStorageKey, shouldShowNotifications]);
 
   useEffect(() => {
+    if (!shouldShowNotifications || !notificationsDismissedStorageKey) {
+      setNotificationsDismissedById({});
+      return;
+    }
+
+    const rawValue = window.localStorage.getItem(notificationsDismissedStorageKey);
+    if (!rawValue) {
+      setNotificationsDismissedById({});
+      return;
+    }
+
+    setNotificationsDismissedById(
+      safeParseNotificationDismissedAtMap(rawValue)
+    );
+  }, [notificationsDismissedStorageKey, shouldShowNotifications]);
+
+  useEffect(() => {
     if (!shouldShowNotifications || !user?.id) {
       setNotifications([]);
       setNotificationsLoading(false);
@@ -479,17 +504,42 @@ export function Navbar() {
     });
   }, [notifications, notificationsOpenedStorageKey]);
 
+  const dismissNotification = useCallback(
+    (notification: DashboardNotificationItem) => {
+      if (!notificationsDismissedStorageKey) return;
+
+      setNotificationsDismissedById((previous) => {
+        if (previous[notification.id] === notification.updatedAt) {
+          return previous;
+        }
+        const next = {
+          ...previous,
+          [notification.id]: notification.updatedAt,
+        };
+        window.localStorage.setItem(
+          notificationsDismissedStorageKey,
+          JSON.stringify(next)
+        );
+        return next;
+      });
+    },
+    [notificationsDismissedStorageKey]
+  );
+
   const notificationsInboxItems = useMemo(() => {
     const now = Date.now();
     return notifications.filter((notification) => {
+      if (notificationsDismissedById[notification.id] === notification.updatedAt) {
+        return false;
+      }
       const openedAt = notificationsOpenedAtById[notification.id];
       if (!Number.isFinite(openedAt)) return true;
       return now - openedAt <= NOTIFICATIONS_INBOX_RETENTION_MS;
     });
-  }, [notifications, notificationsOpenedAtById]);
+  }, [notifications, notificationsDismissedById, notificationsOpenedAtById]);
 
   const unreadNotificationsCount = useMemo(() => {
-    return notifications.reduce((count, notification) => {
+    return notificationsInboxItems.reduce((count, notification) => {
       const createdAt = Date.parse(notification.createdAt);
       if (!Number.isFinite(createdAt)) return count;
       if (notificationsLastReadAt === null || createdAt > notificationsLastReadAt) {
@@ -497,7 +547,7 @@ export function Navbar() {
       }
       return count;
     }, 0);
-  }, [notifications, notificationsLastReadAt]);
+  }, [notificationsInboxItems, notificationsLastReadAt]);
 
   const visibleNotificationsBadgeCount = notificationsOpen
     ? 0
@@ -1354,13 +1404,26 @@ export function Navbar() {
                       getNotificationToneClass(notification.severity)
                     )}
                   >
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="text-sm font-semibold">{notification.title}</p>
-                      <span className="text-[11px] font-medium opacity-80">
-                        {formatNotificationTime(notification.createdAt)}
-                      </span>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold">
+                          {notification.title}
+                        </p>
+                        <span className="mt-0.5 block text-[11px] font-medium opacity-80">
+                          {formatNotificationTime(notification.createdAt)}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => dismissNotification(notification)}
+                        className="shrink-0 rounded-full border border-current/20 p-1 opacity-70 transition hover:opacity-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]"
+                        aria-label={`Dismiss ${notification.title} notification`}
+                        title="Dismiss notification"
+                      >
+                        <X className="h-3.5 w-3.5" aria-hidden />
+                      </button>
                     </div>
-                    <p className="mt-1 text-xs leading-relaxed opacity-90">
+                    <p className="mt-2 text-xs leading-relaxed opacity-90">
                       {notification.message}
                     </p>
                   </article>
@@ -1530,6 +1593,19 @@ function safeParseNotificationOpenedAtMap(value: string): Record<string, number>
     const entries = Object.entries(parsed as Record<string, unknown>).filter(
       ([, timestamp]) => Number.isFinite(timestamp)
     ) as Array<[string, number]>;
+    return Object.fromEntries(entries);
+  } catch {
+    return {};
+  }
+}
+
+function safeParseNotificationDismissedAtMap(value: string): Record<string, string> {
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    if (!parsed || typeof parsed !== "object") return {};
+    const entries = Object.entries(parsed as Record<string, unknown>).filter(
+      ([, timestamp]) => typeof timestamp === "string" && timestamp.length > 0
+    ) as Array<[string, string]>;
     return Object.fromEntries(entries);
   } catch {
     return {};

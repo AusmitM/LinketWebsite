@@ -80,6 +80,7 @@ export async function GET(request: Request) {
     message: item.message,
     severity: item.severity,
     createdAt: item.created_at,
+    updatedAt: item.updated_at,
   }));
 
   return NextResponse.json({

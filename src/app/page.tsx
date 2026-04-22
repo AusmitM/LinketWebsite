@@ -858,10 +858,10 @@ function ExperienceSection() {
           <div>
             <p className="landing-serif text-[1.9rem] font-normal tracking-[-0.03em] sm:text-4xl">
               <span className="text-white/80">
-                Generate, tweak, and deploy Linket hardware{" "}
+                Work with us to design custom made Linkets for your{" "}
               </span>
               <span className="bg-gradient-to-r from-[#f8d058] via-[#f8b878] to-[#58c0e0] bg-clip-text text-transparent">
-                10x faster
+                team
               </span>
             </p>
             <p className="mt-4 text-sm leading-7 text-white/70 sm:text-base sm:leading-8">

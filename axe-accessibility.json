@@ -2933,7 +2933,7 @@
             "all": [],
             "none": [],
             "impact": "serious",
-            "html": "<span class=\"text-white/80\">Generate, tweak, and deploy Linket hardware<!-- --> </span>",
+            "html": "<span class=\"text-white/80\">Work with us to design custom made Linkets for your<!-- --> </span>",
             "target": [
               ".sm\\:text-4xl.text-3xl > .text-white\\/80"
             ],
@@ -2952,7 +2952,7 @@
                 },
                 "relatedNodes": [
                   {
-                    "html": "<span class=\"bg-gradient-to-r from-[#ff9776] via-[#ffd27f] to-[#7dd3fc] bg-clip-text text-transparent\">10x faster</span>",
+                    "html": "<span class=\"bg-gradient-to-r from-[#ff9776] via-[#ffd27f] to-[#7dd3fc] bg-clip-text text-transparent\">team</span>",
                     "target": [
                       ".bg-clip-text.text-transparent.bg-gradient-to-r"
                     ]
@@ -2965,7 +2965,7 @@
             "all": [],
             "none": [],
             "impact": "serious",
-            "html": "<span class=\"bg-gradient-to-r from-[#ff9776] via-[#ffd27f] to-[#7dd3fc] bg-clip-text text-transparent\">10x faster</span>",
+            "html": "<span class=\"bg-gradient-to-r from-[#ff9776] via-[#ffd27f] to-[#7dd3fc] bg-clip-text text-transparent\">team</span>",
             "target": [
               ".bg-clip-text.text-transparent.bg-gradient-to-r"
             ],
@@ -3496,7 +3496,7 @@
             "all": [],
             "none": [],
             "impact": "serious",
-            "html": "<p class=\"text-center text-xs text-white/50\">We reply within one business day.</p>",
+            "html": "<p class=\"text-center text-xs text-white/50\">We will get back to you as soon as possible.</p>",
             "target": [
               ".text-white\\/50.text-center.text-xs"
             ],

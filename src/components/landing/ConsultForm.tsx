@@ -198,7 +198,7 @@ export default function ConsultForm() {
         <p className="text-center text-xs text-red-200">{error}</p>
       ) : (
         <p className="text-center text-xs text-white/50">
-          We reply within one business day.
+          We will get back to you as soon as possible.
         </p>
       )}
     </form>
