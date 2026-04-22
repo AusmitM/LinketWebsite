@@ -237,7 +237,7 @@ async function loadPublicProfilePreview() {
     }
     const { account, profile } = payload;
     const previewAccount: PublicPreviewAccount = {
-      handle: account.username,
+      handle: profile.handle || account.username,
       displayName: account.display_name ?? null,
       avatarPath: account.avatar_url ?? null,
       avatarUpdatedAt: account.avatar_updated_at ?? null,
@@ -251,33 +251,6 @@ async function loadPublicProfilePreview() {
     };
   }
 }
-
-const EXPLORE_PAGES = DISCOVER_PAGES.map((page) => ({
-  title: page.label,
-  href: page.href,
-  description: page.cardDescription,
-}));
-
-// Footer link groups expose the public buying and policy pages.
-const FOOTER_LINK_GROUPS = [
-  {
-    title: "Explore",
-    links: EXPLORE_PAGES.map((page) => ({
-      label: page.title,
-      href: page.href,
-    })),
-  },
-  {
-    title: "Legal",
-    links: [
-      { label: "Privacy", href: "/privacy" },
-      { label: "Terms", href: "/terms" },
-      { label: "Security", href: "/security" },
-      { label: "Accessibility", href: "/accessibility" },
-      { label: "Warranty", href: "/warranty" },
-    ],
-  },
-];
 
 // FAQ content for the accordion + JSON-LD schema.
 function buildFaq(pricing: PublicPricingSnapshot): FaqItem[] {
@@ -412,7 +385,6 @@ export default async function Home() {
           <FAQSection items={faq} />
         </div>
       </div>
-      <LandingFooter />
       {/* Structured data for SEO. */}
       <Script id="linket-faq-schema" type="application/ld+json">
         {JSON.stringify(faqSchema)}
@@ -1069,115 +1041,5 @@ function FAQSection({ items }: { items: FaqItem[] }) {
         ))}
       </Accordion>
     </section>
-  );
-}
-
-// Footer with brand positioning, legal links, and CTA.
-function LandingFooter() {
-  const currentYear = new Date().getFullYear();
-
-  return (
-    <footer className="landing-alt-font relative overflow-hidden border-t border-white/40 bg-[#050816] text-white">
-      <div
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.25),_rgba(5,8,22,0))]"
-        aria-hidden
-      />
-      <div className="relative mx-auto max-w-6xl px-3 py-10 sm:px-6 sm:py-16">
-        <div className="grid gap-7 sm:gap-12 lg:grid-cols-[1.3fr_1fr_1fr]">
-          {/* Brand block + mission copy. */}
-          <div className="space-y-6 sm:space-y-8">
-            <div className="flex items-center gap-3 text-lg font-semibold sm:flex-row sm:items-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10">
-                <Image
-                  src={brand.logomark}
-                  alt={`${brand.name} mark`}
-                  width={32}
-                  height={32}
-                  className="h-8 w-8"
-                />
-              </div>
-              <div>
-                <p className="text-xs uppercase tracking-[0.24em] text-white/70 sm:text-sm sm:tracking-[0.4em]">
-                  {brand.name}
-                </p>
-                <p className="text-xl font-bold text-white sm:text-2xl">
-                  Stay Connected.
-                </p>
-              </div>
-            </div>
-            <p className="mt-6 text-sm text-white/70">
-              Linket turns every tap into a live microsite, lead capture, and
-              follow-up customers actually remember. Built for students,
-              creators, and field teams who want intros that stick.
-            </p>
-          </div>
-          <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)] gap-5 lg:contents">
-            {/* Legal link column. */}
-            <div className="space-y-6">
-              {FOOTER_LINK_GROUPS.map((group) => (
-                <div key={group.title} className="space-y-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/60 sm:tracking-[0.35em]">
-                    {group.title}
-                  </p>
-                  <ul className="space-y-2">
-                    {group.links.map((link) => (
-                      <li key={link.label}>
-                        <Link
-                          href={link.href}
-                          className="transition hover:text-white"
-                        >
-                          {link.label}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-            {/* Contact block. */}
-            <div className="space-y-6 text-sm text-white/70">
-              <div className="space-y-2">
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/60 sm:tracking-[0.35em]">
-                  Contact
-                </p>
-                <p className="break-words text-white/80">hello@linketconnect.com</p>
-                <p className="text-white/60">
-                  400 Bizzell St, College Station, TX
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-        {/* Footer bottom row with legal shortcuts. */}
-        <div className="mt-10 flex flex-col gap-4 border-t border-white/10 pt-6 text-xs text-white/60 sm:mt-12 sm:flex-row sm:items-center sm:justify-between">
-          <p>
-            {"\u00a9"} {currentYear} {brand.name}. All rights reserved.
-          </p>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-2 sm:flex sm:flex-wrap sm:items-center sm:gap-4">
-            <Link href="/privacy" className="transition hover:text-white">
-              Privacy
-            </Link>
-            <Link href="/terms" className="transition hover:text-white">
-              Terms
-            </Link>
-            <Link href="/security" className="transition hover:text-white">
-              Security
-            </Link>
-            <Link
-              href="/warranty"
-              className="transition hover:text-white"
-            >
-              Warranty
-            </Link>
-            <Link
-              href="mailto:hello@linketconnect.com"
-              className="transition hover:text-white"
-            >
-              Contact sales
-            </Link>
-          </div>
-        </div>
-      </div>
-    </footer>
   );
 }

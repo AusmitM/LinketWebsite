@@ -1,7 +1,13 @@
 import type { Metadata } from "next";
 
-import { LEGAL_PAGE_ACTIONS } from "@/components/site/legal-page-actions";
-import { MarketingPage, PageSection } from "@/components/site/marketing-page";
+import {
+  LegalBulletList,
+  LegalCallout,
+  LegalCardGrid,
+  LegalPage,
+  LegalSection,
+  LegalStepList,
+} from "@/components/site/legal-page";
 
 export const metadata: Metadata = {
   title: "Warranty",
@@ -9,120 +15,167 @@ export const metadata: Metadata = {
     "Official Linket Connect warranty coverage, exclusions, and claim process.",
 };
 
-const COVERAGE_WINDOWS = [
+const WARRANTY_STATS = [
   {
     label: "Arrives Right",
-    duration: "30 days",
-    details:
-      "Covers devices that arrive non-functional, incorrect, or with manufacturing defects.",
+    value: "30 days",
+    detail:
+      "Items that arrive non-functional, incorrect, or clearly defective can be reported during the first 30 days after delivery.",
   },
   {
-    label: "Functionality (Individuals)",
-    duration: "6 months",
-    details:
-      "Covers NFC chip failure and structural failure during normal keychain use.",
+    label: "Individuals",
+    value: "6 months",
+    detail:
+      "Individual functionality coverage applies to eligible failures during normal day-to-day keychain use.",
   },
   {
-    label: "Functionality (Businesses)",
-    duration: "12 months",
-    details:
-      "Includes individual functionality coverage plus batch defect handling for affected units.",
+    label: "Businesses",
+    value: "12 months",
+    detail:
+      "Business coverage extends the functionality window and helps address verified batch defects affecting multiple units.",
   },
 ] as const;
 
+const WARRANTY_FACTS = [
+  { label: "Support", value: "support@linketconnect.com", href: "mailto:support@linketconnect.com" },
+  { label: "Covers", value: "Defects in materials and workmanship" },
+  { label: "Resolution", value: "Full Linket replacement after approval" },
+] as const;
+
+const COVERAGE_WINDOWS = [
+  {
+    eyebrow: "Arrival protection",
+    title: "30-day arrives-right window",
+    description:
+      "Use this if a device shows up incorrect, damaged from manufacturing, or unable to function as intended right away.",
+  },
+  {
+    eyebrow: "Individual use",
+    title: "6-month functionality coverage",
+    description:
+      "This covers eligible NFC chip failure or structural failure that happens during normal personal use of the product.",
+  },
+  {
+    eyebrow: "Business orders",
+    title: "12-month business coverage",
+    description:
+      "Business customers receive extended functionality coverage plus support when a verified defect affects a broader group of units.",
+  },
+] as const;
+
+const COVERED_ITEMS = [
+  "Manufacturing defects that prevent the Linket from functioning correctly.",
+  "NFC chip failure under normal usage conditions.",
+  "Structural failure that happens during ordinary keychain use and was not caused by misuse or modification.",
+] as const;
+
 const EXCLUSIONS = [
-  "Lost items.",
-  "Cosmetic wear, including scratches, fading, and scuffs.",
+  "Lost items or missing units after delivery.",
+  "Cosmetic wear such as scratches, fading, or surface scuffs.",
   "Water damage or prolonged immersion.",
   "Heat damage, including dashboard or flame exposure.",
   "Crushing, prying, drilling, heavy impact, or unauthorized modifications.",
 ] as const;
 
 const CLAIM_STEPS = [
-  "Submit the order number and clear photo or short video of the issue.",
-  "Linket Support confirms eligibility within 2 business days.",
-  "Approved replacements ship with standard shipping (expedited options are available).",
+  "Send your order number together with a clear photo or short video that shows the issue.",
+  "The Linket team reviews the claim and confirms eligibility, usually within two business days.",
+  "If the claim is approved, we replace the entire Linket unit and ship it at the customer's expense.",
+] as const;
+
+const REPLACEMENT_DETAILS = [
+  {
+    eyebrow: "Resolution",
+    title: "Full Linket replacement",
+    description:
+      "Approved warranty claims are resolved by replacing the entire Linket itself rather than repairing a component or issuing a cash reimbursement.",
+  },
+  {
+    eyebrow: "Shipping",
+    title: "Customer-paid replacement shipping",
+    description:
+      "When a warranty replacement is approved, shipping for the replacement unit is paid by the customer.",
+  },
+  {
+    eyebrow: "Limit",
+    title: "One replacement per user per month",
+    description:
+      "Warranty replacements are limited to one approved replacement per user during any single calendar month.",
+  },
 ] as const;
 
 export default function WarrantyPage() {
   return (
-    <MarketingPage
-      kicker="Legal"
+    <LegalPage
+      currentPath="/warranty"
       title="Linket warranty policy"
-      subtitle="Formal coverage terms for Linket hardware and related replacement support."
-      actions={LEGAL_PAGE_ACTIONS}
+      subtitle="Coverage details for Linket hardware, what is excluded, and how to file a replacement claim when something goes wrong."
+      summary="The warranty is built to cover real product defects, not general wear or accidental damage. If a Linket arrives wrong or fails during normal use inside the covered window, we review the issue and, when approved, replace the entire Linket with shipping charged to the customer."
+      lastUpdated="April 22, 2026"
+      supportLabel="Email support"
+      supportHref="mailto:support@linketconnect.com"
+      heroStats={WARRANTY_STATS}
+      facts={WARRANTY_FACTS}
     >
-      <PageSection
+      <LegalSection
         title="Coverage windows"
-        subtitle="Coverage period begins on the original delivery date."
+        subtitle="Coverage begins on the original delivery date of the order."
       >
-        <div className="grid gap-4 md:grid-cols-3">
-          {COVERAGE_WINDOWS.map((item) => (
-            <article
-              key={item.label}
-              className="rounded-2xl border border-border/60 bg-card/80 p-6"
-            >
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                {item.label}
-              </p>
-              <p className="mt-2 text-2xl font-semibold text-foreground">
-                {item.duration}
-              </p>
-              <p className="mt-3 text-sm text-muted-foreground">{item.details}</p>
-            </article>
-          ))}
+        <LegalCardGrid items={COVERAGE_WINDOWS} columns="three" />
+      </LegalSection>
+
+      <LegalSection
+        title="What is covered and what is not"
+        subtitle="Warranty coverage is limited to defects in materials and workmanship during normal use."
+      >
+        <div className="grid gap-4 md:grid-cols-2">
+          <article className="rounded-[24px] border border-slate-200 bg-[#fffdfa] p-5 shadow-[0_16px_36px_rgba(15,23,42,0.05)]">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#e3a553]">
+              Covered
+            </p>
+            <h3 className="mt-2 text-base font-semibold text-slate-900">
+              Eligible defects
+            </h3>
+            <div className="mt-4">
+              <LegalBulletList items={COVERED_ITEMS} />
+            </div>
+          </article>
+          <article className="rounded-[24px] border border-slate-200 bg-[#fffdfa] p-5 shadow-[0_16px_36px_rgba(15,23,42,0.05)]">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#34afcf]">
+              Not covered
+            </p>
+            <h3 className="mt-2 text-base font-semibold text-slate-900">
+              Exclusions
+            </h3>
+            <div className="mt-4">
+              <LegalBulletList items={EXCLUSIONS} />
+            </div>
+          </article>
         </div>
-      </PageSection>
+      </LegalSection>
 
-      <PageSection title="What is covered">
-        <div className="rounded-2xl border border-border/60 bg-card/80 p-6 text-sm text-muted-foreground">
-          <p>
-            Linket warranty coverage applies to defects in materials and
-            workmanship under normal use. Approved claims are resolved with a
-            replacement unit.
-          </p>
-          <p className="mt-3">
-            Individual claims are limited to one replacement per qualifying
-            device. Business claims may include replacement of affected units in
-            a verified defective batch.
-          </p>
-        </div>
-      </PageSection>
-
-      <PageSection title="Exclusions">
-        <ul className="space-y-2 rounded-2xl border border-border/60 bg-card/80 p-6 text-sm text-muted-foreground">
-          {EXCLUSIONS.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
-      </PageSection>
-
-      <PageSection
+      <LegalSection
         title="How to file a claim"
-        subtitle="Claims are reviewed in the order received."
+        subtitle="Claims move faster when the order number and issue evidence are included from the start."
       >
-        <ol className="space-y-2 rounded-2xl border border-border/60 bg-card/80 p-6 text-sm text-muted-foreground">
-          {CLAIM_STEPS.map((step) => (
-            <li key={step}>{step}</li>
-          ))}
-        </ol>
-      </PageSection>
+        <LegalStepList items={CLAIM_STEPS} />
+      </LegalSection>
 
-      <PageSection title="Questions">
-        <div className="rounded-2xl border border-border/60 bg-card/80 p-6 text-sm text-muted-foreground">
-          For warranty support, email{" "}
-          <span className="font-medium text-foreground">
-            support@linketconnect.com
-          </span>{" "}
-          and include your order number.
-        </div>
-      </PageSection>
+      <LegalSection
+        title="Replacement details"
+        subtitle="Here is how approved claims are typically resolved once eligibility is confirmed."
+      >
+        <LegalCardGrid items={REPLACEMENT_DETAILS} columns="three" />
+      </LegalSection>
 
-      <PageSection title="Last updated">
-        <div className="rounded-2xl border border-border/60 bg-card/80 p-6 text-sm text-muted-foreground">
-          February 10, 2026
-        </div>
-      </PageSection>
-    </MarketingPage>
+      <LegalSection title="Warranty support">
+        <LegalCallout
+          title="Need help with a hardware issue?"
+          description="Email support@linketconnect.com and include your order number, the affected item, and a clear photo or short video of the problem. Approved claims receive a full Linket replacement, with shipping paid by the customer."
+          href="mailto:support@linketconnect.com"
+          actionLabel="Contact support"
+        />
+      </LegalSection>
+    </LegalPage>
   );
 }

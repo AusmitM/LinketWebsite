@@ -56,7 +56,7 @@ export default function PublicProfilePreview({
     path: string;
     url: string | null;
   } | null>(null);
-  const publicHandle = account.handle || profile.handle || handle;
+  const publicHandle = profile.handle || account.handle || handle;
   const displayName = profile.name || account.displayName || publicHandle;
   const resolvedTheme = normalizeThemeName(themeOverride ?? profile.theme, "autumn");
   const isDark = isDarkTheme(resolvedTheme);

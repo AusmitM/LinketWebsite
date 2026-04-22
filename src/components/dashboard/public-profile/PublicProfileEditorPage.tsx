@@ -1568,10 +1568,6 @@ function EditorPanel({
   const canReorderLinks =
     linkSortMode === "manual" && linkSearchQuery.trim().length === 0;
   const hasLinkMatches = sortedFilteredLinks.length > 0;
-  const activeOverrideLink = useMemo(
-    () => draft?.links.find((link) => link.isOverride) ?? null,
-    [draft?.links]
-  );
   const editorLinkIds = useMemo(
     () => sortedFilteredLinks.map((link) => link.id),
     [sortedFilteredLinks]
@@ -1817,27 +1813,6 @@ function EditorPanel({
             </div>
           </CardHeader>
         <CardContent className="space-y-3">
-          <div
-            data-tour="profile-override-link"
-            className="rounded-xl border border-primary/30 bg-primary/5 px-3 py-3"
-          >
-            <p className="text-sm font-semibold text-foreground">
-              Direct-to-link mode
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Turn this on for one link to make your Linket URL open that
-              destination directly instead of your public profile page.
-            </p>
-            <p className="mt-2 text-[11px] text-muted-foreground">
-              Consequence: scans bypass your profile page and open the selected
-              link directly.
-            </p>
-            <p className="mt-2 text-xs text-foreground">
-              {activeOverrideLink
-                ? `Currently active: ${activeOverrideLink.label || "Selected link"}`
-                : "Currently active: none (Linket URL opens your public profile)."}
-            </p>
-          </div>
           <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_160px]">
             <Input
               value={linkSearchQuery}
@@ -1875,12 +1850,13 @@ function EditorPanel({
               strategy={verticalListSortingStrategy}
             >
               <div className="space-y-3">
-                {sortedFilteredLinks.map((link) => (
+                {sortedFilteredLinks.map((link, index) => (
                   <EditorLinkItem
                     key={link.id}
                     link={link}
                     canReorderLinks={canReorderLinks}
                     draggingLinkId={draggingLinkId}
+                    showOverrideTourTarget={index === 0}
                     onUpdateLink={onUpdateLink}
                     onSetOverrideLink={onSetOverrideLink}
                     onEditLink={onEditLink}
@@ -1967,6 +1943,7 @@ function EditorLinkItem({
   link,
   canReorderLinks,
   draggingLinkId,
+  showOverrideTourTarget,
   onUpdateLink,
   onSetOverrideLink,
   onEditLink,
@@ -1976,6 +1953,7 @@ function EditorLinkItem({
   link: LinkItem;
   canReorderLinks: boolean;
   draggingLinkId: string | null;
+  showOverrideTourTarget?: boolean;
   onUpdateLink: (linkId: string, patch: Partial<LinkItem>) => void;
   onSetOverrideLink: (linkId: string, enabled: boolean) => void;
   onEditLink: (linkId: string) => void;
@@ -2024,7 +2002,10 @@ function EditorLinkItem({
             className="h-9 text-sm"
             onValueChange={(url) => onUpdateLink(link.id, { url })}
           />
-          <div className="mt-1 flex items-start gap-2 rounded-md border border-border/50 bg-muted/20 px-2 py-2">
+          <div
+            data-tour={showOverrideTourTarget ? "profile-override-link" : undefined}
+            className="mt-1 flex items-start gap-2 rounded-md border border-border/50 bg-muted/20 px-2 py-2"
+          >
             <DirectLinkStarToggle
               checked={link.isOverride}
               onPressedChange={(value) => onSetOverrideLink(link.id, value)}

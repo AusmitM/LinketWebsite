@@ -40,7 +40,7 @@ import { brand } from "@/config/brand";
 import { AdaptiveNavPill } from "@/components/ui/3d-adaptive-navigation-bar";
 import { isPublicProfilePathname } from "@/lib/routing";
 import { toast } from "@/components/system/toaster";
-import { DISCOVER_PAGES } from "@/config/discover-pages";
+import { LEGAL_PAGE_LINKS } from "@/components/site/legal-page-actions";
 import { getSiteOrigin } from "@/lib/site-url";
 import type { DashboardNotificationItem } from "@/lib/dashboard-notifications";
 
@@ -79,13 +79,6 @@ const LANDING_LINKS = [
 ] as const;
 
 type LandingSectionId = (typeof LANDING_LINKS)[number]["id"];
-
-const MARKETING_LINKS: Array<{ href: string; label: string }> = DISCOVER_PAGES.map(
-  (page) => ({
-    href: page.href,
-    label: page.navLabel,
-  })
-);
 
 const PROFILE_SECTIONS = [
   { id: "profile", label: "Profile", icon: User },
@@ -194,13 +187,14 @@ export function Navbar() {
   const isPublicProfile = isPublicProfilePathname(pathname);
   const isPublic = !isDashboard;
   const isLandingPage = pathname === "/";
+  const isLegalPage = LEGAL_PAGE_LINKS.some((page) => page.href === pathname);
   const isAuthPage =
     pathname?.startsWith("/auth") ||
     pathname?.startsWith("/forgot-password") ||
     pathname?.startsWith("/reset-password");
   const isProfileEditor = pathname?.startsWith("/dashboard/profiles") ?? false;
   const isMarketingPage =
-    isPublic && !isLandingPage && !isPublicProfile && !isAuthPage;
+    isPublic && !isLandingPage && !isPublicProfile && !isAuthPage && !isLegalPage;
   const userNeedsEmailVerification =
     Boolean(user?.email) && !Boolean(user?.emailConfirmedAt);
   const shouldShowNotifications = Boolean(isDashboard && user);
@@ -853,7 +847,7 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [isPublic]);
 
-  if (isPublicProfile) {
+  if (isPublicProfile || isLegalPage) {
     return null;
   }
 
@@ -865,7 +859,7 @@ export function Navbar() {
 
   const headerClassName = cn(
     "top-0 z-50 w-full border-b transition-[background-color,border-color,color,backdrop-filter] duration-200 ease-out",
-    isDashboard
+    isDashboard || isMarketingPage
       ? "sticky border-border/60 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60"
       : "fixed border-white/70 bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60",
     overlayMode &&
@@ -994,26 +988,6 @@ export function Navbar() {
       />
     </div>
   );
-
-  const marketingNav = MARKETING_LINKS.length ? (
-    <div className="flex w-full items-center justify-center gap-6 px-4">
-      {MARKETING_LINKS.map((link) => {
-        const isActive = pathname === link.href;
-        return (
-          <Link
-            key={link.href}
-            href={link.href}
-            className={cn(
-              "text-sm font-semibold transition-colors",
-              isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            {link.label}
-          </Link>
-        );
-      })}
-    </div>
-  ) : null;
 
   const loginButton = user ? (
     <Link
@@ -1475,7 +1449,6 @@ export function Navbar() {
           aria-label="Primary"
         >
           {isLandingPage ? desktopLinks : null}
-          {isMarketingPage ? marketingNav : null}
         </div>
         </div>
         <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
@@ -1558,20 +1531,6 @@ export function Navbar() {
                       </button>
                     );
                   })}
-                </div>
-              ) : MARKETING_LINKS.length ? (
-                <div className="grid gap-2">
-                  {MARKETING_LINKS.map((link) => (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      onClick={() => setMobileOpen(false)}
-                      className="flex items-center justify-between rounded-[22px] border border-slate-200 bg-white px-4 py-3.5 text-sm font-semibold text-foreground shadow-[0_10px_30px_rgba(15,23,42,0.08)] transition-[transform,border-color,background-color] duration-300 hover:-translate-y-0.5 hover:bg-slate-50"
-                    >
-                      <span>{link.label}</span>
-                      <ArrowUpRight className="h-4 w-4" aria-hidden />
-                    </Link>
-                  ))}
                 </div>
               ) : null}
               <div className="grid grid-cols-2 gap-2.5">
