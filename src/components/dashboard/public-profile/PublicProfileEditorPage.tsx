@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
   type FocusEvent,
+  type KeyboardEvent,
 } from "react";
 import {
   DndContext,
@@ -1960,6 +1961,11 @@ function EditorLinkItem({
   onToggleLink: (linkId: string) => void;
   onRemoveLink: (linkId: string) => void;
 }) {
+  const handleCommitOnEnter = useCallback((event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key !== "Enter" || event.nativeEvent.isComposing) return;
+    event.preventDefault();
+    event.currentTarget.blur();
+  }, []);
   const {
     attributes,
     listeners,
@@ -1994,6 +2000,7 @@ function EditorLinkItem({
             onChange={(event) =>
               onUpdateLink(link.id, { label: event.target.value })
             }
+            onKeyDown={handleCommitOnEnter}
             className="h-9 text-left text-sm"
           />
           <LinkUrlInput
@@ -2001,6 +2008,7 @@ function EditorLinkItem({
             placeholder="www.website.com"
             className="h-9 text-sm"
             onValueChange={(url) => onUpdateLink(link.id, { url })}
+            onKeyDown={handleCommitOnEnter}
           />
           <div
             data-tour={showOverrideTourTarget ? "profile-override-link" : undefined}

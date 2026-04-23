@@ -1,12 +1,12 @@
 "use client";
 
+import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ChevronLeft,
   ChevronRight,
   Hexagon,
   Rose,
-  Shield,
   Sun,
   Moon,
   MoonStar,
@@ -23,6 +23,7 @@ import {
 } from "@/lib/dashboard-theme-pending";
 import { FREE_THEME_NAMES, sanitizeThemeForPlan } from "@/lib/plan-access";
 import type { ThemeName } from "@/lib/themes";
+import { cn } from "@/lib/utils";
 import {
   useDashboardPlanAccess,
   useDashboardUser,
@@ -42,24 +43,34 @@ const ORDER: ThemeName[] = [
   "maroon",
 ];
 
-const BullHead = ({ className }: { className?: string }) => (
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className={className}
+const HookemLonghornIcon = ({ className }: { className?: string }) => (
+  <Image
+    src="/logos/hookem-theme-icon.svg"
+    alt=""
+    width={24}
+    height={24}
     aria-hidden="true"
-  >
-    <path d="M4 7c2-3 6-3 8 0" />
-    <path d="M20 7c-2-3-6-3-8 0" />
-    <path d="M6 9c0 5 2.5 8 6 8s6-3 6-8" />
-    <path d="M9 12h.01" />
-    <path d="M15 12h.01" />
-  </svg>
+    className={cn("object-contain", className)}
+  />
 );
+
+const AggieWolfIcon = ({ className }: { className?: string }) => (
+  <span
+    aria-hidden="true"
+    className={cn("block bg-[#500000]", className)}
+    style={{
+      WebkitMaskImage: "url('/logos/aggie-theme-icon.png')",
+      maskImage: "url('/logos/aggie-theme-icon.png')",
+      WebkitMaskRepeat: "no-repeat",
+      maskRepeat: "no-repeat",
+      WebkitMaskPosition: "center",
+      maskPosition: "center",
+      WebkitMaskSize: "contain",
+      maskSize: "contain",
+    }}
+  />
+);
+
 const ICONS: Record<ThemeName, React.ComponentType<{ className?: string }>> = {
   light: Sun,
   dark: Moon,
@@ -70,8 +81,8 @@ const ICONS: Record<ThemeName, React.ComponentType<{ className?: string }>> = {
   rose: Rose,
   autumn: Leaf,
   honey: Hexagon,
-  "burnt-orange": BullHead,
-  maroon: Shield,
+  "burnt-orange": HookemLonghornIcon,
+  maroon: AggieWolfIcon,
 };
 
 const LABELS: Record<ThemeName, string> = {
@@ -201,6 +212,22 @@ export default function ThemeToggle({ showLabel = false }: { showLabel?: boolean
   const current = availableThemes[index] || availableThemes[0];
   const Icon = ICONS[current];
   const label = LABELS[current];
+  const compactIconClassName =
+    current === "burnt-orange"
+      ? "h-6 w-8"
+      : current === "maroon"
+        ? "h-8 w-8"
+        : "h-5 w-5";
+  const labelIconClassName = cn(
+    "shrink-0",
+    current === "burnt-orange"
+      ? "h-5 w-10 -mr-2 sm:h-6 sm:w-12 sm:-mr-3"
+      : current === "maroon"
+        ? "h-7 w-7 -mr-1 sm:h-8 sm:w-8 sm:-mr-1.5"
+        : "h-5 w-5 sm:h-6 sm:w-6"
+  );
+  const labelToggleArrowClassName =
+    "h-7 w-5 justify-self-center rounded-lg sm:h-8 sm:w-6";
 
   if (!mounted) {
     if (!showLabel) {
@@ -223,13 +250,13 @@ export default function ThemeToggle({ showLabel = false }: { showLabel?: boolean
           variant="ghost"
           size="icon"
           aria-label="Previous theme"
-          className="h-7 w-full rounded-lg sm:h-8"
+          className={labelToggleArrowClassName}
           disabled
         >
           <ChevronLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
         </Button>
         <div className="flex min-w-0 items-center justify-center gap-1.5 rounded-lg px-1 text-xs text-muted-foreground sm:gap-2 sm:px-2">
-          <Sun className="h-4 w-4 shrink-0" />
+          <Sun className="h-5 w-5 shrink-0 sm:h-6 sm:w-6" />
           <span className="font-medium whitespace-nowrap">Theme</span>
         </div>
         <Button
@@ -237,7 +264,7 @@ export default function ThemeToggle({ showLabel = false }: { showLabel?: boolean
           variant="ghost"
           size="icon"
           aria-label="Next theme"
-          className="h-7 w-full rounded-lg sm:h-8"
+          className={labelToggleArrowClassName}
           disabled
         >
           <ChevronRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
@@ -255,7 +282,7 @@ export default function ThemeToggle({ showLabel = false }: { showLabel?: boolean
         onClick={next}
         title={`Theme: ${label}`}
       >
-        <Icon className="h-5 w-5" />
+        <Icon className={compactIconClassName} />
       </Button>
     );
   }
@@ -268,7 +295,7 @@ export default function ThemeToggle({ showLabel = false }: { showLabel?: boolean
         size="icon"
         onClick={previous}
         aria-label="Previous theme"
-        className="h-7 w-full rounded-lg sm:h-8"
+        className={labelToggleArrowClassName}
       >
         <ChevronLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
       </Button>
@@ -279,7 +306,7 @@ export default function ThemeToggle({ showLabel = false }: { showLabel?: boolean
       >
         <div className="min-w-0 text-center">
           <div className="flex items-center justify-center gap-2">
-            <Icon className="h-4 w-4 shrink-0" />
+            <Icon className={labelIconClassName} />
             <span className="font-medium text-muted-foreground whitespace-nowrap">
               {label}
             </span>
@@ -297,7 +324,7 @@ export default function ThemeToggle({ showLabel = false }: { showLabel?: boolean
         size="icon"
         onClick={next}
         aria-label="Next theme"
-        className="h-7 w-full rounded-lg sm:h-8"
+        className={labelToggleArrowClassName}
       >
         <ChevronRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
       </Button>
