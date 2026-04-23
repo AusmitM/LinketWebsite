@@ -1,7 +1,7 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import Sidebar from "@/components/dashboard/Sidebar";
@@ -26,6 +26,7 @@ export default function DashboardAppShell({
   onboardingState: DashboardOnboardingState;
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [dashboardNavHeight, setDashboardNavHeight] = useState(64);
   const pathname = usePathname() ?? "";
   const router = useRouter();
   const { theme } = useThemeOptional();
@@ -46,6 +47,30 @@ export default function DashboardAppShell({
   const shouldHideChrome = effectiveRequiresOnboarding && isSetupRoute;
   const shouldRedirectToSetup =
     effectiveRequiresOnboarding && !isSetupRoute;
+
+  useLayoutEffect(() => {
+    const measureNavbarHeight = () => {
+      const navbar = document.querySelector<HTMLElement>(".dashboard-navbar");
+      if (!navbar) return;
+      setDashboardNavHeight(Math.round(navbar.getBoundingClientRect().height));
+    };
+
+    measureNavbarHeight();
+
+    const navbar = document.querySelector<HTMLElement>(".dashboard-navbar");
+    if (!navbar || typeof ResizeObserver === "undefined") {
+      return;
+    }
+
+    const observer = new ResizeObserver(measureNavbarHeight);
+    observer.observe(navbar);
+    window.addEventListener("resize", measureNavbarHeight);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", measureNavbarHeight);
+    };
+  }, [pathname]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -121,7 +146,7 @@ export default function DashboardAppShell({
         `theme-${theme}`,
         isDarkTheme(theme) && "dark"
       )}
-      style={{ "--dashboard-nav-height": "64px" } as CSSProperties}
+      style={{ "--dashboard-nav-height": `${dashboardNavHeight}px` } as CSSProperties}
     >
       {!shouldHideChrome ? (
         <div className="relative z-30 hidden h-[calc(100vh-var(--dashboard-nav-height))] lg:sticky lg:top-[var(--dashboard-nav-height)] lg:block">

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
+import { getLinkFaviconSrc } from "@/lib/link-favicon";
 import { sanitizePublicLinkUrl } from "@/lib/security";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
@@ -14,28 +15,6 @@ type LinksAppearance = {
   muted: string;
   hover: string;
 };
-
-function apiFavicon(u: string): string | null {
-  try {
-    const parsed = new URL(u);
-    const host = parsed.hostname.toLowerCase();
-    if (host === "instagr.am" || host.endsWith(".instagram.com") || host === "instagram.com") {
-      return "/icons/instagram-logo.png";
-    }
-    if (host.endsWith(".github.com") || host === "github.com") {
-      return "/icons/github-logo.png";
-    }
-    if (host.endsWith(".tiktok.com") || host === "tiktok.com") {
-      return "/icons/tiktok-logo.png";
-    }
-    if (host.endsWith(".youtube.com") || host === "youtube.com") {
-      return "/icons/yt-logo.png";
-    }
-    return `/api/favicon?u=${encodeURIComponent(parsed.toString())}`;
-  } catch {
-    return null;
-  }
-}
 
 function s2Favicon(u: string): string | null {
   try {
@@ -197,7 +176,7 @@ export default function PublicLinks({
               >
                 <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-[color:var(--muted)]/60">
                   <Image
-                    src={apiFavicon(link.url) || ""}
+                    src={getLinkFaviconSrc(link.url) || ""}
                     alt=""
                     width={32}
                     height={32}

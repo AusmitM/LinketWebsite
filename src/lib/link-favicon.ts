@@ -3,6 +3,17 @@ type LinkFaviconOptions = {
   darkTheme?: boolean;
 };
 
+function isZelleHost(host: string) {
+  return (
+    host === "zelle.com" ||
+    host.endsWith(".zelle.com") ||
+    host === "zellepay.com" ||
+    host.endsWith(".zellepay.com") ||
+    host === "zelle.me" ||
+    host.endsWith(".zelle.me")
+  );
+}
+
 export function getLinkFaviconSrc(
   url: string,
   { apiVersion, darkTheme = false }: LinkFaviconOptions = {}
@@ -24,6 +35,9 @@ export function getLinkFaviconSrc(
     }
     if (host.endsWith(".tiktok.com") || host === "tiktok.com") {
       return darkTheme ? "/icons/tiktok-logo-dark.png" : "/icons/tiktok-logo.png";
+    }
+    if (isZelleHost(host)) {
+      return darkTheme ? "/icons/zelle-logo-dark.svg" : "/icons/zelle-logo.svg";
     }
     if (host.endsWith(".youtube.com") || host === "youtube.com") {
       return "/icons/yt-logo.png";
