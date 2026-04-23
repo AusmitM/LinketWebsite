@@ -145,41 +145,53 @@
 }
 
 .dark {
-  --background: #121826;
-  --foreground: #f5f7ff;
-  --primary: #60a5fa;
+  --background: #0f172a;
+  --foreground: #fff7ed;
+  --primary: #58c0e0;
   --primary-foreground: #0f172a;
-  --secondary: #1f2a40;
-  --secondary-foreground: #d4e2ff;
-  --accent: #2b3c5c;
-  --accent-foreground: #f5f7ff;
+  --secondary: #7a5610;
+  --secondary-foreground: #fff7ed;
+  --accent: #9a6640;
+  --accent-foreground: #fff7ed;
   --muted: #172135;
-  --muted-foreground: #9fb0d0;
-  --card: #1a2237;
-  --card-foreground: #f5f7ff;
-  --popover: #1a2237;
-  --popover-foreground: #f5f7ff;
+  --muted-foreground: #c7d0db;
+  --card: rgba(23, 30, 47, 0.94);
+  --card-foreground: #fff7ed;
+  --popover: rgba(23, 30, 47, 0.98);
+  --popover-foreground: #fff7ed;
   --destructive: #f87171;
-  --border: #1f2b45;
-  --input: #1f2b45;
-  --ring: #60a5fa;
-  --chart-1: #60a5fa;
-  --chart-2: #f97316;
-  --chart-3: #34d399;
-  --chart-4: #facc15;
-  --chart-5: #a855f7;
-  --sidebar: #101729;
-  --sidebar-foreground: #f5f7ff;
-  --sidebar-primary: #60a5fa;
+  --border: #28344b;
+  --input: #28344b;
+  --ring: #68d8e0;
+  --chart-1: var(--brand-blue);
+  --chart-2: var(--brand-amber);
+  --chart-3: #16a34a;
+  --chart-4: var(--brand-lilac);
+  --chart-5: #8b5cf6;
+  --sidebar: #101827;
+  --sidebar-foreground: #fff7ed;
+  --sidebar-primary: var(--primary);
   --sidebar-primary-foreground: #0f172a;
-  --sidebar-accent: #18233a;
-  --sidebar-accent-foreground: #d4e2ff;
-  --sidebar-border: #1f2b45;
-  --sidebar-ring: #60a5fa;
-  --button-subtle-foreground: #dce7ff;
-  --button-subtle-foreground-hover: #f5f7ff;
-  --button-subtle-border: rgba(99, 168, 255, 0.36);
-  --button-solid-outline: rgba(191, 219, 254, 0.44);
+  --sidebar-accent: #2a1d10;
+  --sidebar-accent-foreground: #fff7ed;
+  --sidebar-border: #28344b;
+  --sidebar-ring: var(--ring);
+  --button-subtle-foreground: #fff7ed;
+  --button-subtle-foreground-hover: #baf3f7;
+  --button-subtle-border: rgba(255, 247, 237, 0.34);
+  --button-solid-outline: rgba(255, 247, 237, 0.44);
+  --premium-gradient: radial-gradient(120% 120% at 16% 0%, rgba(104, 216, 224, 0.2) 0%, transparent 60%),
+    radial-gradient(120% 120% at 84% 0%, rgba(248, 208, 88, 0.14) 0%, transparent 55%),
+    linear-gradient(180deg, #0f172a 0%, #101827 100%);
+  --premium-card-gradient: linear-gradient(180deg, rgba(24, 33, 53, 0.96) 0%, rgba(17, 24, 39, 0.92) 100%);
+  --premium-topbar-gradient: linear-gradient(90deg, rgba(15, 23, 42, 0.98) 0%, rgba(12, 18, 33, 0.95) 52%, rgba(17, 27, 42, 0.94) 100%);
+  --premium-input-gradient: linear-gradient(180deg, rgba(22, 29, 44, 0.97) 0%, rgba(15, 23, 42, 0.94) 100%);
+  --premium-button-gradient: linear-gradient(180deg, rgba(22, 29, 44, 0.97) 0%, rgba(18, 25, 39, 0.92) 100%);
+  --premium-border: rgba(104, 216, 224, 0.12);
+  --premium-shadow: 0 18px 45px -30px rgba(4, 8, 20, 0.75);
+  --premium-glow: 0 0 0 1px rgba(104, 216, 224, 0.18);
+  --premium-hairline: rgba(255, 255, 255, 0.08);
+  --premium-inset: 0 1px 0 rgba(255, 255, 255, 0.06) inset;
 }
 
 @keyframes landing-fade-up {

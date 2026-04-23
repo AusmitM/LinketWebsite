@@ -8,7 +8,7 @@
       "AA baseline",
       "AAA deltas"
     ],
-    "audit_timestamp": "2026-04-23T08:36:12.453Z",
+    "audit_timestamp": "2026-04-23T08:51:52.408Z",
     "tool_assumptions": [
       "All audited theme selectors were read from src/styles/theme/base.css and src/styles/theme/variants.css.",
       "Contrast ratio uses WCAG relative luminance and source-over alpha compositing before luminance is computed.",
@@ -159,10 +159,13 @@
       "source_file": "src/styles/theme/base.css",
       "audited_pairs": 13,
       "aa_fail_count": 0,
-      "aaa_only_count": 0,
-      "near_threshold_count": 0,
+      "aaa_only_count": 2,
+      "near_threshold_count": 1,
       "aa_fail_pairs": [],
-      "aaa_only_pairs": [],
+      "aaa_only_pairs": [
+        "secondary-foreground/secondary",
+        "accent-foreground/accent"
+      ],
       "status": "aa-pass"
     },
     {
@@ -186,10 +189,13 @@
       "source_file": "src/styles/theme/variants.css",
       "audited_pairs": 13,
       "aa_fail_count": 0,
-      "aaa_only_count": 0,
-      "near_threshold_count": 0,
+      "aaa_only_count": 2,
+      "near_threshold_count": 1,
       "aa_fail_pairs": [],
-      "aaa_only_pairs": [],
+      "aaa_only_pairs": [
+        "secondary-foreground/secondary",
+        "accent-foreground/accent"
+      ],
       "status": "aa-pass"
     },
     {
@@ -1059,30 +1065,30 @@
       "role": "text",
       "fg": {
         "token": "--foreground",
-        "raw": "#f5f7ff",
-        "hex": "#f5f7ff",
-        "rgba": "rgba(245, 247, 255, 1)",
+        "raw": "#fff7ed",
+        "hex": "#fff7ed",
+        "rgba": "rgba(255, 247, 237, 1)",
         "alpha": 1
       },
       "bg": {
         "token": "--background",
-        "hex": "#121826",
-        "rgba": "rgba(18, 24, 38, 1)",
+        "hex": "#0f172a",
+        "rgba": "rgba(15, 23, 42, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--background",
-            "raw": "#121826",
-            "hex": "#121826",
-            "rgba": "rgba(18, 24, 38, 1)",
+            "raw": "#0f172a",
+            "hex": "#0f172a",
+            "rgba": "rgba(15, 23, 42, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 16.58,
-        "luminance_fg": 0.9315,
-        "luminance_bg": 0.0092,
+        "contrast_ratio": 16.81,
+        "luminance_fg": 0.939,
+        "luminance_bg": 0.0088,
         "method": "computed"
       },
       "wcag": {
@@ -1107,37 +1113,37 @@
       "role": "text",
       "fg": {
         "token": "--card-foreground",
-        "raw": "#f5f7ff",
-        "hex": "#f5f7ff",
-        "rgba": "rgba(245, 247, 255, 1)",
+        "raw": "#fff7ed",
+        "hex": "#fff7ed",
+        "rgba": "rgba(255, 247, 237, 1)",
         "alpha": 1
       },
       "bg": {
         "token": "--card",
-        "hex": "#1a2237",
-        "rgba": "rgba(26, 34, 55, 1)",
+        "hex": "#171e2f",
+        "rgba": "rgba(23, 30, 47, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--card",
-            "raw": "#1a2237",
-            "hex": "#1a2237",
-            "rgba": "rgba(26, 34, 55, 1)",
-            "alpha": 1
+            "raw": "rgba(23, 30, 47, 0.94)",
+            "hex": "#171e2f",
+            "rgba": "rgba(23, 30, 47, 0.94)",
+            "alpha": 0.94
           },
           {
             "token": "--background",
-            "raw": "#121826",
-            "hex": "#121826",
-            "rgba": "rgba(18, 24, 38, 1)",
+            "raw": "#0f172a",
+            "hex": "#0f172a",
+            "rgba": "rgba(15, 23, 42, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 14.78,
-        "luminance_fg": 0.9315,
-        "luminance_bg": 0.0164,
+        "contrast_ratio": 15.73,
+        "luminance_fg": 0.939,
+        "luminance_bg": 0.0129,
         "method": "computed"
       },
       "wcag": {
@@ -1162,37 +1168,37 @@
       "role": "text",
       "fg": {
         "token": "--popover-foreground",
-        "raw": "#f5f7ff",
-        "hex": "#f5f7ff",
-        "rgba": "rgba(245, 247, 255, 1)",
+        "raw": "#fff7ed",
+        "hex": "#fff7ed",
+        "rgba": "rgba(255, 247, 237, 1)",
         "alpha": 1
       },
       "bg": {
         "token": "--popover",
-        "hex": "#1a2237",
-        "rgba": "rgba(26, 34, 55, 1)",
+        "hex": "#171e2f",
+        "rgba": "rgba(23, 30, 47, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--popover",
-            "raw": "#1a2237",
-            "hex": "#1a2237",
-            "rgba": "rgba(26, 34, 55, 1)",
-            "alpha": 1
+            "raw": "rgba(23, 30, 47, 0.98)",
+            "hex": "#171e2f",
+            "rgba": "rgba(23, 30, 47, 0.98)",
+            "alpha": 0.98
           },
           {
             "token": "--background",
-            "raw": "#121826",
-            "hex": "#121826",
-            "rgba": "rgba(18, 24, 38, 1)",
+            "raw": "#0f172a",
+            "hex": "#0f172a",
+            "rgba": "rgba(15, 23, 42, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 14.78,
-        "luminance_fg": 0.9315,
-        "luminance_bg": 0.0164,
+        "contrast_ratio": 15.68,
+        "luminance_fg": 0.939,
+        "luminance_bg": 0.0131,
         "method": "computed"
       },
       "wcag": {
@@ -1224,30 +1230,30 @@
       },
       "bg": {
         "token": "--primary",
-        "hex": "#60a5fa",
-        "rgba": "rgba(96, 165, 250, 1)",
+        "hex": "#58c0e0",
+        "rgba": "rgba(88, 192, 224, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--primary",
-            "raw": "#60a5fa",
-            "hex": "#60a5fa",
-            "rgba": "rgba(96, 165, 250, 1)",
+            "raw": "#58c0e0",
+            "hex": "#58c0e0",
+            "rgba": "rgba(88, 192, 224, 1)",
             "alpha": 1
           },
           {
             "token": "--background",
-            "raw": "#121826",
-            "hex": "#121826",
-            "rgba": "rgba(18, 24, 38, 1)",
+            "raw": "#0f172a",
+            "hex": "#0f172a",
+            "rgba": "rgba(15, 23, 42, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 7.02,
+        "contrast_ratio": 8.53,
         "luminance_fg": 0.0088,
-        "luminance_bg": 0.363,
+        "luminance_bg": 0.4516,
         "method": "computed"
       },
       "wcag": {
@@ -1272,37 +1278,37 @@
       "role": "text",
       "fg": {
         "token": "--secondary-foreground",
-        "raw": "#d4e2ff",
-        "hex": "#d4e2ff",
-        "rgba": "rgba(212, 226, 255, 1)",
+        "raw": "#fff7ed",
+        "hex": "#fff7ed",
+        "rgba": "rgba(255, 247, 237, 1)",
         "alpha": 1
       },
       "bg": {
         "token": "--secondary",
-        "hex": "#1f2a40",
-        "rgba": "rgba(31, 42, 64, 1)",
+        "hex": "#7a5610",
+        "rgba": "rgba(122, 86, 16, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--secondary",
-            "raw": "#1f2a40",
-            "hex": "#1f2a40",
-            "rgba": "rgba(31, 42, 64, 1)",
+            "raw": "#7a5610",
+            "hex": "#7a5610",
+            "rgba": "rgba(122, 86, 16, 1)",
             "alpha": 1
           },
           {
             "token": "--background",
-            "raw": "#121826",
-            "hex": "#121826",
-            "rgba": "rgba(18, 24, 38, 1)",
+            "raw": "#0f172a",
+            "hex": "#0f172a",
+            "rgba": "rgba(15, 23, 42, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 11.02,
-        "luminance_fg": 0.7561,
-        "luminance_bg": 0.0232,
+        "contrast_ratio": 6.25,
+        "luminance_fg": 0.939,
+        "luminance_bg": 0.1083,
         "method": "computed"
       },
       "wcag": {
@@ -1311,12 +1317,12 @@
           "1.4.6"
         ],
         "aa_pass": true,
-        "aaa_pass": true,
-        "status": "AAA pass"
+        "aaa_pass": false,
+        "status": "AA only"
       },
       "notes": [
         "Secondary text on secondary surface.",
-        "No text contrast change required for this pairing."
+        "AA passes. Raise contrast further if AAA is a project goal."
       ]
     },
     {
@@ -1327,37 +1333,37 @@
       "role": "text",
       "fg": {
         "token": "--accent-foreground",
-        "raw": "#f5f7ff",
-        "hex": "#f5f7ff",
-        "rgba": "rgba(245, 247, 255, 1)",
+        "raw": "#fff7ed",
+        "hex": "#fff7ed",
+        "rgba": "rgba(255, 247, 237, 1)",
         "alpha": 1
       },
       "bg": {
         "token": "--accent",
-        "hex": "#2b3c5c",
-        "rgba": "rgba(43, 60, 92, 1)",
+        "hex": "#9a6640",
+        "rgba": "rgba(154, 102, 64, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--accent",
-            "raw": "#2b3c5c",
-            "hex": "#2b3c5c",
-            "rgba": "rgba(43, 60, 92, 1)",
+            "raw": "#9a6640",
+            "hex": "#9a6640",
+            "rgba": "rgba(154, 102, 64, 1)",
             "alpha": 1
           },
           {
             "token": "--background",
-            "raw": "#121826",
-            "hex": "#121826",
-            "rgba": "rgba(18, 24, 38, 1)",
+            "raw": "#0f172a",
+            "hex": "#0f172a",
+            "rgba": "rgba(15, 23, 42, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 10.31,
-        "luminance_fg": 0.9315,
-        "luminance_bg": 0.0452,
+        "contrast_ratio": 4.55,
+        "luminance_fg": 0.939,
+        "luminance_bg": 0.1674,
         "method": "computed"
       },
       "wcag": {
@@ -1366,12 +1372,12 @@
           "1.4.6"
         ],
         "aa_pass": true,
-        "aaa_pass": true,
-        "status": "AAA pass"
+        "aaa_pass": false,
+        "status": "AA only"
       },
       "notes": [
         "Accent text on accent surface.",
-        "No text contrast change required for this pairing."
+        "AA passes. Raise contrast further if AAA is a project goal."
       ]
     },
     {
@@ -1382,9 +1388,9 @@
       "role": "text",
       "fg": {
         "token": "--muted-foreground",
-        "raw": "#9fb0d0",
-        "hex": "#9fb0d0",
-        "rgba": "rgba(159, 176, 208, 1)",
+        "raw": "#c7d0db",
+        "hex": "#c7d0db",
+        "rgba": "rgba(199, 208, 219, 1)",
         "alpha": 1
       },
       "bg": {
@@ -1402,16 +1408,16 @@
           },
           {
             "token": "--background",
-            "raw": "#121826",
-            "hex": "#121826",
-            "rgba": "rgba(18, 24, 38, 1)",
+            "raw": "#0f172a",
+            "hex": "#0f172a",
+            "rgba": "rgba(15, 23, 42, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 7.35,
-        "luminance_fg": 0.4298,
+        "contrast_ratio": 10.32,
+        "luminance_fg": 0.6237,
         "luminance_bg": 0.0153,
         "method": "computed"
       },
@@ -1437,37 +1443,37 @@
       "role": "text",
       "fg": {
         "token": "--sidebar-foreground",
-        "raw": "#f5f7ff",
-        "hex": "#f5f7ff",
-        "rgba": "rgba(245, 247, 255, 1)",
+        "raw": "#fff7ed",
+        "hex": "#fff7ed",
+        "rgba": "rgba(255, 247, 237, 1)",
         "alpha": 1
       },
       "bg": {
         "token": "--sidebar",
-        "hex": "#101729",
-        "rgba": "rgba(16, 23, 41, 1)",
+        "hex": "#101827",
+        "rgba": "rgba(16, 24, 39, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--sidebar",
-            "raw": "#101729",
-            "hex": "#101729",
-            "rgba": "rgba(16, 23, 41, 1)",
+            "raw": "#101827",
+            "hex": "#101827",
+            "rgba": "rgba(16, 24, 39, 1)",
             "alpha": 1
           },
           {
             "token": "--background",
-            "raw": "#121826",
-            "hex": "#121826",
-            "rgba": "rgba(18, 24, 38, 1)",
+            "raw": "#0f172a",
+            "hex": "#0f172a",
+            "rgba": "rgba(15, 23, 42, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 16.68,
-        "luminance_fg": 0.9315,
-        "luminance_bg": 0.0088,
+        "contrast_ratio": 16.73,
+        "luminance_fg": 0.939,
+        "luminance_bg": 0.0091,
         "method": "computed"
       },
       "wcag": {
@@ -1499,37 +1505,37 @@
       },
       "bg": {
         "token": "--sidebar-primary",
-        "hex": "#60a5fa",
-        "rgba": "rgba(96, 165, 250, 1)",
+        "hex": "#58c0e0",
+        "rgba": "rgba(88, 192, 224, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--sidebar-primary",
-            "raw": "#60a5fa",
-            "hex": "#60a5fa",
-            "rgba": "rgba(96, 165, 250, 1)",
+            "raw": "#58c0e0",
+            "hex": "#58c0e0",
+            "rgba": "rgba(88, 192, 224, 1)",
             "alpha": 1
           },
           {
             "token": "--sidebar",
-            "raw": "#101729",
-            "hex": "#101729",
-            "rgba": "rgba(16, 23, 41, 1)",
+            "raw": "#101827",
+            "hex": "#101827",
+            "rgba": "rgba(16, 24, 39, 1)",
             "alpha": 1
           },
           {
             "token": "--background",
-            "raw": "#121826",
-            "hex": "#121826",
-            "rgba": "rgba(18, 24, 38, 1)",
+            "raw": "#0f172a",
+            "hex": "#0f172a",
+            "rgba": "rgba(15, 23, 42, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 7.02,
+        "contrast_ratio": 8.53,
         "luminance_fg": 0.0088,
-        "luminance_bg": 0.363,
+        "luminance_bg": 0.4516,
         "method": "computed"
       },
       "wcag": {
@@ -1554,44 +1560,44 @@
       "role": "text",
       "fg": {
         "token": "--sidebar-accent-foreground",
-        "raw": "#d4e2ff",
-        "hex": "#d4e2ff",
-        "rgba": "rgba(212, 226, 255, 1)",
+        "raw": "#fff7ed",
+        "hex": "#fff7ed",
+        "rgba": "rgba(255, 247, 237, 1)",
         "alpha": 1
       },
       "bg": {
         "token": "--sidebar-accent",
-        "hex": "#18233a",
-        "rgba": "rgba(24, 35, 58, 1)",
+        "hex": "#2a1d10",
+        "rgba": "rgba(42, 29, 16, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--sidebar-accent",
-            "raw": "#18233a",
-            "hex": "#18233a",
-            "rgba": "rgba(24, 35, 58, 1)",
+            "raw": "#2a1d10",
+            "hex": "#2a1d10",
+            "rgba": "rgba(42, 29, 16, 1)",
             "alpha": 1
           },
           {
             "token": "--sidebar",
-            "raw": "#101729",
-            "hex": "#101729",
-            "rgba": "rgba(16, 23, 41, 1)",
+            "raw": "#101827",
+            "hex": "#101827",
+            "rgba": "rgba(16, 24, 39, 1)",
             "alpha": 1
           },
           {
             "token": "--background",
-            "raw": "#121826",
-            "hex": "#121826",
-            "rgba": "rgba(18, 24, 38, 1)",
+            "raw": "#0f172a",
+            "hex": "#0f172a",
+            "rgba": "rgba(15, 23, 42, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 12.03,
-        "luminance_fg": 0.7561,
-        "luminance_bg": 0.017,
+        "contrast_ratio": 15.43,
+        "luminance_fg": 0.939,
+        "luminance_bg": 0.0141,
         "method": "computed"
       },
       "wcag": {
@@ -1616,30 +1622,30 @@
       "role": "text",
       "fg": {
         "token": "--muted-foreground",
-        "raw": "#9fb0d0",
-        "hex": "#9fb0d0",
-        "rgba": "rgba(159, 176, 208, 1)",
+        "raw": "#c7d0db",
+        "hex": "#c7d0db",
+        "rgba": "rgba(199, 208, 219, 1)",
         "alpha": 1
       },
       "bg": {
         "token": "--background",
-        "hex": "#121826",
-        "rgba": "rgba(18, 24, 38, 1)",
+        "hex": "#0f172a",
+        "rgba": "rgba(15, 23, 42, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--background",
-            "raw": "#121826",
-            "hex": "#121826",
-            "rgba": "rgba(18, 24, 38, 1)",
+            "raw": "#0f172a",
+            "hex": "#0f172a",
+            "rgba": "rgba(15, 23, 42, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 8.1,
-        "luminance_fg": 0.4298,
-        "luminance_bg": 0.0092,
+        "contrast_ratio": 11.45,
+        "luminance_fg": 0.6237,
+        "luminance_bg": 0.0088,
         "method": "computed"
       },
       "wcag": {
@@ -1664,37 +1670,37 @@
       "role": "text",
       "fg": {
         "token": "--muted-foreground",
-        "raw": "#9fb0d0",
-        "hex": "#9fb0d0",
-        "rgba": "rgba(159, 176, 208, 1)",
+        "raw": "#c7d0db",
+        "hex": "#c7d0db",
+        "rgba": "rgba(199, 208, 219, 1)",
         "alpha": 1
       },
       "bg": {
         "token": "--card",
-        "hex": "#1a2237",
-        "rgba": "rgba(26, 34, 55, 1)",
+        "hex": "#171e2f",
+        "rgba": "rgba(23, 30, 47, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--card",
-            "raw": "#1a2237",
-            "hex": "#1a2237",
-            "rgba": "rgba(26, 34, 55, 1)",
-            "alpha": 1
+            "raw": "rgba(23, 30, 47, 0.94)",
+            "hex": "#171e2f",
+            "rgba": "rgba(23, 30, 47, 0.94)",
+            "alpha": 0.94
           },
           {
             "token": "--background",
-            "raw": "#121826",
-            "hex": "#121826",
-            "rgba": "rgba(18, 24, 38, 1)",
+            "raw": "#0f172a",
+            "hex": "#0f172a",
+            "rgba": "rgba(15, 23, 42, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 7.23,
-        "luminance_fg": 0.4298,
-        "luminance_bg": 0.0164,
+        "contrast_ratio": 10.72,
+        "luminance_fg": 0.6237,
+        "luminance_bg": 0.0129,
         "method": "computed"
       },
       "wcag": {
@@ -1719,37 +1725,37 @@
       "role": "text",
       "fg": {
         "token": "--foreground",
-        "raw": "#f5f7ff",
-        "hex": "#f5f7ff",
-        "rgba": "rgba(245, 247, 255, 1)",
+        "raw": "#fff7ed",
+        "hex": "#fff7ed",
+        "rgba": "rgba(255, 247, 237, 1)",
         "alpha": 1
       },
       "bg": {
         "token": "--card",
-        "hex": "#1a2237",
-        "rgba": "rgba(26, 34, 55, 1)",
+        "hex": "#171e2f",
+        "rgba": "rgba(23, 30, 47, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--card",
-            "raw": "#1a2237",
-            "hex": "#1a2237",
-            "rgba": "rgba(26, 34, 55, 1)",
-            "alpha": 1
+            "raw": "rgba(23, 30, 47, 0.94)",
+            "hex": "#171e2f",
+            "rgba": "rgba(23, 30, 47, 0.94)",
+            "alpha": 0.94
           },
           {
             "token": "--background",
-            "raw": "#121826",
-            "hex": "#121826",
-            "rgba": "rgba(18, 24, 38, 1)",
+            "raw": "#0f172a",
+            "hex": "#0f172a",
+            "rgba": "rgba(15, 23, 42, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 14.78,
-        "luminance_fg": 0.9315,
-        "luminance_bg": 0.0164,
+        "contrast_ratio": 15.73,
+        "luminance_fg": 0.939,
+        "luminance_bg": 0.0129,
         "method": "computed"
       },
       "wcag": {
@@ -2489,30 +2495,30 @@
       "role": "text",
       "fg": {
         "token": "--foreground",
-        "raw": "#f6f8ff",
-        "hex": "#f6f8ff",
-        "rgba": "rgba(246, 248, 255, 1)",
+        "raw": "#fff7ed",
+        "hex": "#fff7ed",
+        "rgba": "rgba(255, 247, 237, 1)",
         "alpha": 1
       },
       "bg": {
         "token": "--background",
-        "hex": "#121826",
-        "rgba": "rgba(18, 24, 38, 1)",
+        "hex": "#0f172a",
+        "rgba": "rgba(15, 23, 42, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--background",
-            "raw": "#121826",
-            "hex": "#121826",
-            "rgba": "rgba(18, 24, 38, 1)",
+            "raw": "#0f172a",
+            "hex": "#0f172a",
+            "rgba": "rgba(15, 23, 42, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 16.71,
-        "luminance_fg": 0.9395,
-        "luminance_bg": 0.0092,
+        "contrast_ratio": 16.81,
+        "luminance_fg": 0.939,
+        "luminance_bg": 0.0088,
         "method": "computed"
       },
       "wcag": {
@@ -2537,37 +2543,37 @@
       "role": "text",
       "fg": {
         "token": "--card-foreground",
-        "raw": "#f6f8ff",
-        "hex": "#f6f8ff",
-        "rgba": "rgba(246, 248, 255, 1)",
+        "raw": "#fff7ed",
+        "hex": "#fff7ed",
+        "rgba": "rgba(255, 247, 237, 1)",
         "alpha": 1
       },
       "bg": {
         "token": "--card",
-        "hex": "#1a2136",
-        "rgba": "rgba(26, 33, 54, 1)",
+        "hex": "#171e2f",
+        "rgba": "rgba(23, 30, 47, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--card",
-            "raw": "rgba(26, 34, 55, 0.94)",
-            "hex": "#1a2237",
-            "rgba": "rgba(26, 34, 55, 0.94)",
+            "raw": "rgba(23, 30, 47, 0.94)",
+            "hex": "#171e2f",
+            "rgba": "rgba(23, 30, 47, 0.94)",
             "alpha": 0.94
           },
           {
             "token": "--background",
-            "raw": "#121826",
-            "hex": "#121826",
-            "rgba": "rgba(18, 24, 38, 1)",
+            "raw": "#0f172a",
+            "hex": "#0f172a",
+            "rgba": "rgba(15, 23, 42, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 15.02,
-        "luminance_fg": 0.9395,
-        "luminance_bg": 0.0159,
+        "contrast_ratio": 15.73,
+        "luminance_fg": 0.939,
+        "luminance_bg": 0.0129,
         "method": "computed"
       },
       "wcag": {
@@ -2592,37 +2598,37 @@
       "role": "text",
       "fg": {
         "token": "--popover-foreground",
-        "raw": "#f6f8ff",
-        "hex": "#f6f8ff",
-        "rgba": "rgba(246, 248, 255, 1)",
+        "raw": "#fff7ed",
+        "hex": "#fff7ed",
+        "rgba": "rgba(255, 247, 237, 1)",
         "alpha": 1
       },
       "bg": {
         "token": "--popover",
-        "hex": "#1a2237",
-        "rgba": "rgba(26, 34, 55, 1)",
+        "hex": "#171e2f",
+        "rgba": "rgba(23, 30, 47, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--popover",
-            "raw": "rgba(26, 34, 55, 0.98)",
-            "hex": "#1a2237",
-            "rgba": "rgba(26, 34, 55, 0.98)",
+            "raw": "rgba(23, 30, 47, 0.98)",
+            "hex": "#171e2f",
+            "rgba": "rgba(23, 30, 47, 0.98)",
             "alpha": 0.98
           },
           {
             "token": "--background",
-            "raw": "#121826",
-            "hex": "#121826",
-            "rgba": "rgba(18, 24, 38, 1)",
+            "raw": "#0f172a",
+            "hex": "#0f172a",
+            "rgba": "rgba(15, 23, 42, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 14.94,
-        "luminance_fg": 0.9395,
-        "luminance_bg": 0.0162,
+        "contrast_ratio": 15.68,
+        "luminance_fg": 0.939,
+        "luminance_bg": 0.0131,
         "method": "computed"
       },
       "wcag": {
@@ -2654,30 +2660,30 @@
       },
       "bg": {
         "token": "--primary",
-        "hex": "#63a8ff",
-        "rgba": "rgba(99, 168, 255, 1)",
+        "hex": "#58c0e0",
+        "rgba": "rgba(88, 192, 224, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--primary",
-            "raw": "#63a8ff",
-            "hex": "#63a8ff",
-            "rgba": "rgba(99, 168, 255, 1)",
+            "raw": "#58c0e0",
+            "hex": "#58c0e0",
+            "rgba": "rgba(88, 192, 224, 1)",
             "alpha": 1
           },
           {
             "token": "--background",
-            "raw": "#121826",
-            "hex": "#121826",
-            "rgba": "rgba(18, 24, 38, 1)",
+            "raw": "#0f172a",
+            "hex": "#0f172a",
+            "rgba": "rgba(15, 23, 42, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 7.29,
+        "contrast_ratio": 8.53,
         "luminance_fg": 0.0088,
-        "luminance_bg": 0.3788,
+        "luminance_bg": 0.4516,
         "method": "computed"
       },
       "wcag": {
@@ -2702,37 +2708,37 @@
       "role": "text",
       "fg": {
         "token": "--secondary-foreground",
-        "raw": "#e6eeff",
-        "hex": "#e6eeff",
-        "rgba": "rgba(230, 238, 255, 1)",
+        "raw": "#fff7ed",
+        "hex": "#fff7ed",
+        "rgba": "rgba(255, 247, 237, 1)",
         "alpha": 1
       },
       "bg": {
         "token": "--secondary",
-        "hex": "#253352",
-        "rgba": "rgba(37, 51, 82, 1)",
+        "hex": "#7a5610",
+        "rgba": "rgba(122, 86, 16, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--secondary",
-            "raw": "#253352",
-            "hex": "#253352",
-            "rgba": "rgba(37, 51, 82, 1)",
+            "raw": "#7a5610",
+            "hex": "#7a5610",
+            "rgba": "rgba(122, 86, 16, 1)",
             "alpha": 1
           },
           {
             "token": "--background",
-            "raw": "#121826",
-            "hex": "#121826",
-            "rgba": "rgba(18, 24, 38, 1)",
+            "raw": "#0f172a",
+            "hex": "#0f172a",
+            "rgba": "rgba(15, 23, 42, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 10.78,
-        "luminance_fg": 0.8519,
-        "luminance_bg": 0.0337,
+        "contrast_ratio": 6.25,
+        "luminance_fg": 0.939,
+        "luminance_bg": 0.1083,
         "method": "computed"
       },
       "wcag": {
@@ -2741,12 +2747,12 @@
           "1.4.6"
         ],
         "aa_pass": true,
-        "aaa_pass": true,
-        "status": "AAA pass"
+        "aaa_pass": false,
+        "status": "AA only"
       },
       "notes": [
         "Secondary text on secondary surface.",
-        "No text contrast change required for this pairing."
+        "AA passes. Raise contrast further if AAA is a project goal."
       ]
     },
     {
@@ -2757,37 +2763,37 @@
       "role": "text",
       "fg": {
         "token": "--accent-foreground",
-        "raw": "#f6f8ff",
-        "hex": "#f6f8ff",
-        "rgba": "rgba(246, 248, 255, 1)",
+        "raw": "#fff7ed",
+        "hex": "#fff7ed",
+        "rgba": "rgba(255, 247, 237, 1)",
         "alpha": 1
       },
       "bg": {
         "token": "--accent",
-        "hex": "#31476f",
-        "rgba": "rgba(49, 71, 111, 1)",
+        "hex": "#9a6640",
+        "rgba": "rgba(154, 102, 64, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--accent",
-            "raw": "#31476f",
-            "hex": "#31476f",
-            "rgba": "rgba(49, 71, 111, 1)",
+            "raw": "#9a6640",
+            "hex": "#9a6640",
+            "rgba": "rgba(154, 102, 64, 1)",
             "alpha": 1
           },
           {
             "token": "--background",
-            "raw": "#121826",
-            "hex": "#121826",
-            "rgba": "rgba(18, 24, 38, 1)",
+            "raw": "#0f172a",
+            "hex": "#0f172a",
+            "rgba": "rgba(15, 23, 42, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 8.75,
-        "luminance_fg": 0.9395,
-        "luminance_bg": 0.0631,
+        "contrast_ratio": 4.55,
+        "luminance_fg": 0.939,
+        "luminance_bg": 0.1674,
         "method": "computed"
       },
       "wcag": {
@@ -2796,12 +2802,12 @@
           "1.4.6"
         ],
         "aa_pass": true,
-        "aaa_pass": true,
-        "status": "AAA pass"
+        "aaa_pass": false,
+        "status": "AA only"
       },
       "notes": [
         "Accent text on accent surface.",
-        "No text contrast change required for this pairing."
+        "AA passes. Raise contrast further if AAA is a project goal."
       ]
     },
     {
@@ -2812,37 +2818,37 @@
       "role": "text",
       "fg": {
         "token": "--muted-foreground",
-        "raw": "#cedcff",
-        "hex": "#cedcff",
-        "rgba": "rgba(206, 220, 255, 1)",
+        "raw": "#c7d0db",
+        "hex": "#c7d0db",
+        "rgba": "rgba(199, 208, 219, 1)",
         "alpha": 1
       },
       "bg": {
         "token": "--muted",
-        "hex": "#1c2942",
-        "rgba": "rgba(28, 41, 66, 1)",
+        "hex": "#172135",
+        "rgba": "rgba(23, 33, 53, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--muted",
-            "raw": "#1c2942",
-            "hex": "#1c2942",
-            "rgba": "rgba(28, 41, 66, 1)",
+            "raw": "#172135",
+            "hex": "#172135",
+            "rgba": "rgba(23, 33, 53, 1)",
             "alpha": 1
           },
           {
             "token": "--background",
-            "raw": "#121826",
-            "hex": "#121826",
-            "rgba": "rgba(18, 24, 38, 1)",
+            "raw": "#0f172a",
+            "hex": "#0f172a",
+            "rgba": "rgba(15, 23, 42, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 10.59,
-        "luminance_fg": 0.7153,
-        "luminance_bg": 0.0223,
+        "contrast_ratio": 10.32,
+        "luminance_fg": 0.6237,
+        "luminance_bg": 0.0153,
         "method": "computed"
       },
       "wcag": {
@@ -2867,37 +2873,37 @@
       "role": "text",
       "fg": {
         "token": "--sidebar-foreground",
-        "raw": "#f6f8ff",
-        "hex": "#f6f8ff",
-        "rgba": "rgba(246, 248, 255, 1)",
+        "raw": "#fff7ed",
+        "hex": "#fff7ed",
+        "rgba": "rgba(255, 247, 237, 1)",
         "alpha": 1
       },
       "bg": {
         "token": "--sidebar",
-        "hex": "#111a2b",
-        "rgba": "rgba(17, 26, 43, 1)",
+        "hex": "#101827",
+        "rgba": "rgba(16, 24, 39, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--sidebar",
-            "raw": "#111a2b",
-            "hex": "#111a2b",
-            "rgba": "rgba(17, 26, 43, 1)",
+            "raw": "#101827",
+            "hex": "#101827",
+            "rgba": "rgba(16, 24, 39, 1)",
             "alpha": 1
           },
           {
             "token": "--background",
-            "raw": "#121826",
-            "hex": "#121826",
-            "rgba": "rgba(18, 24, 38, 1)",
+            "raw": "#0f172a",
+            "hex": "#0f172a",
+            "rgba": "rgba(15, 23, 42, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 16.4,
-        "luminance_fg": 0.9395,
-        "luminance_bg": 0.0103,
+        "contrast_ratio": 16.73,
+        "luminance_fg": 0.939,
+        "luminance_bg": 0.0091,
         "method": "computed"
       },
       "wcag": {
@@ -2929,37 +2935,37 @@
       },
       "bg": {
         "token": "--sidebar-primary",
-        "hex": "#63a8ff",
-        "rgba": "rgba(99, 168, 255, 1)",
+        "hex": "#58c0e0",
+        "rgba": "rgba(88, 192, 224, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--sidebar-primary",
-            "raw": "#63a8ff",
-            "hex": "#63a8ff",
-            "rgba": "rgba(99, 168, 255, 1)",
+            "raw": "#58c0e0",
+            "hex": "#58c0e0",
+            "rgba": "rgba(88, 192, 224, 1)",
             "alpha": 1
           },
           {
             "token": "--sidebar",
-            "raw": "#111a2b",
-            "hex": "#111a2b",
-            "rgba": "rgba(17, 26, 43, 1)",
+            "raw": "#101827",
+            "hex": "#101827",
+            "rgba": "rgba(16, 24, 39, 1)",
             "alpha": 1
           },
           {
             "token": "--background",
-            "raw": "#121826",
-            "hex": "#121826",
-            "rgba": "rgba(18, 24, 38, 1)",
+            "raw": "#0f172a",
+            "hex": "#0f172a",
+            "rgba": "rgba(15, 23, 42, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 7.29,
+        "contrast_ratio": 8.53,
         "luminance_fg": 0.0088,
-        "luminance_bg": 0.3788,
+        "luminance_bg": 0.4516,
         "method": "computed"
       },
       "wcag": {
@@ -2984,44 +2990,44 @@
       "role": "text",
       "fg": {
         "token": "--sidebar-accent-foreground",
-        "raw": "#dce7ff",
-        "hex": "#dce7ff",
-        "rgba": "rgba(220, 231, 255, 1)",
+        "raw": "#fff7ed",
+        "hex": "#fff7ed",
+        "rgba": "rgba(255, 247, 237, 1)",
         "alpha": 1
       },
       "bg": {
         "token": "--sidebar-accent",
-        "hex": "#1d2c48",
-        "rgba": "rgba(29, 44, 72, 1)",
+        "hex": "#2a1d10",
+        "rgba": "rgba(42, 29, 16, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--sidebar-accent",
-            "raw": "#1d2c48",
-            "hex": "#1d2c48",
-            "rgba": "rgba(29, 44, 72, 1)",
+            "raw": "#2a1d10",
+            "hex": "#2a1d10",
+            "rgba": "rgba(42, 29, 16, 1)",
             "alpha": 1
           },
           {
             "token": "--sidebar",
-            "raw": "#111a2b",
-            "hex": "#111a2b",
-            "rgba": "rgba(17, 26, 43, 1)",
+            "raw": "#101827",
+            "hex": "#101827",
+            "rgba": "rgba(16, 24, 39, 1)",
             "alpha": 1
           },
           {
             "token": "--background",
-            "raw": "#121826",
-            "hex": "#121826",
-            "rgba": "rgba(18, 24, 38, 1)",
+            "raw": "#0f172a",
+            "hex": "#0f172a",
+            "rgba": "rgba(15, 23, 42, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 11.23,
-        "luminance_fg": 0.7959,
-        "luminance_bg": 0.0253,
+        "contrast_ratio": 15.43,
+        "luminance_fg": 0.939,
+        "luminance_bg": 0.0141,
         "method": "computed"
       },
       "wcag": {
@@ -3046,30 +3052,30 @@
       "role": "text",
       "fg": {
         "token": "--muted-foreground",
-        "raw": "#cedcff",
-        "hex": "#cedcff",
-        "rgba": "rgba(206, 220, 255, 1)",
+        "raw": "#c7d0db",
+        "hex": "#c7d0db",
+        "rgba": "rgba(199, 208, 219, 1)",
         "alpha": 1
       },
       "bg": {
         "token": "--background",
-        "hex": "#121826",
-        "rgba": "rgba(18, 24, 38, 1)",
+        "hex": "#0f172a",
+        "rgba": "rgba(15, 23, 42, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--background",
-            "raw": "#121826",
-            "hex": "#121826",
-            "rgba": "rgba(18, 24, 38, 1)",
+            "raw": "#0f172a",
+            "hex": "#0f172a",
+            "rgba": "rgba(15, 23, 42, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 12.92,
-        "luminance_fg": 0.7153,
-        "luminance_bg": 0.0092,
+        "contrast_ratio": 11.45,
+        "luminance_fg": 0.6237,
+        "luminance_bg": 0.0088,
         "method": "computed"
       },
       "wcag": {
@@ -3094,37 +3100,37 @@
       "role": "text",
       "fg": {
         "token": "--muted-foreground",
-        "raw": "#cedcff",
-        "hex": "#cedcff",
-        "rgba": "rgba(206, 220, 255, 1)",
+        "raw": "#c7d0db",
+        "hex": "#c7d0db",
+        "rgba": "rgba(199, 208, 219, 1)",
         "alpha": 1
       },
       "bg": {
         "token": "--card",
-        "hex": "#1a2136",
-        "rgba": "rgba(26, 33, 54, 1)",
+        "hex": "#171e2f",
+        "rgba": "rgba(23, 30, 47, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--card",
-            "raw": "rgba(26, 34, 55, 0.94)",
-            "hex": "#1a2237",
-            "rgba": "rgba(26, 34, 55, 0.94)",
+            "raw": "rgba(23, 30, 47, 0.94)",
+            "hex": "#171e2f",
+            "rgba": "rgba(23, 30, 47, 0.94)",
             "alpha": 0.94
           },
           {
             "token": "--background",
-            "raw": "#121826",
-            "hex": "#121826",
-            "rgba": "rgba(18, 24, 38, 1)",
+            "raw": "#0f172a",
+            "hex": "#0f172a",
+            "rgba": "rgba(15, 23, 42, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 11.61,
-        "luminance_fg": 0.7153,
-        "luminance_bg": 0.0159,
+        "contrast_ratio": 10.72,
+        "luminance_fg": 0.6237,
+        "luminance_bg": 0.0129,
         "method": "computed"
       },
       "wcag": {
@@ -3149,37 +3155,37 @@
       "role": "text",
       "fg": {
         "token": "--foreground",
-        "raw": "#f6f8ff",
-        "hex": "#f6f8ff",
-        "rgba": "rgba(246, 248, 255, 1)",
+        "raw": "#fff7ed",
+        "hex": "#fff7ed",
+        "rgba": "rgba(255, 247, 237, 1)",
         "alpha": 1
       },
       "bg": {
         "token": "--card",
-        "hex": "#1a2136",
-        "rgba": "rgba(26, 33, 54, 1)",
+        "hex": "#171e2f",
+        "rgba": "rgba(23, 30, 47, 1)",
         "alpha": 1,
         "layers": [
           {
             "token": "--card",
-            "raw": "rgba(26, 34, 55, 0.94)",
-            "hex": "#1a2237",
-            "rgba": "rgba(26, 34, 55, 0.94)",
+            "raw": "rgba(23, 30, 47, 0.94)",
+            "hex": "#171e2f",
+            "rgba": "rgba(23, 30, 47, 0.94)",
             "alpha": 0.94
           },
           {
             "token": "--background",
-            "raw": "#121826",
-            "hex": "#121826",
-            "rgba": "rgba(18, 24, 38, 1)",
+            "raw": "#0f172a",
+            "hex": "#0f172a",
+            "rgba": "rgba(15, 23, 42, 1)",
             "alpha": 1
           }
         ]
       },
       "computed": {
-        "contrast_ratio": 15.02,
-        "luminance_fg": 0.9395,
-        "luminance_bg": 0.0159,
+        "contrast_ratio": 15.73,
+        "luminance_fg": 0.939,
+        "luminance_bg": 0.0129,
         "method": "computed"
       },
       "wcag": {
@@ -9654,6 +9660,16 @@
     "aa_fail_themes": [],
     "contextual_risks": [],
     "near_threshold_pairs": [
+      {
+        "theme": ".dark",
+        "pair": "accent-foreground/accent",
+        "contrast_ratio": 4.55
+      },
+      {
+        "theme": ".theme-dark",
+        "pair": "accent-foreground/accent",
+        "contrast_ratio": 4.55
+      },
       {
         "theme": ".theme-autumn",
         "pair": "primary-foreground/primary",

@@ -45,8 +45,8 @@ const THEME_OPTIONS: Array<{
   {
     id: "dark",
     label: "Dark",
-    description: "Cool twilight navy with electric blues",
-    preview: "linear-gradient(135deg, #121826 0%, #1a2237 100%)",
+    description: "Deep charcoal canvas with Linket cyan and bronze accents",
+    preview: "linear-gradient(135deg, #0f172a 0%, #1f2937 46%, #58c0e0 72%, #9a6640 100%)",
     textTone: "light",
   },
   {
