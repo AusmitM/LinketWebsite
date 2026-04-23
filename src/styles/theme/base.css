@@ -4,23 +4,23 @@
   /* Layout + sizing tokens */
   --radius: 0.625rem;
 
-  /* Core brand palette */
-  --brand-blue: #2563eb;
-  --brand-amber: #f59e0b;
-  --brand-emerald: #10b981;
-  --brand-lilac: #8b5cf6;
-  --brand-slate: #1f2937;
+  /* Core Linket brand palette */
+  --brand-blue: #58c0e0;
+  --brand-amber: #f8d058;
+  --brand-emerald: #68d8e0;
+  --brand-lilac: #f8b878;
+  --brand-slate: #0f172a;
 
-  /* Neutral scale for surfaces */
-  --neutral-25: #f8fafc;
-  --neutral-50: #f5f7fb;
-  --neutral-100: #e4e8f2;
-  --neutral-200: #d7deed;
-  --neutral-300: #c1c9db;
-  --neutral-400: #9aa3b8;
-  --neutral-500: #707993;
-  --neutral-700: #3f475d;
-  --neutral-900: #101828;
+  /* Warm neutral scale for surfaces */
+  --neutral-25: #fffdf9;
+  --neutral-50: #fff7ed;
+  --neutral-100: #f6eadb;
+  --neutral-200: #ead9c5;
+  --neutral-300: #d6c2a7;
+  --neutral-400: #b7a286;
+  --neutral-500: #8c7660;
+  --neutral-700: #4f4032;
+  --neutral-900: #17120c;
 
   /* Motion + shadows for depth */
   --shadow-ambient: 0 1px 2px rgba(15, 23, 42, 0.08), 0 16px 40px -24px rgba(15, 23, 42, 0.35);
@@ -39,49 +39,49 @@
   --step-4: clamp(2.44rem, 2.22rem + 0.82vw, 2.93rem);
 
   /* Default theme mirrors .theme-light */
-  --background: #f5f7fb;
-  --foreground: #101828;
-  --card: #ffffff;
-  --card-foreground: #101828;
-  --popover: #ffffff;
-  --popover-foreground: #101828;
+  --background: var(--neutral-50);
+  --foreground: var(--brand-slate);
+  --card: var(--neutral-25);
+  --card-foreground: var(--brand-slate);
+  --popover: var(--neutral-25);
+  --popover-foreground: var(--brand-slate);
   --primary: var(--brand-blue);
-  --primary-foreground: #f5f8ff;
-  --secondary: #e0e7ff;
-  --secondary-foreground: #1f1b4d;
-  --muted: #e6eaf4;
-  --muted-foreground: #364152;
-  --accent: #c7d2fe;
-  --accent-foreground: #1f1b4d;
+  --primary-foreground: #0f172a;
+  --secondary: var(--brand-amber);
+  --secondary-foreground: #5c380c;
+  --muted: var(--neutral-100);
+  --muted-foreground: #4b5563;
+  --accent: var(--brand-lilac);
+  --accent-foreground: #4a2312;
   --danger: color-mix(in srgb, #9f1239 84%, var(--primary) 16%);
   --danger-foreground: #fff7fb;
   --success: color-mix(in srgb, #166534 84%, var(--primary) 16%);
   --success-foreground: #f4fffb;
   --destructive: #ef4444;
-  --border: #d7deed;
-  --input: #d7deed;
-  --ring: var(--brand-blue);
-  --avatar-border: var(--ring);
+  --border: var(--neutral-200);
+  --input: var(--neutral-200);
+  --ring: #20586e;
+  --avatar-border: var(--brand-emerald);
 
-  --sidebar: #ffffff;
-  --sidebar-foreground: #101828;
+  --sidebar: var(--neutral-25);
+  --sidebar-foreground: var(--brand-slate);
   --sidebar-primary: var(--primary);
   --sidebar-primary-foreground: var(--primary-foreground);
-  --sidebar-accent: #eef2ff;
-  --sidebar-accent-foreground: #1f2937;
-  --sidebar-border: #d7deed;
+  --sidebar-accent: #fff1d6;
+  --sidebar-accent-foreground: #5c380c;
+  --sidebar-border: var(--neutral-200);
   --sidebar-ring: var(--ring);
-  --button-subtle-foreground: #23458f;
-  --button-subtle-foreground-hover: #1c3773;
-  --button-subtle-border: rgba(84, 120, 198, 0.34);
-  --button-solid-outline: rgba(193, 216, 255, 0.56);
+  --button-subtle-foreground: #20586e;
+  --button-subtle-foreground-hover: #184558;
+  --button-subtle-border: rgba(32, 88, 110, 0.34);
+  --button-solid-outline: rgba(32, 88, 110, 0.42);
   --color-button-focus-ring: color-mix(in srgb, var(--button-subtle-foreground) 78%, var(--ring) 22%);
   --color-button-focus-offset: color-mix(in srgb, var(--card) 88%, var(--background) 12%);
   --color-button-primary-bg: var(--primary);
   --color-button-primary-bg-hover: var(--primary);
   --color-button-primary-bg-active: color-mix(in srgb, var(--primary) 94%, #0f172a 6%);
   --color-button-primary-fg: var(--primary-foreground);
-  --color-button-primary-border: color-mix(in srgb, var(--primary) 42%, white 58%);
+  --color-button-primary-border: var(--button-subtle-foreground);
   --color-button-secondary-bg: color-mix(in srgb, var(--secondary) 78%, var(--card) 22%);
   --color-button-secondary-bg-hover: color-mix(in srgb, var(--secondary) 86%, var(--card) 14%);
   --color-button-secondary-bg-active: color-mix(in srgb, var(--secondary) 92%, var(--card) 8%);
@@ -123,32 +123,24 @@
   --color-button-selected-border: var(--color-button-primary-border);
 
   /* Premium dashboard surfaces */
-  --premium-gradient: radial-gradient(120% 120% at 20% 0%, rgba(37, 99, 235, 0.12) 0%, transparent 60%),
-    radial-gradient(120% 120% at 80% 0%, rgba(16, 185, 129, 0.08) 0%, transparent 55%),
-    linear-gradient(180deg, #f9fbff 0%, #f3f6ff 100%);
-  --premium-card-gradient: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(246, 248, 255, 0.96) 100%);
-  --premium-topbar-gradient: linear-gradient(90deg, rgba(255, 255, 255, 0.96) 0%, rgba(246, 248, 255, 0.94) 100%);
-  --premium-input-gradient: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--card) 92%, white 8%),
-    color-mix(in srgb, var(--card) 70%, var(--background) 30%)
-  );
-  --premium-button-gradient: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--card) 88%, white 12%),
-    color-mix(in srgb, var(--card) 62%, var(--background) 38%)
-  );
-  --premium-border: rgba(15, 23, 42, 0.08);
-  --premium-shadow: 0 18px 45px -30px rgba(15, 23, 42, 0.45);
+  --premium-gradient: radial-gradient(120% 120% at 16% 0%, rgba(88, 192, 224, 0.16) 0%, transparent 60%),
+    radial-gradient(120% 120% at 84% 0%, rgba(248, 184, 120, 0.14) 0%, transparent 55%),
+    linear-gradient(180deg, #fffdf9 0%, #fff7ed 100%);
+  --premium-card-gradient: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 248, 237, 0.96) 100%);
+  --premium-topbar-gradient: linear-gradient(90deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 246, 231, 0.95) 52%, rgba(240, 250, 252, 0.94) 100%);
+  --premium-input-gradient: linear-gradient(180deg, rgba(255, 255, 255, 0.97) 0%, rgba(255, 247, 235, 0.94) 100%);
+  --premium-button-gradient: linear-gradient(180deg, rgba(255, 255, 255, 0.97) 0%, rgba(255, 243, 229, 0.92) 100%);
+  --premium-border: rgba(32, 88, 110, 0.12);
+  --premium-shadow: 0 18px 45px -30px rgba(31, 41, 55, 0.36);
   --premium-glow: 0 0 0 1px rgba(255, 255, 255, 0.75);
   --premium-hairline: rgba(255, 255, 255, 0.65);
   --premium-inset: 0 1px 0 rgba(255, 255, 255, 0.45) inset;
 
   /* Chart defaults */
-  --chart-1: #2563eb;
-  --chart-2: #f97316;
+  --chart-1: var(--brand-blue);
+  --chart-2: var(--brand-amber);
   --chart-3: #16a34a;
-  --chart-4: #facc15;
+  --chart-4: var(--brand-lilac);
   --chart-5: #8b5cf6;
 }
 
@@ -300,15 +292,15 @@
   --accent: #f8b878;
   --accent-foreground: #3a2410;
   --ring: #58c0e0;
-  --avatar-border: #58c0e0;
+  --avatar-border: var(--brand-emerald);
   --sidebar-primary: #58c0e0;
   --sidebar-primary-foreground: #0f172a;
   --sidebar-accent: #fdf5e7;
   --sidebar-accent-foreground: #3a2410;
-  --button-subtle-foreground: #2da9ca;
-  --button-subtle-foreground-hover: #269bb9;
-  --button-subtle-border: rgba(88, 192, 224, 0.34);
-  --button-solid-outline: rgba(104, 216, 224, 0.42);
+  --button-subtle-foreground: #20586e;
+  --button-subtle-foreground-hover: #184558;
+  --button-subtle-border: rgba(32, 88, 110, 0.34);
+  --button-solid-outline: rgba(32, 88, 110, 0.42);
 }
 
 @media (prefers-reduced-motion: reduce) {

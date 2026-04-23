@@ -17,9 +17,9 @@ AA status: all audited themes pass. No audited theme scopes currently fail AA. N
 
 | theme | source file | pairings audited | AA fails | AAA-only deltas | failing pairs | AAA-only pairs |
 | --- | --- | ---: | ---: | ---: | --- | --- |
-| :root (default) | src/styles/theme/base.css | 13 | 0 | 2 | None | primary-foreground/primary, sidebar-primary-foreground/sidebar-primary |
+| :root (default) | src/styles/theme/base.css | 13 | 0 | 2 | None | secondary-foreground/secondary, muted-foreground/muted |
 | .dark | src/styles/theme/base.css | 13 | 0 | 0 | None | None |
-| .theme-light | src/styles/theme/variants.css | 13 | 0 | 2 | None | primary-foreground/primary, sidebar-primary-foreground/sidebar-primary |
+| .theme-light | src/styles/theme/variants.css | 13 | 0 | 2 | None | secondary-foreground/secondary, muted-foreground/muted |
 | .theme-dark | src/styles/theme/variants.css | 13 | 0 | 0 | None | None |
 | .theme-midnight | src/styles/theme/variants.css | 13 | 0 | 2 | None | primary-foreground/primary, sidebar-primary-foreground/sidebar-primary |
 | .theme-dream | src/styles/theme/variants.css | 13 | 0 | 3 | None | muted-foreground/muted, muted-foreground/background, muted-foreground/card |
@@ -46,10 +46,6 @@ AA status: all audited themes pass. No audited theme scopes currently fail AA. N
 | .theme-burnt-orange | primary-foreground/primary | 4.78:1 | Pass AA, fail AAA |
 | .theme-burnt-orange | sidebar-primary-foreground/sidebar-primary | 4.78:1 | Pass AA, fail AAA |
 | .theme-dream | muted-foreground/muted | 4.81:1 | Pass AA, fail AAA |
-| :root (default) | primary-foreground/primary | 4.86:1 | Pass AA, fail AAA |
-| :root (default) | sidebar-primary-foreground/sidebar-primary | 4.86:1 | Pass AA, fail AAA |
-| .theme-light | primary-foreground/primary | 4.86:1 | Pass AA, fail AAA |
-| .theme-light | sidebar-primary-foreground/sidebar-primary | 4.86:1 | Pass AA, fail AAA |
 | .theme-honey | primary-foreground/primary | 4.88:1 | Pass AA, fail AAA |
 | .theme-honey | sidebar-primary-foreground/sidebar-primary | 4.88:1 | Pass AA, fail AAA |
 | .theme-midnight | primary-foreground/primary | 4.95:1 | Pass AA, fail AAA |
@@ -65,6 +61,10 @@ AA status: all audited themes pass. No audited theme scopes currently fail AA. N
 | .theme-autumn | accent-foreground/accent | 5.93:1 | Pass AA, fail AAA |
 | .theme-dream | muted-foreground/card | 6.05:1 | Pass AA, fail AAA |
 | .theme-forest | sidebar-accent-foreground/sidebar-accent | 6.15:1 | Pass AA, fail AAA |
+| :root (default) | muted-foreground/muted | 6.37:1 | Pass AA, fail AAA |
+| .theme-light | muted-foreground/muted | 6.37:1 | Pass AA, fail AAA |
+| .theme-maroon | muted-foreground/muted | 6.45:1 | Pass AA, fail AAA |
+| .theme-rose | muted-foreground/muted | 6.48:1 | Pass AA, fail AAA |
 
 ## Method
 

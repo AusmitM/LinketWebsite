@@ -38,8 +38,8 @@ const THEME_OPTIONS: Array<{
   {
     id: "light",
     label: "Light",
-    description: "Bright + crisp with modern blue accents",
-    preview: "linear-gradient(135deg, #f5f7fb 0%, #ffffff 100%)",
+    description: "Warm cream canvas with Linket cyan and gold accents",
+    preview: "linear-gradient(135deg, #fffdf9 0%, #f8d058 48%, #58c0e0 100%)",
     textTone: "dark",
   },
   {

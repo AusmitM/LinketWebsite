@@ -1148,19 +1148,19 @@ html.dashboard-link-dragging #dashboard-theme-scope * {
 
 /* Light atmosphere overlay */
 #dashboard-theme-scope.theme-light::before {
-  opacity: 0.5;
+  opacity: 0.52;
   background-image:
-    radial-gradient(160px 80px at 14% 16%, rgba(255, 255, 255, 0.5) 0%, transparent 65%),
-    radial-gradient(200px 90px at 76% 12%, rgba(240, 248, 255, 0.42) 0%, transparent 62%),
-    radial-gradient(240px 110px at 84% 66%, rgba(186, 209, 255, 0.2) 0%, transparent 68%);
+    radial-gradient(160px 80px at 14% 16%, rgba(255, 250, 242, 0.54) 0%, transparent 65%),
+    radial-gradient(200px 90px at 76% 12%, rgba(248, 214, 88, 0.34) 0%, transparent 62%),
+    radial-gradient(240px 110px at 84% 66%, rgba(88, 192, 224, 0.22) 0%, transparent 68%);
 }
 
 #dashboard-theme-scope.theme-light::after {
-  opacity: 0.68;
+  opacity: 0.7;
   transform: translateY(0);
   background:
-    radial-gradient(120% 80% at 20% 0%, rgba(169, 204, 255, 0.15) 0%, transparent 70%),
-    radial-gradient(120% 80% at 80% 0%, rgba(119, 162, 242, 0.12) 0%, transparent 72%),
+    radial-gradient(120% 80% at 20% 0%, rgba(248, 184, 120, 0.18) 0%, transparent 70%),
+    radial-gradient(120% 80% at 80% 0%, rgba(88, 192, 224, 0.14) 0%, transparent 72%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.24) 0%, transparent 56%);
 }
 

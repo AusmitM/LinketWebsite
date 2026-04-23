@@ -28,7 +28,7 @@ This reference documents the live theme palettes currently defined in:
 
 | Theme | Background | Foreground | Card / elevated surface | Primary / main CTA | Secondary / support surface | Accent / focus | Border / chrome | Where the theme stands out |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `Light` | `#f5f7fb` | `#101828` | `#ffffff` | `#2563eb` | `#e0e7ff`, subtle actions `#23458f` | accent `#c7d2fe`, ring `#2563eb` | border `#d7deed`, sidebar `#ffffff` | Bright app canvas, airy blue dashboard chrome, pale blue public profile backdrop, crisp white cards |
+| `Light` | `#fff7ed` | `#0f172a` | `#fffdf9` | `#58c0e0` | `#f8d058`, subtle actions `#20586e` | accent `#f8b878`, ring `#20586e` | border `#d6c2a7`, sidebar `#fffaf3` | Warm cream app canvas with Linket cyan/gold highlights, soft tan cards, and brand-led dashboard/public profile accents |
 | `Dark` | `#121826` | `#f6f8ff` | `rgba(26, 34, 55, 0.94)` | `#63a8ff` | `#253352`, subtle actions `#dce7ff` | accent `#31476f`, ring `#63a8ff` | border `#212f4a`, sidebar `#111a2b` | Cool twilight dashboard shell with electric blue focus/CTA states; public profile styling is driven by the shared semantic tokens rather than extra theme-specific overrides |
 | `Midnight` | `#050414` | `#f7f5ff` | `rgba(18, 15, 46, 0.94)` | `#8d5fff` | `#231b50`, subtle actions `#ebe4ff` | accent `#352a6b`, ring `#8d5fff` | border `#261f56`, sidebar `#0c0923` | Deep violet night palette with neon-style purple focus states and premium dark dashboard surfaces |
 | `Dream` | `#f4e9ff` | `#1d1f3d` | `rgba(255, 255, 255, 0.96)` | `#3a2ad6` | `#f2a3db`, subtle actions `#3f3dab` | accent `#b8a6ff`, ring `#3a2ad6` | border `#d8cbed`, sidebar `#efe1ff` | Pastel lavender dashboard chrome, soft violet public profile gradients, dreamy white-violet cards, blue-violet CTAs |
@@ -43,6 +43,7 @@ This reference documents the live theme palettes currently defined in:
 ## Theme-Specific Surface Notes
 
 - `Light`, `Dream`, `Rose`, `Autumn`, `Honey`, and `Gilded` define extra dashboard top-bar, nav, card, and logo treatments in `src/styles/theme/variants.css`.
+- `Light` leans on the Linket brand palette most directly, pairing the cream background with cyan primary actions, gold support surfaces, and a warm tan border system.
 - `Forest` adds a tree-line pattern to public profiles and preview shells, and it increases dashboard border emphasis for better contrast.
 - `Dark` and `Midnight` rely mostly on the shared premium dashboard/public profile styling, so their look comes primarily from the semantic tokens above rather than separate per-theme override blocks.
 - `Gilded` now adds dedicated matte-black dashboard chrome plus a layered black-and-gold contour backdrop for public profiles and previews.

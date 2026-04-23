@@ -218,8 +218,11 @@ export default function ThemeToggle({ showLabel = false }: { showLabel?: boolean
       : current === "maroon"
         ? "h-8 w-8"
         : "h-5 w-5";
+  const lightIconToneClassName =
+    activeTheme === "light" ? "text-[color:var(--brand-lilac)]" : "";
   const labelIconClassName = cn(
     "shrink-0",
+    lightIconToneClassName,
     current === "burnt-orange"
       ? "h-5 w-10 -mr-2 sm:h-6 sm:w-12 sm:-mr-3"
       : current === "maroon"
@@ -239,7 +242,7 @@ export default function ThemeToggle({ showLabel = false }: { showLabel?: boolean
           title="Theme"
           disabled
         >
-          <Sun className="h-5 w-5" />
+          <Sun className={cn("h-5 w-5", lightIconToneClassName)} />
         </Button>
       );
     }
@@ -256,7 +259,7 @@ export default function ThemeToggle({ showLabel = false }: { showLabel?: boolean
           <ChevronLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
         </Button>
         <div className="flex min-w-0 items-center justify-center gap-1.5 rounded-lg px-1 text-xs text-muted-foreground sm:gap-2 sm:px-2">
-          <Sun className="h-5 w-5 shrink-0 sm:h-6 sm:w-6" />
+          <Sun className={cn("h-5 w-5 shrink-0 sm:h-6 sm:w-6", lightIconToneClassName)} />
           <span className="font-medium whitespace-nowrap">Theme</span>
         </div>
         <Button
@@ -282,7 +285,7 @@ export default function ThemeToggle({ showLabel = false }: { showLabel?: boolean
         onClick={next}
         title={`Theme: ${label}`}
       >
-        <Icon className={compactIconClassName} />
+        <Icon className={cn(compactIconClassName, lightIconToneClassName)} />
       </Button>
     );
   }
