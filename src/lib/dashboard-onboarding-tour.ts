@@ -9,6 +9,10 @@ export function getDashboardTourStorageKey(userId: string) {
   return `linket:onboarding-tour:${DASHBOARD_TOUR_VERSION}:${userId}`;
 }
 
+export function getDashboardTourAutoOpenStorageKey(userId: string) {
+  return `linket:onboarding-tour:auto-open:${DASHBOARD_TOUR_VERSION}:${userId}`;
+}
+
 export function readDashboardTourStatus(
   key: string | null
 ): DashboardTourStatus | null {
@@ -38,4 +42,14 @@ export function writeDashboardTourStatus(
     );
   }
   return didWrite;
+}
+
+export function readDashboardTourAutoOpenSeen(key: string | null) {
+  if (!key) return false;
+  return readLocalStorage(key) === "1";
+}
+
+export function writeDashboardTourAutoOpenSeen(key: string | null) {
+  if (!key) return false;
+  return writeLocalStorage(key, "1");
 }

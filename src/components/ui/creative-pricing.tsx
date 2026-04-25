@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 
-import { Check, Sparkles } from "lucide-react";
+import { Check, Star } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -93,7 +93,7 @@ function CreativePricing({
                     : "border-[#f8ddba] bg-gradient-to-r from-[#f8d058] via-[#f8b878] to-[#f8b080] text-[#0f172a] shadow-[0_10px_25px_rgba(248,184,120,0.35)]"
                 )}
               >
-                <Sparkles className="h-3.5 w-3.5" aria-hidden />
+                <Star className="h-3.5 w-3.5" aria-hidden />
                 Most popular
               </div>
             )}

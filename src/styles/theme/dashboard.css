@@ -72,6 +72,95 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--border) 65%, transparent);
 }
 
+/* Branded lead selection checkboxes */
+#dashboard-theme-scope .dashboard-leads-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  display: inline-grid;
+  place-content: center;
+  border-radius: 0.4rem;
+  border: 1px solid color-mix(in oklab, var(--ring) 56%, var(--border) 44%);
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, white 52%, var(--ring) 48%) 0%,
+    color-mix(in oklab, var(--background) 32%, var(--ring) 68%) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -1px 0 rgba(140, 83, 23, 0.12),
+    0 10px 20px -16px rgba(15, 23, 42, 0.45);
+  color: #fff;
+  cursor: pointer;
+  transition:
+    background-color var(--dashboard-interaction-duration) var(--dashboard-interaction-ease),
+    border-color var(--dashboard-interaction-duration) var(--dashboard-interaction-ease),
+    box-shadow var(--dashboard-interaction-duration) var(--dashboard-interaction-ease),
+    transform var(--dashboard-interaction-duration) var(--dashboard-interaction-ease);
+}
+
+#dashboard-theme-scope .dashboard-leads-checkbox::after {
+  content: "";
+  width: 0.28rem;
+  height: 0.56rem;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  opacity: 0;
+  transform: rotate(45deg) scale(0.7);
+  transition:
+    opacity var(--dashboard-interaction-duration) var(--dashboard-interaction-ease),
+    transform var(--dashboard-interaction-duration) var(--dashboard-interaction-ease);
+}
+
+#dashboard-theme-scope .dashboard-leads-checkbox:hover {
+  border-color: color-mix(in oklab, var(--ring) 72%, var(--border) 28%);
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, white 44%, var(--ring) 56%) 0%,
+    color-mix(in oklab, var(--background) 24%, var(--ring) 76%) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.26),
+    inset 0 -1px 0 rgba(140, 83, 23, 0.16),
+    0 14px 26px -18px color-mix(in oklab, var(--ring) 22%, rgba(15, 23, 42, 0.35));
+  transform: translateY(-1px);
+}
+
+#dashboard-theme-scope .dashboard-leads-checkbox:checked,
+#dashboard-theme-scope .dashboard-leads-checkbox:indeterminate {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--ring) 88%, white 12%) 0%,
+    var(--ring) 100%
+  );
+  border-color: color-mix(in srgb, var(--ring) 82%, black 18%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 14px 28px -18px color-mix(in srgb, var(--ring) 34%, rgba(15, 23, 42, 0.35));
+}
+
+#dashboard-theme-scope .dashboard-leads-checkbox:checked::after {
+  opacity: 1;
+  transform: rotate(45deg) scale(1);
+}
+
+#dashboard-theme-scope .dashboard-leads-checkbox:indeterminate::after {
+  width: 0.56rem;
+  height: 2px;
+  border: 0;
+  border-radius: 999px;
+  background: currentColor;
+  opacity: 1;
+  transform: none;
+}
+
+#dashboard-theme-scope .dashboard-leads-checkbox:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--color-button-focus-offset),
+    0 0 0 5px color-mix(in srgb, var(--ring) 34%, transparent),
+    0 14px 28px -18px color-mix(in srgb, var(--ring) 34%, rgba(15, 23, 42, 0.35));
+}
+
 /* Forest theme: make lead selection checkboxes use the brighter accent */
 #dashboard-theme-scope.theme-forest .dashboard-leads-checkbox {
   border-color: var(--ring);
@@ -87,6 +176,18 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
 [data-slot=card] { box-shadow: var(--shadow-ambient); }
 [data-slot=button] { transition: all var(--dashboard-interaction-duration) var(--dashboard-interaction-ease); }
 [data-slot=input] { transition: color var(--dashboard-interaction-duration) var(--dashboard-interaction-ease), box-shadow var(--dashboard-interaction-duration) var(--dashboard-interaction-ease); }
+
+#dashboard-theme-scope .dashboard-datetime-input::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  width: 2.75rem;
+  margin: 0;
+  cursor: pointer;
+}
+
+#dashboard-theme-scope .dashboard-datetime-input::-webkit-clear-button,
+#dashboard-theme-scope .dashboard-datetime-input::-webkit-inner-spin-button {
+  display: none;
+}
 
 /* Motion + micro-interactions */
 #dashboard-theme-scope [data-slot=card] {
@@ -2282,6 +2383,17 @@ body.theme-forest .dashboard-forest-pin {
     overflow-x: hidden;
   }
 
+  #dashboard-theme-scope .dashboard-overview-page,
+  #dashboard-theme-scope .dashboard-overview-grid,
+  #dashboard-theme-scope .dashboard-overview-column,
+  #dashboard-theme-scope .dashboard-overview-page [data-slot=card],
+  #dashboard-theme-scope .dashboard-overview-page [data-slot=card-header],
+  #dashboard-theme-scope .dashboard-overview-page [data-slot=card-content],
+  #dashboard-theme-scope .dashboard-overview-page [data-slot=card-footer] {
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
   #dashboard-theme-scope .dashboard-overview-page {
     width: min(100%, 21rem);
     max-width: 21rem;
@@ -2352,6 +2464,25 @@ body.theme-forest .dashboard-forest-pin {
   #dashboard-theme-scope .dashboard-overview-page [data-slot=card-footer] {
     padding-left: 0.5rem;
     padding-right: 0.5rem;
+  }
+
+  #dashboard-theme-scope .dashboard-datetime-input {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    font-size: 0.8rem;
+  }
+
+  #dashboard-theme-scope .dashboard-datetime-input::-webkit-datetime-edit {
+    padding: 0;
+  }
+
+  #dashboard-theme-scope .dashboard-datetime-input::-webkit-date-and-time-value {
+    min-height: 1em;
+  }
+
+  #dashboard-theme-scope .dashboard-datetime-input::-webkit-calendar-picker-indicator {
+    width: 2.15rem;
   }
 
   #dashboard-theme-scope .dashboard-overview-metrics {

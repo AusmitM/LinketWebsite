@@ -6,6 +6,8 @@ import { getPlanScopedLeadFormConfig } from "@/lib/lead-form.server";
 import { limitRequest } from "@/lib/rate-limit";
 import type { LeadFormConfig, LeadFormSubmission } from "@/types/lead-form";
 
+const DEFAULT_FOLLOW_UP_DELAY_MS = 86_400_000;
+
 type LeadFormRow = {
   id: string;
   user_id: string;
@@ -136,6 +138,9 @@ async function insertLeadRecord(
     company: string | null;
     message: string | null;
     source_url: string | null;
+    lead_flag: string;
+    lead_rating: number;
+    next_follow_up_at: string | null;
     custom_fields: Record<string, unknown>;
     lead_response_id: string;
   }
@@ -301,6 +306,11 @@ export async function PUT(request: NextRequest) {
         company: leadValues.company,
         message: leadValues.message,
         source_url: sourceUrl,
+        lead_flag: "follow_up",
+        lead_rating: 3,
+        next_follow_up_at: new Date(
+          Date.now() + DEFAULT_FOLLOW_UP_DELAY_MS
+        ).toISOString(),
         custom_fields: customFields,
         lead_response_id: responseId,
       });

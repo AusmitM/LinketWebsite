@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { type SetStateAction, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Building2,
   Copy,
+  CalendarClock,
   Download,
   ExternalLink,
   FileText,
@@ -13,8 +14,10 @@ import {
   Paperclip,
   Phone,
   RefreshCw,
+  StickyNote,
   Trash2,
   UserRound,
+  Star,
 } from "lucide-react";
 
 import { toast } from "@/components/system/toaster";
@@ -29,6 +32,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -36,6 +40,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  compareLeadsByPriority,
+  getLeadFlagBadgeClassName,
+  getLeadFlagLabel,
+  getLeadRatingLabel,
+  getDefaultLeadRating,
+  getDefaultFollowUpAt,
+  normalizeLeadFlag,
+  normalizeLeadRating,
+  type LeadFlag,
+} from "@/lib/lead-workflow";
 import { normalizeLeadFormConfig } from "@/lib/lead-form";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
@@ -46,13 +62,8 @@ import type {
   RealtimePostgresChangesPayload,
 } from "@supabase/supabase-js";
 
-type LeadWorkflowStatus =
-  | "new"
-  | "contacted"
-  | "qualified"
-  | "spam"
-  | "archived";
-type LeadSortOption = "newest" | "oldest" | "name-asc" | "name-desc";
+type LeadWorkflowStatus = LeadFlag;
+type LeadSortOption = "newest" | "oldest" | "name-asc" | "name-desc" | "priority";
 type LeadFieldEntry = {
   key: string;
   label: string;
@@ -70,7 +81,6 @@ type LeadView = {
   submittedLabel: string;
   submittedShortLabel: string;
   submittedSortValue: number;
-  spamSuspected: boolean;
 };
 
 type FieldLabelMap = Record<
@@ -78,71 +88,42 @@ type FieldLabelMap = Record<
   Record<string, { label: string; type: LeadFormFieldType }>
 >;
 
-type LeadStatusMap = Record<string, LeadWorkflowStatus>;
 type LeadListFilters = {
   hasAttachment: boolean;
   missingPhone: boolean;
   newOnly: boolean;
-  spamSuspected: boolean;
+};
+
+type LeadFollowUpDraft = {
+  note: string;
+  next_follow_up_at: string;
+  lead_flag: LeadFlag;
+  lead_rating: number;
 };
 
 const DEFAULT_FILTERS: LeadListFilters = {
   hasAttachment: false,
   missingPhone: false,
   newOnly: false,
-  spamSuspected: false,
 };
 const CORE_FIELD_KEYS = new Set(["name", "email", "phone", "company", "message"]);
 const STATUS_META: Record<
   LeadWorkflowStatus,
   { label: string; className: string }
 > = {
-  new: {
-    label: "New",
-    className:
-      "border-emerald-300/70 bg-emerald-50 text-emerald-800 dark:border-emerald-500/40 dark:bg-emerald-500/15 dark:text-emerald-100",
+  follow_up: {
+    label: getLeadFlagLabel("follow_up"),
+    className: getLeadFlagBadgeClassName("follow_up"),
   },
-  contacted: {
-    label: "Contacted",
-    className:
-      "border-sky-300/70 bg-sky-50 text-sky-800 dark:border-sky-500/40 dark:bg-sky-500/15 dark:text-sky-100",
-  },
-  qualified: {
-    label: "Qualified",
-    className:
-      "border-violet-300/70 bg-violet-50 text-violet-800 dark:border-violet-500/40 dark:bg-violet-500/15 dark:text-violet-100",
-  },
-  spam: {
-    label: "Spam",
-    className:
-      "border-amber-300/70 bg-amber-50 text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/15 dark:text-amber-100",
-  },
-  archived: {
-    label: "Archived",
-    className:
-      "border-slate-300/70 bg-slate-100 text-slate-700 dark:border-slate-500/40 dark:bg-slate-500/15 dark:text-slate-200",
+  done: {
+    label: getLeadFlagLabel("done"),
+    className: getLeadFlagBadgeClassName("done"),
   },
 };
-
-function getStatusStorageKey(userId: string) {
-  return `linket.leads.statuses.${userId}`;
-}
-
-function readStoredLeadStatuses(userId: string): LeadStatusMap {
-  if (typeof window === "undefined") return {};
-  try {
-    const raw = window.localStorage.getItem(getStatusStorageKey(userId));
-    if (!raw) return {};
-    const parsed = JSON.parse(raw) as Record<string, unknown>;
-    const next: LeadStatusMap = {};
-    Object.entries(parsed).forEach(([leadId, status]) => {
-      if (isLeadWorkflowStatus(status)) next[leadId] = status;
-    });
-    return next;
-  } catch {
-    return {};
-  }
-}
+const LEAD_RATING_OPTIONS = [1, 2, 3, 4, 5] as const;
+const relativeTimeFormatter = new Intl.RelativeTimeFormat("en-US", {
+  numeric: "auto",
+});
 
 function pruneSelectedIds(selectedIds: Set<string>, loadedIds: Set<string>) {
   if (selectedIds.size === 0) return selectedIds;
@@ -153,25 +134,73 @@ function pruneSelectedIds(selectedIds: Set<string>, loadedIds: Set<string>) {
   return next.size === selectedIds.size ? selectedIds : next;
 }
 
+function formatDatetimeLocalValue(value: string | null) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const pad = (input: number) => String(input).padStart(2, "0");
+  return [
+    date.getFullYear(),
+    pad(date.getMonth() + 1),
+    pad(date.getDate()),
+  ].join("-") + `T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function parseDatetimeLocalValue(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const date = new Date(trimmed);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toISOString();
+}
+
+function formatRelativeTime(date: string) {
+  const target = new Date(date).getTime();
+  if (Number.isNaN(target)) return "recently";
+
+  const diffMs = target - Date.now();
+  const diffMinutes = Math.round(diffMs / 60_000);
+
+  if (Math.abs(diffMinutes) < 60) {
+    return relativeTimeFormatter.format(diffMinutes, "minute");
+  }
+
+  const diffHours = Math.round(diffMinutes / 60);
+  if (Math.abs(diffHours) < 24) {
+    return relativeTimeFormatter.format(diffHours, "hour");
+  }
+
+  const diffDays = Math.round(diffHours / 24);
+  if (Math.abs(diffDays) < 30) {
+    return relativeTimeFormatter.format(diffDays, "day");
+  }
+
+  const diffMonths = Math.round(diffDays / 30);
+  if (Math.abs(diffMonths) < 12) {
+    return relativeTimeFormatter.format(diffMonths, "month");
+  }
+
+  const diffYears = Math.round(diffDays / 365);
+  return relativeTimeFormatter.format(diffYears, "year");
+}
+
 export default function LeadsList({ userId }: { userId: string }) {
   const planAccess = useDashboardPlanAccess();
   const canLabelLeads = planAccess.canLabelLeads;
   const [leads, setLeads] = useState<Lead[]>([]);
   const [fieldLabels, setFieldLabels] = useState<FieldLabelMap>({});
-  const storedLeadStatuses = useMemo(() => readStoredLeadStatuses(userId), [userId]);
-  const [leadStatusOverrides, setLeadStatusOverrides] = useState<
-    Record<string, LeadStatusMap>
-  >({});
   const [loading, setLoading] = useState(true);
   const [fetching, setFetching] = useState(false);
   const [q, setQ] = useState("");
   const [hasMore, setHasMore] = useState(false);
   const [selectedIdState, setSelectedIdState] = useState<Set<string>>(new Set());
-  const [sortBy, setSortBy] = useState<LeadSortOption>("newest");
+  const [sortBy, setSortBy] = useState<LeadSortOption>("priority");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filters, setFilters] = useState<LeadListFilters>(DEFAULT_FILTERS);
   const [activeLeadId, setActiveLeadId] = useState<string | null>(null);
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
+  const [leadDrafts, setLeadDrafts] = useState<Record<string, LeadFollowUpDraft>>({});
+  const [savingLeadId, setSavingLeadId] = useState<string | null>(null);
 
   const pageSize = 20;
   const offsetRef = useRef(0);
@@ -182,7 +211,13 @@ export default function LeadsList({ userId }: { userId: string }) {
   );
 
   const searchQuery = q.trim();
-  const leadStatuses = leadStatusOverrides[userId] ?? storedLeadStatuses;
+  const leadStatuses = useMemo<Record<string, LeadFlag>>(() => {
+    const next: Record<string, LeadFlag> = {};
+    leads.forEach((lead) => {
+      next[lead.id] = lead.lead_flag;
+    });
+    return next;
+  }, [leads]);
   const loadedLeadIds = useMemo(
     () => new Set(leads.map((lead) => lead.id)),
     [leads]
@@ -191,26 +226,6 @@ export default function LeadsList({ userId }: { userId: string }) {
     () => pruneSelectedIds(selectedIdState, loadedLeadIds),
     [loadedLeadIds, selectedIdState]
   );
-
-  function setLeadStatuses(update: SetStateAction<LeadStatusMap>) {
-    setLeadStatusOverrides((prev) => {
-      const current = prev[userId] ?? storedLeadStatuses;
-      const next =
-        typeof update === "function"
-          ? (update as (previous: LeadStatusMap) => LeadStatusMap)(current)
-          : update;
-      if (next === current) return prev;
-      return { ...prev, [userId]: next };
-    });
-  }
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    window.localStorage.setItem(
-      getStatusStorageKey(userId),
-      JSON.stringify(leadStatuses)
-    );
-  }, [leadStatuses, userId]);
 
   async function load({ reset = false }: { reset?: boolean } = {}) {
     if (!userId) return;
@@ -237,6 +252,8 @@ export default function LeadsList({ userId }: { userId: string }) {
           `phone.ilike.${pattern}`,
           `company.ilike.${pattern}`,
           `message.ilike.${pattern}`,
+          `note.ilike.${pattern}`,
+          `lead_flag.ilike.${pattern}`,
         ].join(",")
       );
     }
@@ -387,12 +404,7 @@ export default function LeadsList({ userId }: { userId: string }) {
       const attachments = dedupeFileLinks(
         detailFields.flatMap((field) => field.fileLinks ?? [])
       );
-      const spamSuspected = detectSpamLead(lead);
-      const status = canLabelLeads
-        ? leadStatuses[lead.id] ?? (spamSuspected ? "spam" : "new")
-        : spamSuspected
-        ? "spam"
-        : "new";
+      const status = normalizeLeadFlag(leadStatuses[lead.id] ?? lead.lead_flag);
       const createdAt = new Date(lead.created_at);
       return {
         lead,
@@ -404,7 +416,6 @@ export default function LeadsList({ userId }: { userId: string }) {
         submittedLabel: createdAt.toLocaleString(),
         submittedShortLabel: formatLeadSubmittedShort(createdAt),
         submittedSortValue: createdAt.getTime(),
-        spamSuspected,
       };
     });
 
@@ -412,14 +423,11 @@ export default function LeadsList({ userId }: { userId: string }) {
       .filter((row) => {
         if (filters.hasAttachment && row.attachments.length === 0) return false;
         if (filters.missingPhone && row.lead.phone) return false;
-        if (filters.newOnly && row.status !== "new") return false;
-        if (filters.spamSuspected && !row.spamSuspected && row.status !== "spam") {
-          return false;
-        }
+        if (filters.newOnly && row.status !== "follow_up") return false;
         return matchesLeadSearch(row, searchQuery);
       })
       .sort((a, b) => compareLeadViews(a, b, sortBy));
-  }, [canLabelLeads, fieldLabels, filters, leadStatuses, leads, searchQuery, sortBy]);
+  }, [fieldLabels, filters, leadStatuses, leads, searchQuery, sortBy]);
 
   const visibleIds = useMemo(() => leadViews.map((row) => row.lead.id), [leadViews]);
   const allVisibleSelected =
@@ -438,16 +446,49 @@ export default function LeadsList({ userId }: { userId: string }) {
       ? buildDetachedLeadView(
           leads.find((lead) => lead.id === effectiveActiveLeadId) ?? null,
           fieldLabels,
-          leadStatuses,
-          canLabelLeads
+          leadStatuses
         )
       : null);
+  const activeLeadDraft = activeLeadView
+    ? leadDrafts[activeLeadView.lead.id] ?? {
+        note: activeLeadView.lead.note ?? "",
+        next_follow_up_at: formatDatetimeLocalValue(
+          activeLeadView.lead.next_follow_up_at
+        ),
+        lead_flag: activeLeadView.lead.lead_flag,
+        lead_rating: normalizeLeadRating(activeLeadView.lead.lead_rating),
+      }
+    : null;
+  const activeLeadStatus = activeLeadDraft?.lead_flag ?? activeLeadView?.lead.lead_flag ?? "follow_up";
+  const activeLeadRating = normalizeLeadRating(
+    activeLeadDraft?.lead_rating ?? activeLeadView?.lead.lead_rating ?? getDefaultLeadRating(activeLeadStatus)
+  );
 
   useEffect(() => {
     if (selectAllRef.current) {
       selectAllRef.current.indeterminate = someVisibleSelected;
     }
   }, [someVisibleSelected]);
+
+  useEffect(() => {
+    if (!activeLeadId) return;
+    const currentLead = leads.find((lead) => lead.id === activeLeadId);
+    if (!currentLead) return;
+    setLeadDrafts((prev) => {
+      if (prev[currentLead.id]) return prev;
+      return {
+        ...prev,
+        [currentLead.id]: {
+          note: currentLead.note ?? "",
+          next_follow_up_at: formatDatetimeLocalValue(
+            currentLead.next_follow_up_at
+          ),
+          lead_flag: currentLead.lead_flag,
+          lead_rating: normalizeLeadRating(currentLead.lead_rating),
+        },
+      };
+    });
+  }, [activeLeadId, leads]);
 
   function toggleLeadSelection(id: string) {
     setSelectedIdState((prev) => {
@@ -472,9 +513,153 @@ export default function LeadsList({ userId }: { userId: string }) {
     setSelectedIdState(new Set());
   }
 
-  function updateLeadStatus(id: string, status: LeadWorkflowStatus) {
-    if (!canLabelLeads) return;
-    setLeadStatuses((prev) => ({ ...prev, [id]: status }));
+  async function updateLeadStatus(id: string, status: LeadWorkflowStatus) {
+    if (!canLabelLeads || !userId) return;
+    const nextStatus = normalizeLeadFlag(status);
+    const previousLead = leads.find((lead) => lead.id === id);
+    if (!previousLead) return;
+    const nextFollowUpAt =
+      nextStatus === "done"
+        ? null
+        : previousLead.next_follow_up_at ?? getDefaultFollowUpAt(previousLead.created_at);
+
+    setLeads((prev) =>
+      prev.map((lead) =>
+        lead.id === id
+          ? {
+              ...lead,
+              lead_flag: nextStatus,
+              next_follow_up_at: nextFollowUpAt,
+            }
+          : lead
+      )
+    );
+    setLeadDrafts((prev) => ({
+      ...prev,
+      [id]: {
+        note: prev[id]?.note ?? previousLead.note ?? "",
+        next_follow_up_at:
+          nextFollowUpAt === null
+            ? ""
+            : nextFollowUpAt ??
+              prev[id]?.next_follow_up_at ??
+              previousLead.next_follow_up_at ??
+              "",
+        lead_flag: nextStatus,
+        lead_rating: prev[id]?.lead_rating ?? normalizeLeadRating(previousLead.lead_rating),
+      },
+    }));
+
+    const { error } = await supabase
+      .from("leads")
+      .update({
+        lead_flag: nextStatus,
+        next_follow_up_at: nextFollowUpAt,
+      })
+      .eq("id", id)
+      .eq("user_id", userId);
+
+    if (error) {
+      setLeads((prev) =>
+        prev.map((lead) =>
+          lead.id === id
+            ? {
+                ...lead,
+                lead_flag: previousLead.lead_flag,
+                next_follow_up_at: previousLead.next_follow_up_at,
+              }
+            : lead
+        )
+      );
+      setLeadDrafts((prev) => ({
+        ...prev,
+        [id]: {
+          note: prev[id]?.note ?? previousLead.note ?? "",
+          next_follow_up_at:
+            prev[id]?.next_follow_up_at ?? previousLead.next_follow_up_at ?? "",
+          lead_flag: previousLead.lead_flag,
+          lead_rating: prev[id]?.lead_rating ?? normalizeLeadRating(previousLead.lead_rating),
+        },
+      }));
+      toast({
+        title: "Unable to update status",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  }
+
+  async function saveLeadFollowUp(id: string) {
+    if (!userId) return;
+    const draft = leadDrafts[id];
+    const currentLead = leads.find((lead) => lead.id === id);
+    if (!draft || !currentLead) return;
+
+    setSavingLeadId(id);
+    try {
+      const payload = {
+        note: draft.note.trim(),
+        next_follow_up_at:
+          draft.lead_flag === "done" ? null : parseDatetimeLocalValue(draft.next_follow_up_at),
+        lead_flag: draft.lead_flag,
+        lead_rating: normalizeLeadRating(draft.lead_rating),
+      };
+      const { data, error } = await supabase
+        .from("leads")
+        .update(payload)
+        .eq("id", id)
+        .eq("user_id", userId)
+        .select("id, note, next_follow_up_at, lead_flag, lead_rating")
+        .maybeSingle();
+
+      if (error) throw new Error(error.message);
+      if (!data) throw new Error("Lead not found");
+
+      const nextRow = data as {
+        id: string;
+        note: string | null;
+        next_follow_up_at: string | null;
+        lead_flag: LeadFlag | null;
+        lead_rating: number | null;
+      };
+
+      const nextDraft: LeadFollowUpDraft = {
+        note: nextRow.note ?? "",
+        next_follow_up_at: formatDatetimeLocalValue(
+          nextRow.next_follow_up_at
+        ),
+        lead_flag: normalizeLeadFlag(nextRow.lead_flag),
+        lead_rating: normalizeLeadRating(nextRow.lead_rating),
+      };
+
+      setLeads((prev) =>
+        prev.map((lead) =>
+          lead.id === id
+            ? {
+                ...lead,
+                note: nextDraft.note,
+                next_follow_up_at: nextRow.next_follow_up_at ?? null,
+                lead_flag: nextDraft.lead_flag,
+                lead_rating: nextDraft.lead_rating,
+              }
+            : lead
+        )
+      );
+      setLeadDrafts((prev) => ({ ...prev, [id]: nextDraft }));
+      toast({
+        title: "Follow-up saved",
+        variant: "success",
+      });
+    } catch (error) {
+      toast({
+        title: "Unable to save follow-up",
+        description:
+          error instanceof Error ? error.message : "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setSavingLeadId(null);
+    }
   }
 
   function deleteLead(id: string) {
@@ -521,29 +706,29 @@ export default function LeadsList({ userId }: { userId: string }) {
     const customKeys = Array.from(customKeySet);
     const header = [
       "created_at",
-      "status",
+      "lead_status",
+      "lead_rating",
       "name",
       "email",
       "phone",
       "company",
       "message",
+      "note",
+      "next_follow_up_at",
       "handle",
       ...customKeys.map((key) => labelByKey[key] || toReadableLabel(key)),
     ];
     const rows = targetLeads.map((lead) => [
       safeCsv(lead.created_at),
-      safeCsv(
-        canLabelLeads
-          ? leadStatuses[lead.id] ?? (detectSpamLead(lead) ? "spam" : "new")
-          : detectSpamLead(lead)
-          ? "spam"
-          : "new"
-      ),
+      safeCsv(leadStatuses[lead.id] ?? lead.lead_flag),
+      safeCsv(String(normalizeLeadRating(lead.lead_rating))),
       safeCsv(lead.name),
       safeCsv(lead.email),
       safeCsv(lead.phone || ""),
       safeCsv(lead.company || ""),
       safeCsv(lead.message || ""),
+      safeCsv(lead.note || ""),
+      safeCsv(lead.next_follow_up_at || ""),
       safeCsv(lead.handle),
       ...customKeys.map((key) =>
         safeCsv(formatLeadValue(lead.custom_fields?.[key] ?? null))
@@ -640,7 +825,7 @@ export default function LeadsList({ userId }: { userId: string }) {
                   Paid unlocks lead labeling
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Upgrade to label leads as Contacted, Qualified, Spam, or Archived so your inbox stays organized as submissions grow.
+                  Upgrade to mark leads as Follow up or Done and keep a simple 1-5 star rating on every contact.
                 </p>
               </div>
               <Button asChild size="sm" className="w-full sm:w-auto">
@@ -655,7 +840,7 @@ export default function LeadsList({ userId }: { userId: string }) {
               <Input
                 value={q}
                 onChange={(event) => setQ(event.target.value)}
-                placeholder="Search name, email, phone, company, note"
+                placeholder="Search name, email, phone, company, note, status"
                 aria-label="Search leads"
                 className="h-11 rounded-2xl"
               />
@@ -679,6 +864,7 @@ export default function LeadsList({ userId }: { userId: string }) {
                   <SelectValue placeholder="Sort" />
                 </SelectTrigger>
                 <SelectContent className="rounded-2xl border-border/60 bg-popover/95">
+                  <SelectItem value="priority">Priority first</SelectItem>
                   <SelectItem value="newest">Newest first</SelectItem>
                   <SelectItem value="oldest">Oldest first</SelectItem>
                   <SelectItem value="name-asc">Name A-Z</SelectItem>
@@ -766,15 +952,7 @@ export default function LeadsList({ userId }: { userId: string }) {
                 active={filters.newOnly}
                 onClick={() => setFilters((prev) => ({ ...prev, newOnly: !prev.newOnly }))}
               >
-                New only
-              </FilterChip>
-              <FilterChip
-                active={filters.spamSuspected}
-                onClick={() =>
-                  setFilters((prev) => ({ ...prev, spamSuspected: !prev.spamSuspected }))
-                }
-              >
-                Spam suspected
+                Follow-up only
               </FilterChip>
               {hasActiveFilters(filters) ? (
                 <Button
@@ -876,7 +1054,7 @@ export default function LeadsList({ userId }: { userId: string }) {
                           checked={selectedIds.has(row.lead.id)}
                           onChange={() => toggleLeadSelection(row.lead.id)}
                           aria-label={`Select ${row.lead.name || row.lead.email || "lead"}`}
-                          className="h-4 w-4 rounded border-border"
+                          className="dashboard-leads-checkbox h-4 w-4 rounded border-border"
                         />
                       </div>
                       <button
@@ -886,6 +1064,7 @@ export default function LeadsList({ userId }: { userId: string }) {
                       >
                         <div className="flex flex-wrap items-center gap-2">
                           <StatusBadge status={row.status} />
+                          <RatingBadge rating={row.lead.lead_rating} />
                           {row.attachments.length > 0 ? (
                             <span className="inline-flex items-center gap-1 rounded-full border border-border/50 bg-card/80 px-2.5 py-1 text-[11px] font-medium text-foreground">
                               <Paperclip className="h-3.5 w-3.5" aria-hidden />
@@ -910,6 +1089,22 @@ export default function LeadsList({ userId }: { userId: string }) {
                               {row.lead.handle || "Unknown form"}
                             </span>
                           </div>
+                          {row.lead.note.trim() || row.lead.next_follow_up_at ? (
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              {row.lead.note.trim() ? (
+                                <span className="inline-flex items-center gap-1.5 rounded-full border border-border/50 bg-card/80 px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
+                                  <StickyNote className="h-3.5 w-3.5" aria-hidden />
+                                  Note
+                                </span>
+                              ) : null}
+                              {row.lead.next_follow_up_at ? (
+                                <span className="inline-flex items-center gap-1.5 rounded-full border border-border/50 bg-card/80 px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
+                                  <CalendarClock className="h-3.5 w-3.5" aria-hidden />
+                                  {formatRelativeTime(row.lead.next_follow_up_at)}
+                                </span>
+                              ) : null}
+                            </div>
+                          ) : null}
                         </div>
                         <div className="mt-3 space-y-2">
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -956,12 +1151,13 @@ export default function LeadsList({ userId }: { userId: string }) {
                       </Button>
                       <Button
                         type="button"
-                        variant="destructive"
-                        size="sm"
-                        className="w-full rounded-xl"
+                        variant="custom"
+                        size="icon"
+                        className="ml-auto h-9 w-9 rounded-xl border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 hover:text-rose-700"
                         onClick={() => deleteLead(row.lead.id)}
+                        aria-label={`Delete ${row.lead.name || row.lead.email || "lead"}`}
                       >
-                        Delete
+                        <Trash2 className="h-4 w-4" aria-hidden />
                       </Button>
                     </div>
                   </article>
@@ -970,7 +1166,7 @@ export default function LeadsList({ userId }: { userId: string }) {
 
               <div className="hidden md:block">
                 <div className="overflow-x-auto">
-                  <table className="w-full min-w-[1040px] text-left text-sm">
+                  <table className="w-full min-w-[760px] text-left text-sm">
                   <thead className="bg-muted/50 text-xs uppercase tracking-[0.18em] text-muted-foreground">
                     <tr>
                       <th className="px-4 py-3">
@@ -980,14 +1176,12 @@ export default function LeadsList({ userId }: { userId: string }) {
                           checked={allVisibleSelected}
                           onChange={toggleSelectAllVisible}
                           aria-label="Select all visible leads"
-                          className="h-4 w-4 rounded border-border"
+                          className="dashboard-leads-checkbox h-4 w-4 rounded border-border"
                         />
                       </th>
                       <th className="px-4 py-3">Name</th>
                       <th className="px-4 py-3">Email</th>
                       <th className="px-4 py-3">Phone</th>
-                      <th className="px-4 py-3">Submitted</th>
-                      <th className="px-4 py-3">Attachment</th>
                       <th className="px-4 py-3">Message preview</th>
                       <th className="px-4 py-3 text-right">Actions</th>
                     </tr>
@@ -1005,7 +1199,7 @@ export default function LeadsList({ userId }: { userId: string }) {
                             checked={selectedIds.has(row.lead.id)}
                             onChange={() => toggleLeadSelection(row.lead.id)}
                             aria-label={`Select ${row.lead.name || row.lead.email || "lead"}`}
-                            className="h-4 w-4 rounded border-border"
+                            className="dashboard-leads-checkbox h-4 w-4 rounded border-border"
                           />
                         </td>
                         <td className="px-4 py-3">
@@ -1015,12 +1209,29 @@ export default function LeadsList({ userId }: { userId: string }) {
                             </div>
                             <div className="mt-1 flex items-center gap-2">
                               <StatusBadge status={row.status} />
+                              <RatingBadge rating={row.lead.lead_rating} />
                               {row.lead.company ? (
                                 <span className="truncate text-xs text-muted-foreground">
                                   {row.lead.company}
                                 </span>
                               ) : null}
                             </div>
+                            {row.lead.note.trim() || row.lead.next_follow_up_at ? (
+                              <div className="mt-1 flex flex-wrap gap-2">
+                                {row.lead.note.trim() ? (
+                                  <span className="inline-flex items-center gap-1.5 rounded-full border border-border/50 bg-background/80 px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
+                                    <StickyNote className="h-3.5 w-3.5" aria-hidden />
+                                    Note
+                                  </span>
+                                ) : null}
+                                {row.lead.next_follow_up_at ? (
+                                  <span className="inline-flex items-center gap-1.5 rounded-full border border-border/50 bg-background/80 px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
+                                    <CalendarClock className="h-3.5 w-3.5" aria-hidden />
+                                    {formatRelativeTime(row.lead.next_follow_up_at)}
+                                  </span>
+                                ) : null}
+                              </div>
+                            ) : null}
                           </div>
                         </td>
                         <td className="px-4 py-3 text-muted-foreground">
@@ -1028,19 +1239,6 @@ export default function LeadsList({ userId }: { userId: string }) {
                         </td>
                         <td className="px-4 py-3 text-muted-foreground">
                           {row.lead.phone || "—"}
-                        </td>
-                        <td className="px-4 py-3 text-muted-foreground">
-                          {row.submittedLabel}
-                        </td>
-                        <td className="px-4 py-3">
-                          {row.attachments.length > 0 ? (
-                            <span className="inline-flex items-center gap-2 rounded-full border border-border/50 bg-background/80 px-3 py-1 text-xs font-medium">
-                              <Paperclip className="h-3.5 w-3.5" aria-hidden />
-                              {row.attachments.length}
-                            </span>
-                          ) : (
-                            <span className="text-muted-foreground">—</span>
-                          )}
                         </td>
                         <td className="px-4 py-3">
                           {row.preview ? (
@@ -1056,11 +1254,13 @@ export default function LeadsList({ userId }: { userId: string }) {
                           <div className="flex justify-end gap-2">
                             <Button
                               type="button"
-                              variant="destructive"
-                              size="sm"
+                              variant="custom"
+                              size="icon"
+                              className="h-9 w-9 rounded-xl border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 hover:text-rose-700"
                               onClick={() => deleteLead(row.lead.id)}
+                              aria-label={`Delete ${row.lead.name || row.lead.email || "lead"}`}
                             >
-                              Delete
+                              <Trash2 className="h-4 w-4" aria-hidden />
                             </Button>
                           </div>
                         </td>
@@ -1103,6 +1303,7 @@ export default function LeadsList({ userId }: { userId: string }) {
                   </DialogTitle>
                   <div className="flex flex-wrap items-center gap-2">
                     <StatusBadge status={activeLeadView.status} />
+                    <RatingBadge rating={activeLeadView.lead.lead_rating} />
                     <Badge variant="outline" className="rounded-full px-3 py-1 text-xs">
                       Submitted {activeLeadView.submittedLabel}
                     </Badge>
@@ -1110,8 +1311,8 @@ export default function LeadsList({ userId }: { userId: string }) {
                 </div>
                 <DialogDescription className="max-w-2xl text-sm text-muted-foreground">
                   {canLabelLeads
-                    ? "Review the full submission, update its workflow status, and handle follow-up actions here."
-                    : "Review the full submission and follow up. Paid unlocks lead labels and workflow status updates."}
+                    ? "Review the full submission, update its status and rating, and handle follow-up actions here."
+                    : "Review the full submission and follow up. Paid unlocks status changes, notes, reminders, and ratings."}
                 </DialogDescription>
               </DialogHeader>
               <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4 lg:px-6">
@@ -1122,31 +1323,230 @@ export default function LeadsList({ userId }: { userId: string }) {
                         <SectionLabel>Status</SectionLabel>
                         <div className="rounded-2xl border border-border/50 bg-card/70 p-4">
                           {canLabelLeads ? (
-                            <div className="flex flex-wrap gap-2">
-                              {(Object.keys(STATUS_META) as LeadWorkflowStatus[]).map((status) => (
-                                <button
-                                  key={status}
-                                  type="button"
-                                  onClick={() => updateLeadStatus(activeLeadView.lead.id, status)}
-                                  className={cn(
-                                    "rounded-full border px-3 py-1.5 text-sm font-medium transition",
-                                    activeLeadView.status === status
-                                      ? STATUS_META[status].className
-                                      : "border-border/60 bg-background/70 text-foreground hover:bg-muted/50"
-                                  )}
-                                >
-                                  {STATUS_META[status].label}
-                                </button>
-                              ))}
+                            <div className="space-y-4">
+                              <div className="flex flex-wrap gap-2">
+                                {(Object.keys(STATUS_META) as LeadWorkflowStatus[]).map((status) => (
+                                  <button
+                                    key={status}
+                                    type="button"
+                                    onClick={() => void updateLeadStatus(activeLeadView.lead.id, status)}
+                                    className={cn(
+                                      "rounded-full border px-3 py-1.5 text-sm font-medium transition",
+                                      activeLeadStatus === status
+                                        ? STATUS_META[status].className
+                                        : "border-border/60 bg-background/70 text-foreground hover:bg-muted/50"
+                                    )}
+                                  >
+                                    {STATUS_META[status].label}
+                                  </button>
+                                ))}
+                              </div>
+
+                              <div className="space-y-2">
+                                <div className="flex items-center justify-between gap-3">
+                                  <Label className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                                    Rating
+                                  </Label>
+                                  <span className="text-xs text-muted-foreground">
+                                    {getLeadRatingLabel(activeLeadRating)}
+                                  </span>
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                  {LEAD_RATING_OPTIONS.map((rating) => (
+                                    <button
+                                      key={rating}
+                                      type="button"
+                                      onClick={() =>
+                                        setLeadDrafts((prev) => ({
+                                          ...prev,
+                                          [activeLeadView.lead.id]: {
+                                            note:
+                                              prev[activeLeadView.lead.id]?.note ??
+                                              activeLeadView.lead.note ??
+                                              "",
+                                            next_follow_up_at:
+                                              activeLeadStatus === "done"
+                                                ? ""
+                                                : prev[activeLeadView.lead.id]?.next_follow_up_at ||
+                                                  formatDatetimeLocalValue(
+                                                    activeLeadView.lead.next_follow_up_at
+                                                  ) ||
+                                                  formatDatetimeLocalValue(
+                                                    getDefaultFollowUpAt(activeLeadView.lead.created_at)
+                                                  ),
+                                            lead_flag: activeLeadStatus,
+                                            lead_rating: rating,
+                                          },
+                                        }))
+                                      }
+                                      className={cn(
+                                        "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition",
+                                        rating <= activeLeadRating
+                                          ? "border-amber-300/70 bg-amber-50 text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/15 dark:text-amber-100"
+                                          : "border-border/60 bg-background/70 text-foreground hover:bg-muted/50"
+                                      )}
+                                    >
+                                      <Star
+                                        className={cn(
+                                          "h-4 w-4",
+                                          rating <= activeLeadRating ? "fill-current" : ""
+                                        )}
+                                        aria-hidden
+                                      />
+                                      {rating}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
                             </div>
                           ) : (
                             <div className="space-y-3">
-                              <StatusBadge status={activeLeadView.status} />
+                              <StatusBadge status={activeLeadStatus} />
                               <p className="text-sm text-muted-foreground">
-                                Paid unlocks lead labels and workflow tracking.
+                                Paid unlocks status changes and star ratings.
                               </p>
                               <Button asChild size="sm" variant="outline">
                                 <Link href={planAccess.upgradeHref}>Upgrade to Paid</Link>
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      </section>
+
+                      <section className="space-y-3">
+                        <SectionLabel>Follow-up</SectionLabel>
+                        <div className="rounded-2xl border border-border/50 bg-card/70 p-4">
+                          {canLabelLeads ? (
+                            <div className="space-y-4">
+                              <div className="space-y-2">
+                                <Label
+                                  htmlFor={`lead-note-${activeLeadView.lead.id}`}
+                                  className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground"
+                                >
+                                  Note
+                                </Label>
+                                <Textarea
+                                  id={`lead-note-${activeLeadView.lead.id}`}
+                                  value={activeLeadDraft?.note ?? ""}
+                                  onChange={(event) =>
+                                    setLeadDrafts((prev) => ({
+                                      ...prev,
+                                      [activeLeadView.lead.id]: {
+                                        note: event.target.value,
+                                        next_follow_up_at:
+                                          activeLeadStatus === "done"
+                                            ? ""
+                                            : prev[activeLeadView.lead.id]?.next_follow_up_at ||
+                                              formatDatetimeLocalValue(
+                                                activeLeadView.lead.next_follow_up_at
+                                              ) ||
+                                              formatDatetimeLocalValue(
+                                                getDefaultFollowUpAt(activeLeadView.lead.created_at)
+                                              ),
+                                        lead_flag:
+                                          prev[activeLeadView.lead.id]?.lead_flag ??
+                                          activeLeadStatus,
+                                        lead_rating:
+                                          prev[activeLeadView.lead.id]?.lead_rating ??
+                                          activeLeadRating,
+                                      },
+                                    }))
+                                  }
+                                  placeholder="Capture the context you want before you follow up."
+                                  className="min-h-28 rounded-2xl"
+                                />
+                              </div>
+
+                              <div className="space-y-2">
+                                <Label
+                                  htmlFor={`lead-follow-up-${activeLeadView.lead.id}`}
+                                  className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground"
+                                >
+                                  Reminder
+                                </Label>
+                                <Input
+                                  id={`lead-follow-up-${activeLeadView.lead.id}`}
+                                  type="datetime-local"
+                                  value={
+                                    activeLeadStatus === "done"
+                                      ? ""
+                                      : activeLeadDraft?.next_follow_up_at ?? ""
+                                  }
+                                  onChange={(event) =>
+                                    setLeadDrafts((prev) => ({
+                                      ...prev,
+                                      [activeLeadView.lead.id]: {
+                                        note:
+                                          prev[activeLeadView.lead.id]?.note ??
+                                          activeLeadView.lead.note ??
+                                          "",
+                                        next_follow_up_at: event.target.value,
+                                        lead_flag:
+                                          prev[activeLeadView.lead.id]?.lead_flag ??
+                                          activeLeadStatus,
+                                        lead_rating:
+                                          prev[activeLeadView.lead.id]?.lead_rating ??
+                                          activeLeadRating,
+                                      },
+                                    }))
+                                  }
+                                  disabled={activeLeadStatus === "done"}
+                                />
+                                <p className="text-xs text-muted-foreground">
+                                  Follow-up reminders default to tomorrow. Mark done to clear the reminder.
+                                </p>
+                              </div>
+
+                              <div className="flex flex-wrap gap-2">
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  className="w-full justify-center sm:w-auto"
+                                  onClick={() =>
+                                    void saveLeadFollowUp(activeLeadView.lead.id)
+                                  }
+                                  disabled={savingLeadId === activeLeadView.lead.id}
+                                >
+                                  {savingLeadId === activeLeadView.lead.id
+                                    ? "Saving..."
+                                    : "Save follow-up"}
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  className="w-full justify-center sm:w-auto"
+                                  onClick={() =>
+                                    setLeadDrafts((prev) => ({
+                                      ...prev,
+                                      [activeLeadView.lead.id]: {
+                                        note:
+                                          prev[activeLeadView.lead.id]?.note ??
+                                          activeLeadView.lead.note ??
+                                          "",
+                                        next_follow_up_at: "",
+                                        lead_flag:
+                                          prev[activeLeadView.lead.id]?.lead_flag ??
+                                          activeLeadStatus,
+                                        lead_rating:
+                                          prev[activeLeadView.lead.id]?.lead_rating ??
+                                          activeLeadRating,
+                                      },
+                                    }))
+                                  }
+                                  disabled={savingLeadId === activeLeadView.lead.id}
+                                >
+                                  Clear reminder
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="space-y-3">
+                              <p className="text-sm text-muted-foreground">
+                                Paid unlocks notes, reminders, status changes, and star ratings.
+                              </p>
+                              <Button asChild size="sm" variant="outline">
+                                <Link href={planAccess.upgradeHref}>Unlock follow-up tools</Link>
                               </Button>
                             </div>
                           )}
@@ -1293,20 +1693,20 @@ export default function LeadsList({ userId }: { userId: string }) {
                       type="button"
                       size="sm"
                       className="w-full justify-center sm:w-auto"
-                      onClick={() => updateLeadStatus(activeLeadView.lead.id, "contacted")}
+                      onClick={() => void updateLeadStatus(activeLeadView.lead.id, "done")}
                     >
-                      Mark contacted
+                      Mark done
                     </Button>
                   ) : null}
                   <Button
                     type="button"
-                    variant="destructive"
-                    size="sm"
-                    className="w-full justify-center sm:w-auto"
+                    variant="custom"
+                    size="icon"
+                    className="h-9 w-9 rounded-xl border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 hover:text-rose-700"
                     onClick={() => deleteLead(activeLeadView.lead.id)}
+                    aria-label={`Delete ${activeLeadView.lead.name || activeLeadView.lead.email || "lead"}`}
                   >
                     <Trash2 className="h-4 w-4" aria-hidden />
-                    Delete
                   </Button>
                 </div>
               </div>
@@ -1321,18 +1721,12 @@ export default function LeadsList({ userId }: { userId: string }) {
 function buildDetachedLeadView(
   lead: Lead | null,
   fieldLabels: FieldLabelMap,
-  leadStatuses: LeadStatusMap,
-  canLabelLeads: boolean
+  leadStatuses: Record<string, LeadFlag>
 ) {
   if (!lead) return null;
   const detailFields = collectLeadFieldEntries(lead, fieldLabels);
   const attachments = dedupeFileLinks(detailFields.flatMap((field) => field.fileLinks ?? []));
-  const spamSuspected = detectSpamLead(lead);
-  const status = canLabelLeads
-    ? leadStatuses[lead.id] ?? (spamSuspected ? "spam" : "new")
-    : spamSuspected
-    ? "spam"
-    : "new";
+  const status = normalizeLeadFlag(leadStatuses[lead.id] ?? lead.lead_flag);
   const createdAt = new Date(lead.created_at);
   return {
     lead,
@@ -1344,7 +1738,6 @@ function buildDetachedLeadView(
     submittedLabel: createdAt.toLocaleString(),
     submittedShortLabel: formatLeadSubmittedShort(createdAt),
     submittedSortValue: createdAt.getTime(),
-    spamSuspected,
   } satisfies LeadView;
 }
 
@@ -1422,6 +1815,27 @@ function StatusBadge({ status }: { status: LeadWorkflowStatus }) {
   );
 }
 
+function RatingBadge({ rating }: { rating: number }) {
+  const normalized = normalizeLeadRating(rating);
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full border border-amber-300/60 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/15 dark:text-amber-100">
+      <span className="inline-flex items-center gap-0.5" aria-label={getLeadRatingLabel(normalized)}>
+        {Array.from({ length: 5 }).map((_, index) => (
+          <Star
+            key={index}
+            className={cn(
+              "h-3.5 w-3.5",
+              index < normalized ? "fill-current" : "opacity-30"
+            )}
+            aria-hidden
+          />
+        ))}
+      </span>
+      <span>{normalized}</span>
+    </span>
+  );
+}
+
 function hasActiveFilters(filters: LeadListFilters) {
   return Object.values(filters).some(Boolean);
 }
@@ -1434,6 +1848,10 @@ function matchesLeadSearch(row: LeadView, searchQuery: string) {
     row.lead.phone,
     row.lead.company,
     row.lead.message,
+    row.lead.note,
+    row.lead.next_follow_up_at,
+    row.lead.lead_flag,
+    String(row.lead.lead_rating),
     row.preview,
     row.statusMeta.label,
   ]
@@ -1444,25 +1862,11 @@ function matchesLeadSearch(row: LeadView, searchQuery: string) {
 }
 
 function compareLeadViews(a: LeadView, b: LeadView, sortBy: LeadSortOption) {
+  if (sortBy === "priority") return compareLeadsByPriority(a.lead, b.lead);
   if (sortBy === "oldest") return a.submittedSortValue - b.submittedSortValue;
   if (sortBy === "name-asc") return a.lead.name.localeCompare(b.lead.name);
   if (sortBy === "name-desc") return b.lead.name.localeCompare(a.lead.name);
   return b.submittedSortValue - a.submittedSortValue;
-}
-
-function detectSpamLead(lead: Lead) {
-  const text = [lead.name, lead.email, lead.company, lead.message]
-    .filter(Boolean)
-    .join(" ")
-    .toLowerCase();
-  return (
-    text.includes("test") ||
-    text.includes("asdf") ||
-    text.includes("qwerty") ||
-    text.includes("spam") ||
-    text.includes("fake") ||
-    lead.email.toLowerCase().includes("example.com")
-  );
 }
 
 function collectLeadFieldEntries(
@@ -1496,17 +1900,7 @@ function collectLeadFieldEntries(
 
 function buildLeadPreview(lead: Lead, detailFields: LeadFieldEntry[]) {
   void detailFields;
-  return lead.message?.trim() || "";
-}
-
-function isLeadWorkflowStatus(value: unknown): value is LeadWorkflowStatus {
-  return (
-    value === "new" ||
-    value === "contacted" ||
-    value === "qualified" ||
-    value === "spam" ||
-    value === "archived"
-  );
+  return lead.message?.trim() || lead.note?.trim() || "";
 }
 
 function dedupeById(list: Lead[]) {
@@ -1695,6 +2089,10 @@ function sanitizeLeadRow(row: unknown, fallbackUserId: string): Lead {
     phone: toNullableTextValue(source.phone),
     company: toNullableTextValue(source.company),
     message: toNullableTextValue(source.message),
+    note: toTextValue(source.note),
+    next_follow_up_at: toNullableTextValue(source.next_follow_up_at),
+    lead_flag: normalizeLeadFlag(source.lead_flag),
+    lead_rating: normalizeLeadRating(source.lead_rating, getDefaultLeadRating(source.lead_flag)),
     custom_fields: sanitizeCustomFields(source.custom_fields),
     source_url: toNullableTextValue(source.source_url),
     created_at: toNonEmptyText(source.created_at, new Date().toISOString()),
@@ -1761,3 +2159,4 @@ function canUseRealtime() {
     hostname.endsWith(".local")
   );
 }
+

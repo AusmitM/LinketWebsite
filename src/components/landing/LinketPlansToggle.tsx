@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Package, Pencil, Sparkles, Star } from "lucide-react";
+import { Package, Palette, Pencil, Star } from "lucide-react";
 
 import { CreativePricing } from "@/components/ui/creative-pricing";
 import type { PricingTier } from "@/components/ui/creative-pricing";
@@ -107,7 +107,7 @@ function buildBusinessTiers(pricing: PublicPricingSnapshot): PricingTier[] {
     },
     {
       name: `Custom Design Add-On (min ${pricing.business.custom.minUnits} units)`,
-      icon: <Sparkles className="h-6 w-6" />,
+      icon: <Palette className="h-6 w-6" />,
       price: getBusinessCustomPriceLabel(pricing),
       billingLabel: getBusinessCustomBillingLabel(pricing),
       description: "Custom branded Linkets",

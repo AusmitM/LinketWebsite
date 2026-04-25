@@ -3,13 +3,14 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import {
+  Activity,
   BarChart3,
   Calendar,
   CheckCircle2,
   Circle,
-  MessageSquare,
-  Sparkles,
+  Star,
   Users,
+  type LucideIcon,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useDashboardUser } from "@/components/dashboard/DashboardSessionContext";
 import { useThemeOptional } from "@/components/theme/theme-provider";
 import PublicProfilePreviewLoader from "@/components/public/PublicProfilePreviewLoader";
+import NetworkingModePanel from "@/components/dashboard/overview/NetworkingModePanel";
 import { ANALYTICS_BROADCAST_KEY, ANALYTICS_EVENT_NAME } from "@/lib/analytics";
 import {
   DASHBOARD_TOUR_STATUS_EVENT,
@@ -29,12 +31,6 @@ const numberFormatter = new Intl.NumberFormat("en-US");
 const percentFormatter = new Intl.NumberFormat("en-US", {
   style: "percent",
   maximumFractionDigits: 1,
-});
-const timestampFormatter = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "numeric",
-  hour: "numeric",
-  minute: "2-digit",
 });
 const dateTimeFormatter = new Intl.DateTimeFormat("en-US", {
   month: "short",
@@ -193,15 +189,12 @@ export default function OverviewContent() {
   const isFreeAnalytics =
     analytics?.meta.analyticsScope === "public_profile_visits";
   const leads = analytics?.recentLeads ?? [];
-  const recentLeads = leads.slice(0, 5);
-  const recentLeadsLoading = loading && !analytics;
-  const recentLeadsError = error && !analytics ? error : null;
 
   const overviewItems = [
     {
       label: "Taps in the past week",
       value: totals ? numberFormatter.format(totals.scans7d) : "--",
-      icon: Sparkles,
+      icon: Activity,
     },
     {
       label: "Recent leads",
@@ -218,7 +211,7 @@ export default function OverviewContent() {
     {
       label: "Leads you should reach out to",
       value: totals ? numberFormatter.format(leads.length) : "--",
-      icon: MessageSquare,
+      icon: Star,
     },
   ];
 
@@ -279,15 +272,15 @@ export default function OverviewContent() {
 
 
   return (
-    <div className="dashboard-overview-page space-y-6">
-      <header className="dashboard-overview-header flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="dashboard-overview-intro space-y-1">
+    <div className="dashboard-overview-page min-w-0 space-y-6">
+      <header className="dashboard-overview-header flex flex-col items-center gap-3 text-center sm:flex-row sm:items-center sm:justify-between sm:text-left">
+        <div className="dashboard-overview-intro w-full max-w-lg min-w-0 space-y-1">
           <h1 className="text-2xl font-semibold text-foreground">Dashboard</h1>
           <p className="text-sm text-muted-foreground">
-            Overview of taps, leads, analytics, and your public profile.
+            Live networking mode, lead capture, analytics, and your public profile.
           </p>
         </div>
-        <div className="dashboard-date-pill inline-flex items-center gap-2 rounded-full border border-border/60 bg-card/80 px-4 py-2 text-xs font-medium text-muted-foreground shadow-sm">
+        <div className="dashboard-date-pill mx-auto inline-flex items-center gap-2 rounded-full border border-border/60 bg-card/80 px-4 py-2 text-center text-xs font-medium text-muted-foreground shadow-sm sm:mx-0">
           <Calendar className="h-4 w-4 text-muted-foreground" aria-hidden />
           {dateLabel}
         </div>
@@ -295,29 +288,29 @@ export default function OverviewContent() {
 
       {error && !loading && !analytics ? (
         <Card className="rounded-3xl border border-destructive/40 bg-destructive/10 shadow-sm">
-          <CardHeader>
+          <CardHeader className="px-5 text-center sm:px-7 sm:text-left">
             <CardTitle className="text-lg font-semibold text-destructive">
               Analytics unavailable
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-5 text-center sm:px-7 sm:text-left">
             <p className="text-sm text-destructive">{error}</p>
           </CardContent>
         </Card>
       ) : null}
 
-      <div className="dashboard-overview-grid grid gap-6 lg:grid-cols-12">
-        <div className="dashboard-overview-column space-y-6 lg:col-span-7">
-          <Card className="dashboard-overview-card dashboard-overview-section-card rounded-3xl border border-border/70 bg-card/90 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
-            <CardHeader className="space-y-1">
+      <div className="dashboard-overview-grid grid min-w-0 gap-6 lg:grid-cols-12">
+        <div className="dashboard-overview-column min-w-0 space-y-6 lg:col-span-7">
+          <Card className="dashboard-overview-card dashboard-overview-section-card min-w-0 w-full rounded-3xl border border-border/70 bg-card/90 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
+            <CardHeader className="space-y-1 px-5 text-center sm:px-7 sm:text-left">
               <CardTitle className="text-lg font-semibold text-foreground">
-                Overview
+                Performance snapshot
               </CardTitle>
               <p className="text-sm text-muted-foreground">
-                Your latest Linket performance snapshot.
+                Taps, leads, and conversion at a glance.
               </p>
             </CardHeader>
-            <CardContent className="dashboard-overview-metrics grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <CardContent className="dashboard-overview-metrics grid min-w-0 grid-cols-1 gap-4 px-5 sm:grid-cols-2 sm:px-7">
               {overviewItems.map((item) => (
                 <MetricRow
                   key={item.label}
@@ -330,38 +323,38 @@ export default function OverviewContent() {
             </CardContent>
           </Card>
 
+          <NetworkingModePanel userId={userId} />
+
           {isChecklistDismissed ? null : (
             <Card
-              className={`dashboard-overview-section-card dashboard-overview-checklist-card rounded-3xl border border-border/70 bg-card/90 shadow-[0_18px_45px_rgba(15,23,42,0.08)] ${isChecklistPoppingOut ? "dashboard-overview-checklist-card--exiting" : ""}`}
+              className={`dashboard-overview-section-card dashboard-overview-checklist-card min-w-0 w-full rounded-3xl border border-border/70 bg-card/90 shadow-[0_18px_45px_rgba(15,23,42,0.08)] ${isChecklistPoppingOut ? "dashboard-overview-checklist-card--exiting" : ""}`}
               data-tour="overview-checklist"
             >
-              <CardHeader className="space-y-2">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+              <CardHeader className="space-y-2 px-5 text-center sm:px-7 sm:text-left">
+                <div className="flex flex-col items-center gap-2 text-center sm:flex-row sm:items-start sm:justify-between sm:text-left">
                   <CardTitle className="text-lg font-semibold text-foreground">
                     First-run checklist
                   </CardTitle>
-                  {!hasSeenWalkthrough ? (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="w-full rounded-full sm:w-auto"
-                      onClick={() => {
-                        if (typeof window === "undefined") return;
-                        window.dispatchEvent(
-                          new CustomEvent("linket:onboarding-tour:start")
-                        );
-                      }}
-                    >
-                      Start walkthrough
-                    </Button>
-                  ) : null}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-full rounded-full sm:w-auto"
+                    onClick={() => {
+                      if (typeof window === "undefined") return;
+                      window.dispatchEvent(
+                        new CustomEvent("linket:onboarding-tour:start")
+                      );
+                    }}
+                  >
+                    {hasSeenWalkthrough ? "Open walkthrough" : "Start walkthrough"}
+                  </Button>
                 </div>
                 <p className="text-sm text-muted-foreground">
                   Complete these steps to launch your profile and start capturing leads.
                 </p>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="min-w-0 space-y-4 px-5 sm:px-7">
                 {loading && !analytics ? (
                   <div className="space-y-2">
                     <div className="dashboard-skeleton h-2 w-full animate-pulse rounded bg-muted" data-skeleton />
@@ -371,7 +364,7 @@ export default function OverviewContent() {
                   </div>
                 ) : onboarding ? (
                   <>
-                    <div className="flex items-center justify-between gap-3">
+                    <div className="flex flex-col items-center gap-1 text-center sm:flex-row sm:justify-between sm:text-left">
                       <p className="text-xs uppercase tracking-wide text-muted-foreground">
                         Progress
                       </p>
@@ -402,77 +395,6 @@ export default function OverviewContent() {
               </CardContent>
             </Card>
           )}
-
-          <Card className="dashboard-leads-card dashboard-overview-section-card rounded-3xl border border-border/70 bg-card/90 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
-            <CardHeader className="space-y-4">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <CardTitle className="text-lg font-semibold text-foreground">
-                    Leads
-                  </CardTitle>
-                  <p className="text-sm text-muted-foreground">
-                    Recent prospects captured from Linket scans.
-                  </p>
-                </div>
-              </div>
-              <Button
-                asChild
-                variant="outline"
-                size="sm"
-                className="w-fit rounded-full px-4 text-sm font-semibold"
-              >
-                <Link href="/dashboard/leads">View all</Link>
-              </Button>
-            </CardHeader>
-            <CardContent>
-              {recentLeadsLoading ? (
-                <div className="space-y-3">
-                  {Array.from({ length: 3 }).map((_, index) => (
-                    <div
-                      key={`lead-skeleton-${index}`}
-                      className="dashboard-skeleton h-10 animate-pulse rounded-2xl bg-muted"
-                      data-skeleton
-                    />
-                  ))}
-                </div>
-              ) : recentLeadsError ? (
-                <EmptyState message={recentLeadsError} />
-              ) : recentLeads.length > 0 ? (
-                <div className="space-y-3">
-                  {recentLeads.map((lead) => (
-                    <div
-                      key={lead.id}
-                      className="rounded-2xl border border-border/60 bg-card/70 px-4 py-3"
-                    >
-                      <div className="flex flex-wrap items-start justify-between gap-2">
-                        <div>
-                          <div className="text-sm font-semibold text-foreground">
-                            {lead.name?.trim() || "Unknown"}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {lead.email ?? "No email"}
-                            {lead.company ? ` - ${lead.company}` : ""}
-                          </div>
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {timestampFormatter.format(
-                            new Date(lead.created_at)
-                          )}
-                        </div>
-                      </div>
-                      {lead.message ? (
-                        <p className="mt-2 text-xs text-muted-foreground">
-                          {lead.message}
-                        </p>
-                      ) : null}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <EmptyState message="No leads yet. Share your public page to collect contacts." />
-              )}
-            </CardContent>
-          </Card>
         </div>
 
         <div className="hidden md:block lg:col-span-5">
@@ -502,24 +424,24 @@ function FreeOverviewPanel({
     : "your public profile";
 
   return (
-    <div className="dashboard-overview-page space-y-6">
-      <header className="dashboard-overview-header flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="dashboard-overview-intro space-y-1">
+    <div className="dashboard-overview-page min-w-0 space-y-6">
+      <header className="dashboard-overview-header flex flex-col items-center gap-3 text-center sm:flex-row sm:items-center sm:justify-between sm:text-left">
+        <div className="dashboard-overview-intro w-full max-w-lg min-w-0 space-y-1">
           <h1 className="text-2xl font-semibold text-foreground">Dashboard</h1>
           <p className="text-sm text-muted-foreground">
-            Free tracks visits to {publicProfileLabel}. Paid unlocks lead analytics, conversion insights, and inbox labels.
+            Free tracks visits to {publicProfileLabel}. Paid unlocks lead analytics, conversion insights, follow-up reminders, and star ratings.
           </p>
         </div>
       </header>
 
       {error ? (
         <Card className="rounded-3xl border border-destructive/40 bg-destructive/10 shadow-sm">
-          <CardHeader>
+          <CardHeader className="px-5 text-center sm:px-7 sm:text-left">
             <CardTitle className="text-lg font-semibold text-destructive">
               Analytics unavailable
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-5 text-center sm:px-7 sm:text-left">
             <p className="text-sm text-destructive">{error}</p>
           </CardContent>
         </Card>
@@ -527,8 +449,8 @@ function FreeOverviewPanel({
 
       <div className="grid gap-6 lg:grid-cols-12">
         <div className="space-y-6 lg:col-span-7">
-          <Card className="rounded-3xl border border-border/70 bg-card/90 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
-            <CardHeader className="space-y-1">
+          <Card className="min-w-0 w-full rounded-3xl border border-border/70 bg-card/90 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
+            <CardHeader className="space-y-1 px-5 text-center sm:px-7 sm:text-left">
               <CardTitle className="text-lg font-semibold text-foreground">
                 Public profile visits
               </CardTitle>
@@ -536,9 +458,9 @@ function FreeOverviewPanel({
                 Counts for {publicProfileLabel}.
               </p>
             </CardHeader>
-            <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <CardContent className="grid min-w-0 grid-cols-1 gap-4 px-5 sm:grid-cols-2 sm:px-7">
               <MetricRow
-                icon={Sparkles}
+                icon={Activity}
                 label="Visits in the past week"
                 value={numberFormatter.format(analytics.totals.scans7d)}
                 loading={false}
@@ -552,20 +474,20 @@ function FreeOverviewPanel({
             </CardContent>
           </Card>
 
-          <Card className="rounded-3xl border border-primary/20 bg-primary/5 shadow-sm">
-            <CardHeader className="space-y-1">
+          <Card className="min-w-0 w-full rounded-3xl border border-primary/20 bg-primary/5 shadow-sm">
+            <CardHeader className="space-y-1 px-5 text-center sm:px-7 sm:text-left">
               <CardTitle className="text-lg font-semibold text-foreground">
                 Paid unlocks deeper insight
               </CardTitle>
               <p className="text-sm text-muted-foreground">
-                See lead trends, conversion rate, top links, and label leads as they move through your pipeline.
+                See lead trends, conversion rate, top links, and manage follow-up status as leads move through your pipeline.
               </p>
             </CardHeader>
-            <CardContent className="flex flex-wrap gap-3">
-              <Button asChild size="sm">
+            <CardContent className="flex flex-wrap justify-center gap-3 px-5 sm:justify-start sm:px-7">
+              <Button asChild size="sm" className="w-full sm:w-auto">
                 <Link href="/dashboard/billing">Unlock Paid</Link>
               </Button>
-              <Button asChild size="sm" variant="outline">
+              <Button asChild size="sm" variant="outline" className="w-full sm:w-auto">
                 <Link href="/dashboard/leads">Open leads inbox</Link>
               </Button>
             </CardContent>
@@ -590,18 +512,18 @@ function MetricRow({
   value,
   loading,
 }: {
-  icon: typeof Sparkles;
+  icon: LucideIcon;
   label: string;
   value: string;
   loading: boolean;
 }) {
   return (
-    <div className="dashboard-metric-row flex items-center justify-between gap-3 rounded-2xl border border-border/60 bg-background/70 px-4 py-3">
-      <div className="flex items-center gap-3">
+    <div className="dashboard-metric-row flex min-w-0 flex-col items-center gap-3 rounded-2xl border border-border/60 bg-background/70 px-4 py-4 text-center sm:flex-row sm:justify-between sm:text-left">
+      <div className="flex min-w-0 flex-col items-center gap-3 sm:flex-row">
         <span className="dashboard-metric-icon inline-flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
           <Icon className="h-4 w-4" aria-hidden />
         </span>
-        <span className="dashboard-metric-label text-sm font-medium text-foreground">{label}</span>
+        <span className="dashboard-metric-label min-w-0 max-w-[14rem] text-sm font-medium text-foreground">{label}</span>
       </div>
       <span className="dashboard-metric-value text-sm font-semibold text-foreground">
         {loading ? <span className="text-muted-foreground">--</span> : value}
@@ -620,8 +542,8 @@ function ChecklistItemRow({
   completed: boolean;
 }) {
   return (
-    <div className="dashboard-overview-checklist-item flex items-start justify-between gap-3 rounded-2xl border border-border/60 bg-background/70 px-4 py-3">
-      <div className="flex items-start gap-3">
+    <div className="dashboard-overview-checklist-item flex min-w-0 flex-col items-center gap-3 rounded-2xl border border-border/60 bg-background/70 px-4 py-4 text-center sm:flex-row sm:items-start sm:justify-between sm:text-left">
+      <div className="flex min-w-0 flex-col items-center gap-3 sm:flex-row sm:items-start">
         <span className="mt-0.5 text-primary" aria-hidden>
           {completed ? (
             <CheckCircle2 className="h-4 w-4" />
@@ -629,7 +551,7 @@ function ChecklistItemRow({
             <Circle className="h-4 w-4 text-muted-foreground" />
           )}
         </span>
-        <div>
+        <div className="min-w-0">
           <p className="dashboard-overview-checklist-label text-sm font-medium text-foreground">{label}</p>
           <p className="dashboard-overview-checklist-detail text-xs text-muted-foreground">{detail}</p>
         </div>

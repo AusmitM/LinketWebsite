@@ -17,7 +17,7 @@ import {
   ChevronRight,
   Package,
   Megaphone,
-  Sparkles,
+  Flag,
   User,
 } from "lucide-react";
 
@@ -119,7 +119,7 @@ export default function Sidebar({
         {
           href: "/dashboard/get-started",
           label: "Get Started",
-          icon: Sparkles,
+          icon: Flag,
         },
       ];
     }

@@ -35,6 +35,10 @@ export type ProfileLinkRecord = {
   updated_at: string | null;
 };
 
+export type LeadFlag =
+  | "follow_up"
+  | "done";
+
 export type Lead = {
   id: string;
   user_id: string;
@@ -44,6 +48,10 @@ export type Lead = {
   phone: string | null;
   company: string | null;
   message: string | null;
+  note: string;
+  next_follow_up_at: string | null;
+  lead_flag: LeadFlag;
+  lead_rating: number;
   custom_fields: Record<string, string | boolean | null> | null;
   source_url: string | null;
   created_at: string;

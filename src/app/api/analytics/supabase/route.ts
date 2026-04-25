@@ -7,6 +7,11 @@ import {
   type UserAnalytics,
 } from "@/lib/analytics-service";
 import { getDashboardPlanAccessForUser } from "@/lib/plan-access.server";
+import {
+  getDefaultLeadRating,
+  normalizeLeadFlag,
+  normalizeLeadRating,
+} from "@/lib/lead-workflow";
 import { validateSearchParams } from "@/lib/request-validation";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
@@ -22,6 +27,10 @@ type LeadRow = {
   message: string | null;
   name: string | null;
   phone: string | null;
+  note: string | null;
+  next_follow_up_at: string | null;
+  lead_flag: "follow_up" | "done" | null;
+  lead_rating: number | null;
 };
 
 type ActiveProfileHandleRow = {
@@ -224,7 +233,7 @@ async function fetchRecentLeads(userId: string) {
   const supabase = await createServerSupabase();
   const { data: leads, error } = await supabase
     .from("leads")
-    .select("id,name,email,phone,company,message,created_at")
+    .select("id,name,email,phone,company,message,note,next_follow_up_at,lead_flag,lead_rating,created_at")
     .eq("user_id", userId)
     .order("created_at", { ascending: false })
     .limit(10);
@@ -240,6 +249,13 @@ async function fetchRecentLeads(userId: string) {
     phone: lead.phone ?? null,
     company: lead.company ?? null,
     message: lead.message ?? null,
+    note: lead.note ?? null,
+    next_follow_up_at: lead.next_follow_up_at ?? null,
+    lead_flag: normalizeLeadFlag(lead.lead_flag),
+    lead_rating: normalizeLeadRating(
+      lead.lead_rating,
+      getDefaultLeadRating(lead.lead_flag)
+    ),
     source_url: null,
     handle: null,
     created_at: lead.created_at,

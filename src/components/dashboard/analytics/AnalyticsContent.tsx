@@ -34,7 +34,14 @@ import {
   Tooltip,
   Legend,
 } from "recharts";
-import { CheckCircle2, Circle, Download } from "lucide-react";
+import { CheckCircle2, Circle, Download, Star } from "lucide-react";
+import {
+  getLeadFlagBadgeClassName,
+  getLeadFlagLabel,
+  getLeadRatingLabel,
+  normalizeLeadFlag,
+  normalizeLeadRating,
+} from "@/lib/lead-workflow";
 
 const numberFormatter = new Intl.NumberFormat("en-US");
 const shortDate = new Intl.DateTimeFormat("en-US", {
@@ -651,16 +658,18 @@ export default function AnalyticsContent() {
   ]);
   const primaryInsight = nextSteps[0] ?? null;
   const supportingInsights = nextSteps.slice(1, 4);
-  const recentLeadContextCount = useMemo(
-    () =>
-      recentLeads.filter(
-        (lead) =>
-          Boolean(lead.company?.trim()) ||
-          Boolean(lead.phone?.trim()) ||
-          Boolean(lead.message?.trim()),
-      ).length,
-    [recentLeads],
-  );
+    const recentLeadContextCount = useMemo(
+      () =>
+        recentLeads.filter(
+          (lead) =>
+            Boolean(lead.company?.trim()) ||
+            Boolean(lead.phone?.trim()) ||
+            Boolean(lead.message?.trim()) ||
+            Boolean(lead.note?.trim()) ||
+            Boolean(lead.next_follow_up_at),
+        ).length,
+      [recentLeads],
+    );
   const topLinkSharePercent =
     topLink && topLinksTotalClicks > 0
       ? (topLink.clicks / topLinksTotalClicks) * 100
@@ -717,8 +726,8 @@ export default function AnalyticsContent() {
         value: contextValue,
         detail:
           recentLeads.length > 0
-            ? `${recentLeadContextCount} of the last ${recentLeads.length} contacts included company, phone, or notes.`
-            : "Teams pay for context, not just names. Company, phone, and notes appear here once leads are captured.",
+            ? `${recentLeadContextCount} of the last ${recentLeads.length} contacts included company, phone, notes, or reminders.`
+            : "Teams pay for context, not just names. Company, phone, notes, and reminders appear here once leads are captured.",
         tone: recentLeadContextCount > 0 ? "primary" : "neutral",
       },
       {
@@ -2252,12 +2261,58 @@ function RecentLeadListItem({
           <div>{timestampFormatter.format(new Date(lead.created_at))}</div>
         </div>
       </div>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <LeadFlagBadge flag={normalizeLeadFlag(lead.lead_flag)} />
+        <LeadRatingBadge rating={normalizeLeadRating(lead.lead_rating)} />
+        {lead.next_follow_up_at ? (
+          <span className="text-[11px] text-muted-foreground">
+            Follow-up due {formatRelativeTime(lead.next_follow_up_at)}.
+          </span>
+        ) : null}
+      </div>
       {lead.message ? (
         <p className="mt-3 text-sm leading-6 text-muted-foreground">
           {truncateText(lead.message, 110)}
         </p>
       ) : null}
     </div>
+  );
+}
+
+function LeadFlagBadge({ flag }: { flag: "follow_up" | "done" }) {
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold",
+        getLeadFlagBadgeClassName(flag)
+      )}
+    >
+      {getLeadFlagLabel(flag)}
+    </span>
+  );
+}
+
+function LeadRatingBadge({ rating }: { rating: number }) {
+  const normalized = normalizeLeadRating(rating);
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full border border-amber-300/60 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/15 dark:text-amber-100">
+      <span
+        className="inline-flex items-center gap-0.5"
+        aria-label={getLeadRatingLabel(normalized)}
+      >
+        {Array.from({ length: 5 }).map((_, index) => (
+          <Star
+            key={index}
+            className={cn(
+              "h-3.5 w-3.5",
+              index < normalized ? "fill-current" : "opacity-30"
+            )}
+            aria-hidden
+          />
+        ))}
+      </span>
+      <span>{normalized}</span>
+    </span>
   );
 }
 

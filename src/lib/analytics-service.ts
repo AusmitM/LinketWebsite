@@ -1,4 +1,9 @@
 import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
+import {
+  getDefaultLeadRating,
+  normalizeLeadFlag,
+  normalizeLeadRating,
+} from "@/lib/lead-workflow";
 
 export type AnalyticsTimelinePoint = {
   date: string;
@@ -32,6 +37,10 @@ export type AnalyticsLead = {
   phone: string | null;
   company: string | null;
   message: string | null;
+  note: string | null;
+  next_follow_up_at: string | null;
+  lead_flag: "follow_up" | "done";
+  lead_rating: number;
   source_url: string | null;
   handle: string | null;
   created_at: string;
@@ -306,7 +315,7 @@ export async function getUserAnalytics(
   const { data: leadRows, error: leadsError } = await supabaseAdmin
     .from("leads")
     .select(
-      "id, name, email, phone, company, message, source_url, handle, created_at"
+      "id, name, email, phone, company, message, note, next_follow_up_at, lead_flag, lead_rating, source_url, handle, created_at"
     )
     .eq("user_id", userId)
     .gte("created_at", startUtc.toISOString())
@@ -414,6 +423,13 @@ export async function getUserAnalytics(
       phone: lead.phone ?? null,
       company: lead.company ?? null,
       message: lead.message ?? null,
+      note: lead.note ?? null,
+      next_follow_up_at: lead.next_follow_up_at ?? null,
+      lead_flag: normalizeLeadFlag(lead.lead_flag),
+      lead_rating: normalizeLeadRating(
+        lead.lead_rating,
+        getDefaultLeadRating(lead.lead_flag)
+      ),
       source_url: lead.source_url ?? null,
       handle: lead.handle ?? null,
       created_at: lead.created_at,

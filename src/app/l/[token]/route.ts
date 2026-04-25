@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { formatClaimCodeDisplay } from "@/lib/linket-claim-code";
 import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
 import { sanitizeHttpUrl } from "@/lib/security";
 import { createServerSupabaseReadonly } from "@/lib/supabase/server";
@@ -15,17 +16,21 @@ function normalizeHandle(value: string | null | undefined) {
   return trimmed.startsWith("@") ? trimmed.slice(1) : trimmed;
 }
 
-async function redirectToClaimDestination(req: NextRequest, token: string) {
-  const claimPath = `/dashboard/linkets?claim=${encodeURIComponent(token)}`;
-  const supabase = await createServerSupabaseReadonly();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (user) {
-    return redirectTo(req, claimPath);
+async function redirectToClaimDestination(
+  req: NextRequest,
+  token: string,
+  claimCode: string | null,
+  authenticatedUserId: string | null
+) {
+  if (authenticatedUserId) {
+    const displayCode = formatClaimCodeDisplay(claimCode);
+    const signedInClaimPath = displayCode
+      ? `/dashboard/linkets?claimCode=${encodeURIComponent(displayCode)}`
+      : `/dashboard/linkets?claim=${encodeURIComponent(token)}`;
+    return redirectTo(req, signedInClaimPath);
   }
 
+  const claimPath = `/dashboard/linkets?claim=${encodeURIComponent(token)}`;
   return redirectTo(
     req,
     `/auth?view=signin&next=${encodeURIComponent(claimPath)}`
@@ -192,7 +197,7 @@ export async function GET(
 
   const { data: tag, error: tagError } = await supabaseAdmin
     .from("hardware_tags")
-    .select("id,status,public_token")
+    .select("id,status,public_token,claim_code")
     .eq("public_token", token)
     .limit(1)
     .maybeSingle();
@@ -201,8 +206,19 @@ export async function GET(
     return redirectTo(req, "/");
   }
 
+  const supabase = await createServerSupabaseReadonly();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const authenticatedUserId = user?.id ?? null;
+
   if (CLAIMABLE_STATUSES.has(tag.status)) {
-    return redirectToClaimDestination(req, token);
+    return redirectToClaimDestination(
+      req,
+      token,
+      tag.claim_code ?? null,
+      authenticatedUserId
+    );
   }
 
   const { data: assignment, error: assignmentError } = await supabaseAdmin
@@ -219,6 +235,19 @@ export async function GET(
   }
 
   if (!assignmentError && assignment) {
+    if (
+      authenticatedUserId &&
+      assignment.user_id &&
+      assignment.user_id === authenticatedUserId
+    ) {
+      return redirectTo(
+        req,
+        `/dashboard/linkets?claimedAssignment=${encodeURIComponent(
+          assignment.id
+        )}`
+      );
+    }
+
     if (assignment.target_type === "url" && assignment.target_url) {
       try {
         return NextResponse.redirect(sanitizeHttpUrl(assignment.target_url));

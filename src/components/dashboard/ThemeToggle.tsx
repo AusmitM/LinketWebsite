@@ -12,7 +12,7 @@ import {
   MoonStar,
   Cloud,
   Trees,
-  Sparkles,
+  Star,
   Leaf,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -77,7 +77,7 @@ const ICONS: Record<ThemeName, React.ComponentType<{ className?: string }>> = {
   midnight: MoonStar,
   dream: Cloud,
   forest: Trees,
-  gilded: Sparkles,
+  gilded: Star,
   rose: Rose,
   autumn: Leaf,
   honey: Hexagon,

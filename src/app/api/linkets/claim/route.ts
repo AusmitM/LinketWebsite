@@ -9,6 +9,7 @@ import {
 } from "@/lib/billing/complimentary-subscription";
 import { getOrCreateStripeCustomerForUser } from "@/lib/billing/dashboard";
 import { getLinketBundleComplimentaryWindowForUser } from "@/lib/billing/linket-bundle";
+import { normalizeClaimCodeInput } from "@/lib/linket-claim-code";
 import { assertOwnedProfileId } from "@/lib/linket-tags";
 import { validateJsonBody } from "@/lib/request-validation";
 import { getStripeSecretKey, getStripeServerClient } from "@/lib/stripe";
@@ -36,12 +37,8 @@ const claimPayloadSchema = z
 
 const CLAIMABLE_STATUSES = new Set(["unclaimed", "claimable"]);
 
-function normalizeClaimCode(value: string) {
-  return value.trim().replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
-}
-
 function buildClaimLookupCandidates(value: string) {
-  const upper = normalizeClaimCode(value);
+  const upper = normalizeClaimCodeInput(value);
   const lower = upper.toLowerCase();
   return {
     upper,

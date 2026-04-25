@@ -142,7 +142,7 @@ const PRICING_TIERS: PricingTier[] = [
   },
   {
     name: "Enterprise Studio",
-    icon: <Sparkles className="h-6 w-6" />,
+    icon: <ShieldCheck className="h-6 w-6" />,
     price: 279,
     description: "Roll Linket across campuses or field teams.",
     color: "purple",
@@ -163,7 +163,7 @@ const JOURNEY_STEPS: JourneyStep[] = [
     title: "Invite with a tap",
     description: "Tap Linket on their phone or let them scan the QR fallback.",
     detail: "No app to receive -- everything opens in their browser instantly.",
-    icon: Sparkles,
+    icon: Waves,
     accent: "from-sky-200/80 to-sky-100/40 text-sky-700",
   },
   {
@@ -508,7 +508,7 @@ function TrustedBy() {
         <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs font-semibold text-foreground/80 sm:gap-3 sm:text-sm">
           {SOCIAL_PROOF.map((name) => (
             <span key={name} className="inline-flex items-center gap-2 rounded-full border border-foreground/10 px-3 py-1.5">
-              <Sparkles className="h-3.5 w-3.5 text-primary" aria-hidden />
+              <ShieldCheck className="h-3.5 w-3.5 text-primary" aria-hidden />
               {name}
             </span>
           ))}
@@ -570,7 +570,7 @@ function ExperienceSection() {
         <div className="w-full max-w-md rounded-3xl border border-white/10 bg-white/5 p-8 shadow-[0_30px_80px_rgba(5,5,20,0.45)] backdrop-blur">
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#ff9776] via-[#ffb866] to-[#5dd6f7] text-slate-900">
-              <Sparkles className="h-6 w-6" aria-hidden />
+              <UserRound className="h-6 w-6" aria-hidden />
             </div>
             <div>
               <p className="text-lg font-semibold text-white">Get in touch</p>
@@ -854,7 +854,6 @@ import {
   Pencil,
   Search,
   ShieldCheck,
-  Sparkles,
   Star,
   Twitter,
   UserRound,

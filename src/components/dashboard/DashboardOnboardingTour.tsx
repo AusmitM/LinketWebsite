@@ -2,13 +2,16 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, ArrowRight, Sparkles, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Flag, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { useDashboardUser } from "@/components/dashboard/DashboardSessionContext";
 import {
+  getDashboardTourAutoOpenStorageKey,
   getDashboardTourStorageKey,
+  readDashboardTourAutoOpenSeen,
   readDashboardTourStatus,
+  writeDashboardTourAutoOpenSeen,
   writeDashboardTourStatus,
   type DashboardTourStatus,
 } from "@/lib/dashboard-onboarding-tour";
@@ -219,6 +222,10 @@ export default function DashboardOnboardingTour() {
     () => (userId ? getDashboardTourStorageKey(userId) : null),
     [userId]
   );
+  const autoOpenStorageKey = useMemo(
+    () => (userId ? getDashboardTourAutoOpenStorageKey(userId) : null),
+    [userId]
+  );
 
   const currentStep = TOUR_STEPS[stepIndex] ?? TOUR_STEPS[0];
   const isNavigating = isOpen && pathname !== currentStep.path;
@@ -370,15 +377,24 @@ export default function DashboardOnboardingTour() {
   }, [closeTour, handleBack, handleNext, isOpen]);
 
   useEffect(() => {
+    autoStartHandled.current = false;
+  }, [autoOpenStorageKey]);
+
+  useEffect(() => {
     if (!storageKey || autoStartHandled.current) return;
     if (pathname !== "/dashboard/overview") return;
 
     const hasTourQueryParam =
       searchParams.get(TOUR_QUERY_PARAM) === TOUR_START_VALUE;
+    const hasAutoOpened = readDashboardTourAutoOpenSeen(autoOpenStorageKey);
     const status = readDashboardTourStatus(storageKey);
     let startTimer: ReturnType<typeof setTimeout> | null = null;
-    if (!status && !hasTourQueryParam) {
+    if (!hasAutoOpened && status) {
       autoStartHandled.current = true;
+      writeDashboardTourAutoOpenSeen(autoOpenStorageKey);
+    } else if (!hasAutoOpened && !hasTourQueryParam) {
+      autoStartHandled.current = true;
+      writeDashboardTourAutoOpenSeen(autoOpenStorageKey);
       startTimer = setTimeout(() => {
         startTour("auto");
       }, 0);
@@ -402,7 +418,7 @@ export default function DashboardOnboardingTour() {
     return () => {
       if (startTimer) clearTimeout(startTimer);
     };
-  }, [pathname, router, searchParams, startTour, storageKey]);
+  }, [autoOpenStorageKey, pathname, router, searchParams, startTour, storageKey]);
 
   useEffect(() => {
     if (!isOpen || isNavigating) return;
@@ -665,7 +681,7 @@ export default function DashboardOnboardingTour() {
       <section ref={panelRef} className="dashboard-onboarding-tour-panel absolute" style={panelStyle}>
         <div className="dashboard-onboarding-tour-headline">
           <span className="dashboard-onboarding-tour-kicker">
-            <Sparkles className="h-3.5 w-3.5" />
+            <Flag className="h-3.5 w-3.5" />
             Guided Setup
           </span>
           <span className="dashboard-onboarding-tour-path">{pathLabel}</span>

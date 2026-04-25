@@ -21,6 +21,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/components/system/toaster";
+import {
+  formatClaimCodeDisplay,
+  normalizeClaimCodeInput,
+} from "@/lib/linket-claim-code";
 import { cn } from "@/lib/utils";
 import { useDashboardUser } from "@/components/dashboard/DashboardSessionContext";
 
@@ -28,9 +32,19 @@ type LinketsContentProps = {
   variant?: "standalone" | "embedded";
 };
 
-function normalizeClaimInput(value: string | null | undefined) {
-  if (!value) return "";
-  return value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+const linketDateTimeFormatter = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+});
+
+function formatLinketTimestamp(value: string | null | undefined) {
+  if (!value) return null;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return linketDateTimeFormatter.format(parsed);
 }
 
 export default function LinketsContent({ variant = "standalone" }: LinketsContentProps) {
@@ -45,8 +59,19 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
   const [claimCode, setClaimCode] = useState("");
   const [claiming, setClaiming] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const claimCodeFromQuery = useMemo(
-    () => normalizeClaimInput(searchParams.get("claim")),
+  const claimedAssignmentFromQuery =
+    searchParams.get("claimedAssignment")?.trim() ?? "";
+  const claimCodeFromQuery = useMemo(() => {
+    const claimCodePrefill = searchParams.get("claimCode");
+    if (claimCodePrefill) {
+      return formatClaimCodeDisplay(claimCodePrefill);
+    }
+
+    const legacyClaimPrefill = searchParams.get("claim");
+    return legacyClaimPrefill?.trim() ?? "";
+  }, [searchParams]);
+  const hasClaimCodePrefill = useMemo(
+    () => Boolean(searchParams.get("claimCode")),
     [searchParams]
   );
 
@@ -118,6 +143,17 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
       isActive: profile.is_active,
     }));
   }, [profiles]);
+  const activeDefaultProfile = useMemo(
+    () => activeProfileOptions.find((profile) => profile.isActive) ?? null,
+    [activeProfileOptions]
+  );
+  const openedClaimedLinket = useMemo(() => {
+    if (!claimedAssignmentFromQuery) return null;
+    return (
+      linkets.find((item) => item.assignment.id === claimedAssignmentFromQuery) ??
+      null
+    );
+  }, [claimedAssignmentFromQuery, linkets]);
 
   async function handleAssign(assignmentId: string, profileId: string | null) {
     if (!userId) return;
@@ -165,7 +201,7 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
       toast({ title: "Sign in required", variant: "destructive" });
       return;
     }
-    const normalizedClaimCode = normalizeClaimInput(claimCode);
+    const normalizedClaimCode = normalizeClaimCodeInput(claimCode);
     if (!normalizedClaimCode) {
       toast({ title: "Enter a claim code", variant: "destructive" });
       return;
@@ -175,7 +211,7 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
       const response = await fetch("/api/linkets/claim", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, chipUid: normalizedClaimCode }),
+        body: JSON.stringify({ userId, claimCode: normalizedClaimCode }),
       });
       if (!response.ok) {
         const body = await response.json().catch(() => null);
@@ -184,6 +220,7 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
       setClaimCode("");
       if (claimCodeFromQuery) {
         const params = new URLSearchParams(searchParams.toString());
+        params.delete("claimCode");
         params.delete("claim");
         const nextQuery = params.toString();
         router.replace(nextQuery ? `/dashboard/linkets?${nextQuery}` : "/dashboard/linkets", {
@@ -248,10 +285,15 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
               </Label>
               <Input
                 id="claim-code"
-                placeholder="e.g., ABC123"
+                placeholder="e.g., ABCD-EFGH-IJKL"
                 value={claimCode}
                 onChange={(event) => {
-                  const nextValue = normalizeClaimInput(event.target.value);
+                  const nextRawValue = event.target.value;
+                  const normalizedValue = normalizeClaimCodeInput(nextRawValue);
+                  const nextValue =
+                    normalizedValue.length <= 12
+                      ? formatClaimCodeDisplay(nextRawValue)
+                      : normalizedValue;
                   setClaimCode(nextValue);
                 }}
                 disabled={claiming}
@@ -260,9 +302,9 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
               <p className="text-xs text-muted-foreground">
                 Use this if you cannot tap the tag right now. Codes are printed with each Linket.
               </p>
-              {claimCodeFromQuery ? (
+              {hasClaimCodePrefill ? (
                 <p className="rounded-xl border border-emerald-300 bg-emerald-50/60 px-2 py-1 text-xs text-emerald-900">
-                  Tap detected. We prefilled your claim code from the Linket URL.
+                  Tap detected. We prefilled the exact printed claim code from the mint sheet.
                 </p>
               ) : null}
             </div>
@@ -284,6 +326,74 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
             </div>
           </form>
 
+          {claimedAssignmentFromQuery ? (
+            <div className="rounded-2xl border border-amber-300 bg-amber-50/70 p-4 text-amber-950">
+              {loading ? (
+                <p className="text-sm">Loading the Linket you just opened...</p>
+              ) : openedClaimedLinket ? (
+                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                  <div className="space-y-1.5">
+                    <p className="text-sm font-semibold">
+                      This Linket is already claimed to your account.
+                    </p>
+                    <p className="text-sm text-amber-900">
+                      Assigned to{" "}
+                      <span className="font-medium">
+                        {openedClaimedLinket.profile?.name ??
+                          activeDefaultProfile?.label ??
+                          "your active profile"}
+                      </span>
+                      . The matching card is highlighted below.
+                    </p>
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-amber-900/80">
+                      <span>
+                        Claim code:{" "}
+                        <code className="font-mono">
+                          {formatClaimCodeDisplay(
+                            openedClaimedLinket.tag.claim_code
+                          ) || "Unavailable"}
+                        </code>
+                      </span>
+                      <span>
+                        Claimed:{" "}
+                        {formatLinketTimestamp(
+                          openedClaimedLinket.tag.last_claimed_at
+                        ) ?? "Unknown"}
+                      </span>
+                      <span>
+                        Last tap:{" "}
+                        {formatLinketTimestamp(
+                          openedClaimedLinket.assignment.last_redirected_at
+                        ) ?? "No scans recorded yet"}
+                      </span>
+                    </div>
+                  </div>
+                  {(openedClaimedLinket.profile?.handle ??
+                    activeDefaultProfile?.handle) ? (
+                    <Button asChild variant="outline" className="rounded-full">
+                      <Link
+                        href={`/${
+                          openedClaimedLinket.profile?.handle ??
+                          activeDefaultProfile?.handle
+                        }`}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        <ExternalLink className="mr-2 h-4 w-4" />
+                        Open public destination
+                      </Link>
+                    </Button>
+                  ) : null}
+                </div>
+              ) : (
+                <p className="text-sm">
+                  This Linket is already claimed, but it is not available in the
+                  current account view.
+                </p>
+              )}
+            </div>
+          ) : null}
+
           {error && (
             <div className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
               <AlertCircle className="h-4 w-4" /> {error}
@@ -303,16 +413,34 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
             <div className="grid gap-4">
               {linkets.map((item) => {
                 const assignedProfileId = item.assignment.profile_id;
-                const activeProfile = assignedProfileId
-                  ? activeProfileOptions.find((profile) => profile.id === assignedProfileId)
-                  : null;
+                const assignedProfile = assignedProfileId
+                  ? activeProfileOptions.find((profile) => profile.id === assignedProfileId) ??
+                    (item.profile
+                      ? {
+                          id: item.profile.id,
+                          label: item.profile.name,
+                          handle: item.profile.handle,
+                          isActive: item.profile.is_active,
+                        }
+                      : null)
+                  : activeDefaultProfile;
+                const claimCodeDisplay = formatClaimCodeDisplay(item.tag.claim_code);
+                const claimedAtLabel = formatLinketTimestamp(item.tag.last_claimed_at);
+                const lastTapLabel = formatLinketTimestamp(
+                  item.assignment.last_redirected_at
+                );
+                const isOpenedLinket =
+                  claimedAssignmentFromQuery === item.assignment.id;
                 return (
                   <div
                     key={item.assignment.id}
-                    className="rounded-2xl border border-border/60 bg-card/90 p-4 shadow-sm"
+                    className={cn(
+                      "rounded-2xl border border-border/60 bg-card/90 p-4 shadow-sm transition-colors",
+                      isOpenedLinket && "border-primary/70 ring-2 ring-primary/20"
+                    )}
                   >
                     <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                      <div className="space-y-1">
+                      <div className="space-y-2">
                         <div className="text-sm font-semibold text-foreground">
                           {item.assignment.nickname || `Linket ${item.tag.chip_uid}`}
                         </div>
@@ -321,6 +449,24 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
                         </div>
                         <div className="text-xs text-muted-foreground">
                           Status: {item.tag.status === "claimed" ? "Active" : item.tag.status}
+                        </div>
+                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                          <span>
+                            Assigned to{" "}
+                            <span className="font-medium text-foreground/80">
+                              {assignedProfile?.label ?? "Active profile (default)"}
+                            </span>
+                          </span>
+                          {claimCodeDisplay ? (
+                            <span>
+                              Claim code{" "}
+                              <code className="font-mono text-[11px]">
+                                {claimCodeDisplay}
+                              </code>
+                            </span>
+                          ) : null}
+                          <span>Claimed {claimedAtLabel ?? "Unknown"}</span>
+                          <span>Last tap {lastTapLabel ?? "No scans yet"}</span>
                         </div>
                       </div>
                       <div className="flex flex-col gap-2 text-sm md:flex-row md:items-center">
@@ -341,14 +487,15 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
                               <SelectItem value="default">Active profile (default)</SelectItem>
                               {activeProfileOptions.map((profile) => (
                                 <SelectItem key={profile.id} value={profile.id}>
-                                  {profile.label} {profile.isActive ? "•" : ""}
+                                  {profile.label}
+                                  {profile.isActive ? " (Active)" : ""}
                                 </SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
-                          {activeProfile ? (
+                          {assignedProfile?.handle ? (
                             <Link
-                              href={`/${activeProfile.handle}`}
+                              href={`/${assignedProfile.handle}`}
                               target="_blank"
                               rel="noreferrer"
                               className="inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs text-muted-foreground hover:text-foreground"

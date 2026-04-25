@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireRouteAccess } from "@/lib/api-authorization";
+import { formatClaimCodeDisplay } from "@/lib/linket-claim-code";
 import { uuidParamSchema } from "@/lib/request-validation";
 import { sanitizeAttachmentFilename } from "@/lib/security";
 import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
@@ -45,14 +46,6 @@ function csvEscape(value: unknown) {
     return `"${text.replace(/"/g, "\"\"")}"`;
   }
   return text;
-}
-
-function formatClaimCode(value: string | null | undefined) {
-  const cleaned = value?.replace(/-/g, "").toUpperCase() ?? "";
-  if (!cleaned) return "";
-  return [cleaned.slice(0, 4), cleaned.slice(4, 8), cleaned.slice(8, 12)]
-    .filter(Boolean)
-    .join("-");
 }
 
 function getSiteBase() {
@@ -138,7 +131,7 @@ export async function GET(
         public_token: row.public_token,
         url: row.public_token ? `${baseUrl}/l/${row.public_token}` : "",
         claim_code: row.claim_code ?? "",
-        claim_code_display: formatClaimCode(row.claim_code),
+        claim_code_display: formatClaimCodeDisplay(row.claim_code),
         batch_id: row.batch_id,
         batch_label: safeLabel,
         claimed: row.status === "claimed" ? "yes" : "no",
