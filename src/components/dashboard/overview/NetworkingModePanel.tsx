@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { CalendarClock, CalendarDays, Star, Users } from "lucide-react";
+import { CalendarDays, Star, Users } from "lucide-react";
 import type {
   RealtimeChannel,
   RealtimePostgresChangesPayload,
@@ -476,9 +476,6 @@ export default function NetworkingModePanel({
                           {lead.company ? ` - ${lead.company}` : ""}
                         </div>
                       </div>
-                      <div className="text-[11px] text-muted-foreground">
-                        {formatRelativeTime(lead.created_at)}
-                      </div>
                     </div>
                     {lead.note ? (
                       <p className="mt-2 line-clamp-2 text-center text-xs text-muted-foreground sm:text-left">
@@ -488,12 +485,6 @@ export default function NetworkingModePanel({
                       <p className="mt-2 line-clamp-2 text-center text-xs text-muted-foreground sm:text-left">
                         {lead.message}
                       </p>
-                    ) : null}
-                    {lead.next_follow_up_at ? (
-                      <div className="mt-2 flex items-center justify-center gap-2 text-[11px] text-muted-foreground sm:justify-start">
-                        <CalendarClock className="h-3.5 w-3.5" aria-hidden />
-                        Follow-up {formatDueLabel(lead)}
-                      </div>
                     ) : null}
                   </button>
                 ))}
@@ -796,52 +787,6 @@ function parseDatetimeLocalValue(value: string) {
   const date = new Date(trimmed);
   if (Number.isNaN(date.getTime())) return null;
   return date.toISOString();
-}
-
-function formatRelativeTime(date: string) {
-  const target = new Date(date).getTime();
-  if (Number.isNaN(target)) return "recently";
-
-  const diffMs = target - Date.now();
-  const diffMinutes = Math.round(diffMs / 60_000);
-  const formatter = new Intl.RelativeTimeFormat("en-US", { numeric: "auto" });
-
-  if (Math.abs(diffMinutes) < 60) {
-    return formatter.format(diffMinutes, "minute");
-  }
-
-  const diffHours = Math.round(diffMinutes / 60);
-  if (Math.abs(diffHours) < 24) {
-    return formatter.format(diffHours, "hour");
-  }
-
-  const diffDays = Math.round(diffHours / 24);
-  return formatter.format(diffDays, "day");
-}
-
-function formatDueLabel(lead: Lead) {
-  if (lead.lead_flag === "done") return "Done";
-  if (!lead.next_follow_up_at) return "No reminder set";
-  const dueAt = new Date(lead.next_follow_up_at).getTime();
-  if (Number.isNaN(dueAt)) return "No reminder set";
-  const diffMs = dueAt - Date.now();
-  const diffHours = Math.round(diffMs / 3_600_000);
-  if (Math.abs(diffHours) < 24) {
-    if (diffHours < 0) return `overdue by ${Math.abs(diffHours)}h`;
-    if (diffHours === 0) return "due now";
-    return `due in ${diffHours}h`;
-  }
-  const diffDays = Math.round(diffHours / 24);
-  return diffDays <= 0 ? "due today" : `due in ${diffDays}d`;
-}
-
-function isDueToday(lead: Lead) {
-  if (lead.lead_flag === "done") return false;
-  if (!lead.next_follow_up_at) return false;
-  const dueAt = new Date(lead.next_follow_up_at);
-  if (Number.isNaN(dueAt.getTime())) return false;
-  const diffHours = (dueAt.getTime() - Date.now()) / 3_600_000;
-  return diffHours <= 24;
 }
 
 function canUseRealtime() {

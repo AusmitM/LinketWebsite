@@ -16,6 +16,10 @@ function normalizeHandle(value: string | null | undefined) {
   return trimmed.startsWith("@") ? trimmed.slice(1) : trimmed;
 }
 
+function buildOwnerPublicPreviewPath(handle: string) {
+  return `/${encodeURIComponent(handle)}?skipAnalytics=1`;
+}
+
 async function redirectToClaimDestination(
   req: NextRequest,
   token: string,
@@ -228,6 +232,26 @@ export async function GET(
     .limit(1)
     .maybeSingle();
 
+  if (
+    !assignmentError &&
+    assignment &&
+    authenticatedUserId &&
+    assignment.user_id &&
+    assignment.user_id === authenticatedUserId
+  ) {
+    const target = await resolveAssignmentProfileTarget(assignment);
+    if (target.handle) {
+      return redirectTo(req, buildOwnerPublicPreviewPath(target.handle));
+    }
+
+    return redirectTo(
+      req,
+      `/dashboard/linkets?claimedAssignment=${encodeURIComponent(
+        assignment.id
+      )}`
+    );
+  }
+
   if (!assignmentError) {
     await recordScan(req, tag.id, (assignment as AssignmentLookup | null) ?? null);
   } else {
@@ -235,19 +259,6 @@ export async function GET(
   }
 
   if (!assignmentError && assignment) {
-    if (
-      authenticatedUserId &&
-      assignment.user_id &&
-      assignment.user_id === authenticatedUserId
-    ) {
-      return redirectTo(
-        req,
-        `/dashboard/linkets?claimedAssignment=${encodeURIComponent(
-          assignment.id
-        )}`
-      );
-    }
-
     if (assignment.target_type === "url" && assignment.target_url) {
       try {
         return NextResponse.redirect(sanitizeHttpUrl(assignment.target_url));

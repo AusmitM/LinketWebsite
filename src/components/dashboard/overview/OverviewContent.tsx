@@ -519,11 +519,16 @@ function MetricRow({
 }) {
   return (
     <div className="dashboard-metric-row flex min-w-0 flex-col items-center gap-3 rounded-2xl border border-border/60 bg-background/70 px-4 py-4 text-center sm:flex-row sm:justify-between sm:text-left">
-      <div className="flex min-w-0 flex-col items-center gap-3 sm:flex-row">
+      <div className="dashboard-metric-main flex min-w-0 flex-col items-center gap-3 sm:flex-row">
         <span className="dashboard-metric-icon inline-flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
           <Icon className="h-4 w-4" aria-hidden />
         </span>
-        <span className="dashboard-metric-label min-w-0 max-w-[14rem] text-sm font-medium text-foreground">{label}</span>
+        <span
+          className="dashboard-metric-label min-w-0 max-w-[14rem] text-sm font-medium text-foreground"
+          title={label}
+        >
+          {label}
+        </span>
       </div>
       <span className="dashboard-metric-value text-sm font-semibold text-foreground">
         {loading ? <span className="text-muted-foreground">--</span> : value}

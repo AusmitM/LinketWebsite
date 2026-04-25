@@ -2490,16 +2490,28 @@ body.theme-forest .dashboard-forest-pin {
   }
 
   #dashboard-theme-scope .dashboard-metric-row {
-    padding: 0.4rem 0.5rem;
+    padding: 0.45rem 0.55rem;
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
+    gap: 0.55rem;
+    text-align: left;
     flex-wrap: nowrap;
+  }
+
+  #dashboard-theme-scope .dashboard-metric-main {
+    min-width: 0;
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.55rem;
   }
 
   #dashboard-theme-scope .dashboard-metric-icon {
     height: 1.5rem;
     width: 1.5rem;
+    flex: 0 0 auto;
   }
 
   #dashboard-theme-scope .dashboard-metric-label,
@@ -2508,12 +2520,17 @@ body.theme-forest .dashboard-forest-pin {
   }
 
   #dashboard-theme-scope .dashboard-metric-label {
+    min-width: 0;
+    max-width: 100%;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    text-align: left;
   }
 
   #dashboard-theme-scope .dashboard-metric-value {
+    flex: 0 0 auto;
+    align-self: auto;
     white-space: nowrap;
   }
 
