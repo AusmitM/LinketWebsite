@@ -187,7 +187,7 @@ function writeOnboardingDraftCache<T>(
       JSON.stringify(cache)
     );
   } catch {
-    // Ignore storage failures and continue with in-memory autosave.
+    // Ignore storage failures and continue with in-memory draft persistence.
   }
 }
 
@@ -377,18 +377,6 @@ function deriveLinkTitle(title: string, url: string) {
       .replace(/\b\w/g, (char) => char.toUpperCase());
   } catch {
     return "Website";
-  }
-}
-
-function formatSavedTime(value: string | null) {
-  if (!value) return null;
-  try {
-    return new Intl.DateTimeFormat(undefined, {
-      hour: "numeric",
-      minute: "2-digit",
-    }).format(new Date(value));
-  } catch {
-    return null;
   }
 }
 
@@ -706,13 +694,6 @@ function getFieldSaveState(input: {
   return "unsaved";
 }
 
-function mergeFieldSaveStates(states: FieldSaveState[]) {
-  if (states.includes("error")) return "error";
-  if (states.includes("saving")) return "saving";
-  if (states.includes("unsaved")) return "unsaved";
-  return "saved";
-}
-
 function FieldSavePill({
   state,
   showSaved = false,
@@ -822,12 +803,6 @@ export default function DashboardSetupFlow({
   const [saveError, setSaveError] = useState<string | null>(null);
   const [handleError, setHandleError] = useState<string | null>(null);
   const [stepError, setStepError] = useState<string | null>(null);
-  const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
-  const [profileSavedLocally, setProfileSavedLocally] = useState(false);
-  const [contactSavedLocally, setContactSavedLocally] = useState(false);
-  const [isOnline, setIsOnline] = useState(
-    typeof navigator === "undefined" ? true : navigator.onLine
-  );
   const [showLaunchHub, setShowLaunchHub] = useState(false);
   const [publishedThisSession, setPublishedThisSession] = useState(false);
   const [shareTestComplete, setShareTestComplete] = useState(
@@ -876,18 +851,6 @@ export default function DashboardSetupFlow({
   useEffect(() => {
     contactDraftRef.current = contactDraft;
   }, [contactDraft]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
-    return () => {
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
-    };
-  }, []);
 
   useEffect(() => {
     if (!contactDraft) return;
@@ -963,8 +926,6 @@ export default function DashboardSetupFlow({
     setContactDraft(previewContactDraft);
     setContactRequiresReview(false);
     setHandleTouched(!isAutoHandle(previewProfileDraft.handle));
-    setProfileSavedLocally(false);
-    setContactSavedLocally(false);
     savedProfileDraftRef.current = previewProfileDraft;
     savedContactDraftRef.current = previewContactDraft;
     savedProfileSignatureRef.current =
@@ -1123,8 +1084,6 @@ export default function DashboardSetupFlow({
           localContactDirty ? seededContact : nextContact,
           nextProfile.name
         );
-        setProfileSavedLocally(localProfileDirty);
-        setContactSavedLocally(localContactDirty);
         setTheme(nextProfile.theme);
         setCurrentStepIndex(
           getInitialStepIndex({
@@ -1191,16 +1150,6 @@ export default function DashboardSetupFlow({
           savedContactSignatureRef.current =
             localContactDraft?.savedSignature ??
             buildContactDraftSignature(fallbackContact, fallbackProfile.name);
-          setProfileSavedLocally(localProfileDirty);
-          setContactSavedLocally(
-            Boolean(
-              localContactDraft &&
-                buildContactDraftSignature(
-                  localContactDraft.draft,
-                  fallbackProfile.name
-                ) !== localContactDraft.savedSignature
-            )
-          );
           setTheme(fallbackProfile.theme);
           setCurrentStepIndex(
             getInitialStepIndex({
@@ -1278,53 +1227,6 @@ export default function DashboardSetupFlow({
     profileDraft?.handle,
     savedProfileDraft?.handle
   );
-  const autosaveLabel = useMemo(() => {
-    if (profileSaveStatus === "publishing") return "Publishing page";
-    if (avatarSaveState === "saving") return "Saving photo";
-    if (profileSaveStatus === "saving" || contactSaveStatus === "saving") {
-      return profileSavedLocally || contactSavedLocally
-        ? "Saved on this phone. Syncing..."
-        : "Saving changes";
-    }
-    if (
-      avatarSaveState === "error" ||
-      profileSaveStatus === "error" ||
-      contactSaveStatus === "error" ||
-      saveError
-    ) {
-      if (profileSavedLocally || contactSavedLocally) {
-        return isOnline
-          ? "Saved on this phone. Retrying sync..."
-          : "Saved on this phone. Waiting for connection";
-      }
-      return "Needs attention";
-    }
-    if (
-      avatarSaveState === "unsaved" ||
-      profileHasUnsavedChanges ||
-      contactHasUnsavedChanges
-    ) {
-      return profileSavedLocally || contactSavedLocally
-        ? isOnline
-          ? "Saved on this phone. Syncing..."
-          : "Saved on this phone. Waiting for connection"
-        : "Unsaved changes";
-    }
-    const savedAt = formatSavedTime(lastSavedAt);
-    if (savedAt) return `Saved ${savedAt}`;
-    return "Ready";
-  }, [
-    avatarSaveState,
-    contactHasUnsavedChanges,
-    contactSavedLocally,
-    contactSaveStatus,
-    isOnline,
-    lastSavedAt,
-    profileHasUnsavedChanges,
-    profileSavedLocally,
-    profileSaveStatus,
-    saveError,
-  ]);
   const handleStatus = useMemo(() => {
     const slug = profileDraft?.handle.trim() ?? "";
     if (!slug) {
@@ -1345,6 +1247,12 @@ export default function DashboardSetupFlow({
         className: "text-amber-700",
       };
     }
+    if (!handleTouched && handleIsDirty) {
+      return {
+        label: "Suggested from your name",
+        className: "text-muted-foreground",
+      };
+    }
     if (profileSaveStatus === "saving" && handleIsDirty) {
       return {
         label: "Checking availability",
@@ -1361,13 +1269,18 @@ export default function DashboardSetupFlow({
       label: "Available",
       className: "text-emerald-700",
     };
-  }, [handleError, handleIsDirty, profileDraft?.handle, profileSaveStatus]);
+  }, [
+    handleError,
+    handleIsDirty,
+    handleTouched,
+    profileDraft?.handle,
+    profileSaveStatus,
+  ]);
 
   useEffect(() => {
     if (previewMode || !userId || !profileDraft) return;
     if (!profileHasUnsavedChanges) {
       clearOnboardingDraftCache(userId, "profile");
-      setProfileSavedLocally(false);
       return;
     }
     writeOnboardingDraftCache(userId, "profile", {
@@ -1375,14 +1288,12 @@ export default function DashboardSetupFlow({
       savedSignature: savedProfileSignatureRef.current,
       updatedAt: new Date().toISOString(),
     });
-    setProfileSavedLocally(true);
   }, [previewMode, profileDraft, profileHasUnsavedChanges, userId]);
 
   useEffect(() => {
     if (previewMode || !userId || !contactDraft || !profileDraft) return;
     if (!contactHasUnsavedChanges) {
       clearOnboardingDraftCache(userId, "contact");
-      setContactSavedLocally(false);
       return;
     }
     writeOnboardingDraftCache(userId, "contact", {
@@ -1390,7 +1301,6 @@ export default function DashboardSetupFlow({
       savedSignature: savedContactSignatureRef.current,
       updatedAt: new Date().toISOString(),
     });
-    setContactSavedLocally(true);
   }, [
     contactDraft,
     contactHasUnsavedChanges,
@@ -1503,10 +1413,8 @@ export default function DashboardSetupFlow({
           savedProfileDraftRef.current = savedRecord;
           savedProfileSignatureRef.current =
             buildProfileDraftSignature(savedRecord);
-          setLastSavedAt(new Date().toISOString());
           setProfileSaveStatus("saved");
           clearOnboardingDraftCache(userId, "profile");
-          setProfileSavedLocally(false);
           if (savedRecord.theme === requestedTheme) {
             clearPendingDashboardTheme();
           }
@@ -1625,10 +1533,8 @@ export default function DashboardSetupFlow({
             fallbackName
           );
           setContactRequiresReview(false);
-          setLastSavedAt(new Date().toISOString());
           setContactSaveStatus("saved");
           clearOnboardingDraftCache(userId, "contact");
-          setContactSavedLocally(false);
 
           if (
             buildContactDraftSignature(
@@ -2057,7 +1963,6 @@ export default function DashboardSetupFlow({
   }
 
   const currentStep = SETUP_STEPS[currentStepIndex];
-  const progressValue = ((currentStepIndex + 1) / SETUP_STEPS.length) * 100;
   const fieldLabelClassName = "text-sm font-medium text-foreground";
   const fieldHelperClassName = "text-xs leading-5 text-muted-foreground sm:text-sm";
   const fieldInputClassName =
@@ -2180,12 +2085,6 @@ export default function DashboardSetupFlow({
               description: "Check your page once, then go live.",
             };
   const linkButtonLabel = "Add another link";
-  const autosaveTextToneClassName =
-    profileSaveStatus === "error" ||
-    contactSaveStatus === "error" ||
-    saveError
-      ? "text-red-600"
-      : "text-muted-foreground";
   const continueButtonLabel =
     currentStep.id === "profile"
       ? "Continue to contact info"
@@ -2198,13 +2097,6 @@ export default function DashboardSetupFlow({
             : publishReady
               ? "Update live page"
               : "Publish page";
-  const meaningfulLinkCount = profileDraft.links.filter((link) =>
-    isMeaningfulLink(link.url)
-  ).length;
-  const footerStatusLabel =
-    currentStep.id === "links" && meaningfulLinkCount > 0
-      ? `${meaningfulLinkCount} link${meaningfulLinkCount === 1 ? "" : "s"} added | ${autosaveLabel}`
-      : autosaveLabel;
   const sidebarPreviewWrapperClassName =
     currentStep.id === "profile"
       ? "max-w-[272px] max-h-[470px]"
@@ -2219,18 +2111,6 @@ export default function DashboardSetupFlow({
       : currentStep.id === "publish"
         ? "Check this once before you publish."
       : "This updates as you type.";
-  const mobilePrimaryActionLabel =
-    currentStep.id === "publish" ? continueButtonLabel : continueButtonLabel;
-  const mobileFooterStatusLabel =
-    currentStep.id === "publish" ? "You can edit later." : footerStatusLabel;
-  const currentStepGuidanceHint =
-    currentStep.id === "profile"
-      ? "Add the basics people notice first. If a field shows Unsaved, leave this page open for a moment."
-      : currentStep.id === "contact"
-        ? "Start with email or phone so people can reach you fast."
-        : currentStep.id === "links"
-          ? "Add the links you want people to tap first. Empty rows stay hidden until you add a URL."
-          : "Review everything once, then publish.";
   const getProfileFieldState = (
     dirty: boolean,
     hasFieldError = false
@@ -2288,32 +2168,14 @@ export default function DashboardSetupFlow({
     currentStep.id === "profile"
       ? "Contact card comes next"
       : "Add email or phone";
-  const profileDraftAutosaveState = getFieldSaveState({
-    dirty: profileHasUnsavedChanges,
-    saveStatus: profileSaveStatus,
-    hasError: Boolean(profileSaveStatus === "error" && saveError),
-  });
-  const contactDraftAutosaveState = getFieldSaveState({
-    dirty: contactHasUnsavedChanges,
-    saveStatus: contactSaveStatus,
-    hasError: Boolean(contactSaveStatus === "error" && saveError),
-  });
-  const overallAutosaveState = showLaunchHub
-    ? "saved"
-    : currentStep.id === "profile" || currentStep.id === "links"
-      ? currentStep.id === "profile"
-        ? mergeFieldSaveStates([avatarSaveState, profileDraftAutosaveState])
-        : profileDraftAutosaveState
-      : currentStep.id === "contact"
-        ? contactDraftAutosaveState
-        : profileSaveStatus === "publishing"
-          ? "saving"
-          : "saved";
+  const showAvatarSavePill =
+    Boolean(account.avatarPath || avatarPreviewUrl) || avatarFieldState !== "saved";
+  const showHandleSavePill = handleTouched || Boolean(handleError);
 
   return (
     <div className="dashboard-overview-page dashboard-setup-page min-h-[100svh] bg-[var(--background)] px-4 pb-[calc(env(safe-area-inset-bottom)+8.5rem)] pt-4 text-foreground sm:px-6 sm:py-5 lg:px-10 lg:py-6">
       <div className="mx-auto max-w-6xl space-y-4 sm:space-y-5">
-        <header className="dashboard-overview-header dashboard-setup-header flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
+        <header className="dashboard-overview-header dashboard-setup-header flex flex-col gap-3">
           <div className="dashboard-overview-intro dashboard-setup-intro max-w-3xl space-y-2">
             <p className="text-sm font-medium text-muted-foreground">
               Step {currentStepIndex + 1} of {SETUP_STEPS.length}: {stepHeading.title}
@@ -2325,38 +2187,11 @@ export default function DashboardSetupFlow({
               {pageHeading.description}
             </p>
           </div>
-          <div className="w-full max-w-xl xl:max-w-sm">
-            <div
-              className="h-2 overflow-hidden rounded-full bg-muted"
-              role="progressbar"
-              aria-label="Onboarding progress"
-              aria-valuemin={1}
-              aria-valuemax={SETUP_STEPS.length}
-              aria-valuenow={currentStepIndex + 1}
-              aria-valuetext={`Step ${currentStepIndex + 1} of ${SETUP_STEPS.length}`}
-            >
-              <div
-                className="h-full rounded-full bg-primary transition-[width] duration-300"
-                style={{ width: `${progressValue}%` }}
-              />
-            </div>
-          </div>
         </header>
 
         {!showLaunchHub ? (
           <Card className={cn(setupCardClassName, "dashboard-setup-mobile-summary lg:hidden")}>
             <CardContent className="space-y-4 px-4 py-4">
-              <div className="min-w-0 space-y-1">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-                  Setup flow
-                </p>
-                <p className="text-sm font-semibold text-foreground">
-                  {stepHeading.title}
-                </p>
-                <p className="text-xs leading-5 text-muted-foreground">
-                  {stepHeading.description || pageHeading.description}
-                </p>
-              </div>
               <div className="grid grid-cols-4 gap-2 max-[359px]:grid-cols-2">
                 {SETUP_STEPS.map((step, index) => {
                   const isCurrent = index === currentStepIndex;
@@ -2395,17 +2230,6 @@ export default function DashboardSetupFlow({
                     </div>
                   );
                 })}
-              </div>
-              <div className="flex items-center justify-between gap-3 rounded-2xl border border-border/60 bg-background/55 px-3 py-2.5">
-                <div className="min-w-0">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                    Autosave
-                  </p>
-                  <p className={cn("mt-1 text-sm", autosaveTextToneClassName)}>
-                    {mobileFooterStatusLabel}
-                  </p>
-                </div>
-                <FieldSavePill state={overallAutosaveState} showSaved />
               </div>
             </CardContent>
           </Card>
@@ -2531,9 +2355,6 @@ export default function DashboardSetupFlow({
             ) : (
               <Card className={setupCardClassName}>
                   <CardHeader className="gap-1 border-b border-border/60 pb-4">
-                    <p className="hidden text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground sm:block">
-                      Step {currentStepIndex + 1}
-                    </p>
                     <CardTitle className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
                       {stepHeading.title}
                     </CardTitle>
@@ -2544,21 +2365,6 @@ export default function DashboardSetupFlow({
                     ) : null}
                   </CardHeader>
                   <CardContent className="space-y-6 px-5 py-5 sm:px-6">
-                    {currentStep.id !== "publish" ? (
-                      <div className="rounded-[24px] border border-border/60 bg-background/55 p-4">
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                          <div className="space-y-1">
-                            <p className="text-sm font-semibold text-foreground">
-                              What to do here
-                            </p>
-                            <p className="text-sm leading-6 text-muted-foreground">
-                              {currentStepGuidanceHint}
-                            </p>
-                          </div>
-                          <FieldSavePill state={overallAutosaveState} showSaved />
-                        </div>
-                      </div>
-                    ) : null}
                     {currentStep.id === "profile" ? (
                       <div className="space-y-6">
                         <div className="space-y-3">
@@ -2567,15 +2373,12 @@ export default function DashboardSetupFlow({
                               <p className="text-sm font-semibold text-foreground">
                                 Profile photo (optional)
                               </p>
-                              <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
-                                <span className="inline-flex items-center rounded-full border border-border/60 bg-background/70 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                                  Autosaves
-                                </span>
+                              {showAvatarSavePill ? (
                                 <FieldSavePill state={avatarFieldState} showSaved />
-                              </div>
+                              ) : null}
                             </div>
                             <p className={fieldHelperClassName}>
-                              Optional for now. The crop saves automatically after you stop moving it.
+                              Optional for now. Add a photo if you want a stronger first impression.
                             </p>
                           </div>
                           <AvatarUploader
@@ -2648,7 +2451,9 @@ export default function DashboardSetupFlow({
                             >
                               Public URL
                             </Label>
-                            <FieldSavePill state={handleFieldState} />
+                            {showHandleSavePill ? (
+                              <FieldSavePill state={handleFieldState} />
+                            ) : null}
                           </div>
                           <div className="rounded-2xl border border-border/60 bg-background px-5 py-3 sm:px-6">
                             <div className="flex items-center gap-3">
@@ -3384,13 +3189,6 @@ export default function DashboardSetupFlow({
                               Back
                             </Button>
                           ) : null}
-                          <p
-                            aria-live="polite"
-                            aria-atomic="true"
-                            className={cn("text-sm", autosaveTextToneClassName)}
-                          >
-                            {currentStep.id === "publish" ? "You can edit later." : footerStatusLabel}
-                          </p>
                         </div>
                         {currentStep.id === "publish" ? (
                           <Button
@@ -3427,9 +3225,6 @@ export default function DashboardSetupFlow({
                       {previewDescription}
                       </CardDescription>
                     </div>
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                    Step {currentStepIndex + 1} of {SETUP_STEPS.length}
-                  </span>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4 px-4 py-4">
@@ -3539,17 +3334,7 @@ export default function DashboardSetupFlow({
 
       {!showLaunchHub ? (
         <div className="dashboard-setup-mobile-footer fixed inset-x-0 bottom-0 z-40 border-t border-border/60 bg-background/95 px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-3 shadow-[0_-18px_42px_-32px_rgba(15,23,42,0.4)] backdrop-blur sm:hidden">
-          <div className="mx-auto max-w-7xl space-y-2">
-            <div className="flex items-center justify-between gap-3">
-              <p
-                aria-live="polite"
-                aria-atomic="true"
-                className={cn("min-w-0 text-sm", autosaveTextToneClassName)}
-              >
-                {mobileFooterStatusLabel}
-              </p>
-              <FieldSavePill state={overallAutosaveState} showSaved />
-            </div>
+          <div className="mx-auto max-w-7xl">
             <div className="flex gap-3 max-[359px]:flex-col">
             {currentStepIndex > 0 ? (
               <Button
@@ -3579,7 +3364,7 @@ export default function DashboardSetupFlow({
                   : void handleContinue()
               }
             >
-              {mobilePrimaryActionLabel}
+              {continueButtonLabel}
             </Button>
             </div>
           </div>
