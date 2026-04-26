@@ -839,11 +839,6 @@ export default function DashboardSetupFlow({
     () => buildContactDraftSignature(contactDraft, profileDraft?.name ?? ""),
     [contactDraft, profileDraft?.name]
   );
-  const suggestedHandle = useMemo(() => {
-    if (!userId) return "";
-    return buildSuggestedHandle(profileDraft?.name ?? "", userId);
-  }, [profileDraft?.name, userId]);
-
   useEffect(() => {
     profileDraftRef.current = profileDraft;
   }, [profileDraft]);
@@ -1248,10 +1243,7 @@ export default function DashboardSetupFlow({
       };
     }
     if (!handleTouched && handleIsDirty) {
-      return {
-        label: "Suggested from your name",
-        className: "text-muted-foreground",
-      };
+      return null;
     }
     if (profileSaveStatus === "saving" && handleIsDirty) {
       return {
@@ -1260,10 +1252,7 @@ export default function DashboardSetupFlow({
       };
     }
     if (handleIsDirty) {
-      return {
-        label: "Will check on save",
-        className: "text-muted-foreground",
-      };
+      return null;
     }
     return {
       label: "Available",
@@ -1577,6 +1566,26 @@ export default function DashboardSetupFlow({
     },
     [userId]
   );
+
+  const requestProfileSaveSoon = useCallback(() => {
+    if (typeof window === "undefined") return;
+    window.setTimeout(() => {
+      if (previewMode || loading || showLaunchHub || !userId) return;
+      const currentDraft = profileDraftRef.current;
+      if (!currentDraft) return;
+      if (
+        buildProfileDraftSignature(currentDraft) ===
+        savedProfileSignatureRef.current
+      ) {
+        return;
+      }
+      if (profileSavePromiseRef.current) {
+        queuedProfileSaveRef.current = true;
+        return;
+      }
+      void saveProfileDraft({ quiet: true });
+    }, 0);
+  }, [loading, previewMode, saveProfileDraft, showLaunchHub, userId]);
 
   useEffect(() => {
     if (loading || !profileDraft || !userId || showLaunchHub) return;
@@ -2210,7 +2219,7 @@ export default function DashboardSetupFlow({
                     <div
                       key={step.id}
                       className={cn(
-                        "rounded-2xl border px-2.5 py-2 text-left",
+                        "rounded-2xl border px-2.5 py-2 text-center",
                         isCurrent
                           ? "border-foreground/25 bg-foreground/10 text-foreground"
                           : isDone
@@ -2475,6 +2484,7 @@ export default function DashboardSetupFlow({
                                     ),
                                   }));
                                 }}
+                                onBlur={requestProfileSaveSoon}
                               />
                             </div>
                           </div>
@@ -2482,38 +2492,23 @@ export default function DashboardSetupFlow({
                             Pick a short link to share. This is the link you&apos;ll send.
                           </p>
                           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
-                            {suggestedHandle &&
-                            suggestedHandle !== sanitizeHandleInput(profileDraft.handle) ? (
-                              <Button
-                                type="button"
-                                variant="link"
-                                className="h-auto p-0 text-xs text-muted-foreground"
-                                onClick={() => {
-                                  setHandleTouched(false);
-                                  updateProfileDraft((current) => ({
-                                    ...current,
-                                    handle: suggestedHandle,
-                                  }));
-                                }}
+                            {handleStatus ? (
+                              <span
+                                className={cn(
+                                  "inline-flex items-center gap-2 font-medium",
+                                  handleStatus.className
+                                )}
                               >
-                                Use suggestion
-                              </Button>
+                                {handleStatus.label === "Checking availability" ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : handleStatus.label === "Available" ? (
+                                  <CheckCircle2 className="h-4 w-4" />
+                                ) : (
+                                  <Link2 className="h-4 w-4" />
+                                )}
+                                {handleStatus.label}
+                              </span>
                             ) : null}
-                            <span
-                              className={cn(
-                                "inline-flex items-center gap-2 font-medium",
-                                handleStatus.className
-                              )}
-                            >
-                              {handleStatus.label === "Checking availability" ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : handleStatus.label === "Available" ? (
-                                <CheckCircle2 className="h-4 w-4" />
-                              ) : (
-                                <Link2 className="h-4 w-4" />
-                              )}
-                              {handleStatus.label}
-                            </span>
                           </div>
                           {handleError ? (
                             <p className="text-sm text-red-600">{handleError}</p>
