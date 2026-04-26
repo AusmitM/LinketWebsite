@@ -1056,7 +1056,7 @@ export default function DashboardSetupFlow({
         );
         const seededContact =
           contactSeededFromAccount
-            ? { ...mappedContact, email: userEmail }
+            ? { ...mappedContact, email: userEmail ?? "" }
             : mappedContact;
         const localProfileDraft = readOnboardingDraftCache<ProfileDraft>(
           userId,
@@ -1157,6 +1157,13 @@ export default function DashboardSetupFlow({
               localProfileDraft.savedSignature
         );
         const fallbackProfile = localProfileDraft?.draft ?? null;
+        const localContactDirty = Boolean(
+          localContactDraft &&
+            buildContactDraftSignature(
+              localContactDraft.draft,
+              fallbackProfile?.name ?? ""
+            ) !== localContactDraft.savedSignature
+        );
         const fallbackContact =
           localContactDraft?.draft ??
           (fallbackProfile
@@ -2767,7 +2774,7 @@ export default function DashboardSetupFlow({
                                   onClick={() =>
                                     updateContactDraft((current) => ({
                                       ...current,
-                                      email: userEmail,
+                                      email: userEmail ?? "",
                                     }), { markReviewed: true })
                                   }
                                 >
