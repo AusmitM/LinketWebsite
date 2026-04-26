@@ -12,6 +12,13 @@ export const MANAGEABLE_STRIPE_SUBSCRIPTION_STATUSES = [
   "paused",
 ] as const;
 
+export type ComplimentaryPauseSource =
+  | "linket_claim_api"
+  | "billing_subscribe"
+  | "stripe_webhook"
+  | "linket_transfer"
+  | "admin_grant";
+
 type ManageableStripeSubscriptionStatus =
   (typeof MANAGEABLE_STRIPE_SUBSCRIPTION_STATUSES)[number];
 
@@ -63,7 +70,7 @@ export async function ensureNoChargeDuringComplimentary(args: {
   subscriptionId: string;
   complimentaryStartsAt: string | null;
   complimentaryEndsAt: string | null;
-  source: "linket_claim_api" | "billing_subscribe" | "stripe_webhook";
+  source: ComplimentaryPauseSource;
 }) {
   const endsAtUnix = toUnixFromIso(args.complimentaryEndsAt);
   if (!endsAtUnix) return false;

@@ -3,16 +3,10 @@ import type { NextRequest } from "next/server";
 import { z } from "zod";
 
 import { requireRouteAccess } from "@/lib/api-authorization";
-import {
-  ensureNoChargeDuringComplimentary,
-  pickManageableSubscriptionId,
-} from "@/lib/billing/complimentary-subscription";
-import { getOrCreateStripeCustomerForUser } from "@/lib/billing/dashboard";
-import { getLinketBundleComplimentaryWindowForUser } from "@/lib/billing/linket-bundle";
 import { normalizeClaimCodeInput } from "@/lib/linket-claim-code";
+import { grantLinketEntitlementToUser } from "@/lib/linket-entitlements";
 import { assertOwnedProfileId } from "@/lib/linket-tags";
 import { validateJsonBody } from "@/lib/request-validation";
-import { getStripeSecretKey, getStripeServerClient } from "@/lib/stripe";
 import { getActiveProfileForUser } from "@/lib/profile-service";
 import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
 
@@ -129,7 +123,6 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const now = new Date().toISOString();
   let tagId: string | null = null;
 
   try {
@@ -140,13 +133,6 @@ export async function POST(req: NextRequest) {
           { error: "Tag is already claimed or unavailable." },
           { status: 409 }
         );
-      }
-      const { error: updateError } = await supabaseAdmin
-        .from("hardware_tags")
-        .update({ status: "claimed", last_claimed_at: now })
-        .eq("id", claimTag.id);
-      if (updateError) {
-        return NextResponse.json({ error: updateError.message }, { status: 500 });
       }
       tagId = claimTag.id;
     } else {
@@ -163,13 +149,6 @@ export async function POST(req: NextRequest) {
           { status: 409 }
         );
       }
-      const { error: updateError } = await supabaseAdmin
-        .from("hardware_tags")
-        .update({ status: "claimed", last_claimed_at: now })
-        .eq("id", tokenTag.id);
-      if (updateError) {
-        return NextResponse.json({ error: updateError.message }, { status: 500 });
-      }
       tagId = tokenTag.id;
     }
   } catch (error) {
@@ -179,82 +158,24 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { data: assignment, error: assignmentError } = await supabaseAdmin
-    .from("tag_assignments")
-    .upsert(
-      {
-        tag_id: tagId,
-        user_id: access.user.id,
-        profile_id: profileId,
-        nickname: payload.nickname ?? null,
-      },
-      { onConflict: "tag_id" }
-    )
-    .select("id")
-    .single();
-  if (assignmentError) {
-    return NextResponse.json({ error: assignmentError.message }, { status: 500 });
+  if (!tagId) {
+    return NextResponse.json({ error: "Claim code not found." }, { status: 404 });
   }
 
-  await supabaseAdmin.from("tag_events").insert({
-    tag_id: tagId,
-    event_type: "claim",
-    metadata: {
-      user_id: access.user.id,
-      claimer_user_id: access.user.id,
-      entitlement_user_id: access.user.id,
-      entitlement_source: "linket_claim",
-      giftable: true,
-    },
-  });
+  try {
+    const result = await grantLinketEntitlementToUser({
+      tagId,
+      user: access.user,
+      source: "linket_claim",
+      pauseSource: "linket_claim_api",
+      profileId,
+      nickname: payload.nickname ?? null,
+    });
 
-  if (getStripeSecretKey()) {
-    try {
-      const complimentaryWindow = await getLinketBundleComplimentaryWindowForUser(
-        access.user.id
-      );
-      if (complimentaryWindow.eligible) {
-        const customerId = await getOrCreateStripeCustomerForUser({
-          userId: access.user.id,
-          email: access.user.email ?? null,
-          fullName:
-            (access.user.user_metadata?.full_name as string | null | undefined) ??
-            (access.user.user_metadata?.name as string | null | undefined) ??
-            null,
-          firstName:
-            (access.user.user_metadata?.first_name as string | null | undefined) ??
-            null,
-          lastName:
-            (access.user.user_metadata?.last_name as string | null | undefined) ??
-            null,
-        });
-
-        if (customerId) {
-          const stripe = getStripeServerClient();
-          const subscriptions = await stripe.subscriptions.list({
-            customer: customerId,
-            status: "all",
-            limit: 20,
-          });
-          const subscriptionId = pickManageableSubscriptionId(subscriptions.data);
-          if (subscriptionId) {
-            await ensureNoChargeDuringComplimentary({
-              stripe,
-              subscriptionId,
-              complimentaryStartsAt: complimentaryWindow.startsAt,
-              complimentaryEndsAt: complimentaryWindow.endsAt,
-              source: "linket_claim_api",
-            });
-          }
-        }
-      }
-    } catch (error) {
-      console.error(
-        "Linket claim completed but failed to enforce complimentary no-charge pause:",
-        error
-      );
-    }
+    return NextResponse.json({ ok: true, assignmentId: result.assignmentId });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Unable to claim Linket.";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
-
-  return NextResponse.json({ ok: true, assignmentId: assignment?.id ?? null });
 }

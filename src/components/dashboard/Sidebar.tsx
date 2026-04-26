@@ -19,6 +19,7 @@ import {
   Megaphone,
   Flag,
   User,
+  Wrench,
 } from "lucide-react";
 
 const BASE_NAV = [
@@ -127,6 +128,11 @@ export default function Sidebar({
     return [
       ...BASE_NAV,
       { href: "/dashboard/admin/mint", label: "Minting", icon: Package },
+      {
+        href: "/dashboard/admin/entitlements",
+        label: "Entitlements",
+        icon: Wrench,
+      },
       {
         href: "/dashboard/admin/notifications",
         label: "Notifications",

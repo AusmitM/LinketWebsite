@@ -95,6 +95,7 @@ async function getAuthenticatedActor(): Promise<AuthenticatedActorResult> {
 export async function requireRouteAccess(
   routeId: PrivilegedRouteId,
   options?: {
+    includeAdminLookup?: boolean;
     resourceUserId?: string | null;
   }
 ): Promise<NextResponse | RouteAccessSuccess> {
@@ -118,7 +119,9 @@ export async function requireRouteAccess(
     );
   }
 
-  const needsAdminLookup = PRIVILEGED_ROUTE_POLICIES[routeId] === "admin";
+  const needsAdminLookup =
+    options?.includeAdminLookup === true ||
+    PRIVILEGED_ROUTE_POLICIES[routeId] === "admin";
   const isAdmin = needsAdminLookup ? await isAdminUser(actor.user.id) : false;
   const role: ActorRole = isAdmin ? "admin" : "user";
   const decision = evaluateRouteAccess({

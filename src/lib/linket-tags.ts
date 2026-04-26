@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { cancelPendingTransfersForTag } from "@/lib/linket-transfers";
 import type {
   HardwareTagRecord,
   TagAssignmentRecord,
@@ -123,6 +124,11 @@ export async function updateAssignmentForUser(options: {
   }
 
   if (options.action === "release") {
+    await cancelPendingTransfersForTag(current.assignment.tag_id, options.userId, {
+      canceled_reason: "linket_released",
+      released_assignment_id: current.assignment.id,
+    });
+
     const { error: deleteError } = await supabaseAdmin
       .from("tag_assignments")
       .delete()

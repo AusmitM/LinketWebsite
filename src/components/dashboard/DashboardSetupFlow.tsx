@@ -71,6 +71,7 @@ import { Textarea } from "@/components/ui/textarea";
 
 type SetupStepId = "profile" | "contact" | "links" | "publish";
 type SaveStatus = "idle" | "saving" | "saved" | "error" | "publishing";
+type FieldSaveState = "saved" | "saving" | "unsaved" | "error";
 
 type ProfileLinkDraft = {
   id?: string;
@@ -125,6 +126,12 @@ type AccountDraft = {
   displayName: string | null;
 };
 
+type SetupDraftCache<T> = {
+  draft: T;
+  savedSignature: string;
+  updatedAt: string;
+};
+
 const AUTO_HANDLE_PATTERN = /^user-[0-9a-f]{8}$/i;
 const DEFAULT_LINK_HOST = getConfiguredSiteHost();
 const MAX_LINK_ROWS = 5;
@@ -132,9 +139,68 @@ const PROFILE_EDITOR_SECTION_STORAGE_KEY =
   "linket:profile-editor:active-section";
 const ONBOARDING_COMPLETION_SESSION_KEY_PREFIX =
   "linket:onboarding-complete";
+const ONBOARDING_PROFILE_DRAFT_STORAGE_PREFIX =
+  "linket:onboarding:profile-draft";
+const ONBOARDING_CONTACT_DRAFT_STORAGE_PREFIX =
+  "linket:onboarding:contact-draft";
 
 function getOnboardingCompletionSessionKey(userId: string) {
   return `${ONBOARDING_COMPLETION_SESSION_KEY_PREFIX}:${userId}`;
+}
+
+function getOnboardingDraftStorageKey(
+  userId: string,
+  type: "profile" | "contact"
+) {
+  return `${
+    type === "profile"
+      ? ONBOARDING_PROFILE_DRAFT_STORAGE_PREFIX
+      : ONBOARDING_CONTACT_DRAFT_STORAGE_PREFIX
+  }:${userId}`;
+}
+
+function readOnboardingDraftCache<T>(
+  userId: string,
+  type: "profile" | "contact"
+): SetupDraftCache<T> | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(
+      getOnboardingDraftStorageKey(userId, type)
+    );
+    if (!raw) return null;
+    return JSON.parse(raw) as SetupDraftCache<T>;
+  } catch {
+    return null;
+  }
+}
+
+function writeOnboardingDraftCache<T>(
+  userId: string,
+  type: "profile" | "contact",
+  cache: SetupDraftCache<T>
+) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(
+      getOnboardingDraftStorageKey(userId, type),
+      JSON.stringify(cache)
+    );
+  } catch {
+    // Ignore storage failures and continue with in-memory autosave.
+  }
+}
+
+function clearOnboardingDraftCache(
+  userId: string,
+  type: "profile" | "contact"
+) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(getOnboardingDraftStorageKey(userId, type));
+  } catch {
+    // Ignore storage failures.
+  }
 }
 
 const SETUP_STEPS: Array<{
@@ -592,6 +658,98 @@ function getInitialStepIndex(input: {
   return 3;
 }
 
+function normalizeComparableText(value: string | null | undefined) {
+  return (value ?? "").trim();
+}
+
+function areComparableValuesDifferent(
+  current: string | null | undefined,
+  saved: string | null | undefined
+) {
+  return normalizeComparableText(current) !== normalizeComparableText(saved);
+}
+
+function areComparableUrlsDifferent(
+  current: string | null | undefined,
+  saved: string | null | undefined
+) {
+  return normalizeLinkUrlInput(current ?? "") !== normalizeLinkUrlInput(saved ?? "");
+}
+
+function getFieldSaveState(input: {
+  dirty: boolean;
+  saveStatus: SaveStatus;
+  hasError?: boolean;
+}): FieldSaveState {
+  if (!input.dirty) return "saved";
+  if (input.hasError || input.saveStatus === "error") return "error";
+  if (input.saveStatus === "saving" || input.saveStatus === "publishing") {
+    return "saving";
+  }
+  return "unsaved";
+}
+
+function mergeFieldSaveStates(states: FieldSaveState[]) {
+  if (states.includes("error")) return "error";
+  if (states.includes("saving")) return "saving";
+  if (states.includes("unsaved")) return "unsaved";
+  return "saved";
+}
+
+function FieldSavePill({
+  state,
+  showSaved = false,
+}: {
+  state: FieldSaveState;
+  showSaved?: boolean;
+}) {
+  if (state === "saved" && !showSaved) return null;
+
+  const toneClassName =
+    state === "error"
+      ? "border-red-500/35 bg-red-500/10 text-red-700 dark:text-red-200"
+      : state === "saving"
+        ? "border-foreground/15 bg-foreground/10 text-foreground"
+        : state === "unsaved"
+          ? "border-amber-500/35 bg-amber-500/10 text-amber-700 dark:text-amber-200"
+          : "border-emerald-500/35 bg-emerald-500/12 text-emerald-700 dark:text-emerald-200";
+
+  const label =
+    state === "error"
+      ? "Not saved"
+      : state === "saving"
+        ? "Saving"
+        : state === "unsaved"
+          ? "Unsaved"
+          : "Saved";
+
+  return (
+    <span
+      className={cn(
+        "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em]",
+        toneClassName
+      )}
+    >
+      {state === "saving" ? (
+        <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" />
+      ) : (
+        <span
+          className={cn(
+            "h-1.5 w-1.5 rounded-full",
+            state === "error"
+              ? "bg-red-600 dark:bg-red-300"
+              : state === "unsaved"
+                ? "bg-amber-600 dark:bg-amber-300"
+                : "bg-emerald-600 dark:bg-emerald-300"
+          )}
+          aria-hidden="true"
+        />
+      )}
+      {label}
+    </span>
+  );
+}
+
 export default function DashboardSetupFlow({
   initialOnboardingState,
   previewMode = false,
@@ -647,6 +805,11 @@ export default function DashboardSetupFlow({
   const [handleError, setHandleError] = useState<string | null>(null);
   const [stepError, setStepError] = useState<string | null>(null);
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
+  const [profileSavedLocally, setProfileSavedLocally] = useState(false);
+  const [contactSavedLocally, setContactSavedLocally] = useState(false);
+  const [isOnline, setIsOnline] = useState(
+    typeof navigator === "undefined" ? true : navigator.onLine
+  );
   const [showLaunchHub, setShowLaunchHub] = useState(false);
   const [publishedThisSession, setPublishedThisSession] = useState(false);
   const [shareTestComplete, setShareTestComplete] = useState(
@@ -657,6 +820,7 @@ export default function DashboardSetupFlow({
   const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false);
   const [showContactExtras, setShowContactExtras] = useState(false);
   const [showPhoneField, setShowPhoneField] = useState(false);
+  const [avatarSaveState, setAvatarSaveState] = useState<FieldSaveState>("saved");
   const [expandedLinkTitleEditors, setExpandedLinkTitleEditors] = useState<
     Record<string, boolean>
   >({});
@@ -664,6 +828,8 @@ export default function DashboardSetupFlow({
   const setupStartedAtRef = useRef(Date.now());
   const profileDraftRef = useRef<ProfileDraft | null>(null);
   const contactDraftRef = useRef<ContactDraft | null>(null);
+  const savedProfileDraftRef = useRef<ProfileDraft | null>(null);
+  const savedContactDraftRef = useRef<ContactDraft | null>(null);
   const savedProfileSignatureRef = useRef("");
   const savedContactSignatureRef = useRef("");
   const profileSavePromiseRef = useRef<Promise<ProfileDraft | null> | null>(null);
@@ -693,6 +859,18 @@ export default function DashboardSetupFlow({
   useEffect(() => {
     contactDraftRef.current = contactDraft;
   }, [contactDraft]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
 
   useEffect(() => {
     if (!contactDraft) return;
@@ -767,6 +945,10 @@ export default function DashboardSetupFlow({
     setProfileDraft(previewProfileDraft);
     setContactDraft(previewContactDraft);
     setHandleTouched(!isAutoHandle(previewProfileDraft.handle));
+    setProfileSavedLocally(false);
+    setContactSavedLocally(false);
+    savedProfileDraftRef.current = previewProfileDraft;
+    savedContactDraftRef.current = previewContactDraft;
     savedProfileSignatureRef.current =
       buildProfileDraftSignature(previewProfileDraft);
     savedContactSignatureRef.current = buildContactDraftSignature(
@@ -856,15 +1038,43 @@ export default function DashboardSetupFlow({
           userEmail
             ? { ...mappedContact, email: userEmail }
             : mappedContact;
+        const localProfileDraft = readOnboardingDraftCache<ProfileDraft>(
+          userId,
+          "profile"
+        );
+        const localContactDraft = readOnboardingDraftCache<ContactDraft>(
+          userId,
+          "contact"
+        );
+        const localProfileDirty = Boolean(
+          localProfileDraft &&
+            buildProfileDraftSignature(localProfileDraft.draft) !==
+              localProfileDraft.savedSignature
+        );
+        const nextProfile =
+          localProfileDirty && localProfileDraft
+            ? localProfileDraft.draft
+            : mappedProfile;
+        const localContactDirty = Boolean(
+          localContactDraft &&
+            buildContactDraftSignature(
+              localContactDraft.draft,
+              nextProfile.name
+            ) !== localContactDraft.savedSignature
+        );
+        const nextContact =
+          localContactDirty && localContactDraft
+            ? localContactDraft.draft
+            : seededContact;
 
         if (cancelled) return;
 
-        setProfileDraft(mappedProfile);
-        setContactDraft(seededContact);
+        setProfileDraft(nextProfile);
+        setContactDraft(nextContact);
         setAccount({
           handle:
             accountPayload.handle?.trim() ||
-            mappedProfile.handle ||
+            nextProfile.handle ||
             initialOnboardingState.activeProfile.handle,
           avatarPath:
             accountPayload.avatarPath ??
@@ -880,22 +1090,28 @@ export default function DashboardSetupFlow({
             initialOnboardingState.account.displayName ??
             null,
         });
-        setHandleTouched(!isAutoHandle(mappedProfile.handle));
-        savedProfileSignatureRef.current = buildProfileDraftSignature(mappedProfile);
+        setHandleTouched(!isAutoHandle(nextProfile.handle));
+        savedProfileDraftRef.current = localProfileDirty ? mappedProfile : nextProfile;
+        savedContactDraftRef.current = localContactDirty ? seededContact : nextContact;
+        savedProfileSignatureRef.current = localProfileDirty
+          ? localProfileDraft?.savedSignature ?? buildProfileDraftSignature(mappedProfile)
+          : buildProfileDraftSignature(nextProfile);
         savedContactSignatureRef.current = buildContactDraftSignature(
-          seededContact,
-          mappedProfile.name
+          localContactDirty ? seededContact : nextContact,
+          nextProfile.name
         );
-        setTheme(mappedProfile.theme);
+        setProfileSavedLocally(localProfileDirty);
+        setContactSavedLocally(localContactDirty);
+        setTheme(nextProfile.theme);
         setCurrentStepIndex(
           getInitialStepIndex({
             profileComplete:
-              Boolean(mappedProfile.name.trim()) &&
-              !isAutoHandle(mappedProfile.handle),
+              Boolean(nextProfile.name.trim()) &&
+              !isAutoHandle(nextProfile.handle),
             contactComplete: Boolean(
-              seededContact.email.trim() || seededContact.phone.trim()
+              nextContact.email.trim() || nextContact.phone.trim()
             ),
-            linksComplete: mappedProfile.links.some((link) =>
+            linksComplete: nextProfile.links.some((link) =>
               isMeaningfulLink(link.url)
             ),
           })
@@ -905,12 +1121,75 @@ export default function DashboardSetupFlow({
           error instanceof Error
             ? error.message
             : "Unable to load your setup flow.";
-        setSaveError(message);
-        toast({
-          title: "Setup unavailable",
-          description: message,
-          variant: "destructive",
-        });
+        const localProfileDraft = readOnboardingDraftCache<ProfileDraft>(
+          userId,
+          "profile"
+        );
+        const localContactDraft = readOnboardingDraftCache<ContactDraft>(
+          userId,
+          "contact"
+        );
+        const localProfileDirty = Boolean(
+          localProfileDraft &&
+            buildProfileDraftSignature(localProfileDraft.draft) !==
+              localProfileDraft.savedSignature
+        );
+        const fallbackProfile = localProfileDraft?.draft ?? null;
+        const fallbackContact =
+          localContactDraft?.draft ??
+          (fallbackProfile
+            ? mapOnboardingStateContact(
+                initialOnboardingState,
+                fallbackProfile.name,
+                userEmail
+              )
+            : null);
+
+        if (fallbackProfile && fallbackContact) {
+          setProfileDraft(fallbackProfile);
+          setContactDraft(fallbackContact);
+          setHandleTouched(!isAutoHandle(fallbackProfile.handle));
+          savedProfileDraftRef.current = fallbackProfile;
+          savedContactDraftRef.current = fallbackContact;
+          savedProfileSignatureRef.current =
+            localProfileDraft?.savedSignature ??
+            buildProfileDraftSignature(fallbackProfile);
+          savedContactSignatureRef.current =
+            localContactDraft?.savedSignature ??
+            buildContactDraftSignature(fallbackContact, fallbackProfile.name);
+          setProfileSavedLocally(localProfileDirty);
+          setContactSavedLocally(
+            Boolean(
+              localContactDraft &&
+                buildContactDraftSignature(
+                  localContactDraft.draft,
+                  fallbackProfile.name
+                ) !== localContactDraft.savedSignature
+            )
+          );
+          setTheme(fallbackProfile.theme);
+          setCurrentStepIndex(
+            getInitialStepIndex({
+              profileComplete:
+                Boolean(fallbackProfile.name.trim()) &&
+                !isAutoHandle(fallbackProfile.handle),
+              contactComplete: Boolean(
+                fallbackContact.email.trim() || fallbackContact.phone.trim()
+              ),
+              linksComplete: fallbackProfile.links.some((link) =>
+                isMeaningfulLink(link.url)
+              ),
+            })
+          );
+          setSaveError(message);
+        } else {
+          setSaveError(message);
+          toast({
+            title: "Setup unavailable",
+            description: message,
+            variant: "destructive",
+          });
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -922,6 +1201,7 @@ export default function DashboardSetupFlow({
       cancelled = true;
     };
   }, [
+    initialOnboardingState,
     initialOnboardingState.account.avatarPath,
     initialOnboardingState.account.avatarUpdatedAt,
     initialOnboardingState.account.displayName,
@@ -955,25 +1235,63 @@ export default function DashboardSetupFlow({
     [account.handle, profileDraft?.handle]
   );
 
+  const savedProfileDraft = savedProfileDraftRef.current;
+  const savedContactDraft = savedContactDraftRef.current;
+  const profileHasUnsavedChanges =
+    profileDraftSignature !== savedProfileSignatureRef.current;
+  const contactHasUnsavedChanges =
+    contactDraftSignature !== savedContactSignatureRef.current;
+  const handleIsDirty = areComparableValuesDifferent(
+    profileDraft?.handle,
+    savedProfileDraft?.handle
+  );
   const autosaveLabel = useMemo(() => {
     if (profileSaveStatus === "publishing") return "Publishing page";
+    if (avatarSaveState === "saving") return "Saving photo";
     if (profileSaveStatus === "saving" || contactSaveStatus === "saving") {
-      return "Saving changes";
+      return profileSavedLocally || contactSavedLocally
+        ? "Saved on this phone. Syncing..."
+        : "Saving changes";
     }
     if (
+      avatarSaveState === "error" ||
       profileSaveStatus === "error" ||
       contactSaveStatus === "error" ||
       saveError
     ) {
+      if (profileSavedLocally || contactSavedLocally) {
+        return isOnline
+          ? "Saved on this phone. Retrying sync..."
+          : "Saved on this phone. Waiting for connection";
+      }
       return "Needs attention";
+    }
+    if (
+      avatarSaveState === "unsaved" ||
+      profileHasUnsavedChanges ||
+      contactHasUnsavedChanges
+    ) {
+      return profileSavedLocally || contactSavedLocally
+        ? isOnline
+          ? "Saved on this phone. Syncing..."
+          : "Saved on this phone. Waiting for connection"
+        : "Unsaved changes";
     }
     const savedAt = formatSavedTime(lastSavedAt);
     if (savedAt) return `Saved ${savedAt}`;
     return "Autosave on";
-  }, [contactSaveStatus, lastSavedAt, profileSaveStatus, saveError]);
-
-  const profileHasUnsavedChanges =
-    profileDraftSignature !== savedProfileSignatureRef.current;
+  }, [
+    avatarSaveState,
+    contactHasUnsavedChanges,
+    contactSavedLocally,
+    contactSaveStatus,
+    isOnline,
+    lastSavedAt,
+    profileHasUnsavedChanges,
+    profileSavedLocally,
+    profileSaveStatus,
+    saveError,
+  ]);
   const handleStatus = useMemo(() => {
     const slug = profileDraft?.handle.trim() ?? "";
     if (!slug) {
@@ -994,9 +1312,15 @@ export default function DashboardSetupFlow({
         className: "text-amber-700",
       };
     }
-    if (profileSaveStatus === "saving" || profileHasUnsavedChanges) {
+    if (profileSaveStatus === "saving" && handleIsDirty) {
       return {
         label: "Checking availability",
+        className: "text-muted-foreground",
+      };
+    }
+    if (handleIsDirty) {
+      return {
+        label: "Will check on save",
         className: "text-muted-foreground",
       };
     }
@@ -1004,7 +1328,43 @@ export default function DashboardSetupFlow({
       label: "Available",
       className: "text-emerald-700",
     };
-  }, [handleError, profileDraft?.handle, profileHasUnsavedChanges, profileSaveStatus]);
+  }, [handleError, handleIsDirty, profileDraft?.handle, profileSaveStatus]);
+
+  useEffect(() => {
+    if (previewMode || !userId || !profileDraft) return;
+    if (!profileHasUnsavedChanges) {
+      clearOnboardingDraftCache(userId, "profile");
+      setProfileSavedLocally(false);
+      return;
+    }
+    writeOnboardingDraftCache(userId, "profile", {
+      draft: profileDraft,
+      savedSignature: savedProfileSignatureRef.current,
+      updatedAt: new Date().toISOString(),
+    });
+    setProfileSavedLocally(true);
+  }, [previewMode, profileDraft, profileHasUnsavedChanges, userId]);
+
+  useEffect(() => {
+    if (previewMode || !userId || !contactDraft || !profileDraft) return;
+    if (!contactHasUnsavedChanges) {
+      clearOnboardingDraftCache(userId, "contact");
+      setContactSavedLocally(false);
+      return;
+    }
+    writeOnboardingDraftCache(userId, "contact", {
+      draft: contactDraft,
+      savedSignature: savedContactSignatureRef.current,
+      updatedAt: new Date().toISOString(),
+    });
+    setContactSavedLocally(true);
+  }, [
+    contactDraft,
+    contactHasUnsavedChanges,
+    previewMode,
+    profileDraft,
+    userId,
+  ]);
 
   const trackingMeta = (extra?: Record<string, unknown>) => ({
     source: "dashboard_get_started",
@@ -1107,10 +1467,13 @@ export default function DashboardSetupFlow({
           const savedRecord = mapProfileRecord(
             (await response.json()) as ProfileWithLinks
           );
+          savedProfileDraftRef.current = savedRecord;
           savedProfileSignatureRef.current =
             buildProfileDraftSignature(savedRecord);
           setLastSavedAt(new Date().toISOString());
           setProfileSaveStatus("saved");
+          clearOnboardingDraftCache(userId, "profile");
+          setProfileSavedLocally(false);
           if (savedRecord.theme === requestedTheme) {
             clearPendingDashboardTheme();
           }
@@ -1220,12 +1583,15 @@ export default function DashboardSetupFlow({
             fields?: Partial<ContactDraft>;
           };
           const savedDraft = mapContactFields(payload.fields, fallbackName);
+          savedContactDraftRef.current = savedDraft;
           savedContactSignatureRef.current = buildContactDraftSignature(
             savedDraft,
             fallbackName
           );
           setLastSavedAt(new Date().toISOString());
           setContactSaveStatus("saved");
+          clearOnboardingDraftCache(userId, "contact");
+          setContactSavedLocally(false);
 
           if (
             buildContactDraftSignature(
@@ -1318,6 +1684,30 @@ export default function DashboardSetupFlow({
     loading,
     profileDraft,
     saveContactDraft,
+    showLaunchHub,
+    userId,
+  ]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handleOnlineSync = () => {
+      if (previewMode || loading || showLaunchHub || !userId) return;
+      if (profileHasUnsavedChanges && !profileSavePromiseRef.current) {
+        void saveProfileDraft({ quiet: true });
+      }
+      if (contactHasUnsavedChanges && !contactSavePromiseRef.current) {
+        void saveContactDraft({ quiet: true });
+      }
+    };
+    window.addEventListener("online", handleOnlineSync);
+    return () => window.removeEventListener("online", handleOnlineSync);
+  }, [
+    contactHasUnsavedChanges,
+    loading,
+    previewMode,
+    profileHasUnsavedChanges,
+    saveContactDraft,
+    saveProfileDraft,
     showLaunchHub,
     userId,
   ]);
@@ -1776,12 +2166,94 @@ export default function DashboardSetupFlow({
       : "This updates as you type.";
   const mobilePrimaryActionLabel =
     currentStep.id === "publish" ? continueButtonLabel : continueButtonLabel;
+  const mobileFooterStatusLabel =
+    currentStep.id === "publish" ? "You can edit later." : footerStatusLabel;
+  const currentStepAutosaveHint =
+    currentStep.id === "profile"
+      ? "These fields save automatically as you type. If one shows Unsaved, leave this page open for a moment."
+      : currentStep.id === "contact"
+        ? "Contact details save automatically. Start with email or phone so people can reach you fast."
+        : currentStep.id === "links"
+          ? "Links and theme save automatically. Empty link rows stay local until you add a URL."
+          : "Review everything once, then publish.";
+  const getProfileFieldState = (
+    dirty: boolean,
+    hasFieldError = false
+  ) =>
+    getFieldSaveState({
+      dirty,
+      saveStatus: profileSaveStatus,
+      hasError: Boolean(hasFieldError || (profileSaveStatus === "error" && saveError)),
+    });
+  const getContactFieldState = (dirty: boolean) =>
+    getFieldSaveState({
+      dirty,
+      saveStatus: contactSaveStatus,
+      hasError: Boolean(contactSaveStatus === "error" && saveError),
+    });
+  const nameFieldState = getProfileFieldState(
+    areComparableValuesDifferent(profileDraft.name, savedProfileDraft?.name)
+  );
+  const avatarFieldState = avatarSaveState;
+  const handleFieldState = getProfileFieldState(handleIsDirty, Boolean(handleError));
+  const headlineFieldState = getProfileFieldState(
+    areComparableValuesDifferent(profileDraft.headline, savedProfileDraft?.headline)
+  );
+  const emailFieldState = getContactFieldState(
+    areComparableValuesDifferent(contactDraft.email, savedContactDraft?.email)
+  );
+  const phoneFieldState = getContactFieldState(
+    areComparableValuesDifferent(contactDraft.phone, savedContactDraft?.phone)
+  );
+  const titleFieldState = getContactFieldState(
+    areComparableValuesDifferent(contactDraft.title, savedContactDraft?.title)
+  );
+  const companyFieldState = getContactFieldState(
+    areComparableValuesDifferent(contactDraft.company, savedContactDraft?.company)
+  );
+  const themeFieldState = getProfileFieldState(
+    normalizeThemeName(savedProfileDraft?.theme ?? "autumn", "autumn") !==
+      selectedThemeValue
+  );
+  const mobileStepLabels: Record<SetupStepId, string> = {
+    profile: "Profile",
+    contact: "Contact",
+    links: "Links",
+    publish: "Review",
+  };
+  const stepCompletion = {
+    profile: liveProfileReady,
+    contact: contactReady,
+    links: linksReady,
+    publish: publishReady,
+  };
+  const profileDraftAutosaveState = getFieldSaveState({
+    dirty: profileHasUnsavedChanges,
+    saveStatus: profileSaveStatus,
+    hasError: Boolean(profileSaveStatus === "error" && saveError),
+  });
+  const contactDraftAutosaveState = getFieldSaveState({
+    dirty: contactHasUnsavedChanges,
+    saveStatus: contactSaveStatus,
+    hasError: Boolean(contactSaveStatus === "error" && saveError),
+  });
+  const overallAutosaveState = showLaunchHub
+    ? "saved"
+    : currentStep.id === "profile" || currentStep.id === "links"
+      ? currentStep.id === "profile"
+        ? mergeFieldSaveStates([avatarSaveState, profileDraftAutosaveState])
+        : profileDraftAutosaveState
+      : currentStep.id === "contact"
+        ? contactDraftAutosaveState
+        : profileSaveStatus === "publishing"
+          ? "saving"
+          : "saved";
 
   return (
-    <div className="dashboard-overview-page min-h-[100svh] bg-[var(--background)] px-4 pb-[calc(env(safe-area-inset-bottom)+8.5rem)] pt-4 text-foreground sm:px-6 sm:py-5 lg:px-10 lg:py-6">
+    <div className="dashboard-overview-page dashboard-setup-page min-h-[100svh] bg-[var(--background)] px-4 pb-[calc(env(safe-area-inset-bottom)+8.5rem)] pt-4 text-foreground sm:px-6 sm:py-5 lg:px-10 lg:py-6">
       <div className="mx-auto max-w-6xl space-y-4 sm:space-y-5">
-        <header className="dashboard-overview-header flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
-          <div className="dashboard-overview-intro max-w-3xl space-y-2">
+        <header className="dashboard-overview-header dashboard-setup-header flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
+          <div className="dashboard-overview-intro dashboard-setup-intro max-w-3xl space-y-2">
             <p className="text-sm font-medium text-muted-foreground">
               Step {currentStepIndex + 1} of {SETUP_STEPS.length}: {stepHeading.title}
             </p>
@@ -1818,27 +2290,70 @@ export default function DashboardSetupFlow({
         </header>
 
         {!showLaunchHub ? (
-          <Card className={cn(setupCardClassName, "lg:hidden")}>
-            <CardContent className="flex items-center justify-between gap-3 px-4 py-3 max-[359px]:flex-col max-[359px]:items-stretch">
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-foreground">
-                  {stepHeading.title}
-                </p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {stepHeading.description || pageHeading.description}
-                </p>
+          <Card className={cn(setupCardClassName, "dashboard-setup-mobile-summary lg:hidden")}>
+            <CardContent className="space-y-4 px-4 py-4">
+              <div className="flex items-start justify-between gap-3 max-[359px]:flex-col max-[359px]:items-stretch">
+                <div className="min-w-0 space-y-1">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                    Setup flow
+                  </p>
+                  <p className="text-sm font-semibold text-foreground">
+                    {stepHeading.title}
+                  </p>
+                  <p className="text-xs leading-5 text-muted-foreground">
+                    {stepHeading.description || pageHeading.description}
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-10 shrink-0 rounded-2xl px-3 text-sm max-[359px]:w-full"
+                  onClick={() => setMobilePreviewOpen(true)}
+                >
+                  <span className="inline-flex items-center gap-2">
+                    <Smartphone className="h-4 w-4" aria-hidden="true" />
+                    Preview
+                  </span>
+                </Button>
               </div>
-              <Button
-                type="button"
-                variant="outline"
-                className="h-10 shrink-0 rounded-2xl px-3 text-sm max-[359px]:w-full"
-                onClick={() => setMobilePreviewOpen(true)}
-              >
-                <span className="inline-flex items-center gap-2">
-                  <Smartphone className="h-4 w-4" aria-hidden="true" />
-                  Preview
-                </span>
-              </Button>
+              <div className="grid grid-cols-4 gap-2 max-[359px]:grid-cols-2">
+                {SETUP_STEPS.map((step, index) => {
+                  const isCurrent = index === currentStepIndex;
+                  const isDone = stepCompletion[step.id];
+
+                  return (
+                    <div
+                      key={step.id}
+                      className={cn(
+                        "rounded-2xl border px-2.5 py-2 text-left",
+                        isCurrent
+                          ? "border-foreground/25 bg-foreground/10 text-foreground"
+                          : isDone
+                            ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-200"
+                            : "border-border/60 bg-background/60 text-muted-foreground"
+                      )}
+                    >
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.16em]">
+                        {index + 1}
+                      </p>
+                      <p className="mt-1 text-[11px] font-semibold leading-4">
+                        {mobileStepLabels[step.id]}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="flex items-center justify-between gap-3 rounded-2xl border border-border/60 bg-background/55 px-3 py-2.5">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                    Autosave
+                  </p>
+                  <p className={cn("mt-1 text-sm", autosaveTextToneClassName)}>
+                    {mobileFooterStatusLabel}
+                  </p>
+                </div>
+                <FieldSavePill state={overallAutosaveState} showSaved />
+              </div>
             </CardContent>
           </Card>
         ) : null}
@@ -1976,15 +2491,38 @@ export default function DashboardSetupFlow({
                     ) : null}
                   </CardHeader>
                   <CardContent className="space-y-6 px-5 py-5 sm:px-6">
+                    {currentStep.id !== "publish" ? (
+                      <div className="rounded-[24px] border border-border/60 bg-background/55 p-4">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                          <div className="space-y-1">
+                            <p className="text-sm font-semibold text-foreground">
+                              Autosave is on
+                            </p>
+                            <p className="text-sm leading-6 text-muted-foreground">
+                              {currentStepAutosaveHint}
+                            </p>
+                          </div>
+                          <FieldSavePill state={overallAutosaveState} showSaved />
+                        </div>
+                      </div>
+                    ) : null}
                     {currentStep.id === "profile" ? (
                       <div className="space-y-6">
                         <div className="space-y-3">
                           <div className="space-y-1">
-                            <p className="text-sm font-semibold text-foreground">
-                              Profile photo (optional)
-                            </p>
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <p className="text-sm font-semibold text-foreground">
+                                Profile photo (optional)
+                              </p>
+                              <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+                                <span className="inline-flex items-center rounded-full border border-border/60 bg-background/70 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                                  Autosaves
+                                </span>
+                                <FieldSavePill state={avatarFieldState} showSaved />
+                              </div>
+                            </div>
                             <p className={fieldHelperClassName}>
-                              Optional for now.
+                              Optional for now. The crop saves automatically after you stop moving it.
                             </p>
                           </div>
                           <AvatarUploader
@@ -1993,6 +2531,8 @@ export default function DashboardSetupFlow({
                             avatarUrl={avatarPreviewUrl}
                             avatarOriginalFileName={account.avatarOriginalFileName}
                             variant="compact"
+                            autoSave
+                            onSaveStateChange={setAvatarSaveState}
                             onUploaded={(payload) => {
                               const hasAvatar = Boolean(payload.path);
                               setAccount((current) => ({
@@ -2011,12 +2551,15 @@ export default function DashboardSetupFlow({
                         </div>
 
                         <div className="space-y-2.5">
-                          <Label
-                            htmlFor="setup-name"
-                            className={fieldLabelClassName}
-                          >
-                            Name
-                          </Label>
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <Label
+                              htmlFor="setup-name"
+                              className={fieldLabelClassName}
+                            >
+                              Name
+                            </Label>
+                            <FieldSavePill state={nameFieldState} />
+                          </div>
                           <Input
                             id="setup-name"
                             value={profileDraft.name}
@@ -2045,12 +2588,15 @@ export default function DashboardSetupFlow({
                         </div>
 
                         <div className="space-y-2.5">
-                          <Label
-                            htmlFor="setup-handle"
-                            className={fieldLabelClassName}
-                          >
-                            Public URL
-                          </Label>
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <Label
+                              htmlFor="setup-handle"
+                              className={fieldLabelClassName}
+                            >
+                              Public URL
+                            </Label>
+                            <FieldSavePill state={handleFieldState} />
+                          </div>
                           <div className="rounded-2xl border border-border/60 bg-background px-5 py-3 sm:px-6">
                             <div className="flex items-center gap-3">
                               <span className="shrink-0 text-sm font-medium text-muted-foreground">
@@ -2117,12 +2663,15 @@ export default function DashboardSetupFlow({
                         </div>
 
                         <div className="space-y-2.5">
-                          <Label
-                            htmlFor="setup-headline"
-                            className={fieldLabelClassName}
-                          >
-                            One-line intro
-                          </Label>
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <Label
+                              htmlFor="setup-headline"
+                              className={fieldLabelClassName}
+                            >
+                              One-line intro
+                            </Label>
+                            <FieldSavePill state={headlineFieldState} />
+                          </div>
                           <Textarea
                             id="setup-headline"
                             value={profileDraft.headline}
@@ -2153,30 +2702,33 @@ export default function DashboardSetupFlow({
                           </p>
                         </div>
                         <div className="space-y-2.5">
-                          <div className="flex items-center justify-between gap-3">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
                             <Label
                               htmlFor="setup-email"
                               className={fieldLabelClassName}
                             >
                               Email
                             </Label>
-                            {userEmail &&
-                            !contactDraft.email.trim() &&
-                            userEmail !== contactDraft.email ? (
-                              <Button
-                                type="button"
-                                variant="link"
-                                className="h-auto p-0 text-xs text-muted-foreground"
-                                onClick={() =>
-                                  updateContactDraft((current) => ({
-                                    ...current,
-                                    email: userEmail,
-                                  }))
-                                }
-                              >
-                                Use account email
-                              </Button>
-                            ) : null}
+                            <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+                              <FieldSavePill state={emailFieldState} />
+                              {userEmail &&
+                              !contactDraft.email.trim() &&
+                              userEmail !== contactDraft.email ? (
+                                <Button
+                                  type="button"
+                                  variant="link"
+                                  className="h-auto p-0 text-xs text-muted-foreground"
+                                  onClick={() =>
+                                    updateContactDraft((current) => ({
+                                      ...current,
+                                      email: userEmail,
+                                    }))
+                                  }
+                                >
+                                  Use account email
+                                </Button>
+                              ) : null}
+                            </div>
                           </div>
                           <Input
                             id="setup-email"
@@ -2198,23 +2750,26 @@ export default function DashboardSetupFlow({
                           </p>
                           {showPhoneField ? (
                             <div className={cn("space-y-3 p-4", softPanelClassName)}>
-                              <div className="flex items-center justify-between gap-3">
+                              <div className="flex flex-wrap items-center justify-between gap-2">
                                 <Label
                                   htmlFor="setup-phone"
                                   className={fieldLabelClassName}
                                 >
                                   Phone
                                 </Label>
-                                {!contactDraft.phone.trim() ? (
-                                  <Button
-                                    type="button"
-                                    variant="link"
-                                    className="h-auto p-0 text-xs text-muted-foreground"
-                                    onClick={() => setShowPhoneField(false)}
-                                  >
-                                    Hide
-                                  </Button>
-                                ) : null}
+                                <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+                                  <FieldSavePill state={phoneFieldState} />
+                                  {!contactDraft.phone.trim() ? (
+                                    <Button
+                                      type="button"
+                                      variant="link"
+                                      className="h-auto p-0 text-xs text-muted-foreground"
+                                      onClick={() => setShowPhoneField(false)}
+                                    >
+                                      Hide
+                                    </Button>
+                                  ) : null}
+                                </div>
                               </div>
                               <Input
                                 id="setup-phone"
@@ -2263,12 +2818,15 @@ export default function DashboardSetupFlow({
                               </div>
                               <div className="grid gap-4 md:grid-cols-2">
                                 <div className="space-y-2">
-                                  <Label
-                                    htmlFor="setup-title"
-                                    className={fieldLabelClassName}
-                                  >
-                                    Job title
-                                  </Label>
+                                  <div className="flex flex-wrap items-center justify-between gap-2">
+                                    <Label
+                                      htmlFor="setup-title"
+                                      className={fieldLabelClassName}
+                                    >
+                                      Job title
+                                    </Label>
+                                    <FieldSavePill state={titleFieldState} />
+                                  </div>
                                   <Input
                                     id="setup-title"
                                     value={contactDraft.title}
@@ -2283,12 +2841,15 @@ export default function DashboardSetupFlow({
                                   />
                                 </div>
                                 <div className="space-y-2">
-                                  <Label
-                                    htmlFor="setup-company"
-                                    className={fieldLabelClassName}
-                                  >
-                                    Company
-                                  </Label>
+                                  <div className="flex flex-wrap items-center justify-between gap-2">
+                                    <Label
+                                      htmlFor="setup-company"
+                                      className={fieldLabelClassName}
+                                    >
+                                      Company
+                                    </Label>
+                                    <FieldSavePill state={companyFieldState} />
+                                  </div>
                                   <Input
                                     id="setup-company"
                                     value={contactDraft.company}
@@ -2334,10 +2895,29 @@ export default function DashboardSetupFlow({
                             {profileDraft.links.map((link, index) => (
                               (() => {
                                 const linkFieldKey = getDraftLinkFieldKey(link, index);
+                                const savedLink =
+                                  (link.id
+                                    ? savedProfileDraft?.links.find(
+                                        (item) => item.id === link.id
+                                      )
+                                    : undefined) ??
+                                  savedProfileDraft?.links[index];
                                 const showTitleField =
                                   index === 0 ||
                                   Boolean(link.title.trim()) ||
                                   Boolean(expandedLinkTitleEditors[linkFieldKey]);
+                                const linkTitleFieldState = getProfileFieldState(
+                                  areComparableValuesDifferent(
+                                    link.title,
+                                    savedLink?.title
+                                  )
+                                );
+                                const linkUrlFieldState = getProfileFieldState(
+                                  areComparableUrlsDifferent(
+                                    link.url,
+                                    savedLink?.url
+                                  )
+                                );
 
                                 return (
                                   <div
@@ -2388,28 +2968,31 @@ export default function DashboardSetupFlow({
                                     >
                                       {showTitleField ? (
                                         <div className="space-y-2">
-                                          <div className="flex items-center justify-between gap-3">
+                                          <div className="flex flex-wrap items-center justify-between gap-2">
                                             <Label
                                               htmlFor={`setup-link-title-${index}`}
                                               className={fieldLabelClassName}
                                             >
                                               Link label
                                             </Label>
-                                            {!link.title.trim() && index !== 0 ? (
-                                              <Button
-                                                type="button"
-                                                variant="link"
-                                                className="h-auto p-0 text-xs text-muted-foreground"
-                                                onClick={() =>
-                                                  setExpandedLinkTitleEditors((current) => ({
-                                                    ...current,
-                                                    [linkFieldKey]: false,
-                                                  }))
-                                                }
-                                              >
-                                                Hide
-                                              </Button>
-                                            ) : null}
+                                            <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+                                              <FieldSavePill state={linkTitleFieldState} />
+                                              {!link.title.trim() && index !== 0 ? (
+                                                <Button
+                                                  type="button"
+                                                  variant="link"
+                                                  className="h-auto p-0 text-xs text-muted-foreground"
+                                                  onClick={() =>
+                                                    setExpandedLinkTitleEditors((current) => ({
+                                                      ...current,
+                                                      [linkFieldKey]: false,
+                                                    }))
+                                                  }
+                                                >
+                                                  Hide
+                                                </Button>
+                                              ) : null}
+                                            </div>
                                           </div>
                                           <Input
                                             id={`setup-link-title-${index}`}
@@ -2436,28 +3019,31 @@ export default function DashboardSetupFlow({
                                         </div>
                                       ) : null}
                                       <div className="space-y-2">
-                                        <div className="flex items-center justify-between gap-3">
+                                        <div className="flex flex-wrap items-center justify-between gap-2">
                                           <Label
                                             htmlFor={`setup-link-url-${index}`}
                                             className={fieldLabelClassName}
                                           >
                                             URL
                                           </Label>
-                                          {!showTitleField ? (
-                                            <Button
-                                              type="button"
-                                              variant="link"
-                                              className="h-auto p-0 text-xs text-muted-foreground"
-                                              onClick={() =>
-                                                setExpandedLinkTitleEditors((current) => ({
-                                                  ...current,
-                                                  [linkFieldKey]: true,
-                                                }))
-                                              }
-                                            >
-                                              Add custom label
-                                            </Button>
-                                          ) : null}
+                                          <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+                                            <FieldSavePill state={linkUrlFieldState} />
+                                            {!showTitleField ? (
+                                              <Button
+                                                type="button"
+                                                variant="link"
+                                                className="h-auto p-0 text-xs text-muted-foreground"
+                                                onClick={() =>
+                                                  setExpandedLinkTitleEditors((current) => ({
+                                                    ...current,
+                                                    [linkFieldKey]: true,
+                                                  }))
+                                                }
+                                              >
+                                                Add custom label
+                                              </Button>
+                                            ) : null}
+                                          </div>
                                         </div>
                                         <Input
                                           id={`setup-link-url-${index}`}
@@ -2513,16 +3099,19 @@ export default function DashboardSetupFlow({
                           ) : null}
                         </div>
                         <div className="space-y-3">
-                          <div className="flex items-center gap-2">
-                            <Palette className="h-4 w-4 text-muted-foreground" />
-                            <div>
-                              <p className="text-sm font-semibold text-foreground">
-                                Theme
-                              </p>
-                              <p className="text-sm text-muted-foreground">
-                                Pick a theme. You can change it later.
-                              </p>
+                          <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div className="flex items-center gap-2">
+                              <Palette className="h-4 w-4 text-muted-foreground" />
+                              <div>
+                                <p className="text-sm font-semibold text-foreground">
+                                  Theme
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                  Pick a theme. You can change it later.
+                                </p>
+                              </div>
                             </div>
+                            <FieldSavePill state={themeFieldState} />
                           </div>
                           {canChooseTheme ? (
                             <div className={cn("space-y-3 p-4", softPanelClassName)}>
@@ -2930,8 +3519,19 @@ export default function DashboardSetupFlow({
       </Dialog>
 
       {!showLaunchHub ? (
-        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border/60 bg-background/95 px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-3 shadow-[0_-18px_42px_-32px_rgba(15,23,42,0.4)] backdrop-blur sm:hidden">
-          <div className="mx-auto flex max-w-7xl gap-3 max-[359px]:flex-col">
+        <div className="dashboard-setup-mobile-footer fixed inset-x-0 bottom-0 z-40 border-t border-border/60 bg-background/95 px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-3 shadow-[0_-18px_42px_-32px_rgba(15,23,42,0.4)] backdrop-blur sm:hidden">
+          <div className="mx-auto max-w-7xl space-y-2">
+            <div className="flex items-center justify-between gap-3">
+              <p
+                aria-live="polite"
+                aria-atomic="true"
+                className={cn("min-w-0 text-sm", autosaveTextToneClassName)}
+              >
+                {mobileFooterStatusLabel}
+              </p>
+              <FieldSavePill state={overallAutosaveState} showSaved />
+            </div>
+            <div className="flex gap-3 max-[359px]:flex-col">
             {currentStepIndex > 0 ? (
               <Button
                 type="button"
@@ -2962,6 +3562,7 @@ export default function DashboardSetupFlow({
             >
               {mobilePrimaryActionLabel}
             </Button>
+            </div>
           </div>
         </div>
       ) : null}

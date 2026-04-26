@@ -1,6 +1,7 @@
 export type PrivilegedRouteId =
   | "DELETE /api/linket-profiles/[id]"
   | "GET /api/account/handle"
+  | "GET /api/admin/linkets/complimentary-grant"
   | "GET /api/admin/mint/batch/[batchId]"
   | "GET /api/admin/mint/master-log"
   | "GET /api/admin/mint/next-batch"
@@ -15,11 +16,14 @@ export type PrivilegedRouteId =
   | "GET /api/lead-forms/responses"
   | "GET /api/linket-profiles"
   | "GET /api/linkets"
+  | "GET /api/linkets/transfers/[token]"
   | "GET /api/me"
   | "GET /api/vcard/profile"
+  | "PATCH /api/admin/linkets/complimentary-grant"
   | "PATCH /api/admin/notifications"
   | "PATCH /api/linkets/[id]"
   | "POST /api/account/delete"
+  | "POST /api/admin/linkets/complimentary-grant"
   | "POST /api/admin/mint"
   | "POST /api/admin/notifications"
   | "POST /api/billing/bundle-checkout"
@@ -32,6 +36,8 @@ export type PrivilegedRouteId =
   | "POST /api/linket-profiles/[id]/activate"
   | "POST /api/linket-profiles"
   | "POST /api/linkets/claim"
+  | "POST /api/linkets/transfers"
+  | "POST /api/linkets/transfers/[token]/accept"
   | "POST /api/vcard/profile"
   | "PUT /api/lead-forms";
 
@@ -44,6 +50,7 @@ export const PRIVILEGED_ROUTE_POLICIES: Record<
 > = {
   "DELETE /api/linket-profiles/[id]": "self",
   "GET /api/account/handle": "self",
+  "GET /api/admin/linkets/complimentary-grant": "admin",
   "GET /api/admin/mint/batch/[batchId]": "admin",
   "GET /api/admin/mint/master-log": "admin",
   "GET /api/admin/mint/next-batch": "admin",
@@ -58,11 +65,14 @@ export const PRIVILEGED_ROUTE_POLICIES: Record<
   "GET /api/lead-forms/responses": "self",
   "GET /api/linket-profiles": "self",
   "GET /api/linkets": "authenticated",
+  "GET /api/linkets/transfers/[token]": "authenticated",
   "GET /api/me": "authenticated",
   "GET /api/vcard/profile": "self",
+  "PATCH /api/admin/linkets/complimentary-grant": "admin",
   "PATCH /api/admin/notifications": "admin",
   "PATCH /api/linkets/[id]": "authenticated",
   "POST /api/account/delete": "authenticated",
+  "POST /api/admin/linkets/complimentary-grant": "admin",
   "POST /api/admin/mint": "admin",
   "POST /api/admin/notifications": "admin",
   "POST /api/billing/bundle-checkout": "authenticated",
@@ -75,6 +85,8 @@ export const PRIVILEGED_ROUTE_POLICIES: Record<
   "POST /api/linket-profiles/[id]/activate": "self",
   "POST /api/linket-profiles": "self",
   "POST /api/linkets/claim": "authenticated",
+  "POST /api/linkets/transfers": "authenticated",
+  "POST /api/linkets/transfers/[token]/accept": "authenticated",
   "POST /api/vcard/profile": "self",
   "PUT /api/lead-forms": "self",
 };

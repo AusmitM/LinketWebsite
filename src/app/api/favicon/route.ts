@@ -1,10 +1,5 @@
 import { NextResponse } from "next/server";
 
-const FALLBACK_PNG = Buffer.from(
-  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAAWgmWQ0AAAAASUVORK5CYII=",
-  "base64"
-);
-
 function errorResponse(status: number, message: string) {
   return NextResponse.json({ error: message }, { status });
 }
@@ -90,10 +85,9 @@ export async function GET(request: Request) {
     }
   }
 
-  return new NextResponse(FALLBACK_PNG, {
-    status: 200,
+  return new NextResponse(null, {
+    status: 404,
     headers: {
-      "Content-Type": "image/png",
       "X-Favicon-Source": "fallback",
       "Cache-Control":
         "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800",

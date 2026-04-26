@@ -49,6 +49,7 @@ import AvatarUploader from "@/components/dashboard/AvatarUploader";
 import ProfileHeaderUploader from "@/components/dashboard/ProfileHeaderUploader";
 import ProfileLogoUploader from "@/components/dashboard/ProfileLogoUploader";
 import LeadFormBuilder from "@/components/dashboard/LeadFormBuilder";
+import LinkFavicon from "@/components/LinkFavicon";
 import VCardContent from "@/components/dashboard/vcard/VCardContent";
 import { useDashboardUser } from "@/components/dashboard/DashboardSessionContext";
 import { useThemeOptional } from "@/components/theme/theme-provider";
@@ -62,7 +63,6 @@ import {
 import { getSignedAvatarUrl } from "@/lib/avatar-client";
 import { getSignedProfileHeaderUrl } from "@/lib/profile-header-client";
 import { getSignedProfileLogoUrl } from "@/lib/profile-logo-client";
-import { getLinkFaviconSrc } from "@/lib/link-favicon";
 import { confirmRemove } from "@/lib/confirm-remove";
 import { cn } from "@/lib/utils";
 import { shuffleFields } from "@/lib/lead-form";
@@ -2404,11 +2404,7 @@ function LinkListItem({
     transition,
     isDragging,
   } = useSortable({ id: link.id });
-  const Icon = ICON_OPTIONS.find((item) => item.value === link.icon)?.icon ?? Link2;
   const clicks = link.clicks ?? 0;
-  const favicon = getLinkFaviconSrc(link.url, {
-    darkTheme: useDarkThemeIcons,
-  });
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -2433,19 +2429,13 @@ function LinkListItem({
         >
           <GripVertical className="h-4 w-4" />
         </span>
-        {favicon ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={favicon}
-            alt=""
-            className="h-10 w-10 rounded-md"
-            aria-hidden
-          />
-        ) : (
-          <span className="flex h-10 w-10 items-center justify-center rounded-full border border-border/60 bg-background/70 text-muted-foreground">
-            <Icon className="h-5 w-5" />
-          </span>
-        )}
+        <LinkFavicon
+          title={link.label}
+          url={link.url}
+          useDarkThemeIcons={useDarkThemeIcons}
+          className="h-10 w-10 rounded-md"
+          fallbackClassName="flex items-center justify-center rounded-md border border-border/60 bg-background/70 text-[11px] font-semibold text-muted-foreground"
+        />
         <div className="min-w-0">
           <div className="public-link-title truncate text-sm font-semibold text-foreground">
             {link.label}

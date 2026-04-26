@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   AlertCircle,
+  ArrowRightLeft,
+  Copy,
   ExternalLink,
   Loader2,
   RefreshCcw,
@@ -17,6 +19,13 @@ import type { ProfileWithLinks } from "@/lib/profile-service";
 import type { TagAssignmentDetail } from "@/lib/linket-tags";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -30,6 +39,33 @@ import { useDashboardUser } from "@/components/dashboard/DashboardSessionContext
 
 type LinketsContentProps = {
   variant?: "standalone" | "embedded";
+};
+
+type CreatedTransfer = {
+  id: string;
+  token: string;
+  recipientEmail: string;
+  expiresAt: string;
+  nickname: string | null;
+  chipUid: string | null;
+  claimCode: string | null;
+  directUrl: string;
+  inviteUrl: string;
+};
+
+type TransferPreview = {
+  id: string;
+  assignmentId: string | null;
+  chipUid: string | null;
+  claimCode: string | null;
+  nickname: string | null;
+  recipientEmail: string;
+  status: "pending" | "accepted" | "canceled" | "expired";
+  expiresAt: string;
+  createdAt: string;
+  isSender: boolean;
+  canAccept: boolean;
+  alreadyAcceptedByCurrentUser: boolean;
 };
 
 const linketDateTimeFormatter = new Intl.DateTimeFormat("en-US", {
@@ -59,8 +95,24 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
   const [claimCode, setClaimCode] = useState("");
   const [claiming, setClaiming] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [transferDialogAssignment, setTransferDialogAssignment] =
+    useState<TagAssignmentDetail | null>(null);
+  const [transferRecipientEmail, setTransferRecipientEmail] = useState("");
+  const [transferSubmitting, setTransferSubmitting] = useState(false);
+  const [createdTransfer, setCreatedTransfer] = useState<CreatedTransfer | null>(
+    null
+  );
+  const [transferPreview, setTransferPreview] = useState<TransferPreview | null>(
+    null
+  );
+  const [transferPreviewLoading, setTransferPreviewLoading] = useState(false);
+  const [transferPreviewError, setTransferPreviewError] = useState<string | null>(
+    null
+  );
+  const [acceptingTransfer, setAcceptingTransfer] = useState(false);
   const claimedAssignmentFromQuery =
     searchParams.get("claimedAssignment")?.trim() ?? "";
+  const transferTokenFromQuery = searchParams.get("transfer")?.trim() ?? "";
   const claimCodeFromQuery = useMemo(() => {
     const claimCodePrefill = searchParams.get("claimCode");
     if (claimCodePrefill) {
@@ -135,6 +187,54 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
     setClaimCode((current) => current || claimCodeFromQuery);
   }, [claimCodeFromQuery]);
 
+  useEffect(() => {
+    if (!transferTokenFromQuery || !userId) {
+      setTransferPreview(null);
+      setTransferPreviewError(null);
+      setTransferPreviewLoading(false);
+      return;
+    }
+
+    let active = true;
+    setTransferPreviewLoading(true);
+    setTransferPreviewError(null);
+
+    void (async () => {
+      try {
+        const response = await fetch(
+          `/api/linkets/transfers/${encodeURIComponent(transferTokenFromQuery)}`,
+          {
+            cache: "no-store",
+          }
+        );
+        const payload = await response.json().catch(() => null);
+        if (!response.ok) {
+          throw new Error(
+            payload && typeof payload.error === "string"
+              ? payload.error
+              : "Unable to load transfer invite."
+          );
+        }
+        if (!active) return;
+        setTransferPreview(payload as TransferPreview);
+      } catch (error) {
+        if (!active) return;
+        setTransferPreview(null);
+        setTransferPreviewError(
+          error instanceof Error ? error.message : "Unable to load transfer invite."
+        );
+      } finally {
+        if (active) {
+          setTransferPreviewLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [transferTokenFromQuery, userId]);
+
   const activeProfileOptions = useMemo(() => {
     return profiles.map((profile) => ({
       id: profile.id,
@@ -161,7 +261,7 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
       const response = await fetch(`/api/linkets/${assignmentId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, profileId }),
+        body: JSON.stringify({ profileId }),
       });
       if (!response.ok) {
         const body = await response.json().catch(() => null);
@@ -182,7 +282,7 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
       const response = await fetch(`/api/linkets/${assignmentId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, action: "release" }),
+        body: JSON.stringify({ action: "release" }),
       });
       if (!response.ok) {
         const body = await response.json().catch(() => null);
@@ -193,6 +293,124 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unable to release Linket";
       toast({ title: "Release failed", description: message, variant: "destructive" });
+    }
+  }
+
+  function openTransferDialog(item: TagAssignmentDetail) {
+    setTransferDialogAssignment(item);
+    setTransferRecipientEmail("");
+    setCreatedTransfer(null);
+  }
+
+  async function copyTransferInvite(value: string) {
+    try {
+      await navigator.clipboard.writeText(value);
+      toast({
+        title: "Invite link copied",
+        description: "Share the link with the recipient so they can accept the transfer.",
+        variant: "success",
+      });
+    } catch {
+      toast({
+        title: "Copy failed",
+        description: "Copy the invite link manually from the field.",
+        variant: "destructive",
+      });
+    }
+  }
+
+  async function submitTransferInvite() {
+    if (!transferDialogAssignment) return;
+    setTransferSubmitting(true);
+
+    try {
+      const response = await fetch("/api/linkets/transfers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          assignmentId: transferDialogAssignment.assignment.id,
+          recipientEmail: transferRecipientEmail,
+        }),
+      });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new Error(
+          payload && typeof payload.error === "string"
+            ? payload.error
+            : "Unable to create transfer invite."
+        );
+      }
+
+      const nextTransfer = payload?.transfer as CreatedTransfer;
+      setCreatedTransfer(nextTransfer);
+      toast({
+        title: "Transfer invite created",
+        description: `Share the invite with ${nextTransfer.recipientEmail}.`,
+        variant: "success",
+      });
+      await copyTransferInvite(nextTransfer.inviteUrl);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to create transfer invite.";
+      toast({
+        title: "Transfer invite failed",
+        description: message,
+        variant: "destructive",
+      });
+    } finally {
+      setTransferSubmitting(false);
+    }
+  }
+
+  async function acceptTransfer() {
+    if (!transferTokenFromQuery || !userId) return;
+    setAcceptingTransfer(true);
+
+    try {
+      const response = await fetch(
+        `/api/linkets/transfers/${encodeURIComponent(
+          transferTokenFromQuery
+        )}/accept`,
+        {
+          method: "POST",
+        }
+      );
+      const payload = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new Error(
+          payload && typeof payload.error === "string"
+            ? payload.error
+            : "Unable to accept Linket transfer."
+        );
+      }
+
+      toast({
+        title: "Linket transferred",
+        description: "The Linket now belongs to your account and the complimentary window was granted.",
+        variant: "success",
+      });
+
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete("transfer");
+      const nextQuery = params.toString();
+      setTransferPreview(null);
+      setTransferPreviewError(null);
+      await loadData(userId);
+      router.replace(
+        nextQuery ? `/dashboard/linkets?${nextQuery}` : "/dashboard/linkets",
+        { scroll: false }
+      );
+      router.refresh();
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to accept Linket transfer.";
+      toast({
+        title: "Transfer accept failed",
+        description: message,
+        variant: "destructive",
+      });
+    } finally {
+      setAcceptingTransfer(false);
     }
   }
 
@@ -211,7 +429,7 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
       const response = await fetch("/api/linkets/claim", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, claimCode: normalizedClaimCode }),
+        body: JSON.stringify({ claimCode: normalizedClaimCode }),
       });
       if (!response.ok) {
         const body = await response.json().catch(() => null);
@@ -394,6 +612,70 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
             </div>
           ) : null}
 
+          {transferTokenFromQuery ? (
+            <div className="rounded-2xl border border-sky-300 bg-sky-50/70 p-4 text-sky-950">
+              {transferPreviewLoading ? (
+                <p className="inline-flex items-center gap-2 text-sm">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Loading transfer invite...
+                </p>
+              ) : transferPreviewError ? (
+                <p className="text-sm">{transferPreviewError}</p>
+              ) : transferPreview ? (
+                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                  <div className="space-y-1.5">
+                    <p className="text-sm font-semibold">
+                      {transferPreview.canAccept
+                        ? "This Linket transfer is ready for you to accept."
+                        : transferPreview.isSender
+                          ? "This transfer invite is still waiting for the recipient."
+                          : transferPreview.alreadyAcceptedByCurrentUser
+                            ? "This Linket transfer was already accepted by your account."
+                            : transferPreview.status === "expired"
+                              ? "This transfer invite has expired."
+                              : transferPreview.status === "canceled"
+                                ? "This transfer invite was canceled."
+                                : "This transfer invite cannot be accepted from the current account."}
+                    </p>
+                    <p className="text-sm text-sky-900">
+                      {transferPreview.nickname || `Linket ${transferPreview.chipUid ?? ""}`}
+                      {transferPreview.claimCode
+                        ? ` • claim code ${formatClaimCodeDisplay(
+                            transferPreview.claimCode
+                          )}`
+                        : ""}
+                    </p>
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-sky-900/80">
+                      <span>Invited email {transferPreview.recipientEmail}</span>
+                      <span>Expires {formatLinketTimestamp(transferPreview.expiresAt) ?? "Unknown"}</span>
+                    </div>
+                  </div>
+                  {transferPreview.canAccept ? (
+                    <Button
+                      onClick={() => void acceptTransfer()}
+                      className="rounded-full"
+                      disabled={acceptingTransfer}
+                    >
+                      {acceptingTransfer ? (
+                        <span className="inline-flex items-center gap-2 text-sm">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Accepting...
+                        </span>
+                      ) : (
+                        <>
+                          <ArrowRightLeft className="mr-2 h-4 w-4" />
+                          Accept transfer
+                        </>
+                      )}
+                    </Button>
+                  ) : null}
+                </div>
+              ) : (
+                <p className="text-sm">Transfer invite not found.</p>
+              )}
+            </div>
+          ) : null}
+
           {error && (
             <div className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
               <AlertCircle className="h-4 w-4" /> {error}
@@ -503,6 +785,15 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
                               <ExternalLink className="h-3 w-3" /> View
                             </Link>
                           ) : null}
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="rounded-full"
+                            onClick={() => openTransferDialog(item)}
+                          >
+                            <ArrowRightLeft className="mr-2 h-3.5 w-3.5" />
+                            Transfer
+                          </Button>
                         </div>
                         <button
                           type="button"
@@ -521,6 +812,120 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
           </div>
         </CardContent>
       </Card>
+
+      <Dialog
+        open={Boolean(transferDialogAssignment)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setTransferDialogAssignment(null);
+            setCreatedTransfer(null);
+            setTransferRecipientEmail("");
+          }
+        }}
+      >
+        <DialogContent className="max-w-lg rounded-[28px] border-border/60 bg-card/95 p-6">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-semibold text-foreground">
+              Transfer Linket
+            </DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">
+              Create a recipient-bound invite. Ownership stays with your account until the invited recipient accepts the transfer.
+            </DialogDescription>
+          </DialogHeader>
+
+          {transferDialogAssignment ? (
+            <div className="space-y-5">
+              <div className="rounded-2xl border border-border/60 bg-background/60 p-4 text-sm">
+                <div className="font-semibold text-foreground">
+                  {transferDialogAssignment.assignment.nickname ||
+                    `Linket ${transferDialogAssignment.tag.chip_uid}`}
+                </div>
+                <div className="mt-1 text-xs text-muted-foreground">
+                  Claim code{" "}
+                  <code className="font-mono">
+                    {formatClaimCodeDisplay(transferDialogAssignment.tag.claim_code) ||
+                      "Unavailable"}
+                  </code>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="transfer-recipient-email">Recipient email</Label>
+                <Input
+                  id="transfer-recipient-email"
+                  type="email"
+                  value={transferRecipientEmail}
+                  onChange={(event) => setTransferRecipientEmail(event.target.value)}
+                  placeholder="recipient@example.com"
+                />
+                <p className="text-xs text-muted-foreground">
+                  The recipient must sign in with this email before the transfer can be accepted.
+                </p>
+              </div>
+
+              <div className="flex items-center justify-end gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="rounded-full"
+                  onClick={() => setTransferDialogAssignment(null)}
+                >
+                  Close
+                </Button>
+                <Button
+                  type="button"
+                  className="rounded-full"
+                  disabled={transferSubmitting || !transferRecipientEmail.trim()}
+                  onClick={() => void submitTransferInvite()}
+                >
+                  {transferSubmitting ? (
+                    <span className="inline-flex items-center gap-2 text-sm">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Creating...
+                    </span>
+                  ) : (
+                    <>
+                      <ArrowRightLeft className="mr-2 h-4 w-4" />
+                      Create invite
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {createdTransfer ? (
+                <div className="space-y-3 rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4 text-sm text-emerald-950">
+                  <div>
+                    <div className="font-semibold">Invite ready</div>
+                    <p className="mt-1 text-xs text-emerald-900/80">
+                      Share the invite link with {createdTransfer.recipientEmail}. It expires{" "}
+                      {formatLinketTimestamp(createdTransfer.expiresAt) ?? "soon"}.
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="transfer-invite-link">Invite link</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="transfer-invite-link"
+                        value={createdTransfer.inviteUrl}
+                        readOnly
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="rounded-full"
+                        onClick={() => void copyTransferInvite(createdTransfer.inviteUrl)}
+                      >
+                        <Copy className="mr-2 h-4 w-4" />
+                        Copy
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
 
       <p
         className={cn(

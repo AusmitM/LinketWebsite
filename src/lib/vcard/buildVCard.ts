@@ -1,4 +1,4 @@
-import { ContactProfile, Address, Email, Phone } from "@/lib/profile.store";
+import type { ContactProfile, Address, Email, Phone } from "@/lib/profile.store";
 import { escapeText } from "./escape";
 import { foldLine } from "./fold";
 
@@ -44,13 +44,19 @@ function toEmail(e: Email): string {
 
 function toPhoto(p: ContactProfile): string | null {
   if (!p.photo) return null;
-  const mime = p.photo.mime || (p.photo.dataUrl?.split(",")[0].match(/data:(.*?);base64/)?.[1] ?? undefined);
-  const base64 = p.photo.dataUrl?.split(",")[1];
-  if (base64 && base64.length * 0.75 <= 150 * 1024) {
-    return `PHOTO;MEDIATYPE=${mime || "image/jpeg"}:${base64}`;
+  const trimmedDataUrl = p.photo.dataUrl?.trim() ?? "";
+  const mime =
+    p.photo.mime ||
+    (trimmedDataUrl.match(/^data:(.*?);base64,/i)?.[1] ?? undefined);
+  const base64 = trimmedDataUrl.split(",")[1];
+  if (trimmedDataUrl.startsWith("data:") && base64 && base64.length * 0.75 <= 150 * 1024) {
+    return `PHOTO;VALUE=uri:${trimmedDataUrl}`;
   }
-  if (p.photo.url) {
-    return `PHOTO;MEDIATYPE=${mime || "image/jpeg"}:${escapeText(p.photo.url)}`;
+  if (base64 && base64.length * 0.75 <= 150 * 1024) {
+    return `PHOTO;VALUE=uri:data:${mime || "image/jpeg"};base64,${base64}`;
+  }
+  if (p.photo.url?.trim()) {
+    return `PHOTO;VALUE=uri:${p.photo.url.trim()}`;
   }
   return null;
 }

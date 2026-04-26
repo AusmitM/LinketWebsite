@@ -48,6 +48,69 @@ type VCardStatusPayload = {
   lastSavedAt: string | null;
 };
 
+type VCardDraftCache = {
+  fields: VCardFields;
+  lastSaved: VCardFields | null;
+  updatedAt: string;
+};
+
+const VCARD_DRAFT_STORAGE_PREFIX = "linket:vcard:draft";
+
+function hasVCardContent(fields: VCardFields) {
+  return Boolean(
+    fields.fullName ||
+      fields.title ||
+      fields.email ||
+      fields.phone ||
+      fields.company ||
+      fields.addressLine1 ||
+      fields.addressLine2 ||
+      fields.addressCity ||
+      fields.addressRegion ||
+      fields.addressPostal ||
+      fields.addressCountry ||
+      fields.note ||
+      fields.photoData ||
+      fields.photoName
+  );
+}
+
+function getVCardDraftStorageKey(userId: string) {
+  return `${VCARD_DRAFT_STORAGE_PREFIX}:${userId}`;
+}
+
+function readVCardDraftCache(userId: string): VCardDraftCache | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(getVCardDraftStorageKey(userId));
+    if (!raw) return null;
+    return JSON.parse(raw) as VCardDraftCache;
+  } catch {
+    return null;
+  }
+}
+
+function writeVCardDraftCache(userId: string, cache: VCardDraftCache) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(
+      getVCardDraftStorageKey(userId),
+      JSON.stringify(cache)
+    );
+  } catch {
+    // Ignore storage quota and private mode errors. Saving to the server is still attempted.
+  }
+}
+
+function clearVCardDraftCache(userId: string) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(getVCardDraftStorageKey(userId));
+  } catch {
+    // Ignore storage errors.
+  }
+}
+
 export default function VCardContent({
   variant = "card",
   onFieldsChange,
@@ -81,9 +144,16 @@ export default function VCardContent({
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
+  const [savedLocally, setSavedLocally] = useState(false);
+  const [restoredLocalDraft, setRestoredLocalDraft] = useState(false);
+  const [isOnline, setIsOnline] = useState(
+    typeof navigator === "undefined" ? true : navigator.onLine
+  );
   const lastSavedRef = useRef<VCardFields | null>(null);
   const initialisedRef = useRef(false);
   const latestFieldsRef = useRef(fields);
+  const persistPromiseRef = useRef<Promise<VCardFields | null> | null>(null);
+  const queuedPersistRef = useRef(false);
   const contentRef = useRef<HTMLDivElement | null>(null);
   const photoFileInputRef = useRef<HTMLInputElement | null>(null);
   const pointerPosition = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -106,6 +176,18 @@ export default function VCardContent({
   useEffect(() => {
     latestFieldsRef.current = fields;
   }, [fields]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
 
   function updateField(key: keyof VCardFields, value: string) {
     setFields((prev) => ({ ...prev, [key]: value }));
@@ -252,15 +334,50 @@ export default function VCardContent({
         }
         const payload = (await response.json()) as { fields: VCardFields };
         if (cancelled) return;
-        setFields(payload.fields);
-        setPhotoPreview(payload.fields.photoData);
-        lastSavedRef.current = payload.fields;
+        const localDraft = readVCardDraftCache(userId);
+        const localHasUnsyncedChanges = Boolean(
+          localDraft &&
+            (localDraft.lastSaved
+              ? !areVCardFieldsEqual(localDraft.fields, localDraft.lastSaved)
+              : hasVCardContent(localDraft.fields))
+        );
+        const nextFields =
+          localHasUnsyncedChanges && localDraft ? localDraft.fields : payload.fields;
+        const nextSaved =
+          localHasUnsyncedChanges && localDraft
+            ? localDraft.lastSaved ?? payload.fields
+            : payload.fields;
+
+        setFields(nextFields);
+        setPhotoPreview(nextFields.photoData);
+        lastSavedRef.current = nextSaved;
         initialisedRef.current = true;
-        setStatus("saved");
+        setSavedLocally(localHasUnsyncedChanges);
+        setRestoredLocalDraft(localHasUnsyncedChanges);
+        setStatus(localHasUnsyncedChanges ? "idle" : "saved");
         setLastSavedAt(new Date().toISOString());
+        if (!localHasUnsyncedChanges) {
+          clearVCardDraftCache(userId);
+        }
       } catch (err) {
         if (cancelled) return;
         const message = err instanceof Error ? err.message : "Unable to load vCard";
+        const localDraft = readVCardDraftCache(userId);
+        const localHasUnsyncedChanges = Boolean(
+          localDraft &&
+            (localDraft.lastSaved
+              ? !areVCardFieldsEqual(localDraft.fields, localDraft.lastSaved)
+              : hasVCardContent(localDraft.fields))
+        );
+
+        if (localDraft) {
+          setFields(localDraft.fields);
+          setPhotoPreview(localDraft.fields.photoData);
+          lastSavedRef.current = localDraft.lastSaved;
+          setSavedLocally(localHasUnsyncedChanges);
+          setRestoredLocalDraft(localHasUnsyncedChanges);
+        }
+
         setError(message);
         setStatus("error");
         initialisedRef.current = true;
@@ -276,34 +393,79 @@ export default function VCardContent({
 
   const persist = useCallback(
     async (current: VCardFields) => {
-      if (!userId) return;
+      if (!userId) return null;
+      if (persistPromiseRef.current) {
+        queuedPersistRef.current = true;
+        return persistPromiseRef.current;
+      }
+
+      const request = (async () => {
+        try {
+          setStatus("saving");
+          setError(null);
+          const response = await fetch("/api/vcard/profile", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId, fields: current }),
+          });
+          if (!response.ok) {
+            const info = await response.json().catch(() => ({}));
+            throw new Error(info?.error || `Unable to save vCard (${response.status})`);
+          }
+          const payload = (await response.json()) as { fields: VCardFields };
+          const latestFields = latestFieldsRef.current;
+
+          lastSavedRef.current = payload.fields;
+          if (
+            areVCardFieldsEqual(latestFields, current) &&
+            !areVCardFieldsEqual(payload.fields, current)
+          ) {
+            setFields(payload.fields);
+            setPhotoPreview(payload.fields.photoData);
+          }
+
+          const stillDirty = !areVCardFieldsEqual(latestFields, payload.fields);
+          if (stillDirty) {
+            queuedPersistRef.current = true;
+            setSavedLocally(true);
+            writeVCardDraftCache(userId, {
+              fields: latestFields,
+              lastSaved: payload.fields,
+              updatedAt: new Date().toISOString(),
+            });
+            setStatus("saving");
+          } else {
+            clearVCardDraftCache(userId);
+            setSavedLocally(false);
+            setRestoredLocalDraft(false);
+            setStatus("saved");
+            setLastSavedAt(new Date().toISOString());
+          }
+
+          return payload.fields;
+        } catch (err) {
+          const message = err instanceof Error ? err.message : "Unable to save vCard";
+          setStatus("error");
+          setError(message);
+          setSavedLocally(true);
+          writeVCardDraftCache(userId, {
+            fields: latestFieldsRef.current,
+            lastSaved: lastSavedRef.current,
+            updatedAt: new Date().toISOString(),
+          });
+          return null;
+        }
+      })();
+
+      persistPromiseRef.current = request;
       try {
-        setStatus("saving");
-        setError(null);
-        const response = await fetch("/api/vcard/profile", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId, fields: current }),
-        });
-        if (!response.ok) {
-          const info = await response.json().catch(() => ({}));
-          throw new Error(info?.error || `Unable to save vCard (${response.status})`);
+        return await request;
+      } finally {
+        persistPromiseRef.current = null;
+        if (queuedPersistRef.current) {
+          queuedPersistRef.current = false;
+          void persist(latestFieldsRef.current);
         }
-        const payload = (await response.json()) as { fields: VCardFields };
-        lastSavedRef.current = payload.fields;
-        if (areVCardFieldsEqual(latestFieldsRef.current, current) && !areVCardFieldsEqual(payload.fields, current)) {
-          setFields(payload.fields);
-          setPhotoPreview(payload.fields.photoData);
-        }
-        const stillDirty = !areVCardFieldsEqual(latestFieldsRef.current, payload.fields);
-        setStatus(stillDirty ? "saving" : "saved");
-        if (!stillDirty) {
-          setLastSavedAt(new Date().toISOString());
-        }
-      } catch (err) {
-        const message = err instanceof Error ? err.message : "Unable to save vCard";
-        setStatus("error");
-        setError(message);
       }
     },
     [userId]
@@ -412,23 +574,36 @@ export default function VCardContent({
 
   const isDirty = useMemo(() => {
     if (!lastSavedRef.current) {
-      return Boolean(
-        fields.fullName ||
-        fields.title ||
-        fields.email ||
-        fields.phone ||
-        fields.company ||
-        fields.addressLine1 ||
-        fields.addressLine2 ||
-        fields.addressCity ||
-        fields.addressRegion ||
-        fields.addressPostal ||
-        fields.addressCountry ||
-        fields.note
-      );
+      return hasVCardContent(fields);
     }
     return !areVCardFieldsEqual(lastSavedRef.current, fields);
   }, [fields]);
+
+  useEffect(() => {
+    if (!userId || !initialisedRef.current) return;
+    const hasUnsyncedChanges = lastSavedRef.current
+      ? !areVCardFieldsEqual(lastSavedRef.current, fields)
+      : hasVCardContent(fields);
+
+    if (!hasUnsyncedChanges) {
+      clearVCardDraftCache(userId);
+      setSavedLocally(false);
+      setRestoredLocalDraft(false);
+      return;
+    }
+
+    writeVCardDraftCache(userId, {
+      fields,
+      lastSaved: lastSavedRef.current,
+      updatedAt: new Date().toISOString(),
+    });
+    setSavedLocally(true);
+  }, [fields, userId]);
+
+  useEffect(() => {
+    if (!isDirty || !persistPromiseRef.current) return;
+    queuedPersistRef.current = true;
+  }, [fields, isDirty]);
 
   useEffect(() => {
     if (
@@ -523,6 +698,24 @@ export default function VCardContent({
   }, [isDirty, loading, persist, status, userId]);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handleOnlineSync = () => {
+      if (!userId || loading || !initialisedRef.current || photoSourceUrl) return;
+      const draft = readVCardDraftCache(userId);
+      const hasUnsyncedChanges = Boolean(
+        draft &&
+          (draft.lastSaved
+            ? !areVCardFieldsEqual(draft.fields, draft.lastSaved)
+            : hasVCardContent(draft.fields))
+      );
+      if (!hasUnsyncedChanges) return;
+      void persist(latestFieldsRef.current);
+    };
+    window.addEventListener("online", handleOnlineSync);
+    return () => window.removeEventListener("online", handleOnlineSync);
+  }, [loading, persist, photoSourceUrl, userId]);
+
+  useEffect(() => {
     onFieldsChange?.(fields);
   }, [fields, onFieldsChange]);
 
@@ -532,11 +725,29 @@ export default function VCardContent({
 
   const statusMessage = useMemo(() => {
     if (loading) return "Loading...";
-    if (status === "saving") return "Saving changes...";
-    if (status === "error") return `${error ?? "Save failed"} Retrying automatically...`;
+    if (status === "saving") {
+      return savedLocally
+        ? "Saved on this phone. Syncing..."
+        : "Saving changes...";
+    }
+    if (status === "error") {
+      if (savedLocally) {
+        return isOnline
+          ? "Saved on this phone. Retrying sync automatically..."
+          : "Saved on this phone. Waiting for connection...";
+      }
+      return `${error ?? "Save failed"} Retrying automatically...`;
+    }
+    if (savedLocally && isDirty) {
+      return restoredLocalDraft
+        ? "Local draft restored. Syncing..."
+        : isOnline
+          ? "Saved on this phone. Syncing..."
+          : "Saved on this phone. Waiting for connection...";
+    }
     if (isDirty) return "Changes pending";
     return "All changes saved";
-  }, [loading, status, error, isDirty]);
+  }, [error, isDirty, isOnline, loading, restoredLocalDraft, savedLocally, status]);
 
   useEffect(() => {
     return () => {
@@ -965,4 +1176,3 @@ function loadImage(src: string): Promise<HTMLImageElement> {
     img.src = src;
   });
 }
-

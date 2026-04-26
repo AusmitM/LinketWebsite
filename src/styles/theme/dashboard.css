@@ -2677,6 +2677,56 @@ body.theme-forest .dashboard-forest-pin {
   }
 }
 
+/* Mobile onboarding flow */
+@media (max-width: 640px) {
+  #dashboard-theme-scope .dashboard-overview-page.dashboard-setup-page {
+    width: 100%;
+    max-width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+    padding: 1rem 1rem calc(env(safe-area-inset-bottom) + 8.5rem);
+    gap: 1rem;
+    align-items: stretch;
+    text-align: left;
+  }
+
+  #dashboard-theme-scope .dashboard-overview-page.dashboard-setup-page > .mx-auto {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  #dashboard-theme-scope .dashboard-overview-page.dashboard-setup-page .dashboard-setup-header,
+  #dashboard-theme-scope .dashboard-overview-page.dashboard-setup-page .dashboard-setup-intro {
+    align-items: flex-start;
+    text-align: left;
+    max-width: none;
+  }
+
+  #dashboard-theme-scope .dashboard-overview-page.dashboard-setup-page .dashboard-setup-mobile-summary,
+  #dashboard-theme-scope .dashboard-overview-page.dashboard-setup-page [data-slot=card] {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  #dashboard-theme-scope .dashboard-overview-page.dashboard-setup-page [data-slot=card-header],
+  #dashboard-theme-scope .dashboard-overview-page.dashboard-setup-page [data-slot=card-content],
+  #dashboard-theme-scope .dashboard-overview-page.dashboard-setup-page [data-slot=card-footer] {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  #dashboard-theme-scope .dashboard-overview-page.dashboard-setup-page input,
+  #dashboard-theme-scope .dashboard-overview-page.dashboard-setup-page textarea,
+  #dashboard-theme-scope .dashboard-overview-page.dashboard-setup-page button {
+    min-width: 0;
+  }
+
+  #dashboard-theme-scope .dashboard-overview-page.dashboard-setup-page .dashboard-setup-mobile-footer {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
 /* Guided onboarding walkthrough */
 #dashboard-theme-scope .dashboard-onboarding-tour {
   isolation: isolate;

@@ -37,6 +37,8 @@ type Props = {
   }) => void;
   variant?: "default" | "compact";
   inputId?: string;
+  autoSave?: boolean;
+  onSaveStateChange?: (state: "saved" | "saving" | "unsaved" | "error") => void;
 };
 
 const OUTPUT_SIZE = 640;
@@ -52,6 +54,8 @@ export default function AvatarUploader({
   onUploaded,
   variant = "default",
   inputId,
+  autoSave = false,
+  onSaveStateChange,
 }: Props) {
   const isCompact = variant === "compact";
   const [isSmallScreen, setIsSmallScreen] = useState(false);
@@ -89,6 +93,7 @@ export default function AvatarUploader({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isDraggingOver, setDraggingOver] = useState(false);
+  const autoSaveSnapshotRef = useRef("");
 
   const baseScale = useMemo(() => {
     if (!imageMeta) return 1;
@@ -438,8 +443,51 @@ export default function AvatarUploader({
     resolveUsername,
   ]);
 
+  const cropSnapshot = useMemo(() => {
+    if (!sourceFile || !sourceUrl || !imageMeta || !previewReady) return "";
+    return JSON.stringify({
+      name: sourceFile.name,
+      size: sourceFile.size,
+      lastModified: sourceFile.lastModified,
+      zoom: Number(zoom.toFixed(3)),
+      x: Math.round(offset.x),
+      y: Math.round(offset.y),
+    });
+  }, [imageMeta, offset.x, offset.y, previewReady, sourceFile, sourceUrl, zoom]);
+
+  useEffect(() => {
+    if (!autoSave || !cropSnapshot || loading) {
+      if (!cropSnapshot) {
+        autoSaveSnapshotRef.current = "";
+      }
+      return;
+    }
+    if (cropSnapshot === autoSaveSnapshotRef.current) return;
+
+    const timer = window.setTimeout(() => {
+      autoSaveSnapshotRef.current = cropSnapshot;
+      void handleUpload();
+    }, 900);
+
+    return () => window.clearTimeout(timer);
+  }, [autoSave, cropSnapshot, handleUpload, loading]);
+
+  const saveState = loading
+    ? "saving"
+    : error
+      ? "error"
+      : sourceUrl
+        ? "unsaved"
+        : "saved";
+
+  useEffect(() => {
+    onSaveStateChange?.(saveState);
+  }, [onSaveStateChange, saveState]);
+
   const helperText = sourceFile
-    ? "Drag to reposition, adjust the zoom, then save."
+    ? autoSave
+      ? "Unsaved crop. The photo saves automatically when you stop moving."
+      : "Drag to reposition, adjust the zoom, then save."
     : "Upload a photo to start cropping.";
 
   const cardClassName = cn(
@@ -650,7 +698,9 @@ export default function AvatarUploader({
               >
                 {loading
                   ? "Uploading crop..."
-                  : "Adjust the crop, then save when you're ready."}
+                  : autoSave
+                    ? "Unsaved crop. It saves automatically after you stop moving."
+                    : "Adjust the crop, then save when you're ready."}
               </span>
               <Button
                 type="button"
@@ -659,7 +709,7 @@ export default function AvatarUploader({
                 onClick={() => void handleUpload()}
                 disabled={!previewReady || loading}
               >
-                Save photo
+                {autoSave ? "Save now" : "Save photo"}
               </Button>
               <Button
                 type="button"
@@ -831,8 +881,10 @@ export default function AvatarUploader({
                 {loading
                   ? "Uploading crop..."
                   : sourceUrl
-                  ? "Crop auto-applies after you stop moving."
-                  : "Choose a photo to start editing."}
+                    ? autoSave
+                      ? "Unsaved crop. It saves automatically after you stop moving."
+                      : "Choose a crop, then save it."
+                    : "Choose a photo to start editing."}
               </span>
               <span className={cn("text-xs text-muted-foreground", isCompact && "text-[11px]")}>
                 PNG/JPG/WebP  Up to 5MB  Saved as WebP
@@ -877,7 +929,7 @@ export default function AvatarUploader({
                     onClick={() => void handleUpload()}
                     disabled={!previewReady || loading}
                   >
-                    Save photo
+                    {autoSave ? "Save now" : "Save photo"}
                   </Button>
                   <Button
                     type="button"

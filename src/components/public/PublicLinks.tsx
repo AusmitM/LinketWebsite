@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Image from "next/image";
-import { getLinkFaviconSrc } from "@/lib/link-favicon";
+import LinkFavicon from "@/components/LinkFavicon";
 import { sanitizePublicLinkUrl } from "@/lib/security";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
@@ -15,15 +14,6 @@ type LinksAppearance = {
   muted: string;
   hover: string;
 };
-
-function s2Favicon(u: string): string | null {
-  try {
-    const host = new URL(u).hostname;
-    return `https://www.google.com/s2/favicons?domain=${host}&sz=64`;
-  } catch {
-    return null;
-  }
-}
 
 function byOrder(a: ProfileLinkRecord, b: ProfileLinkRecord) {
   return (a.order_index ?? 0) - (b.order_index ?? 0) || a.created_at.localeCompare(b.created_at);
@@ -157,7 +147,7 @@ export default function PublicLinks({
         </div>
       ) : (
         <ul className="space-y-3">
-          {links.map((link) => (
+          {links.map((link, index) => (
             <li key={link.id}>
               <a
                 href={link.url}
@@ -175,17 +165,12 @@ export default function PublicLinks({
                 title={link.title}
               >
                 <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-[color:var(--muted)]/60">
-                  <Image
-                    src={getLinkFaviconSrc(link.url) || ""}
-                    alt=""
-                    width={32}
-                    height={32}
-                    className="h-10 w-10 object-contain"
-                    unoptimized
-                    onError={(event) => {
-                      const fallback = s2Favicon(link.url);
-                      if (fallback) (event.currentTarget as HTMLImageElement).src = fallback;
-                    }}
+                  <LinkFavicon
+                    title={link.title}
+                    url={link.url}
+                    className="h-10 w-10 rounded-2xl object-contain"
+                    fallbackClassName="rounded-2xl bg-[color:var(--muted)]/60 text-xs font-semibold text-[color:var(--muted-foreground)]"
+                    loading={index < 4 ? "eager" : "lazy"}
                   />
                 </span>
                 <div className="min-w-0 flex-1">
