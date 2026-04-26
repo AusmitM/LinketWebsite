@@ -658,6 +658,23 @@ function getInitialStepIndex(input: {
   return 3;
 }
 
+function hasContactMethod(
+  contact:
+    | Pick<ContactDraft, "email" | "phone">
+    | Partial<ContactDraft>
+    | null
+    | undefined
+) {
+  return Boolean(contact?.email?.trim() || contact?.phone?.trim());
+}
+
+function isAccountSeededContact(
+  fields: Partial<ContactDraft> | null | undefined,
+  fallbackEmail: string | null
+) {
+  return !hasContactMethod(fields) && Boolean(fallbackEmail?.trim());
+}
+
 function normalizeComparableText(value: string | null | undefined) {
   return (value ?? "").trim();
 }
@@ -799,6 +816,7 @@ export default function DashboardSetupFlow({
       linksComplete: initialOnboardingState.steps.links,
     })
   );
+  const [contactRequiresReview, setContactRequiresReview] = useState(false);
   const [profileSaveStatus, setProfileSaveStatus] = useState<SaveStatus>("idle");
   const [contactSaveStatus, setContactSaveStatus] = useState<SaveStatus>("idle");
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -817,7 +835,6 @@ export default function DashboardSetupFlow({
   );
   const [handleTouched, setHandleTouched] = useState(true);
   const [qrOpen, setQrOpen] = useState(false);
-  const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false);
   const [showContactExtras, setShowContactExtras] = useState(false);
   const [showPhoneField, setShowPhoneField] = useState(false);
   const [avatarSaveState, setAvatarSaveState] = useState<FieldSaveState>("saved");
@@ -944,6 +961,7 @@ export default function DashboardSetupFlow({
     if (!previewMode) return;
     setProfileDraft(previewProfileDraft);
     setContactDraft(previewContactDraft);
+    setContactRequiresReview(false);
     setHandleTouched(!isAutoHandle(previewProfileDraft.handle));
     setProfileSavedLocally(false);
     setContactSavedLocally(false);
@@ -1032,10 +1050,12 @@ export default function DashboardSetupFlow({
           contactPayload.fields,
           mappedProfile.name
         );
-        const seededContact =
-          !mappedContact.email.trim() &&
-          !mappedContact.phone.trim() &&
+        const contactSeededFromAccount = isAccountSeededContact(
+          contactPayload.fields,
           userEmail
+        );
+        const seededContact =
+          contactSeededFromAccount
             ? { ...mappedContact, email: userEmail }
             : mappedContact;
         const localProfileDraft = readOnboardingDraftCache<ProfileDraft>(
@@ -1066,11 +1086,14 @@ export default function DashboardSetupFlow({
           localContactDirty && localContactDraft
             ? localContactDraft.draft
             : seededContact;
+        const nextContactRequiresReview =
+          !localContactDirty && contactSeededFromAccount;
 
         if (cancelled) return;
 
         setProfileDraft(nextProfile);
         setContactDraft(nextContact);
+        setContactRequiresReview(nextContactRequiresReview);
         setAccount({
           handle:
             accountPayload.handle?.trim() ||
@@ -1108,9 +1131,8 @@ export default function DashboardSetupFlow({
             profileComplete:
               Boolean(nextProfile.name.trim()) &&
               !isAutoHandle(nextProfile.handle),
-            contactComplete: Boolean(
-              nextContact.email.trim() || nextContact.phone.trim()
-            ),
+            contactComplete:
+              hasContactMethod(nextContact) && !nextContactRequiresReview,
             linksComplete: nextProfile.links.some((link) =>
               isMeaningfulLink(link.url)
             ),
@@ -1144,10 +1166,15 @@ export default function DashboardSetupFlow({
                 userEmail
               )
             : null);
+        const fallbackContactRequiresReview =
+          !localContactDirty &&
+          !localContactDraft &&
+          isAccountSeededContact(initialOnboardingState.contact, userEmail);
 
         if (fallbackProfile && fallbackContact) {
           setProfileDraft(fallbackProfile);
           setContactDraft(fallbackContact);
+          setContactRequiresReview(fallbackContactRequiresReview);
           setHandleTouched(!isAutoHandle(fallbackProfile.handle));
           savedProfileDraftRef.current = fallbackProfile;
           savedContactDraftRef.current = fallbackContact;
@@ -1173,9 +1200,9 @@ export default function DashboardSetupFlow({
               profileComplete:
                 Boolean(fallbackProfile.name.trim()) &&
                 !isAutoHandle(fallbackProfile.handle),
-              contactComplete: Boolean(
-                fallbackContact.email.trim() || fallbackContact.phone.trim()
-              ),
+              contactComplete:
+                hasContactMethod(fallbackContact) &&
+                !fallbackContactRequiresReview,
               linksComplete: fallbackProfile.links.some((link) =>
                 isMeaningfulLink(link.url)
               ),
@@ -1217,9 +1244,8 @@ export default function DashboardSetupFlow({
     Boolean(profileDraft?.name.trim()) &&
     Boolean(profileDraft?.handle.trim()) &&
     !isAutoHandle(profileDraft?.handle ?? "");
-  const contactReady = Boolean(
-    contactDraft?.email.trim() || contactDraft?.phone.trim()
-  );
+  const contactReady = hasContactMethod(contactDraft);
+  const contactStepComplete = contactReady && !contactRequiresReview;
   const linksReady = Boolean(
     profileDraft?.links.some((link) => isMeaningfulLink(link.url))
   );
@@ -1279,7 +1305,7 @@ export default function DashboardSetupFlow({
     }
     const savedAt = formatSavedTime(lastSavedAt);
     if (savedAt) return `Saved ${savedAt}`;
-    return "Autosave on";
+    return "Ready";
   }, [
     avatarSaveState,
     contactHasUnsavedChanges,
@@ -1536,13 +1562,16 @@ export default function DashboardSetupFlow({
   );
 
   const saveContactDraft = useCallback(
-    async function saveContactDraftImpl(options?: { quiet?: boolean }) {
+    async function saveContactDraftImpl(options?: {
+      quiet?: boolean;
+      force?: boolean;
+    }) {
       const draft = contactDraftRef.current;
       const fallbackName = profileDraftRef.current?.name ?? "";
       if (!draft || !userId) return null;
 
       const nextSignature = buildContactDraftSignature(draft, fallbackName);
-      if (nextSignature === savedContactSignatureRef.current) {
+      if (!options?.force && nextSignature === savedContactSignatureRef.current) {
         setContactSaveStatus("saved");
         return draft;
       }
@@ -1588,6 +1617,7 @@ export default function DashboardSetupFlow({
             savedDraft,
             fallbackName
           );
+          setContactRequiresReview(false);
           setLastSavedAt(new Date().toISOString());
           setContactSaveStatus("saved");
           clearOnboardingDraftCache(userId, "contact");
@@ -1721,11 +1751,17 @@ export default function DashboardSetupFlow({
     setSaveError(null);
   }
 
-  function updateContactDraft(updater: (current: ContactDraft) => ContactDraft) {
+  function updateContactDraft(
+    updater: (current: ContactDraft) => ContactDraft,
+    options?: { markReviewed?: boolean }
+  ) {
     setContactDraft((current) => {
       if (!current) return current;
       return updater(current);
     });
+    if (options?.markReviewed) {
+      setContactRequiresReview(false);
+    }
     setStepError(null);
     setSaveError(null);
   }
@@ -1792,6 +1828,9 @@ export default function DashboardSetupFlow({
       default:
         if (!liveProfileReady) return "Finish your profile first.";
         if (!contactReady) return "Add contact details before you publish.";
+        if (contactRequiresReview) {
+          return "Review your contact details before you publish.";
+        }
         if (!linksReady) return "Add your first link before you publish.";
         return null;
     }
@@ -1811,8 +1850,12 @@ export default function DashboardSetupFlow({
       if (!saved) return;
     }
     if (stepId === "contact") {
-      const saved = await saveContactDraft({ quiet: true });
+      const saved = await saveContactDraft({
+        quiet: true,
+        force: contactRequiresReview,
+      });
       if (!saved) return;
+      setContactRequiresReview(false);
     }
 
     setStepError(null);
@@ -1840,7 +1883,7 @@ export default function DashboardSetupFlow({
       if (!liveProfileReady) {
         setCurrentStepIndex(0);
         focusFirstMissingField("profile");
-      } else if (!contactReady) {
+      } else if (!contactReady || contactRequiresReview) {
         setCurrentStepIndex(1);
         focusFirstMissingField("contact");
       } else if (!linksReady) {
@@ -1855,10 +1898,11 @@ export default function DashboardSetupFlow({
     void trackEvent("onboarding_publish_clicked", trackingMeta());
 
     const [savedContact, savedProfile] = await Promise.all([
-      saveContactDraft({ quiet: true }),
+      saveContactDraft({ quiet: true, force: contactRequiresReview }),
       saveProfileDraft({ quiet: true }),
     ]);
     if (!savedContact || !savedProfile) return;
+    setContactRequiresReview(false);
 
     const published = await saveProfileDraft({ publish: true, quiet: false });
     if (!published) return;
@@ -2021,7 +2065,7 @@ export default function DashboardSetupFlow({
     "rounded-2xl border border-border/60 bg-background/40";
   const checklistItems = [
     { label: "Add profile basics", done: liveProfileReady, icon: UserRound },
-    { label: "Add contact info", done: contactReady, icon: Mail },
+    { label: "Add contact info", done: contactStepComplete, icon: Mail },
     { label: "Add your first link", done: linksReady, icon: Link2 },
     { label: "Publish page", done: publishReady, icon: Rocket },
     { label: "Test once", done: shareTestComplete, icon: Smartphone },
@@ -2052,7 +2096,11 @@ export default function DashboardSetupFlow({
   const canChooseTheme = linksReady;
   const publishReviewItems = [
     { label: "Profile basics added", done: liveProfileReady, missing: "Profile basics missing" },
-    { label: "Contact card added", done: contactReady, missing: "Contact card missing" },
+    {
+      label: "Contact card added",
+      done: contactStepComplete,
+      missing: "Contact card missing",
+    },
     { label: "First link added", done: linksReady, missing: "Add a first link to continue" },
     { label: `Theme selected: ${selectedThemeOption.label}`, done: true, missing: "Pick a theme" },
   ];
@@ -2065,7 +2113,7 @@ export default function DashboardSetupFlow({
     { label: "Live", tone: "text-emerald-700" },
     {
       label: "Contact card added",
-      tone: contactReady ? "text-foreground" : "text-muted-foreground",
+      tone: contactStepComplete ? "text-foreground" : "text-muted-foreground",
     },
     {
       label: "First link active",
@@ -2168,13 +2216,13 @@ export default function DashboardSetupFlow({
     currentStep.id === "publish" ? continueButtonLabel : continueButtonLabel;
   const mobileFooterStatusLabel =
     currentStep.id === "publish" ? "You can edit later." : footerStatusLabel;
-  const currentStepAutosaveHint =
+  const currentStepGuidanceHint =
     currentStep.id === "profile"
-      ? "These fields save automatically as you type. If one shows Unsaved, leave this page open for a moment."
+      ? "Add the basics people notice first. If a field shows Unsaved, leave this page open for a moment."
       : currentStep.id === "contact"
-        ? "Contact details save automatically. Start with email or phone so people can reach you fast."
+        ? "Start with email or phone so people can reach you fast."
         : currentStep.id === "links"
-          ? "Links and theme save automatically. Empty link rows stay local until you add a URL."
+          ? "Add the links you want people to tap first. Empty rows stay hidden until you add a URL."
           : "Review everything once, then publish.";
   const getProfileFieldState = (
     dirty: boolean,
@@ -2223,10 +2271,16 @@ export default function DashboardSetupFlow({
   };
   const stepCompletion = {
     profile: liveProfileReady,
-    contact: contactReady,
+    contact: contactStepComplete,
     links: linksReady,
     publish: publishReady,
   };
+  const previewContactEnabled =
+    (showLaunchHub || currentStep.id !== "profile") && contactReady;
+  const previewContactDisabledText =
+    currentStep.id === "profile"
+      ? "Contact card comes next"
+      : "Add email or phone";
   const profileDraftAutosaveState = getFieldSaveState({
     dirty: profileHasUnsavedChanges,
     saveStatus: profileSaveStatus,
@@ -2264,14 +2318,7 @@ export default function DashboardSetupFlow({
               {pageHeading.description}
             </p>
           </div>
-          <div className="w-full max-w-xl space-y-2 xl:max-w-sm">
-            <p
-              aria-live="polite"
-              aria-atomic="true"
-              className={cn("text-sm", autosaveTextToneClassName)}
-            >
-              About 3 min | {autosaveLabel}
-            </p>
+          <div className="w-full max-w-xl xl:max-w-sm">
             <div
               className="h-2 overflow-hidden rounded-full bg-muted"
               role="progressbar"
@@ -2292,34 +2339,30 @@ export default function DashboardSetupFlow({
         {!showLaunchHub ? (
           <Card className={cn(setupCardClassName, "dashboard-setup-mobile-summary lg:hidden")}>
             <CardContent className="space-y-4 px-4 py-4">
-              <div className="flex items-start justify-between gap-3 max-[359px]:flex-col max-[359px]:items-stretch">
-                <div className="min-w-0 space-y-1">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-                    Setup flow
-                  </p>
-                  <p className="text-sm font-semibold text-foreground">
-                    {stepHeading.title}
-                  </p>
-                  <p className="text-xs leading-5 text-muted-foreground">
-                    {stepHeading.description || pageHeading.description}
-                  </p>
-                </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="h-10 shrink-0 rounded-2xl px-3 text-sm max-[359px]:w-full"
-                  onClick={() => setMobilePreviewOpen(true)}
-                >
-                  <span className="inline-flex items-center gap-2">
-                    <Smartphone className="h-4 w-4" aria-hidden="true" />
-                    Preview
-                  </span>
-                </Button>
+              <div className="min-w-0 space-y-1">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                  Setup flow
+                </p>
+                <p className="text-sm font-semibold text-foreground">
+                  {stepHeading.title}
+                </p>
+                <p className="text-xs leading-5 text-muted-foreground">
+                  {stepHeading.description || pageHeading.description}
+                </p>
               </div>
               <div className="grid grid-cols-4 gap-2 max-[359px]:grid-cols-2">
                 {SETUP_STEPS.map((step, index) => {
                   const isCurrent = index === currentStepIndex;
                   const isDone = stepCompletion[step.id];
+                  const statusLabel = isCurrent
+                    ? "Current"
+                    : isDone
+                      ? "Done"
+                      : index < currentStepIndex
+                        ? "Review"
+                        : index === currentStepIndex + 1
+                          ? "Next"
+                          : "Later";
 
                   return (
                     <div
@@ -2338,6 +2381,9 @@ export default function DashboardSetupFlow({
                       </p>
                       <p className="mt-1 text-[11px] font-semibold leading-4">
                         {mobileStepLabels[step.id]}
+                      </p>
+                      <p className="mt-1 text-[10px] font-medium uppercase tracking-[0.12em] opacity-80">
+                        {statusLabel}
                       </p>
                     </div>
                   );
@@ -2496,10 +2542,10 @@ export default function DashboardSetupFlow({
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                           <div className="space-y-1">
                             <p className="text-sm font-semibold text-foreground">
-                              Autosave is on
+                              What to do here
                             </p>
                             <p className="text-sm leading-6 text-muted-foreground">
-                              {currentStepAutosaveHint}
+                              {currentStepGuidanceHint}
                             </p>
                           </div>
                           <FieldSavePill state={overallAutosaveState} showSaved />
@@ -2722,7 +2768,7 @@ export default function DashboardSetupFlow({
                                     updateContactDraft((current) => ({
                                       ...current,
                                       email: userEmail,
-                                    }))
+                                    }), { markReviewed: true })
                                   }
                                 >
                                   Use account email
@@ -2740,7 +2786,7 @@ export default function DashboardSetupFlow({
                               updateContactDraft((current) => ({
                                 ...current,
                                 email: event.target.value,
-                              }))
+                              }), { markReviewed: true })
                             }
                           />
                         </div>
@@ -2781,7 +2827,7 @@ export default function DashboardSetupFlow({
                                   updateContactDraft((current) => ({
                                     ...current,
                                     phone: event.target.value,
-                                  }))
+                                  }), { markReviewed: true })
                                 }
                               />
                             </div>
@@ -2836,7 +2882,7 @@ export default function DashboardSetupFlow({
                                       updateContactDraft((current) => ({
                                         ...current,
                                         title: event.target.value,
-                                      }))
+                                      }), { markReviewed: true })
                                     }
                                   />
                                 </div>
@@ -2859,7 +2905,7 @@ export default function DashboardSetupFlow({
                                       updateContactDraft((current) => ({
                                         ...current,
                                         company: event.target.value,
-                                      }))
+                                      }), { markReviewed: true })
                                     }
                                   />
                                 </div>
@@ -3392,8 +3438,8 @@ export default function DashboardSetupFlow({
                     logoShape={profileDraft.logoShape}
                     logoBackgroundWhite={profileDraft.logoBackgroundWhite}
                     themeName={profileDraft.theme}
-                    contactEnabled={contactReady}
-                    contactDisabledText="Add email or phone"
+                    contactEnabled={previewContactEnabled}
+                    contactDisabledText={previewContactDisabledText}
                     links={previewLinks}
                     showLeadFormSection={false}
                     showClicks={false}
@@ -3467,40 +3513,6 @@ export default function DashboardSetupFlow({
           </aside>
         </div>
       </div>
-
-      <Dialog open={mobilePreviewOpen} onOpenChange={setMobilePreviewOpen}>
-        <DialogContent className="w-[calc(100vw-1rem)] max-w-[21rem] rounded-[24px] border-border/60 bg-card/95 p-4 sm:max-w-md sm:p-5 lg:hidden">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-semibold text-foreground">
-              Live preview
-            </DialogTitle>
-            <DialogDescription className="text-sm text-muted-foreground">
-              {previewDescription}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3">
-            <div className="mx-auto w-full max-w-[264px] sm:max-w-[300px]">
-              <PhonePreviewCard
-                profile={{
-                  name: previewDisplayName,
-                  tagline: previewTagline,
-                }}
-                avatarUrl={avatarPreviewUrl}
-                headerImageUrl={headerPreviewUrl}
-                logoUrl={logoPreviewUrl}
-                logoShape={profileDraft.logoShape}
-                logoBackgroundWhite={profileDraft.logoBackgroundWhite}
-                themeName={profileDraft.theme}
-                contactEnabled={contactReady}
-                contactDisabledText="Add email or phone"
-                links={previewLinks}
-                showLeadFormSection={false}
-                showClicks={false}
-              />
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       <Dialog open={qrOpen} onOpenChange={setQrOpen}>
         <DialogContent className="max-w-md rounded-[28px] border-border/60 bg-card/95 p-6">
