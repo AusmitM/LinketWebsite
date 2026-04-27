@@ -682,7 +682,7 @@ export default function DashboardOnboardingTour() {
         <div className="dashboard-onboarding-tour-headline">
           <span className="dashboard-onboarding-tour-kicker">
             <Flag className="h-3.5 w-3.5" />
-            Guided Setup
+            Guided Dashboard Setup
           </span>
           <span className="dashboard-onboarding-tour-path">{pathLabel}</span>
         </div>
