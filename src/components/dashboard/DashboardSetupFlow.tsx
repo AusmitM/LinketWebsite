@@ -128,6 +128,7 @@ type AccountDraft = {
 
 type SetupDraftCache<T> = {
   draft: T;
+  savedDraft?: T;
   savedSignature: string;
   updatedAt: string;
 };
@@ -143,6 +144,13 @@ const ONBOARDING_PROFILE_DRAFT_STORAGE_PREFIX =
   "linket:onboarding:profile-draft";
 const ONBOARDING_CONTACT_DRAFT_STORAGE_PREFIX =
   "linket:onboarding:contact-draft";
+const SAVE_RETRY_DELAYS_MS = [1500, 4000, 8000, 15000] as const;
+
+function getSaveRetryDelay(attempt: number) {
+  return SAVE_RETRY_DELAYS_MS[
+    Math.min(Math.max(attempt, 0), SAVE_RETRY_DELAYS_MS.length - 1)
+  ];
+}
 
 function getOnboardingCompletionSessionKey(userId: string) {
   return `${ONBOARDING_COMPLETION_SESSION_KEY_PREFIX}:${userId}`;
@@ -828,6 +836,8 @@ export default function DashboardSetupFlow({
   const contactSavePromiseRef = useRef<Promise<ContactDraft | null> | null>(null);
   const queuedProfileSaveRef = useRef(false);
   const queuedContactSaveRef = useRef(false);
+  const profileRetryAttemptRef = useRef(0);
+  const contactRetryAttemptRef = useRef(0);
   const startedTrackingRef = useRef(false);
   const lastStepViewRef = useRef<SetupStepId | null>(null);
 
@@ -1070,8 +1080,12 @@ export default function DashboardSetupFlow({
             null,
         });
         setHandleTouched(!isAutoHandle(nextProfile.handle));
-        savedProfileDraftRef.current = localProfileDirty ? mappedProfile : nextProfile;
-        savedContactDraftRef.current = localContactDirty ? seededContact : nextContact;
+        savedProfileDraftRef.current = localProfileDirty
+          ? localProfileDraft?.savedDraft ?? mappedProfile
+          : nextProfile;
+        savedContactDraftRef.current = localContactDirty
+          ? localContactDraft?.savedDraft ?? seededContact
+          : nextContact;
         savedProfileSignatureRef.current = localProfileDirty
           ? localProfileDraft?.savedSignature ?? buildProfileDraftSignature(mappedProfile)
           : buildProfileDraftSignature(nextProfile);
@@ -1137,8 +1151,12 @@ export default function DashboardSetupFlow({
           setContactDraft(fallbackContact);
           setContactRequiresReview(fallbackContactRequiresReview);
           setHandleTouched(!isAutoHandle(fallbackProfile.handle));
-          savedProfileDraftRef.current = fallbackProfile;
-          savedContactDraftRef.current = fallbackContact;
+          savedProfileDraftRef.current = localProfileDirty
+            ? localProfileDraft?.savedDraft ?? null
+            : fallbackProfile;
+          savedContactDraftRef.current = localContactDirty
+            ? localContactDraft?.savedDraft ?? null
+            : fallbackContact;
           savedProfileSignatureRef.current =
             localProfileDraft?.savedSignature ??
             buildProfileDraftSignature(fallbackProfile);
@@ -1274,6 +1292,7 @@ export default function DashboardSetupFlow({
     }
     writeOnboardingDraftCache(userId, "profile", {
       draft: profileDraft,
+      savedDraft: savedProfileDraftRef.current ?? undefined,
       savedSignature: savedProfileSignatureRef.current,
       updatedAt: new Date().toISOString(),
     });
@@ -1287,6 +1306,7 @@ export default function DashboardSetupFlow({
     }
     writeOnboardingDraftCache(userId, "contact", {
       draft: contactDraft,
+      savedDraft: savedContactDraftRef.current ?? undefined,
       savedSignature: savedContactSignatureRef.current,
       updatedAt: new Date().toISOString(),
     });
@@ -1348,6 +1368,7 @@ export default function DashboardSetupFlow({
       const nextSignature = buildProfileDraftSignature(draft);
 
       if (!publish && nextSignature === savedProfileSignatureRef.current) {
+        profileRetryAttemptRef.current = 0;
         setProfileSaveStatus("saved");
         return draft;
       }
@@ -1402,6 +1423,7 @@ export default function DashboardSetupFlow({
           savedProfileDraftRef.current = savedRecord;
           savedProfileSignatureRef.current =
             buildProfileDraftSignature(savedRecord);
+          profileRetryAttemptRef.current = 0;
           setProfileSaveStatus("saved");
           clearOnboardingDraftCache(userId, "profile");
           if (savedRecord.theme === requestedTheme) {
@@ -1476,6 +1498,7 @@ export default function DashboardSetupFlow({
 
       const nextSignature = buildContactDraftSignature(draft, fallbackName);
       if (!options?.force && nextSignature === savedContactSignatureRef.current) {
+        contactRetryAttemptRef.current = 0;
         setContactSaveStatus("saved");
         return draft;
       }
@@ -1521,6 +1544,7 @@ export default function DashboardSetupFlow({
             savedDraft,
             fallbackName
           );
+          contactRetryAttemptRef.current = 0;
           setContactRequiresReview(false);
           setContactSaveStatus("saved");
           clearOnboardingDraftCache(userId, "contact");
@@ -1610,6 +1634,63 @@ export default function DashboardSetupFlow({
   ]);
 
   useEffect(() => {
+    profileRetryAttemptRef.current = 0;
+  }, [profileDraftSignature]);
+
+  useEffect(() => {
+    contactRetryAttemptRef.current = 0;
+  }, [contactDraftSignature]);
+
+  useEffect(() => {
+    if (!profileHasUnsavedChanges && profileSaveStatus === "error") {
+      setProfileSaveStatus("saved");
+    }
+  }, [profileHasUnsavedChanges, profileSaveStatus]);
+
+  useEffect(() => {
+    if (!contactHasUnsavedChanges && contactSaveStatus === "error") {
+      setContactSaveStatus("saved");
+    }
+  }, [contactHasUnsavedChanges, contactSaveStatus]);
+
+  useEffect(() => {
+    if (
+      previewMode ||
+      loading ||
+      showLaunchHub ||
+      !userId ||
+      profileSaveStatus !== "error" ||
+      !profileHasUnsavedChanges ||
+      profileSavePromiseRef.current
+    ) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      const currentDraft = profileDraftRef.current;
+      if (!currentDraft || profileSavePromiseRef.current) return;
+      if (
+        buildProfileDraftSignature(currentDraft) ===
+        savedProfileSignatureRef.current
+      ) {
+        return;
+      }
+      profileRetryAttemptRef.current += 1;
+      void saveProfileDraft({ quiet: true });
+    }, getSaveRetryDelay(profileRetryAttemptRef.current));
+
+    return () => window.clearTimeout(timer);
+  }, [
+    loading,
+    previewMode,
+    profileHasUnsavedChanges,
+    profileSaveStatus,
+    saveProfileDraft,
+    showLaunchHub,
+    userId,
+  ]);
+
+  useEffect(() => {
     if (
       loading ||
       !contactDraft ||
@@ -1635,6 +1716,45 @@ export default function DashboardSetupFlow({
     contactDraftSignature,
     loading,
     profileDraft,
+    saveContactDraft,
+    showLaunchHub,
+    userId,
+  ]);
+
+  useEffect(() => {
+    if (
+      previewMode ||
+      loading ||
+      showLaunchHub ||
+      !userId ||
+      contactSaveStatus !== "error" ||
+      !contactHasUnsavedChanges ||
+      contactSavePromiseRef.current
+    ) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      const currentDraft = contactDraftRef.current;
+      if (!currentDraft || contactSavePromiseRef.current) return;
+      if (
+        buildContactDraftSignature(
+          currentDraft,
+          profileDraftRef.current?.name ?? ""
+        ) === savedContactSignatureRef.current
+      ) {
+        return;
+      }
+      contactRetryAttemptRef.current += 1;
+      void saveContactDraft({ quiet: true });
+    }, getSaveRetryDelay(contactRetryAttemptRef.current));
+
+    return () => window.clearTimeout(timer);
+  }, [
+    contactHasUnsavedChanges,
+    contactSaveStatus,
+    loading,
+    previewMode,
     saveContactDraft,
     showLaunchHub,
     userId,
@@ -1669,6 +1789,7 @@ export default function DashboardSetupFlow({
       if (!current) return current;
       return updater(current);
     });
+    setProfileSaveStatus((current) => (current === "error" ? "idle" : current));
     setStepError(null);
     setSaveError(null);
   }
@@ -1684,6 +1805,7 @@ export default function DashboardSetupFlow({
     if (options?.markReviewed) {
       setContactRequiresReview(false);
     }
+    setContactSaveStatus((current) => (current === "error" ? "idle" : current));
     setStepError(null);
     setSaveError(null);
   }
@@ -2477,6 +2599,7 @@ export default function DashboardSetupFlow({
                                 aria-invalid={Boolean(handleError)}
                                 onChange={(event) => {
                                   setHandleTouched(true);
+                                  setHandleError(null);
                                   updateProfileDraft((current) => ({
                                     ...current,
                                     handle: sanitizeHandleInput(

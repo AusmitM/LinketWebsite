@@ -45,6 +45,13 @@ const OUTPUT_SIZE = 640;
 const MIN_ZOOM = 0.7;
 const MAX_ZOOM = 3;
 const ZOOM_STEP = 0.01;
+const AUTO_SAVE_RETRY_DELAYS_MS = [1500, 4000, 8000, 15000] as const;
+
+function getAutoSaveRetryDelay(attempt: number) {
+  return AUTO_SAVE_RETRY_DELAYS_MS[
+    Math.min(Math.max(attempt, 0), AUTO_SAVE_RETRY_DELAYS_MS.length - 1)
+  ];
+}
 
 export default function AvatarUploader({
   userId,
@@ -94,6 +101,8 @@ export default function AvatarUploader({
   const [error, setError] = useState<string | null>(null);
   const [isDraggingOver, setDraggingOver] = useState(false);
   const autoSaveSnapshotRef = useRef("");
+  const autoSaveRetryAttemptRef = useRef(0);
+  const lastCropSnapshotRef = useRef("");
 
   const baseScale = useMemo(() => {
     if (!imageMeta) return 1;
@@ -323,6 +332,7 @@ export default function AvatarUploader({
         setPersistedFileName(originalFileName);
       }
       setLatestAvatarUrl(versionedUrl);
+      autoSaveRetryAttemptRef.current = 0;
       onUploaded({
         path,
         version,
@@ -456,21 +466,40 @@ export default function AvatarUploader({
   }, [imageMeta, offset.x, offset.y, previewReady, sourceFile, sourceUrl, zoom]);
 
   useEffect(() => {
+    if (cropSnapshot !== lastCropSnapshotRef.current) {
+      lastCropSnapshotRef.current = cropSnapshot;
+      autoSaveRetryAttemptRef.current = 0;
+      if (error) {
+        setError(null);
+      }
+    }
+  }, [cropSnapshot, error]);
+
+  useEffect(() => {
     if (!autoSave || !cropSnapshot || loading) {
       if (!cropSnapshot) {
         autoSaveSnapshotRef.current = "";
+        autoSaveRetryAttemptRef.current = 0;
       }
       return;
     }
-    if (cropSnapshot === autoSaveSnapshotRef.current) return;
+
+    const shouldRetryFailedSnapshot =
+      Boolean(error) && cropSnapshot === autoSaveSnapshotRef.current;
+    if (cropSnapshot === autoSaveSnapshotRef.current && !shouldRetryFailedSnapshot) {
+      return;
+    }
 
     const timer = window.setTimeout(() => {
       autoSaveSnapshotRef.current = cropSnapshot;
+      if (shouldRetryFailedSnapshot) {
+        autoSaveRetryAttemptRef.current += 1;
+      }
       void handleUpload();
-    }, 900);
+    }, shouldRetryFailedSnapshot ? getAutoSaveRetryDelay(autoSaveRetryAttemptRef.current) : 900);
 
     return () => window.clearTimeout(timer);
-  }, [autoSave, cropSnapshot, handleUpload, loading]);
+  }, [autoSave, cropSnapshot, error, handleUpload, loading]);
 
   const saveState = loading
     ? "saving"
