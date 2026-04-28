@@ -41,19 +41,28 @@ type BoxRect = FocusRect & {
 const TOUR_QUERY_PARAM = "tour";
 const TOUR_START_VALUE = "welcome";
 const TOUR_START_EVENT = "linket:onboarding-tour:start";
+const OVERVIEW_PATH = "/dashboard/overview";
 
 const TOUR_STEPS: TourStep[] = [
   {
     id: "welcome",
-    path: "/dashboard/linkets",
-    title: "Welcome to Linket",
+    path: OVERVIEW_PATH,
+    title: "Welcome to your dashboard",
     description:
-      "This walkthrough shows you the full setup path: claim a Linket, build your profile, capture leads, and track performance.",
+      "Start here. Overview brings together your launch checklist, live profile preview, networking mode, and performance snapshot.",
     selectors: [],
   },
   {
+    id: "overview",
+    path: OVERVIEW_PATH,
+    title: "Use the launch checklist",
+    description:
+      "This checklist keeps your onboarding progress visible and highlights what to finish next.",
+    selectors: ['[data-tour="overview-checklist"]'],
+  },
+  {
     id: "navigation",
-    path: "/dashboard/linkets",
+    path: OVERVIEW_PATH,
     title: "Navigate confidently",
     description:
       "Use dashboard navigation to move between setup, profile editing, leads, analytics, and settings.",
@@ -117,14 +126,6 @@ const TOUR_STEPS: TourStep[] = [
     selectors: ['[data-tour="analytics-overview"]'],
   },
   {
-    id: "overview",
-    path: "/dashboard/overview",
-    title: "Use the launch checklist",
-    description:
-      "This checklist keeps your onboarding progress visible and highlights what to finish next.",
-    selectors: ['[data-tour="overview-checklist"]'],
-  },
-  {
     id: "settings",
     path: "/dashboard/settings",
     title: "Finish account setup",
@@ -134,7 +135,7 @@ const TOUR_STEPS: TourStep[] = [
   },
   {
     id: "complete",
-    path: "/dashboard/overview",
+    path: OVERVIEW_PATH,
     title: "You are ready to launch",
     description:
       "Your core setup path is complete. Use the Overview checklist to track anything still left before launch.",
@@ -147,7 +148,7 @@ const TOUR_PATH_LABELS: Record<string, string> = {
   "/dashboard/profiles": "Public Profile",
   "/dashboard/leads": "Leads",
   "/dashboard/analytics": "Analytics",
-  "/dashboard/overview": "Overview",
+  [OVERVIEW_PATH]: "Overview",
   "/dashboard/settings": "Settings",
 };
 
@@ -228,6 +229,7 @@ export default function DashboardOnboardingTour() {
   );
 
   const currentStep = TOUR_STEPS[stepIndex] ?? TOUR_STEPS[0];
+  const isOverviewRoute = pathname === OVERVIEW_PATH;
   const isNavigating = isOpen && pathname !== currentStep.path;
   const isLastStep = stepIndex >= TOUR_STEPS.length - 1;
   const progressPercent = ((stepIndex + 1) / TOUR_STEPS.length) * 100;
@@ -347,12 +349,15 @@ export default function DashboardOnboardingTour() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const handleStart = () => startTour("manual");
+    const handleStart = () => {
+      if (!isOverviewRoute) return;
+      startTour("manual");
+    };
     window.addEventListener(TOUR_START_EVENT, handleStart);
     return () => {
       window.removeEventListener(TOUR_START_EVENT, handleStart);
     };
-  }, [startTour]);
+  }, [isOverviewRoute, startTour]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -381,44 +386,51 @@ export default function DashboardOnboardingTour() {
   }, [autoOpenStorageKey]);
 
   useEffect(() => {
-    if (!storageKey || autoStartHandled.current) return;
-    if (pathname !== "/dashboard/overview") return;
+    if (!storageKey || !isOverviewRoute) return;
 
     const hasTourQueryParam =
       searchParams.get(TOUR_QUERY_PARAM) === TOUR_START_VALUE;
     const hasAutoOpened = readDashboardTourAutoOpenSeen(autoOpenStorageKey);
     const status = readDashboardTourStatus(storageKey);
     let startTimer: ReturnType<typeof setTimeout> | null = null;
-    if (!hasAutoOpened && status) {
-      autoStartHandled.current = true;
-      writeDashboardTourAutoOpenSeen(autoOpenStorageKey);
-    } else if (!hasAutoOpened && !hasTourQueryParam) {
-      autoStartHandled.current = true;
-      writeDashboardTourAutoOpenSeen(autoOpenStorageKey);
-      startTimer = setTimeout(() => {
-        startTour("auto");
-      }, 0);
-    }
 
     if (hasTourQueryParam) {
       autoStartHandled.current = true;
-      if (!status) {
-        startTimer = setTimeout(() => {
-          startTour("manual");
-        }, 0);
-      }
+      writeDashboardTourAutoOpenSeen(autoOpenStorageKey);
+      startTimer = setTimeout(() => {
+        startTour("manual");
+      }, 0);
       const nextParams = new URLSearchParams(searchParams.toString());
       nextParams.delete(TOUR_QUERY_PARAM);
       const nextPath = nextParams.size
         ? `${pathname}?${nextParams.toString()}`
         : pathname;
       router.replace(nextPath);
+    } else if (!autoStartHandled.current) {
+      autoStartHandled.current = true;
+
+      if (!hasAutoOpened && status) {
+        writeDashboardTourAutoOpenSeen(autoOpenStorageKey);
+      } else if (!hasAutoOpened && !status) {
+        writeDashboardTourAutoOpenSeen(autoOpenStorageKey);
+        startTimer = setTimeout(() => {
+          startTour("auto");
+        }, 0);
+      }
     }
 
     return () => {
       if (startTimer) clearTimeout(startTimer);
     };
-  }, [autoOpenStorageKey, pathname, router, searchParams, startTour, storageKey]);
+  }, [
+    autoOpenStorageKey,
+    isOverviewRoute,
+    pathname,
+    router,
+    searchParams,
+    startTour,
+    storageKey,
+  ]);
 
   useEffect(() => {
     if (!isOpen || isNavigating) return;

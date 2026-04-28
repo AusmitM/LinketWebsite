@@ -116,7 +116,7 @@ export default function SettingsContent() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-6">
       <Card
         className="rounded-3xl border bg-card/80 shadow-sm"
         data-tour="settings-account"
@@ -138,8 +138,8 @@ export default function SettingsContent() {
         </CardHeader>
         <CardContent>
           <div className="rounded-3xl border border-border/60 bg-background/70 p-5">
-            <div className="flex items-center gap-4">
-              <div className="relative h-24 w-24 overflow-hidden rounded-full border-2 border-[var(--accent)] bg-muted">
+            <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:text-left">
+              <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-full border-2 border-[var(--accent)] bg-muted">
                 {avatarLoading ? (
                   <div className="h-full w-full animate-pulse bg-muted" />
                 ) : avatarUrl ? (
@@ -155,11 +155,11 @@ export default function SettingsContent() {
                   </div>
                 )}
               </div>
-              <div className="space-y-2">
+              <div className="min-w-0 space-y-2">
                 <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                   Account overview
                 </div>
-                <div className="text-lg font-semibold text-foreground">
+                <div className="break-all text-lg font-semibold text-foreground">
                   {email || "Email unavailable"}
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -232,7 +232,7 @@ export default function SettingsContent() {
             </div>
             <Button
               variant="destructive"
-              className="rounded-full"
+              className="w-full rounded-full sm:w-auto"
               onClick={() => setDeleteOpen(true)}
             >
               Delete account
@@ -242,7 +242,7 @@ export default function SettingsContent() {
       </div>
 
       <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <DialogContent>
+        <DialogContent className="w-[calc(100vw-2rem)] max-w-lg rounded-3xl">
           <DialogHeader>
             <DialogTitle>Delete account</DialogTitle>
             <DialogDescription>
@@ -251,12 +251,13 @@ export default function SettingsContent() {
               and stored images. This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteOpen(false)}>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" className="w-full sm:w-auto" onClick={() => setDeleteOpen(false)}>
               Cancel
             </Button>
             <Button
               variant="destructive"
+              className="w-full sm:w-auto"
               onClick={handleDeleteAccount}
               disabled={deleting}
             >
@@ -281,12 +282,12 @@ function SettingsFact({
   helper: string;
 }) {
   return (
-    <div className="rounded-2xl border bg-background/70 p-4">
-      <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-        <Icon className="h-4 w-4" aria-hidden="true" />
-        {label}
+    <div className="min-w-0 rounded-2xl border bg-background/70 p-4">
+      <div className="flex min-w-0 items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+        <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+        <span className="min-w-0 break-words">{label}</span>
       </div>
-      <p className="mt-2 text-sm font-semibold text-foreground">{value}</p>
+      <p className="mt-2 break-all text-sm font-semibold text-foreground">{value}</p>
       <p className="mt-1 text-xs text-muted-foreground">{helper}</p>
     </div>
   );
