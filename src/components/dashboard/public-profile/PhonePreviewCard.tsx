@@ -242,7 +242,7 @@ export default function PhonePreviewCard({
                   : "bg-muted text-muted-foreground opacity-80"
               )}
             >
-              <span className="block break-words">
+              <span className="block truncate">
                 {contactEnabled ? "Save contact" : contactDisabledText}
               </span>
             </button>
@@ -255,7 +255,7 @@ export default function PhonePreviewCard({
                   : "bg-muted text-muted-foreground opacity-80"
               )}
             >
-              <span className="block break-words">
+              <span className="block truncate">
                 {contactEnabled ? "Save contact" : contactDisabledText}
               </span>
             </div>
@@ -472,10 +472,10 @@ function LinkListItem({
           fallbackClassName="flex items-center justify-center rounded-md border border-border/60 bg-background/70 text-[11px] font-semibold text-muted-foreground"
         />
         <div className="min-w-0">
-          <div className="public-link-title break-words text-sm font-semibold text-foreground">
+          <div className="public-link-title truncate text-sm font-semibold text-foreground">
             {link.label}
           </div>
-          <div className="public-link-url break-all text-[11px] text-muted-foreground">
+          <div className="public-link-url truncate text-[11px] text-muted-foreground">
             {link.url}
           </div>
           {showClicks ? (

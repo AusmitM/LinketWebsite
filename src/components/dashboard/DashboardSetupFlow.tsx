@@ -2390,10 +2390,10 @@ export default function DashboardSetupFlow({
                       >
                         {index + 1}
                       </p>
-                      <p className="mt-2 max-w-full break-words text-[12px] font-semibold leading-4">
+                      <p className="mt-2 max-w-full truncate text-[12px] font-semibold leading-4">
                         {mobileStepLabels[step.id]}
                       </p>
-                      <p className="mt-1 max-w-full break-words text-[10px] font-semibold uppercase leading-4 tracking-[0.08em] opacity-80">
+                      <p className="mt-1 max-w-full truncate text-[10px] font-semibold uppercase leading-4 tracking-[0.08em] opacity-80">
                         {statusLabel}
                       </p>
                     </div>

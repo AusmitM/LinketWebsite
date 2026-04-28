@@ -1076,7 +1076,7 @@ export default function LeadsList({ userId }: { userId: string }) {
                           </span>
                         </div>
                         <div className="mt-3 min-w-0">
-                          <div className="break-words text-base font-semibold text-foreground">
+                          <div className="truncate text-base font-semibold text-foreground">
                             {row.lead.name || "Unnamed lead"}
                           </div>
                           <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
@@ -1109,19 +1109,19 @@ export default function LeadsList({ userId }: { userId: string }) {
                         <div className="mt-3 space-y-2">
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <Mail className="h-4 w-4 shrink-0" aria-hidden />
-                            <span className="break-all">
+                            <span className="truncate">
                               {row.lead.email || "No email provided"}
                             </span>
                           </div>
                           {row.lead.phone ? (
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                               <Phone className="h-4 w-4 shrink-0" aria-hidden />
-                              <span className="break-all">{row.lead.phone}</span>
+                              <span className="truncate">{row.lead.phone}</span>
                             </div>
                           ) : null}
                         </div>
                         {row.preview ? (
-                          <p className="mt-3 break-words rounded-2xl border border-border/40 bg-card/80 px-3 py-3 text-sm text-foreground/90">
+                          <p className="mt-3 line-clamp-3 rounded-2xl border border-border/40 bg-card/80 px-3 py-3 text-sm text-foreground/90">
                             {row.preview}
                           </p>
                         ) : null}
@@ -1204,14 +1204,14 @@ export default function LeadsList({ userId }: { userId: string }) {
                         </td>
                         <td className="px-4 py-3">
                           <div className="min-w-0">
-                            <div className="break-words font-semibold text-foreground">
+                            <div className="truncate font-semibold text-foreground">
                               {row.lead.name || "Unnamed lead"}
                             </div>
                             <div className="mt-1 flex items-center gap-2">
                               <StatusBadge status={row.status} />
                               <RatingBadge rating={row.lead.lead_rating} />
                               {row.lead.company ? (
-                                <span className="break-words text-xs text-muted-foreground">
+                                <span className="truncate text-xs text-muted-foreground">
                                   {row.lead.company}
                                 </span>
                               ) : null}
@@ -1235,14 +1235,14 @@ export default function LeadsList({ userId }: { userId: string }) {
                           </div>
                         </td>
                         <td className="px-4 py-3 text-muted-foreground">
-                          <span className="block max-w-[220px] break-all">{row.lead.email || "—"}</span>
+                          <span className="block max-w-[220px] truncate">{row.lead.email || "—"}</span>
                         </td>
                         <td className="px-4 py-3 text-muted-foreground">
                           {row.lead.phone || "—"}
                         </td>
                         <td className="px-4 py-3">
                           {row.preview ? (
-                            <p className="max-w-[280px] break-words text-muted-foreground">
+                            <p className="max-w-[280px] truncate text-muted-foreground">
                               {row.preview}
                             </p>
                           ) : null}
@@ -1291,7 +1291,7 @@ export default function LeadsList({ userId }: { userId: string }) {
 
       <Dialog open={Boolean(activeLeadView)} onOpenChange={(open) => !open && setActiveLeadId(null)}>
         <DialogContent
-          className="left-auto right-0 top-0 h-dvh max-h-dvh w-full max-w-full translate-x-0 translate-y-0 overflow-hidden gap-0 rounded-[28px] border-l border-border/60 bg-background/95 p-0 shadow-[0_30px_80px_-40px_rgba(15,23,42,0.45)] sm:max-w-2xl sm:rounded-[32px] lg:max-w-[44rem]"
+          className="left-auto right-0 top-0 h-dvh max-h-dvh w-full max-w-full translate-x-0 translate-y-0 overflow-hidden gap-0 rounded-none border-l border-border/60 bg-background/95 p-0 shadow-[0_30px_80px_-40px_rgba(15,23,42,0.45)] sm:max-w-2xl lg:max-w-[44rem]"
           showCloseButton
         >
           {activeLeadView ? (
@@ -1558,7 +1558,7 @@ export default function LeadsList({ userId }: { userId: string }) {
                         <div className="rounded-2xl border border-border/50 bg-card/70 p-4 text-sm">
                           <div className="flex items-center justify-between gap-4">
                             <span className="text-muted-foreground">Profile</span>
-                            <span className="break-words font-medium text-foreground">
+                            <span className="truncate font-medium text-foreground">
                               {activeLeadView.lead.handle}
                             </span>
                           </div>
@@ -1625,7 +1625,7 @@ export default function LeadsList({ userId }: { userId: string }) {
                                   className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/80 px-3 py-2 text-sm hover:bg-muted/50"
                                 >
                                   <Paperclip className="h-4 w-4" aria-hidden />
-                                  <span className="max-w-[220px] break-all">
+                                  <span className="max-w-[220px] truncate">
                                     {getDisplayFileName(file)}
                                   </span>
                                   <ExternalLink className="h-4 w-4" aria-hidden />

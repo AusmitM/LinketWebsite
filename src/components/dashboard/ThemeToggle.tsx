@@ -260,7 +260,7 @@ export default function ThemeToggle({ showLabel = false }: { showLabel?: boolean
         </Button>
         <div className="flex min-w-0 items-center justify-center gap-1.5 rounded-lg px-1 text-xs text-muted-foreground sm:gap-2 sm:px-2">
           <Sun className={cn("h-5 w-5 shrink-0 sm:h-6 sm:w-6", lightIconToneClassName)} />
-          <span className="break-words font-medium">Theme</span>
+          <span className="font-medium whitespace-nowrap">Theme</span>
         </div>
         <Button
           type="button"
@@ -310,12 +310,12 @@ export default function ThemeToggle({ showLabel = false }: { showLabel?: boolean
         <div className="min-w-0 text-center">
           <div className="flex items-center justify-center gap-2">
             <Icon className={labelIconClassName} />
-            <span className="break-words font-medium text-muted-foreground">
+            <span className="font-medium text-muted-foreground whitespace-nowrap">
               {label}
             </span>
           </div>
           {!planAccess.hasPaidAccess ? (
-            <div className="break-words text-[9px] text-muted-foreground/80 sm:text-[10px]">
+            <div className="truncate text-[9px] text-muted-foreground/80 sm:text-[10px]">
               Paid unlocks more themes
             </div>
           ) : null}

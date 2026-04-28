@@ -218,7 +218,7 @@ export default function Sidebar({
               >
                 <Icon className="h-4 w-4 shrink-0" />
                 {(!isCollapsed || isMobile) && (
-                  <span className="min-w-0 break-words">{item.label}</span>
+                  <span className="truncate">{item.label}</span>
                 )}
                 {isCollapsed && !isMobile && (
                   <span className="pointer-events-none absolute left-[54px] top-1/2 hidden -translate-y-1/2 rounded-md bg-popover px-2 py-1 text-xs text-popover-foreground shadow-md ring-1 ring-border group-hover:block">

@@ -1254,7 +1254,7 @@ export function Navbar() {
                               )}
                               aria-hidden
                             />
-                            <span className="min-w-0 break-words">
+                            <span className="min-w-0 truncate whitespace-nowrap">
                               {section.label}
                             </span>
                           </button>

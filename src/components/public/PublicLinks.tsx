@@ -174,8 +174,8 @@ export default function PublicLinks({
                   />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <div className="break-words text-sm font-semibold">{link.title}</div>
-                  <div className="break-all text-xs text-[color:var(--muted-foreground)] group-hover:text-[color:var(--foreground)]/70">
+                  <div className="truncate text-sm font-semibold">{link.title}</div>
+                  <div className="truncate text-xs text-[color:var(--muted-foreground)] group-hover:text-[color:var(--foreground)]/70">
                     {link.url}
                   </div>
                 </div>

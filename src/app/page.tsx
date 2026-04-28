@@ -489,7 +489,7 @@ function HeroDashboardPreview() {
             PK
           </div>
           <div className="min-w-0">
-            <p className="break-words text-sm font-semibold text-slate-900 sm:text-base">Punit Kothakonda</p>
+            <p className="truncate text-sm font-semibold text-slate-900 sm:text-base">Punit Kothakonda</p>
           </div>
         </div>
         <div className="flex w-full min-w-0 flex-col gap-3 lg:flex-1 lg:flex-row lg:items-center lg:justify-between">
@@ -652,10 +652,10 @@ function HeroDashboardPreview() {
                         {initials}
                       </div>
                       <div className="min-w-0">
-                        <p className="break-words text-sm font-semibold text-slate-900">
+                        <p className="truncate text-sm font-semibold text-slate-900">
                           {sale.name}
                         </p>
-                        <p className="break-all text-xs text-slate-600">{sale.email}</p>
+                        <p className="truncate text-xs text-slate-600">{sale.email}</p>
                       </div>
                     </div>
                     <p className="shrink-0 text-xs font-semibold text-[#e6aa5c] sm:text-sm">
