@@ -1205,7 +1205,7 @@ export default function PublicProfileEditorPage() {
   const isPublished = true;
 
   return (
-    <div className="min-w-0 space-y-6" onBlurCapture={handleBlurCapture}>
+    <div className="space-y-6" onBlurCapture={handleBlurCapture}>
       <div className="md:hidden">
         <Select
           value={activeSection}
@@ -1213,7 +1213,7 @@ export default function PublicProfileEditorPage() {
         >
           <SelectTrigger
             data-tour="profile-section-select"
-            className="h-11 w-full rounded-full border-border/30 bg-gradient-to-r from-background/60 via-card/80 to-background/60 px-5 text-sm font-semibold text-foreground shadow-[0_18px_40px_-26px_rgba(15,23,42,0.65)] ring-1 ring-border/30 backdrop-blur sm:max-w-[260px]"
+            className="h-11 w-full max-w-[260px] rounded-full border-border/30 bg-gradient-to-r from-background/60 via-card/80 to-background/60 px-5 text-sm font-semibold text-foreground shadow-[0_18px_40px_-26px_rgba(15,23,42,0.65)] ring-1 ring-border/30 backdrop-blur"
           >
             <SelectValue placeholder="Section" />
           </SelectTrigger>
@@ -1234,7 +1234,7 @@ export default function PublicProfileEditorPage() {
           On phones, the preview lives in its own "Preview" section.
           Keep the live preview column on desktop/tablet.
         */}
-        <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div className="min-w-0 space-y-4" data-tour="profile-editor-panel">
             {/*
               Keep a single preview instance for reuse.

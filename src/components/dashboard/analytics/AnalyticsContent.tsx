@@ -852,11 +852,11 @@ export default function AnalyticsContent() {
 
   return (
     <div
-      className="dashboard-analytics-page w-full min-w-0 space-y-6"
+      className="dashboard-analytics-page w-full space-y-6"
       data-tour="analytics-overview"
     >
-      <header className="flex min-w-0 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-        <div className="min-w-0 space-y-2">
+      <header className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+        <div className="space-y-2">
           <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-primary/80">
             Analytics workspace
           </p>
@@ -873,7 +873,7 @@ export default function AnalyticsContent() {
         </div>
         <div className="dashboard-analytics-range flex w-full flex-nowrap items-center gap-2 overflow-x-auto pb-1 sm:w-auto sm:flex-wrap sm:overflow-visible sm:pb-0">
           <Select value={sectionJump} onValueChange={handleSectionJump}>
-            <SelectTrigger className="h-9 w-full min-w-[200px] rounded-full border-border/60 bg-card/80 text-sm shadow-sm sm:w-[220px]">
+            <SelectTrigger className="h-9 w-[220px] rounded-full border-border/60 bg-card/80 text-sm shadow-sm">
               <SelectValue placeholder="Jump to section" />
             </SelectTrigger>
             <SelectContent>
@@ -905,7 +905,7 @@ export default function AnalyticsContent() {
             type="button"
             variant="outline"
             size="sm"
-            className="shrink-0 rounded-full"
+            className="rounded-full shrink-0"
             onClick={handleExport}
             disabled={!analytics || analytics.timeline.length === 0}
           >
@@ -975,8 +975,8 @@ export default function AnalyticsContent() {
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1.08fr)_minmax(320px,0.92fr)]">
-              <div className="min-w-0 space-y-4">
+            <div className="grid gap-4 xl:grid-cols-[minmax(0,1.08fr)_minmax(320px,0.92fr)]">
+              <div className="space-y-4">
                 <div className="rounded-[28px] border border-primary/20 bg-primary/5 p-5 sm:p-6">
                   {loading ? (
                     <div className="space-y-3">
@@ -1083,7 +1083,7 @@ export default function AnalyticsContent() {
                 ) : null}
               </div>
 
-              <div className="min-w-0 rounded-[28px] border border-border/70 bg-background/45 p-5 sm:p-6">
+              <div className="rounded-[28px] border border-border/70 bg-background/45 p-5 sm:p-6">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <h3 className="text-base font-semibold text-foreground">

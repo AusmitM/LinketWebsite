@@ -142,21 +142,21 @@ export default function DashboardAppShell({
     <div
       id="dashboard-theme-scope"
       className={cn(
-        "font-dashboard flex min-h-[100svh] min-w-0 overflow-x-clip bg-[var(--background)]",
+        "font-dashboard flex min-h-[100svh] bg-[var(--background)]",
         `theme-${theme}`,
         isDarkTheme(theme) && "dark"
       )}
       style={{ "--dashboard-nav-height": `${dashboardNavHeight}px` } as CSSProperties}
     >
       {!shouldHideChrome ? (
-        <div className="relative z-30 hidden h-[calc(100dvh-var(--dashboard-nav-height))] lg:sticky lg:top-[var(--dashboard-nav-height)] lg:block">
+        <div className="relative z-30 hidden h-[calc(100vh-var(--dashboard-nav-height))] lg:sticky lg:top-[var(--dashboard-nav-height)] lg:block">
           <Sidebar onboardingState={effectiveOnboardingState} />
         </div>
       ) : null}
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+      <div className="flex flex-1 flex-col overflow-hidden">
         <div
           className={cn(
-            "dashboard-scroll-area min-w-0 flex-1 overflow-auto overflow-x-hidden overscroll-contain",
+            "dashboard-scroll-area flex-1 overflow-auto",
             shouldHideChrome
               ? "px-0 pb-0 pt-0"
               : "px-3 pb-6 pt-3 sm:px-4 sm:pb-8 sm:pt-4 lg:px-8 lg:pb-10"
@@ -164,7 +164,7 @@ export default function DashboardAppShell({
         >
           <div
             className={cn(
-              "dashboard-content mx-auto w-full min-w-0 max-w-full",
+              "dashboard-content mx-auto w-full",
               shouldHideChrome ? "max-w-none" : "max-w-none lg:max-w-7xl"
             )}
           >
@@ -189,7 +189,7 @@ export default function DashboardAppShell({
           />
           <div
             className={cn(
-              "dashboard-sidebar-panel absolute inset-x-0 bottom-0 max-h-[82dvh] w-full transform overflow-hidden rounded-t-3xl border-t border-border/60 bg-background shadow-2xl transition-transform duration-500 ease-in-out will-change-transform",
+              "dashboard-sidebar-panel absolute inset-x-0 bottom-0 max-h-[80vh] w-full transform rounded-t-3xl border-t border-border/60 bg-background shadow-2xl transition-transform duration-500 ease-in-out will-change-transform",
               sidebarOpen ? "translate-y-0" : "translate-y-full"
             )}
           >

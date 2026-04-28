@@ -102,10 +102,10 @@ export default function MessagesContent() {
   }
 
   return (
-    <div className="min-w-0 space-y-6 lg:grid lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:gap-6 lg:space-y-0">
-      <Card className="min-w-0 rounded-3xl border bg-card/80 shadow-sm">
+    <div className="space-y-6 lg:space-y-0 lg:gap-6 lg:grid lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+      <Card className="rounded-3xl border bg-card/80 shadow-sm">
         <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="min-w-0">
+          <div>
             <CardTitle className="text-lg font-semibold">Leads</CardTitle>
             <p className="text-sm text-muted-foreground">Captured from tap journeys and contact forms.</p>
           </div>
@@ -114,15 +114,15 @@ export default function MessagesContent() {
               placeholder="Search name, company, school, location"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              className="min-w-0 sm:min-w-[240px]"
+              className="sm:min-w-[240px]"
             />
-            <Button variant="outline" size="sm" className="w-full rounded-full sm:w-auto" onClick={onDownloadCsv} disabled={filteredLeads.length === 0}>
+            <Button variant="outline" size="sm" className="rounded-full" onClick={onDownloadCsv} disabled={filteredLeads.length === 0}>
               Download CSV
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="grid min-w-0 gap-4 lg:grid-cols-[240px_minmax(0,1fr)]">
-          <div className="min-w-0 space-y-2">
+        <CardContent className="grid gap-4 lg:grid-cols-[240px_minmax(0,1fr)]">
+          <div className="space-y-2">
             {filteredLeads.length === 0 ? (
               <p className="rounded-2xl border border-dashed px-3 py-6 text-center text-sm text-muted-foreground">
                 No leads match your search.
@@ -137,19 +137,19 @@ export default function MessagesContent() {
                 >
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
                     <span>{lead.addedAt}</span>
-                    <span className="min-w-0 truncate">{lead.source}</span>
+                    <span>{lead.source}</span>
                   </div>
-                  <div className="truncate text-sm font-semibold text-foreground">{lead.name}</div>
+                  <div className="text-sm font-semibold text-foreground">{lead.name}</div>
                   <p className="truncate text-xs text-muted-foreground">{[lead.company, lead.location].filter(Boolean).join(" \u00B7 ")}</p>
                 </button>
               ))
             )}
           </div>
           {selected ? (
-            <div className="min-w-0 space-y-3">
+            <div className="space-y-3">
               <div className="rounded-2xl border bg-background p-4">
-                <div className="break-words text-sm font-semibold text-foreground">{selected.name}</div>
-                <p className="break-all text-xs text-muted-foreground">{selected.email}</p>
+                <div className="text-sm font-semibold text-foreground">{selected.name}</div>
+                <p className="text-xs text-muted-foreground">{selected.email}</p>
                 <div className="mt-2 flex flex-wrap gap-2 text-xs text-muted-foreground">
                   <Badge variant="secondary" className="rounded-full text-[10px]">{selected.company}</Badge>
                   <Badge variant="secondary" className="rounded-full text-[10px]">{selected.location}</Badge>
@@ -165,12 +165,12 @@ export default function MessagesContent() {
                     <p className="text-muted-foreground">No messages yet.</p>
                   ) : (
                     selected.messages.map((message) => (
-                      <div key={message.id} className="min-w-0 rounded-xl border bg-background px-3 py-2">
+                      <div key={message.id} className="rounded-xl border bg-background px-3 py-2">
                         <div className="flex items-center justify-between text-xs text-muted-foreground">
-                          <span className="min-w-0 truncate">{message.author}</span>
-                          <span className="shrink-0">{message.sentAt}</span>
+                          <span>{message.author}</span>
+                          <span>{message.sentAt}</span>
                         </div>
-                        <p className="mt-1 break-words text-foreground">{message.body}</p>
+                        <p className="mt-1 text-foreground">{message.body}</p>
                       </div>
                     ))
                   )}
@@ -181,7 +181,7 @@ export default function MessagesContent() {
         </CardContent>
       </Card>
 
-      <Card className="min-w-0 rounded-3xl border bg-card/80 shadow-sm">
+      <Card className="rounded-3xl border bg-card/80 shadow-sm">
         <CardHeader>
           <CardTitle className="text-lg font-semibold">Email integrations (coming soon)</CardTitle>
           <p className="text-sm text-muted-foreground">Connect Gmail or other inboxes to reply without leaving Linket.</p>
@@ -200,6 +200,7 @@ function escapeCsv(value: string): string {
   }
   return value;
 }
+
 
 
 

@@ -64,9 +64,9 @@ export default function LeadsPage() {
   }
 
   return (
-    <Tabs defaultValue="leads" className="min-w-0 space-y-5 sm:space-y-6">
-      <div className="flex min-w-0 flex-col gap-4 md:gap-5 lg:flex-row lg:items-end lg:justify-between">
-        <div className="min-w-0 space-y-2">
+    <Tabs defaultValue="leads" className="space-y-5 sm:space-y-6">
+      <div className="flex flex-col gap-4 md:gap-5 lg:flex-row lg:items-end lg:justify-between">
+        <div className="space-y-2">
           <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
             Leads
           </h1>
@@ -75,7 +75,7 @@ export default function LeadsPage() {
             builder when you need to change what people submit.
           </p>
         </div>
-        <TabsList className="grid h-auto w-full min-w-0 grid-cols-2 rounded-[1.35rem] border border-border/60 bg-card/80 p-1 shadow-sm sm:w-auto">
+        <TabsList className="grid h-auto w-full grid-cols-2 rounded-[1.35rem] border border-border/60 bg-card/80 p-1 shadow-sm sm:w-auto">
           <TabsTrigger
             value="leads"
             className="min-w-0 rounded-[1.05rem] px-3 py-2.5 sm:rounded-full sm:px-4 sm:py-2"
