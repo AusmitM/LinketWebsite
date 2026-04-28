@@ -78,10 +78,10 @@ export default function PublicProfileLinksList({
               loading={index < 4 ? "eager" : "lazy"}
             />
             <div className="min-w-0">
-              <div className="truncate text-base font-semibold text-foreground">
+              <div className="break-words text-base font-semibold text-foreground">
                 {link.title}
               </div>
-              <div className="truncate text-xs text-muted-foreground">
+              <div className="break-all text-xs text-muted-foreground">
                 {link.url}
               </div>
             </div>

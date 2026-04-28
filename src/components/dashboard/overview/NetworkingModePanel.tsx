@@ -43,7 +43,7 @@ const AUTO_SAVE_RETRY_DELAY_MS = 2000;
 const LEAD_STATUS_OPTIONS: LeadFlag[] = ["follow_up", "done"];
 const LEAD_RATING_OPTIONS = [1, 2, 3, 4, 5] as const;
 
-export default function tttttttttttttttttttttttr5fcNetworkingModePanel({
+export default function NetworkingModePanel({
   userId,
 }: {
   userId: string | null;
@@ -465,7 +465,7 @@ export default function tttttttttttttttttttttttr5fcNetworkingModePanel({
                     <div className="flex flex-col items-center gap-3 text-center sm:flex-row sm:items-start sm:justify-between sm:text-left">
                       <div className="min-w-0 space-y-1">
                         <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
-                          <span className="truncate text-sm font-semibold text-foreground">
+                          <span className="break-words text-sm font-semibold text-foreground">
                             {lead.name || "Unnamed lead"}
                           </span>
                           <FlagBadge flag={lead.lead_flag} />
@@ -478,11 +478,11 @@ export default function tttttttttttttttttttttttr5fcNetworkingModePanel({
                       </div>
                     </div>
                     {lead.note ? (
-                      <p className="mt-2 line-clamp-2 text-center text-xs text-muted-foreground sm:text-left">
+                      <p className="mt-2 break-words text-center text-xs text-muted-foreground sm:text-left">
                         {lead.note}
                       </p>
                     ) : lead.message ? (
-                      <p className="mt-2 line-clamp-2 text-center text-xs text-muted-foreground sm:text-left">
+                      <p className="mt-2 break-words text-center text-xs text-muted-foreground sm:text-left">
                         {lead.message}
                       </p>
                     ) : null}

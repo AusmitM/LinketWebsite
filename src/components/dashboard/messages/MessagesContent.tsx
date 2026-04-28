@@ -137,10 +137,10 @@ export default function MessagesContent() {
                 >
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
                     <span>{lead.addedAt}</span>
-                    <span className="min-w-0 truncate">{lead.source}</span>
+                    <span className="min-w-0 break-words">{lead.source}</span>
                   </div>
-                  <div className="truncate text-sm font-semibold text-foreground">{lead.name}</div>
-                  <p className="truncate text-xs text-muted-foreground">{[lead.company, lead.location].filter(Boolean).join(" \u00B7 ")}</p>
+                  <div className="break-words text-sm font-semibold text-foreground">{lead.name}</div>
+                  <p className="break-words text-xs text-muted-foreground">{[lead.company, lead.location].filter(Boolean).join(" \u00B7 ")}</p>
                 </button>
               ))
             )}
@@ -167,7 +167,7 @@ export default function MessagesContent() {
                     selected.messages.map((message) => (
                       <div key={message.id} className="min-w-0 rounded-xl border bg-background px-3 py-2">
                         <div className="flex items-center justify-between text-xs text-muted-foreground">
-                          <span className="min-w-0 truncate">{message.author}</span>
+                          <span className="min-w-0 break-words">{message.author}</span>
                           <span className="shrink-0">{message.sentAt}</span>
                         </div>
                         <p className="mt-1 break-words text-foreground">{message.body}</p>
@@ -200,7 +200,6 @@ function escapeCsv(value: string): string {
   }
   return value;
 }
-
 
 
 

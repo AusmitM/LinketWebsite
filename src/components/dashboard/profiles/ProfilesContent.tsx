@@ -1080,7 +1080,7 @@ export default function ProfilesContent() {
                       <p className="text-xs uppercase tracking-wide text-muted-foreground">
                         Public link
                       </p>
-                      <p className="mt-1 truncate text-sm font-medium text-foreground">
+                      <p className="mt-1 break-all text-sm font-medium text-foreground">
                         {publicProfileUrl ?? "Handle pending"}
                       </p>
                     </div>

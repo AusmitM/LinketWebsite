@@ -734,7 +734,7 @@ export default function AnalyticsContent() {
         eyebrow: "Best CTA share",
         value: optimizationValue,
         detail: topLink
-          ? `${truncateText(topLink.title, 38)} currently owns ${topLinkSharePercent.toFixed(1)}% of clicks across active links.`
+          ? `${formatVisibleText(topLink.title, 38)} currently owns ${topLinkSharePercent.toFixed(1)}% of clicks across active links.`
           : "Link-click concentration appears once visitors start choosing CTAs on your page.",
         tone: topLink ? "primary" : "neutral",
       },
@@ -777,7 +777,7 @@ export default function AnalyticsContent() {
         step: "3",
         title: "Use trends to optimize",
         detail: topLink
-          ? `${truncateText(topLink.title, 32)} is your current leading CTA. Open trends and breakdowns to understand why.`
+          ? `${formatVisibleText(topLink.title, 32)} is your current leading CTA. Open trends and breakdowns to understand why.`
           : "Open the trend and breakdown sections once visits and clicks start coming in.",
         target: "trends",
       },
@@ -1007,7 +1007,7 @@ export default function AnalyticsContent() {
                           </h2>
                           <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
                             {latestLead.message?.trim()
-                              ? truncateText(latestLead.message.trim(), 180)
+                              ? formatVisibleText(latestLead.message.trim(), 180)
                               : (primaryInsight?.detail ??
                                 "Reach out while the in-person conversation is still fresh.")}
                           </p>
@@ -1182,7 +1182,7 @@ export default function AnalyticsContent() {
                 }
                 helper={
                   topLink
-                    ? `${truncateText(topLink.title, 30)} is leading current click share`
+                    ? `${formatVisibleText(topLink.title, 30)} is leading current click share`
                     : "Across active profile links"
                 }
               />
@@ -1674,7 +1674,7 @@ export default function AnalyticsContent() {
                       >
                         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                           <div className="min-w-0 space-y-1">
-                            <div className="truncate text-base font-semibold text-foreground">
+                            <div className="break-words text-base font-semibold text-foreground">
                               {link.title}
                             </div>
                             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
@@ -1692,7 +1692,7 @@ export default function AnalyticsContent() {
                                   {link.handle}
                                 </span>
                               ) : null}
-                              <span className="min-w-0 truncate">
+                              <span className="min-w-0 break-all">
                                 {displayUrl}
                               </span>
                             </div>
@@ -2247,7 +2247,7 @@ function RecentLeadListItem({
     <div className="rounded-2xl border border-border/60 bg-background/55 px-4 py-3 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0 space-y-1">
-          <div className="truncate text-sm font-semibold text-foreground">
+          <div className="break-words text-sm font-semibold text-foreground">
             {lead.name?.trim() || lead.email || "Unknown contact"}
           </div>
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
@@ -2272,7 +2272,7 @@ function RecentLeadListItem({
       </div>
       {lead.message ? (
         <p className="mt-3 text-sm leading-6 text-muted-foreground">
-          {truncateText(lead.message, 110)}
+          {formatVisibleText(lead.message, 110)}
         </p>
       ) : null}
     </div>
@@ -2566,9 +2566,9 @@ function formatRelativeTime(date: string) {
   return relativeTimeFormatter.format(diffYears, "year");
 }
 
-function truncateText(value: string, maxLength: number) {
-  if (value.length <= maxLength) return value;
-  return `${value.slice(0, Math.max(0, maxLength - 3)).trimEnd()}...`;
+function formatVisibleText(value: string, maxLength: number) {
+  void maxLength;
+  return value.trim();
 }
 
 function formatLinkUrl(url: string) {

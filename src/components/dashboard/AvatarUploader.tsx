@@ -578,7 +578,7 @@ export default function AvatarUploader({
               />
               <div className="flex w-full min-w-0 flex-col items-stretch gap-2 overflow-hidden rounded-xl border border-input bg-background/70 px-3 py-2">
                 <span
-                  className="min-w-0 truncate whitespace-nowrap text-center text-sm text-muted-foreground"
+                  className="min-w-0 break-all text-center text-sm text-muted-foreground"
                   title={visibleFileName ?? "No image selected"}
                 >
                   {visibleFileName ?? "No image selected"}

@@ -225,7 +225,7 @@ export default async function AdminMintPage() {
                   prefetch={false}
                 >
                   <div className="min-w-0">
-                    <div className="dashboard-mint-title truncate text-sm font-semibold text-foreground">{label}</div>
+                    <div className="dashboard-mint-title break-words text-sm font-semibold text-foreground">{label}</div>
                     <div className="dashboard-mint-muted text-xs text-muted-foreground">
                       {formatTimestamp(batch.createdAt)}
                     </div>

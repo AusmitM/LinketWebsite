@@ -2522,9 +2522,10 @@ body.theme-forest .dashboard-forest-pin {
   #dashboard-theme-scope .dashboard-metric-label {
     min-width: 0;
     max-width: 100%;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    overflow-wrap: anywhere;
     text-align: left;
   }
 
@@ -3233,4 +3234,62 @@ body.theme-forest .dashboard-forest-pin {
     padding-left: 0.55rem;
     padding-right: 0.55rem;
   }
+}
+
+/* Dashboard legibility and soft-corner pass */
+.dashboard-navbar :where(a, button, span, p),
+#dashboard-theme-scope :where(
+  h1,
+  h2,
+  h3,
+  h4,
+  p,
+  span,
+  a,
+  button,
+  label,
+  li,
+  dt,
+  dd,
+  code,
+  td,
+  th,
+  [data-slot="card-title"],
+  [data-slot="card-description"]
+) {
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.dashboard-navbar .dashboard-account-menu-email,
+.dashboard-navbar .dashboard-account-menu-item,
+#dashboard-theme-scope :where(
+  [data-slot="card"],
+  [data-slot="card-header"],
+  [data-slot="card-content"],
+  [data-slot="card-footer"],
+  [data-slot="dialog-content"],
+  article,
+  td,
+  th
+) :where(.truncate, .line-clamp-1, .line-clamp-2, .line-clamp-3) {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  -webkit-line-clamp: unset;
+  -webkit-box-orient: initial;
+}
+
+.dashboard-navbar :where(.rounded-sm, .rounded-md, .rounded-lg),
+#dashboard-theme-scope :where(.rounded-sm, .rounded-md, .rounded-lg) {
+  border-radius: 1rem;
+}
+
+.dashboard-navbar :where(button, [role="button"], [data-slot="button"]),
+#dashboard-theme-scope :where(button, [role="button"], [data-slot="button"], [data-slot="tabs-trigger"], [data-slot="select-trigger"], input, select) {
+  border-radius: 999px;
+}
+
+#dashboard-theme-scope :where(textarea, [data-slot="dialog-content"]) {
+  border-radius: 1.35rem;
 }

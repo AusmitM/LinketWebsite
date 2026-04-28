@@ -623,7 +623,7 @@ export default function LeadFormBuilder({
             )}
           >
           <CardHeader className="space-y-3">
-            <CardTitle className="text-sm font-semibold whitespace-nowrap">
+            <CardTitle className="break-words text-sm font-semibold">
               Form setup
             </CardTitle>
             <p className="text-xs text-muted-foreground">
@@ -823,7 +823,7 @@ export default function LeadFormBuilder({
             >
             <CardHeader className="space-y-3">
               <div className="flex flex-row items-center justify-between gap-4">
-                <CardTitle className="text-sm font-semibold whitespace-nowrap">
+                <CardTitle className="break-words text-sm font-semibold">
                   Questions
                 </CardTitle>
                 <Button
@@ -932,7 +932,7 @@ export default function LeadFormBuilder({
             >
             <CardHeader className="space-y-3">
               <div className="flex flex-wrap items-center gap-2">
-                <CardTitle className="text-sm font-semibold whitespace-nowrap">
+                <CardTitle className="break-words text-sm font-semibold">
                   Selected field
                 </CardTitle>
                 <Badge variant="outline" className="rounded-full px-2.5 py-0.5 text-[11px]">
@@ -1048,7 +1048,7 @@ export default function LeadFormBuilder({
           {showPreview ? (
             <Card className="rounded-2xl border border-border/60 bg-card/80 shadow-sm">
               <CardHeader>
-                <CardTitle className="text-sm font-semibold whitespace-nowrap">
+                <CardTitle className="break-words text-sm font-semibold">
                   Live preview
                 </CardTitle>
               </CardHeader>
