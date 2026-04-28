@@ -821,6 +821,14 @@ export default function DashboardSetupFlow({
   const [showContactExtras, setShowContactExtras] = useState(false);
   const [showPhoneField, setShowPhoneField] = useState(false);
   const [avatarSaveState, setAvatarSaveState] = useState<FieldSaveState>("saved");
+  const [completedSetupSteps, setCompletedSetupSteps] = useState<
+    Record<SetupStepId, boolean>
+  >({
+    profile: false,
+    contact: false,
+    links: false,
+    publish: false,
+  });
   const [expandedLinkTitleEditors, setExpandedLinkTitleEditors] = useState<
     Record<string, boolean>
   >({});
@@ -1913,6 +1921,12 @@ export default function DashboardSetupFlow({
     if (stepId === "links") {
       void trackEvent("primary_link_added", trackingMeta({ step_id: stepId }));
     }
+    if (stepId) {
+      setCompletedSetupSteps((current) => ({
+        ...current,
+        [stepId]: true,
+      }));
+    }
 
     setCurrentStepIndex((current) =>
       Math.min(current + 1, SETUP_STEPS.length - 1)
@@ -1959,6 +1973,12 @@ export default function DashboardSetupFlow({
     }
     setPublishedThisSession(true);
     setShowLaunchHub(true);
+    setCompletedSetupSteps({
+      profile: true,
+      contact: true,
+      links: true,
+      publish: true,
+    });
     setProfileSaveStatus("saved");
     setContactSaveStatus("saved");
     void trackEvent("onboarding_publish_succeeded", trackingMeta());
@@ -2106,11 +2126,26 @@ export default function DashboardSetupFlow({
     "rounded-[28px] border-border/60 bg-card/95 shadow-[0_12px_30px_-24px_rgba(15,23,42,0.28)]";
   const softPanelClassName =
     "rounded-2xl border border-border/60 bg-background/40";
+  const stepCompletion = {
+    profile:
+      completedSetupSteps.profile &&
+      liveProfileReady &&
+      !profileHasUnsavedChanges,
+    contact:
+      completedSetupSteps.contact &&
+      contactStepComplete &&
+      !contactHasUnsavedChanges,
+    links:
+      completedSetupSteps.links &&
+      linksReady &&
+      !profileHasUnsavedChanges,
+    publish: completedSetupSteps.publish && publishReady,
+  };
   const checklistItems = [
-    { label: "Add profile basics", done: liveProfileReady, icon: UserRound },
-    { label: "Add contact info", done: contactStepComplete, icon: Mail },
-    { label: "Add your first link", done: linksReady, icon: Link2 },
-    { label: "Publish page", done: publishReady, icon: Rocket },
+    { label: "Add profile basics", done: stepCompletion.profile, icon: UserRound },
+    { label: "Add contact info", done: stepCompletion.contact, icon: Mail },
+    { label: "Add your first link", done: stepCompletion.links, icon: Link2 },
+    { label: "Publish page", done: stepCompletion.publish, icon: Rocket },
     { label: "Test once", done: shareTestComplete, icon: Smartphone },
   ];
   const previewDisplayName =
@@ -2287,12 +2322,6 @@ export default function DashboardSetupFlow({
     links: "Links",
     publish: "Review",
   };
-  const stepCompletion = {
-    profile: liveProfileReady,
-    contact: contactStepComplete,
-    links: linksReady,
-    publish: publishReady,
-  };
   const previewContactEnabled =
     (showLaunchHub || currentStep.id !== "profile") && contactReady;
   const previewContactDisabledText =
@@ -2322,8 +2351,8 @@ export default function DashboardSetupFlow({
 
         {!showLaunchHub ? (
           <Card className={cn(setupCardClassName, "dashboard-setup-mobile-summary lg:hidden")}>
-            <CardContent className="space-y-4 px-4 py-4">
-              <div className="grid grid-cols-4 gap-2 max-[359px]:grid-cols-2">
+            <CardContent className="px-3 py-3">
+              <div className="grid grid-cols-4 gap-2">
                 {SETUP_STEPS.map((step, index) => {
                   const isCurrent = index === currentStepIndex;
                   const isDone = stepCompletion[step.id];
@@ -2341,7 +2370,7 @@ export default function DashboardSetupFlow({
                     <div
                       key={step.id}
                       className={cn(
-                        "rounded-2xl border px-2.5 py-2 text-center",
+                        "flex min-h-[104px] min-w-0 flex-col items-center justify-center rounded-2xl border px-1.5 py-2 text-center",
                         isCurrent
                           ? "border-foreground/25 bg-foreground/10 text-foreground"
                           : isDone
@@ -2349,13 +2378,22 @@ export default function DashboardSetupFlow({
                             : "border-border/60 bg-background/60 text-muted-foreground"
                       )}
                     >
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.16em]">
+                      <p
+                        className={cn(
+                          "flex h-7 w-7 items-center justify-center rounded-full border text-xs font-semibold leading-none",
+                          isCurrent
+                            ? "border-foreground/25 bg-background/70 text-foreground"
+                            : isDone
+                              ? "border-emerald-500/25 bg-emerald-500/10 text-emerald-700 dark:text-emerald-200"
+                              : "border-border/60 bg-card/80 text-muted-foreground"
+                        )}
+                      >
                         {index + 1}
                       </p>
-                      <p className="mt-1 text-[11px] font-semibold leading-4">
+                      <p className="mt-2 max-w-full truncate text-[12px] font-semibold leading-4">
                         {mobileStepLabels[step.id]}
                       </p>
-                      <p className="mt-1 text-[10px] font-medium uppercase tracking-[0.12em] opacity-80">
+                      <p className="mt-1 max-w-full truncate text-[10px] font-semibold uppercase leading-4 tracking-[0.08em] opacity-80">
                         {statusLabel}
                       </p>
                     </div>

@@ -184,6 +184,8 @@ export function Navbar() {
     };
   }, []);
   const isDashboard = pathname?.startsWith("/dashboard");
+  const isDashboardSetupRoute =
+    pathname?.startsWith("/dashboard/get-started") ?? false;
   const isPublicProfile = isPublicProfilePathname(pathname);
   const isPublic = !isDashboard;
   const isLandingPage = pathname === "/";
@@ -197,7 +199,9 @@ export function Navbar() {
     isPublic && !isLandingPage && !isPublicProfile && !isAuthPage && !isLegalPage;
   const userNeedsEmailVerification =
     Boolean(user?.email) && !Boolean(user?.emailConfirmedAt);
-  const shouldShowNotifications = Boolean(isDashboard && user);
+  const shouldShowNotifications = Boolean(
+    isDashboard && !isDashboardSetupRoute && user
+  );
   const notificationsReadStorageKey = user?.id
     ? `${NOTIFICATIONS_LAST_READ_STORAGE_KEY_PREFIX}:${user.id}`
     : null;
@@ -1070,7 +1074,12 @@ export function Navbar() {
       ref={accountButtonRef}
       onClick={() => setAccountMenuOpen(true)}
       className="dashboard-avatar-button inline-flex h-11 w-11 items-center justify-center rounded-full border border-border/60 bg-card/90 text-sm font-semibold uppercase text-foreground transition hover:bg-card"
-      aria-label="Account menu"
+      aria-label={
+        isDashboardSetupRoute
+          ? `Signed in as ${user?.email ?? "this account"}`
+          : "Account menu"
+      }
+      title={user?.email ? `Signed in as ${user.email}` : "Signed in account"}
     >
       {avatarUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
@@ -1141,7 +1150,9 @@ export function Navbar() {
       <header
         className="dashboard-navbar font-dashboard sticky top-0 z-50 w-full border-b border-border/60 bg-background/90 text-foreground backdrop-blur supports-[backdrop-filter]:bg-background/70"
       >
-        {userNeedsEmailVerification && !verificationBannerDismissed ? (
+        {userNeedsEmailVerification &&
+        !verificationBannerDismissed &&
+        !isDashboardSetupRoute ? (
           <div className="border-b border-amber-200/70 bg-amber-100/70 px-3 py-2">
             <div className="mx-auto flex w-full max-w-6xl flex-col gap-2 text-amber-950 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-2 text-xs font-semibold">
@@ -1257,9 +1268,9 @@ export function Navbar() {
           </div>
 
           <div className="dashboard-navbar-right flex shrink-0 items-center gap-3">
-            {dashboardProfileActions}
-            {dashboardNotificationsButton}
-            {showDashboardSignedInChrome ? (
+            {!isDashboardSetupRoute ? dashboardProfileActions : null}
+            {!isDashboardSetupRoute ? dashboardNotificationsButton : null}
+            {showDashboardSignedInChrome && !isDashboardSetupRoute ? (
               <Button
                 type="button"
                 size="sm"
@@ -1275,7 +1286,7 @@ export function Navbar() {
                 </span>
               </Button>
             ) : null}
-            {showDashboardSignedInChrome ? (
+            {showDashboardSignedInChrome && !isDashboardSetupRoute ? (
               <Button
                 asChild
                 size="sm"
@@ -1284,7 +1295,7 @@ export function Navbar() {
                 <Link href="/dashboard/linkets">New Linket</Link>
               </Button>
             ) : null}
-            {showDashboardSignedInChrome ? (
+            {showDashboardSignedInChrome && !isDashboardSetupRoute ? (
               <Button
                 asChild
                 size="sm"
@@ -1304,7 +1315,9 @@ export function Navbar() {
               </Button>
             ) : null}
             {dashboardAvatar}
-            {showDashboardSignedInChrome && !isDashboardAuthPending ? (
+            {showDashboardSignedInChrome &&
+            !isDashboardAuthPending &&
+            !isDashboardSetupRoute ? (
               <button
                 type="button"
                 className="dashboard-mobile-toggle inline-flex items-center justify-center rounded-full border border-border/60 p-2 text-foreground lg:hidden"
@@ -1329,24 +1342,28 @@ export function Navbar() {
             onOpenChange={setAccountMenuOpen}
             anchorRef={accountButtonRef}
             align="end"
-            title="Account menu"
+            title={isDashboardSetupRoute ? undefined : "Account menu"}
           >
             <div className="dashboard-account-menu-content space-y-2 text-sm">
               <div className="dashboard-account-menu-email rounded-lg border border-border/60 bg-card/80 px-3 py-2 text-xs text-muted-foreground">
                 {user?.email ?? "Not signed in"}
               </div>
-              <MenuLink href="/dashboard/settings">Account settings</MenuLink>
-              <MenuLink href="/dashboard/billing">Billing</MenuLink>
-              <MenuButton
-                onClick={() =>
-                  window.dispatchEvent(new CustomEvent("open-support"))
-                }
-              >
-                Support
-              </MenuButton>
-              <MenuButton onClick={handleLogout} disabled={loggingOut}>
-                <LogOut className="mr-2 h-4 w-4" /> Logout
-              </MenuButton>
+              {!isDashboardSetupRoute ? (
+                <>
+                  <MenuLink href="/dashboard/settings">Account settings</MenuLink>
+                  <MenuLink href="/dashboard/billing">Billing</MenuLink>
+                  <MenuButton
+                    onClick={() =>
+                      window.dispatchEvent(new CustomEvent("open-support"))
+                    }
+                  >
+                    Support
+                  </MenuButton>
+                  <MenuButton onClick={handleLogout} disabled={loggingOut}>
+                    <LogOut className="mr-2 h-4 w-4" /> Logout
+                  </MenuButton>
+                </>
+              ) : null}
             </div>
           </PopoverDialog>
         )}
